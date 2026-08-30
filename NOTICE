@@ -1,0 +1,8 @@
+Eidos
+Copyright 2026 Jeremy Zgonec
+
+Ce produit est distribué sous licence Apache 2.0.
+Voir le fichier LICENSE pour les termes complets.
+
+Eidos n'incorpore aucune bibliothèque tierce : il n'emploie que la
+bibliothèque standard de Python.
