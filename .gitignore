@@ -1,0 +1,10 @@
+# état local, jamais versionné
+chaine.dat
+portefeuille.json
+*.psnx
+*.blend_data
+*seed*
+*graine*
+__pycache__/
+*.pyc
+.DS_Store
