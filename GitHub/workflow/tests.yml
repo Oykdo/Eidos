@@ -1,0 +1,109 @@
+ name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  suites:
+    name: ${{ matrix.os }} · Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Genese reproductible (32 controles)
+        run: python verify_genesis.py
+
+      - name: Emission et codec (6 controles)
+        run: python eonis.py
+
+      - name: Carnet UTXO et signatures Lamport (11 controles)
+        run: python utxo.py
+
+      - name: Difficulte et travail cumule (6 controles)
+        run: python consensus.py
+
+      - name: Consensus federe (11 controles)
+        run: python federation.py
+
+      - name: Persistance, aller-retour complet
+        shell: bash
+        run: |
+          python store.py --init
+          python store.py --mine 2
+          python store.py --pay
+          python store.py --verify
+
+  empreintes:
+    name: empreinte ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Calculer l'empreinte des quatre tables
+        shell: bash
+        run: |
+          python - <<'PY' > empreinte.txt
+          import hashlib, eonis as E
+          for nom, a, _ in E.AGES:
+              W = E.build_epoch_table(a)
+              blob = ("\n".join(str(x) for x in W) + "\n").encode("ascii")
+              print(nom, hashlib.sha256(blob).hexdigest())
+          PY
+          cat empreinte.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: empreinte-${{ matrix.os }}
+          path: empreinte.txt
+
+  comparaison:
+    name: determinisme inter-plateformes
+    needs: empreintes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: empreintes
+
+      - name: Les trois systemes doivent produire le meme texte
+        shell: bash
+        run: |
+          find empreintes -name empreinte.txt | sort | while read f; do
+            echo "--- $f"; cat "$f"
+          done
+          n=$(find empreintes -name empreinte.txt -exec sha256sum {} \; \
+              | awk '{print $1}' | sort -u | wc -l)
+          if [ "$n" -ne 1 ]; then
+            echo "ECHEC : les tables different selon la plateforme."
+            exit 1
+          fi
+          echo "OK : empreintes identiques sur les trois systemes."
+
+  hygiene:
+    name: hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
