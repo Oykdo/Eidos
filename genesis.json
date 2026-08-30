@@ -1,0 +1,106 @@
+{
+ "spec": "eonis-genesis/1",
+ "monnaie": {
+  "nom": "EIDOLON",
+  "ticker": "EIDL",
+  "atomes_par_unite": 100000000,
+  "decimales": 8
+ },
+ "temps": {
+  "intervalle_bloc_s": 600,
+  "blocs_par_heure": 6,
+  "blocs_par_epoque": 1008,
+  "heures_par_epoque": 168,
+  "epoques_totales": 2080
+ },
+ "emission": {
+  "formule": "R(h) = a + b*cos(2*pi*(h - h0)/T), b = a/2",
+  "T": 1008,
+  "h0": 492,
+  "b_ratio": "1/2",
+  "invariant": "somme des cosinus nulle sur une periode -> total = a*T exact",
+  "total_atomes": 6289920000000000,
+  "total_eidolon": 62899200,
+  "blocs_totaux": 2096640
+ },
+ "generation_des_tables": {
+  "arithmetique": "decimal.Decimal, getcontext().prec = 60",
+  "cosinus": "serie de Taylor, reduction d'argument mod 2*pi (pas math.cos)",
+  "pi_decimales": 68,
+  "arrondi": "plancher puis repartition au plus fort reste; egalite tranchee par index croissant",
+  "serialisation_canonique": "T+1 valeurs cumulees, decimal ASCII, une par ligne, LF, newline final",
+  "generateur": "eonis.py",
+  "generateur_sha256": "cc94ad1e6eadf7027414a1347e870a4842689431b8fca2c1b381f93f4f1dfabc"
+ },
+ "ages": [
+  {
+   "nom": "Satya",
+   "a_eidolon": 40,
+   "epoques": 832,
+   "hauteur_debut": 0,
+   "hauteur_fin": 838655,
+   "blocs": 838656,
+   "emission_age_atomes": 3354624000000000,
+   "table_fichier": "table-satya.txt",
+   "table_sha256": "2c4dc8170d102ca01f032955aebd33385ad838ad58d7f4f0b09327a7851d550b",
+   "table_octets": 13747,
+   "recompense_min_atomes": 2000000000,
+   "recompense_max_atomes": 6000000000
+  },
+  {
+   "nom": "Treta",
+   "a_eidolon": 30,
+   "epoques": 624,
+   "hauteur_debut": 838656,
+   "hauteur_fin": 1467647,
+   "blocs": 628992,
+   "emission_age_atomes": 1886976000000000,
+   "table_fichier": "table-treta.txt",
+   "table_sha256": "adb95a75943373967c1d5c14d963594935f72bac09344f1862be213e9e659c11",
+   "table_octets": 13666,
+   "recompense_min_atomes": 1500000000,
+   "recompense_max_atomes": 4500000000
+  },
+  {
+   "nom": "Dvapara",
+   "a_eidolon": 20,
+   "epoques": 416,
+   "hauteur_debut": 1467648,
+   "hauteur_fin": 1886975,
+   "blocs": 419328,
+   "emission_age_atomes": 838656000000000,
+   "table_fichier": "table-dvapara.txt",
+   "table_sha256": "f10ceef54513bb5e014b1726b73d9305a6bdc7b37b1d54aa1ed1ddc71c4a5158",
+   "table_octets": 13520,
+   "recompense_min_atomes": 1000000000,
+   "recompense_max_atomes": 3000000000
+  },
+  {
+   "nom": "Kali",
+   "a_eidolon": 10,
+   "epoques": 208,
+   "hauteur_debut": 1886976,
+   "hauteur_fin": 2096639,
+   "blocs": 209664,
+   "emission_age_atomes": 209664000000000,
+   "table_fichier": "table-kali.txt",
+   "table_sha256": "ec54de677a8a81796a71369660e0fc9361381136bb8f199a511a49f183b1a6d0",
+   "table_octets": 12937,
+   "recompense_min_atomes": 500000000,
+   "recompense_max_atomes": 1500000000
+  }
+ ],
+ "bloc_genese": {
+  "hauteur": 0,
+  "prev": "0000000000000000000000000000000000000000000000000000000000000000",
+  "message": "Aion ne demande pas combien, mais ou l'on en est. Jeremy Zgonec, 30 aout 2026.",
+  "horodatage_iso": "2026-08-30T09:58:00+02:00",
+  "horodatage_unix": 1756540680,
+  "bits": 18,
+  "merkle_root": "0cd32557985be5c07e3a085862cb951c2f5f1cc46684283a5ed98e9e48ef6d0a",
+  "nonce": 470448,
+  "hash": "00003d32ffa7a1dc7f1ace8ec08d0c739126ad4449fe004ea772710baec2c7b6",
+  "recompense_atomes": 2005592406,
+  "glyphes": "··· ··· ··· ✚✚○ ·✚· ☽✚✚ ✚✚☽ ☽○✚ ☽☽· ○✚○ ✚·○ ✚✚✚ ·○☽ ☽✚· ✚☽☽ ·✚☽ ✚·· ·☽· ✚○· ·✚· ○✚· ✚☽○ ·○· ☽○☽ ☽☽✚ ○○· ○·○ ·☽○ ✚✚✚ ☽·· ··○ ·✚☽ ☽☽○ ✚○✚ ·☽○ ✚·○ ··☽ ✚☽☽ ✚☽✚ ··☽ ✚·○ ✚☽✚ ○☽·"
+ }
+}
