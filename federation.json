@@ -1,0 +1,22 @@
+{
+ "spec": "eidos-federation/1",
+ "reseau": "essai",
+ "n": 7,
+ "hauteur_mss": 10,
+ "signatures_par_cle": 1024,
+ "creneau_s": 3600,
+ "pas_rotation": 3,
+ "t0_unix": 1756540680,
+ "t0_iso": "2026-08-30T09:58:00+02:00",
+ "derivation_graines": "sha256('eidos-testnet-1/validateur/<i>')",
+ "avertissement": "Reseau d'essai : graines publiques, aucune valeur.",
+ "racines": [
+  "ae5997eed7ca93d285bb92390effcd04aa0b6b55d8665f23504616eafe83b31d",
+  "04603752ab570acb7b85f7a2b278df367e95563d073c02f9e0981112bd494b69",
+  "29bb8930ef899aca30fe3b6005a8e8aebe76ecc673906e07311cb79f9a1be7d5",
+  "44272e8ceb41245824ce09d90e0ddf639fdd29557a02d3d58631f52a91fe3a56",
+  "a91fec501cfd12a2a57ed7c5d9e8996d290d71af6f64d98124515d15c2959d76",
+  "e6612d17054049eebcf045f441bef0f2461e48c56d198df3ca22f168223e3406",
+  "ba31d0a39f621e1cbf17b4c62e1d133a79f1dccd60af15e9149bebdb88d88190"
+ ]
+}
