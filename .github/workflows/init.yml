@@ -1,0 +1,66 @@
+name: init-federation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Calculer les sept racines de validateur
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, sys, time
+          sys.path.insert(0, ".")
+          import federation as F
+
+          if os.path.exists("chaine-eidos.dat"):
+              sys.exit("REFUS : chaine-eidos.dat existe deja. Regenerer les "
+                       "racines invaliderait tous les blocs deja signes.")
+
+          N, HAUTEUR, GRAINE = 7, 10, "eidos-testnet-1"
+          t = time.time()
+          racines = []
+          for i in range(N):
+              s = hashlib.sha256(f"{GRAINE}/validateur/{i}".encode()).digest()
+              racines.append(F.CleValidateur(s, HAUTEUR).racine.hex())
+              print(f"validateur {i} : {racines[-1]}")
+
+          cfg = {
+           "spec": "eidos-federation/1",
+           "reseau": "essai",
+           "n": N,
+           "hauteur_mss": HAUTEUR,
+           "signatures_par_cle": 1 << HAUTEUR,
+           "creneau_s": 3600,
+           "pas_rotation": 3,
+           "t0_unix": 1756540680,
+           "t0_iso": "2026-08-30T09:58:00+02:00",
+           "derivation_graines": f"sha256('{GRAINE}/validateur/<i>')",
+           "avertissement": "Reseau d'essai : graines publiques, aucune valeur.",
+           "racines": racines,
+          }
+          json.dump(cfg, open("federation.json", "w"), indent=1, ensure_ascii=False)
+          print(f"\nfederation.json ecrit en {time.time()-t:.1f} s")
+          PY
+
+      - name: Publier federation.json
+        run: |
+          git config user.name  "eidos-noeud"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add federation.json
+          if git diff --cached --quiet; then
+            echo "federation.json inchange"
+            exit 0
+          fi
+          git commit -m "federation.json : sept racines de validateur"
+          git push
