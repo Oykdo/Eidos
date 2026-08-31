@@ -34,11 +34,14 @@ import utxo as U
 import federation as F
 
 CHAINE = os.path.join(HERE, "chaine-eidos.dat")
+MEMPOOL = os.path.join(HERE, "mempool.json")
 CONFIG = os.path.join(HERE, "federation.json")
 ETAT = os.path.join(HERE, "etat.json")
 MAGIC = b"EIDOS\x00\x00\x01"
 FORMAT = 1
 MAX_PAR_EXECUTION = 6          # garde-fou : jamais plus de 6 blocs d'un coup
+MAX_PAIEMENTS = 3              # demandes servies par bloc
+MONTANT_ROBINET = 100_000_000  # 1 eidolon par demande
 
 
 # ==========================================================================
@@ -177,12 +180,75 @@ def ajouter(blk):
 # ==========================================================================
 # Forge
 # ==========================================================================
+def graine_tresor(h):
+    return hashlib.sha256(f"eidos-testnet-1/tresor/{h}".encode()).digest()
+
+
+def graine_rendu(h, k):
+    return hashlib.sha256(f"eidos-testnet-1/rendu/{h}/{k}".encode()).digest()
+
+
+def adr(graine):
+    return U.address_of(U.lamport_public(U.lamport_secret(graine)))
+
+
 def adresse_du_bloc(hauteur):
     """Trésor du réseau d'essai : une adresse fraîche par bloc, dérivée
     publiquement. Les fonds sont donc dépensables par quiconque — c'est
     assumé, il n'y a rien à voler."""
-    g = hashlib.sha256(f"eidos-testnet-1/tresor/{hauteur}".encode()).digest()
-    return U.address_of(U.lamport_public(U.lamport_secret(g)))
+    return adr(graine_tresor(hauteur))
+
+
+# ==========================================================================
+# Robinet : sert les demandes inscrites dans mempool.json
+# ==========================================================================
+def charger_mempool():
+    if not os.path.exists(MEMPOOL):
+        return {"spec": "eidos-mempool/1", "demandes": []}
+    return json.load(open(MEMPOOL, encoding="utf-8"))
+
+
+def sorties_tresor(ch, combien):
+    """Sorties non dépensées appartenant au trésor, des plus récentes aux plus
+    anciennes. Le balayage descendant tombe presque toujours sur la coinbase du
+    bloc précédent, donc en une itération."""
+    par_adresse = {}
+    for cle, (a, m) in ch.carnet.utxo.items():
+        par_adresse.setdefault(a.hex(), []).append((cle, m))
+    trouve = []
+    for h in range(ch.carnet.hauteur, -1, -1):
+        graines = [graine_tresor(h)] + [graine_rendu(h, k) for k in range(MAX_PAIEMENTS)]
+        for g in graines:
+            for cle, m in par_adresse.get(adr(g).hex(), []):
+                if m > 2 * MONTANT_ROBINET:
+                    trouve.append((cle, g, m))
+                    if len(trouve) >= combien:
+                        return trouve
+    return trouve
+
+
+def construire_paiements(ch, hauteur_bloc):
+    """Une transaction par demande : le trésor verse, et rend la monnaie sur
+    une adresse fraîche. Frais nuls."""
+    f = charger_mempool()
+    attente = [d for d in f["demandes"] if d["etat"] == "en_attente"][:MAX_PAIEMENTS]
+    if not attente:
+        return [], f, False
+    dispo = sorties_tresor(ch, len(attente))
+    txs = []
+    for k, (d, (cle, graine, montant)) in enumerate(zip(attente, dispo)):
+        dest = bytes.fromhex(d["adresse"])
+        tx = U.Tx([cle], [(dest, MONTANT_ROBINET),
+                          (adr(graine_rendu(hauteur_bloc, k)),
+                           montant - MONTANT_ROBINET)])
+        tx.sign(0, graine)
+        txs.append(tx)
+        d["etat"] = "servie"
+        d["bloc"] = hauteur_bloc
+        d["txid"] = tx.txid().hex()
+        print(f"  robinet : {MONTANT_ROBINET / E.ATOMES:.2f} vers "
+              f"{d['adresse'][:16]}… (issue #{d['issue']})")
+    return txs, f, True
 
 
 def forger(maintenant=None):
@@ -207,18 +273,24 @@ def forger(maintenant=None):
             break
         h = ch.carnet.hauteur + 1
         ts = fed.t0 + s * F.CRENEAU
-        blk = _forger_un(ch, k, v, h, ts)
+        paiements, file, servi = ([], None, False)
+        if s == creneau_courant:                 # seulement au dernier bloc
+            paiements, file, servi = construire_paiements(ch, h)
+        blk = _forger_un(ch, k, v, h, ts, paiements)
         d = ch.valider(blk)
         ajouter(blk)
+        if servi:
+            json.dump(file, open(MEMPOOL, "w"), indent=1, ensure_ascii=False)
         forges += 1
         print(f"#{h:<5} créneau {s:<5} validateur {v}  {d.hex()[:16]}  "
               f"+{E.reward_at(h) / E.ATOMES:.6f}")
     return ch, forges
 
 
-def _forger_un(ch, k, v, h, ts):
+def _forger_un(ch, k, v, h, ts, paiements=()):
     blk = {"height": h, "prev": ch.carnet.tete, "ts": ts, "nonce": 0,
-           "bits": 0, "txs": [U.coinbase(h, adresse_du_bloc(h))],
+           "bits": 0,
+           "txs": [U.coinbase(h, adresse_du_bloc(h))] + list(paiements),
            "validateur": v}
     blk["sig"] = k.signer(ch.id_bloc(blk))
     return blk
