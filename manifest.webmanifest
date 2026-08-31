@@ -1,0 +1,15 @@
+{
+  "name": "Eidos — portefeuille",
+  "short_name": "Eidos",
+  "description": "Portefeuille et client léger Eidos : adresses en glyphes à trois figures, courbe d'émission.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12151A",
+  "theme_color": "#12151A",
+  "lang": "fr",
+  "icons": [
+    { "src": "icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
