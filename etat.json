@@ -1,0 +1,28 @@
+{
+ "spec": "eidos-etat/1",
+ "reseau": "essai",
+ "maj_unix": 1788160806,
+ "hauteur": 5,
+ "blocs": 6,
+ "tete": "3fa77b6c72cc94f269648199042017b86f09eaf40d47b793b1671b5342a1f319",
+ "dernier_creneau": 8783,
+ "age": "Satya",
+ "a_courant": 40,
+ "recompense_courante_atomes": 2011218379,
+ "emission_cumulee_atomes": 12049658458,
+ "en_circulation_atomes": 12049658458,
+ "sorties_non_depensees": 6,
+ "cles_consommees": 6,
+ "atomes_par_unite": 100000000,
+ "emission_totale_atomes": 6289920000000000,
+ "taille_chaine_octets": 150226,
+ "soldes": {
+  "a098dd7b9b54eb9b05bfe5e87281e0671e6beb6e": 2005592406,
+  "ca660c96e0800dc159766f9b42a98d6309f8f87d": 2006562778,
+  "fdf0c142fa8f86ac39fd2e64167b5bb72c64279c": 2007610604,
+  "538d2b7e3bf056aa77162fcf51700d9a578108e7": 2008735842,
+  "4ec3d4da549408e447f25aa95b229dae6c944ac5": 2009938449,
+  "ba066416e4df6758b587150d475b262ee89dfce5": 2011218379
+ },
+ "invariant": true
+}
