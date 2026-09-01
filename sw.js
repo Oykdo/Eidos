@@ -1,5 +1,5 @@
 // Eidos — cache applicatif. Changez CACHE a chaque publication.
-const CACHE = "eidos-v4";
+const CACHE = "eidos-v6";
 const FICHIERS = [
   "./", "./index.html", "./manifest.webmanifest",
   "./apple-touch-icon.png", "./icone-192.png", "./icone-512.png"
