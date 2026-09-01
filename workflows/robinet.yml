@@ -1,0 +1,67 @@
+name: robinet
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: chaine
+  cancel-in-progress: false
+
+jobs:
+  servir:
+    if: startsWith(github.event.issue.title, 'robinet') || startsWith(github.event.issue.title, 'envoi')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # Le texte de l'issue n'est JAMAIS interpole dans une commande :
+      # il arrive uniquement par l'environnement, et robinet.py ne retient
+      # que ce qui passe le filtre de figures et la somme de controle.
+      # Ni le titre ni le corps ne sont interpoles dans une commande :
+      # ils passent par l'environnement, et robinet.py filtre le reste.
+      - name: Inscrire la demande dans la file
+        env:
+          EIDOS_ISSUE_BODY: ${{ github.event.issue.body }}
+          EIDOS_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          EIDOS_ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          case "$EIDOS_ISSUE_TITLE" in
+            envoi*)   python robinet.py --envoi ;;
+            *)        python robinet.py --issue ;;
+          esac
+
+      - name: Publier la file
+        run: |
+          git config user.name  "eidos-noeud"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f mempool.json
+          if git diff --cached --quiet; then
+            echo "file inchangee"
+            exit 0
+          fi
+          git commit -m "robinet : demande #${{ github.event.issue.number }}"
+          git push
+
+      - name: Repondre et fermer
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          ETAT: ${{ job.status }}
+        run: |
+          if [ "$ETAT" = "success" ]; then
+            MSG="Demande enregistree. Le noeud la servira au prochain bloc (une heure au plus). Verifiez ensuite votre solde sur https://oykdo.github.io/Eidos/"
+          else
+            MSG="Aucune adresse Eidos valide trouvee dans ce message. Collez les 31 symboles, somme de controle comprise, telle que la page les affiche."
+          fi
+          gh issue comment "$NUM" --body "$MSG"
+          gh issue close "$NUM"
