@@ -1,0 +1,12 @@
+{
+ "spec": "eidos-mempool/1",
+ "demandes": [
+  {
+   "type": "robinet",
+   "adresse": "1a56415346085a7afc028ccc90426f67762e6d10",
+   "issue": 1,
+   "montant_atomes": 100000000,
+   "etat": "en_attente"
+  }
+ ]
+}
