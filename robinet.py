@@ -17,7 +17,7 @@ texte est ignore.
   python3 robinet.py --file         affiche la file
 """
 
-import hashlib, json, os, re, sys
+import base64, hashlib, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MEMPOOL = os.path.join(HERE, "mempool.json")
@@ -80,6 +80,62 @@ def ecrire_file(f):
     json.dump(f, open(MEMPOOL, "w"), indent=1, ensure_ascii=False)
 
 
+DEBUT = "-----EIDOS-----"
+FIN = "-----FIN-----"
+B64 = re.compile(r"^[A-Za-z0-9+/=]{200,}$")
+MAX_TX_CARACTERES = 80000
+
+
+def extraire_transaction(texte: str) -> str:
+    """La transaction est delimitee par deux marqueurs, et occupe des lignes
+    entieres. On n'assemble jamais des morceaux disperses : chaque ligne doit
+    etre entierement du base64, sinon elle est ignoree. Le contenu n'est pas
+    interprete ici — c'est le noeud qui le validera, et une transaction
+    fautive est ecartee sans faire echouer le bloc."""
+    lignes = texte.splitlines()
+    if DEBUT in texte and FIN in texte:
+        d = next(i for i, l in enumerate(lignes) if DEBUT in l)
+        f = next(i for i, l in enumerate(lignes) if FIN in l and i > d)
+        lignes = lignes[d + 1:f]
+    morceaux = [l.strip() for l in lignes if B64.match(l.strip())]
+    if not morceaux:
+        raise ValueError("aucune transaction trouvee dans ce message")
+    jeton = "".join(morceaux)
+    if len(jeton) > MAX_TX_CARACTERES:
+        raise ValueError("transaction trop volumineuse")
+    try:
+        brut = base64.b64decode(jeton, validate=True)
+    except Exception as e:
+        raise ValueError(f"base64 invalide : {e}")
+    if len(brut) < 200:
+        raise ValueError("transaction trop courte")
+    return jeton
+
+
+def ajouter_envoi():
+    corps = os.environ.get("EIDOS_ISSUE_BODY", "")
+    numero = os.environ.get("EIDOS_ISSUE_NUMBER", "0")
+    numero = int(numero) if numero.isdigit() else 0
+    donnees = extraire_transaction(corps)
+
+    f = charger_file()
+    if len(f["demandes"]) >= MAX_FILE:
+        raise SystemExit("REFUS : file pleine")
+    if any(d.get("donnees") == donnees for d in f["demandes"]):
+        print("transaction deja en file")
+        return
+    f["demandes"].append({
+        "type": "envoi",
+        "issue": numero,
+        "octets": len(base64.b64decode(donnees)),
+        "donnees": donnees,
+        "etat": "en_attente",
+    })
+    ecrire_file(f)
+    print(f"transaction inscrite : {len(base64.b64decode(donnees))} octets "
+          f"(issue #{numero})")
+
+
 def ajouter():
     corps = os.environ.get("EIDOS_ISSUE_BODY", "")
     numero = os.environ.get("EIDOS_ISSUE_NUMBER", "0")
@@ -95,6 +151,7 @@ def ajouter():
         print(f"deja en file ou deja servie : {adresse}")
         return
     f["demandes"].append({
+        "type": "robinet",
         "adresse": adresse,
         "issue": numero,
         "montant_atomes": MONTANT_ATOMES,
@@ -110,6 +167,11 @@ if __name__ == "__main__":
         for d in f["demandes"]:
             print(f"{d['etat']:<12} {d['adresse']}  issue #{d['issue']}")
         print(f"{len(f['demandes'])} demande(s)")
+    elif "--envoi" in sys.argv:
+        try:
+            ajouter_envoi()
+        except ValueError as e:
+            raise SystemExit(f"REFUS : {e}")
     elif "--issue" in sys.argv:
         try:
             ajouter()
