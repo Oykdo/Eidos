@@ -1,21 +1,21 @@
 {
  "spec": "eidos-etat/1",
  "reseau": "essai",
- "maj_unix": 1788296243,
- "hauteur": 39,
- "blocs": 40,
- "tete": "3511c74a8481ee4671aae0e2c8756e0d2e50d01c2f38a91915266220295f9e37",
- "dernier_creneau": 8820,
+ "maj_unix": 1788304451,
+ "hauteur": 42,
+ "blocs": 43,
+ "tete": "6934de4916b58fb7df0f97d9a9416642f0e911880a24176418b1819664bfa611",
+ "dernier_creneau": 8823,
  "age": "Satya",
  "a_courant": 40,
- "recompense_courante_atomes": 2100211707,
- "emission_cumulee_atomes": 81740134002,
- "en_circulation_atomes": 81740134002,
- "sorties_non_depensees": 42,
- "cles_consommees": 40,
+ "recompense_courante_atomes": 2112233339,
+ "emission_cumulee_atomes": 88064665219,
+ "en_circulation_atomes": 88064665219,
+ "sorties_non_depensees": 46,
+ "cles_consommees": 43,
  "atomes_par_unite": 100000000,
  "emission_totale_atomes": 6289920000000000,
- "taille_chaine_octets": 1050816,
+ "taille_chaine_octets": 1150607,
  "soldes": {
   "a098dd7b9b54eb9b05bfe5e87281e0671e6beb6e": 2005592406,
   "ca660c96e0800dc159766f9b42a98d6309f8f87d": 2006562778,
@@ -53,11 +53,14 @@
   "085f7629a67099317ef099066df85553663fcde6": 2078165356,
   "387baa9c4e68bf3e2d7cfb53fb4eeaa866e65b03": 2081653877,
   "a3048a9ad8a26b5d1bbf28164afdbd8ad087472c": 2088854388,
-  "1a56415346085a7afc028ccc90426f67762e6d10": 200000000,
+  "1a56415346085a7afc028ccc90426f67762e6d10": 300000000,
   "409b90e4784f68c0ebf729a04a9a26e99e5ec596": 1985216934,
   "4c24b667baa7ca20d411a22afc1ce7acc8c14f87": 2092566099,
   "277ccee42d68c98b496becb041fb7cee03a249e9": 2100211707,
-  "a95c12de692e0c31a8dc988eaf3dd2ce471b5512": 1996351920
+  "a95c12de692e0c31a8dc988eaf3dd2ce471b5512": 1996351920,
+  "c7a63a5a419944af435e99a216b0d1bf99570356": 2104145308,
+  "bef2b997cbe26012da205e39a5632c6bd8179cde": 2112233339,
+  "c88237e41c60dad98b0381df520d87ffdb8c848a": 2008152570
  },
  "sorties": {
   "fb3c7d4e17bfaa03fcc39f1d693eb712c8d5f673003bcb7e429cf646a470fa59:0": {
@@ -227,6 +230,22 @@
   "f84e6924895e83689b1c4a73309593206ad752ceec7d3b56b75f1ff6061cdf73:1": {
    "adresse": "a95c12de692e0c31a8dc988eaf3dd2ce471b5512",
    "montant": 1996351920
+  },
+  "1f490d4c387d58cbb5d8d6fe057e38d1e338851da07e6d7e5ac00f5e2a4d4fbc:0": {
+   "adresse": "c7a63a5a419944af435e99a216b0d1bf99570356",
+   "montant": 2104145308
+  },
+  "e7284a28b89bc6621506cdf845e123b07a69afda2babd21661c12d763dbf7727:0": {
+   "adresse": "bef2b997cbe26012da205e39a5632c6bd8179cde",
+   "montant": 2112233339
+  },
+  "0a26b7b67e7bdc7f89ca0caf4b9607631419ff8f956e89bd3977f84da2195f54:0": {
+   "adresse": "1a56415346085a7afc028ccc90426f67762e6d10",
+   "montant": 100000000
+  },
+  "0a26b7b67e7bdc7f89ca0caf4b9607631419ff8f956e89bd3977f84da2195f54:1": {
+   "adresse": "c88237e41c60dad98b0381df520d87ffdb8c848a",
+   "montant": 2008152570
   }
  },
  "invariant": true
