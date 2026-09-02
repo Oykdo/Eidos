@@ -6,7 +6,9 @@
    "adresse": "1a56415346085a7afc028ccc90426f67762e6d10",
    "issue": 1,
    "montant_atomes": 100000000,
-   "etat": "en_attente"
+   "etat": "servie",
+   "bloc": 61,
+   "txid": "d3c35c9f30dfbe85cf61981a3272aec1586fea406e793c799ce480866150aa0e"
   }
  ]
 }
