@@ -1,4 +1,11 @@
-#!/usr/bin/env python3
+name: chaine
+
+# Le nœud d'Eidos. Se réveille à la minute 7 de chaque heure, rejoue la
+# chaîne, forge les créneaux échus (six au plus), revalide, puis publie.
+# À déposer dans .github/workflows/chaine.yml
+
+on:
+  schedule:#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 noeud.py — nœud fédéré d'Eidos, conçu pour tourner dans GitHub Actions.
@@ -25,7 +32,7 @@ Aucune valeur monétaire. Ce n'est pas non plus un réseau : un seul processus
 écrit, il n'y a ni pairs ni propagation.
 """
 
-import base64, hashlib, json, os, sys, time
+import hashlib, json, os, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -227,94 +234,15 @@ def sorties_tresor(ch, combien):
     return trouve
 
 
-def tx_recevable(ch, tx):
-    """Rejoue les regles de validation AVANT d'inclure une transaction, pour
-    qu'une transaction fautive ne fasse pas echouer tout le bloc."""
-    if tx.is_coinbase():
-        return "coinbase interdite ici"
-    entree = 0
-    vus = set()
-    for i, (ptxid, rang) in enumerate(tx.inputs):
-        cle = (ptxid, rang)
-        if cle in vus:
-            return "double depense interne"
-        vus.add(cle)
-        if cle not in ch.carnet.utxo:
-            return "entree inconnue ou deja depensee"
-        adresse, montant = ch.carnet.utxo[cle]
-        w = tx.witness[i] if i < len(tx.witness) else None
-        if w is None:
-            return "temoin absent"
-        pk, sig = w
-        if U.address_of(pk) != adresse:
-            return "la cle ne correspond pas a l'adresse"
-        if U.sha256(pk) in ch.carnet.cles_usees:
-            return "cle Lamport deja employee"
-        if not U.lamport_verify(pk, tx.sighash(i), sig):
-            return "signature invalide"
-        entree += montant
-    if any(m <= 0 for _, m in tx.outputs):
-        return "sortie nulle ou negative"
-    if tx.total_out() > entree:
-        return "creation de valeur"
-    return None
-
-
-def transactions_en_file(ch, f):
-    """Transactions deposees par les utilisateurs, validees une a une."""
-    txs = []
-    for d in f["demandes"]:
-        if d.get("type") != "envoi" or d["etat"] != "en_attente":
-            continue
-        try:
-            brut = base64.b64decode(d["donnees"])
-            tx, reste = deser_tx(brut, 0)
-            if reste != len(brut):
-                raise ValueError("octets en trop")
-        except Exception as e:
-            d["etat"] = "refusee"
-            d["motif"] = f"illisible : {e}"
-            continue
-        motif = tx_recevable(ch, tx)
-        if motif:
-            d["etat"] = "refusee"
-            d["motif"] = motif
-        else:
-            txs.append((d, tx))
-            if len(txs) >= MAX_PAIEMENTS:
-                break
-    return txs
-
-
 def construire_paiements(ch, hauteur_bloc):
     """Une transaction par demande : le trésor verse, et rend la monnaie sur
     une adresse fraîche. Frais nuls."""
     f = charger_mempool()
-    modifie = False
-    txs = []
-
-    # 1. les transactions envoyees par les utilisateurs
-    for d, tx in transactions_en_file(ch, f):
-        txs.append(tx)
-        d["etat"] = "incluse"
-        d["bloc"] = hauteur_bloc
-        d["txid"] = tx.txid().hex()
-        modifie = True
-        print(f"  envoi   : {tx.total_out() / E.ATOMES:.6f} "
-              f"(issue #{d['issue']})")
-    if any(d.get("etat") == "refusee" and "vu" not in d for d in f["demandes"]):
-        modifie = True
-        for d in f["demandes"]:
-            if d.get("etat") == "refusee":
-                d["vu"] = True
-
-    # 2. les demandes au robinet
-    attente = [d for d in f["demandes"]
-               if d.get("type", "robinet") == "robinet" and d["etat"] == "en_attente"]
-    attente = attente[:MAX_PAIEMENTS]
+    attente = [d for d in f["demandes"] if d["etat"] == "en_attente"][:MAX_PAIEMENTS]
     if not attente:
-        return txs, f, modifie
+        return [], f, False
     dispo = sorties_tresor(ch, len(attente))
+    txs = []
     for k, (d, (cle, graine, montant)) in enumerate(zip(attente, dispo)):
         dest = bytes.fromhex(d["adresse"])
         tx = U.Tx([cle], [(dest, MONTANT_ROBINET),
@@ -381,11 +309,9 @@ def _forger_un(ch, k, v, h, ts, paiements=()):
 def ecrire_etat(ch, blocs):
     c = ch.fed
     carnet = ch.carnet
-    soldes, sorties = {}, {}
-    for (txid, rang), (adresse, montant) in carnet.utxo.items():
+    soldes = {}
+    for adresse, montant in carnet.utxo.values():
         soldes[adresse.hex()] = soldes.get(adresse.hex(), 0) + montant
-        sorties[f"{txid.hex()}:{rang}"] = {"adresse": adresse.hex(),
-                                           "montant": montant}
     nom, a, _ = E.age_of(max(carnet.hauteur, 0))
     etat = {
         "spec": "eidos-etat/1",
@@ -406,7 +332,12 @@ def ecrire_etat(ch, blocs):
         "emission_totale_atomes": 62_899_200 * E.ATOMES,
         "taille_chaine_octets": os.path.getsize(CHAINE),
         "soldes": soldes,
-        "sorties": sorties,
+        # sorties non dépensées, publiées pour que le portefeuille puisse
+        # choisir l'entrée qu'il dépense : "txid:rang" -> adresse, montant
+        "sorties": {
+            f"{txid.hex()}:{rang}": {"adresse": adresse.hex(), "montant": montant}
+            for (txid, rang), (adresse, montant) in carnet.utxo.items()
+        },
     }
     etat["invariant"] = (etat["en_circulation_atomes"]
                          == etat["emission_cumulee_atomes"])
@@ -438,3 +369,56 @@ if __name__ == "__main__":
         print(f"{f} bloc(s) forgé(s)")
     else:
         print(__doc__.strip().split("  python3")[1].split("Format")[0])
+
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Même groupe que robinet.yaml : jamais deux écritures simultanées
+# sur chaine-eidos.dat.
+concurrency:
+  group: chaine
+  cancel-in-progress: false
+
+jobs:
+  forger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Genèse reproductible
+        run: python3 verify_genesis.py
+
+      - name: Initialiser la chaîne si elle est absente
+        run: |
+          if [ ! -f chaine-eidos.dat ]; then
+            python3 noeud.py --init
+          else
+            echo "chaine-eidos.dat existe déjà"
+          fi
+
+      - name: Forger
+        run: python3 noeud.py --forger
+
+      - name: Rejeu de contrôle
+        run: python3 noeud.py --verifier
+
+      - name: Publier
+        run: |
+          git config user.name  "eidos-noeud"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for f in chaine-eidos.dat etat.json mempool.json; do
+            [ -f "$f" ] && git add -f "$f"
+          done
+          if git diff --cached --quiet; then
+            echo "rien à publier"
+            exit 0
+          fi
+          git commit -m "noeud : forge du $(date -u +%FT%TZ)"
+          git push || { git pull --rebase --autostash && git push; }
