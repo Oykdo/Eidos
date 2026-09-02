@@ -1,5 +1,9 @@
 name: chaine
 
+# Le nœud d'Eidos. Se réveille à la minute 7 de chaque heure, rejoue la
+# chaîne, forge les créneaux échus (six au plus), revalide, puis publie.
+# À déposer dans .github/workflows/chaine.yml
+
 on:
   schedule:
     - cron: "7 * * * *"
@@ -8,6 +12,8 @@ on:
 permissions:
   contents: write
 
+# Même groupe que robinet.yaml : jamais deux écritures simultanées
+# sur chaine-eidos.dat.
 concurrency:
   group: chaine
   cancel-in-progress: false
@@ -22,25 +28,33 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Creer la chaine si elle n'existe pas
+      - name: Genèse reproductible
+        run: python3 verify_genesis.py
+
+      - name: Initialiser la chaîne si elle est absente
         run: |
-          if [ ! -f chaine-eidos.dat ]; then python noeud.py --init; fi
+          if [ ! -f chaine-eidos.dat ]; then
+            python3 noeud.py --init
+          else
+            echo "chaine-eidos.dat existe déjà"
+          fi
 
-      - name: Forger les blocs des creneaux echus
-        run: python noeud.py --forger
+      - name: Forger
+        run: python3 noeud.py --forger
 
-      - name: Rejeu integral de controle
-        run: python noeud.py --verifier
+      - name: Rejeu de contrôle
+        run: python3 noeud.py --verifier
 
       - name: Publier
         run: |
           git config user.name  "eidos-noeud"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f chaine-eidos.dat etat.json
+          for f in chaine-eidos.dat etat.json mempool.json; do
+            [ -f "$f" ] && git add -f "$f"
+          done
           if git diff --cached --quiet; then
-            echo "aucun changement"
+            echo "rien à publier"
             exit 0
           fi
-          H=$(python -c "import json;print(json.load(open('etat.json'))['hauteur'])")
-          git commit -m "bloc $H"
-          git push
+          git commit -m "noeud : forge du $(date -u +%FT%TZ)"
+          git push || { git pull --rebase --autostash && git push; }
