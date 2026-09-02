@@ -1,11 +1,4 @@
-name: chaine
-
-# Le nœud d'Eidos. Se réveille à la minute 7 de chaque heure, rejoue la
-# chaîne, forge les créneaux échus (six au plus), revalide, puis publie.
-# À déposer dans .github/workflows/chaine.yml
-
-on:
-  schedule:#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 noeud.py — nœud fédéré d'Eidos, conçu pour tourner dans GitHub Actions.
@@ -369,56 +362,3 @@ if __name__ == "__main__":
         print(f"{f} bloc(s) forgé(s)")
     else:
         print(__doc__.strip().split("  python3")[1].split("Format")[0])
-
-    - cron: "7 * * * *"
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-# Même groupe que robinet.yaml : jamais deux écritures simultanées
-# sur chaine-eidos.dat.
-concurrency:
-  group: chaine
-  cancel-in-progress: false
-
-jobs:
-  forger:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Genèse reproductible
-        run: python3 verify_genesis.py
-
-      - name: Initialiser la chaîne si elle est absente
-        run: |
-          if [ ! -f chaine-eidos.dat ]; then
-            python3 noeud.py --init
-          else
-            echo "chaine-eidos.dat existe déjà"
-          fi
-
-      - name: Forger
-        run: python3 noeud.py --forger
-
-      - name: Rejeu de contrôle
-        run: python3 noeud.py --verifier
-
-      - name: Publier
-        run: |
-          git config user.name  "eidos-noeud"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for f in chaine-eidos.dat etat.json mempool.json; do
-            [ -f "$f" ] && git add -f "$f"
-          done
-          if git diff --cached --quiet; then
-            echo "rien à publier"
-            exit 0
-          fi
-          git commit -m "noeud : forge du $(date -u +%FT%TZ)"
-          git push || { git pull --rebase --autostash && git push; }
