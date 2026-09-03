@@ -313,6 +313,8 @@ def ecrire_etat(ch, blocs):
         "hauteur": carnet.hauteur,
         "blocs": blocs,
         "tete": carnet.tete.hex(),
+        "tresor_adresse": (adresse_du_bloc(carnet.hauteur).hex()
+                           if carnet.hauteur >= 0 else None),
         "dernier_creneau": ch.creneaux[-1] if ch.creneaux else None,
         "age": nom,
         "a_courant": a,

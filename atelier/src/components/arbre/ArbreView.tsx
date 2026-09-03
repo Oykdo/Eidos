@@ -19,12 +19,19 @@ import {
   calculerChamp,
   palierLePlusProche,
   poser,
-  poserPalier,
   type Operateur,
   type Plongement,
   type Vue,
 } from "@/lib/arbre/champ.ts";
 import { ancreDe } from "@/lib/arbre/ancre.ts";
+import {
+  PREMIER_CULMINATION,
+  chromaNoeud,
+  poserLumen,
+  poserPalierLumen,
+  type LumenScene,
+} from "@/lib/arbre/lumen.ts";
+import { chargerEtat, sceneOuVide, type EtatReseau } from "@/lib/arbre/etat.ts";
 import { Nav } from "@/components/Nav";
 import { Langue } from "@/components/Langue";
 import { cn } from "@/lib/utils";
@@ -32,24 +39,26 @@ import { useI18n, t } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 
-function yPremier(i: number, mode: Plongement): number {
+function yPremier(i: number, mode: Plongement, scene: LumenScene): number {
   const t = (i / (PREMIERS.length - 1)) * 9;
-  return poserPalier(t, mode).y;
+  return poserPalierLumen(t, mode, scene.lumen).y;
 }
 
 function Paliers({
   filtre,
   mode,
+  scene,
   onPalier,
 }: {
   filtre: number | null;
   mode: Plongement;
+  scene: LumenScene;
   onPalier: (t: number) => void;
 }) {
   return (
     <group>
       {TIERS.map((t) => {
-        const { y, r } = poserPalier(t.id, mode);
+        const { y, r } = poserPalierLumen(t.id, mode, scene.lumen);
         const mute = filtre != null;
         return (
           <group key={t.id}>
@@ -73,7 +82,7 @@ function Paliers({
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, y, 0]}>
               <ringGeometry args={[r - 0.015, r + 0.015, 96]} />
               <meshBasicMaterial
-                color="#c9a227"
+                color={scene.lumen.culmination ? "#dde1e6" : scene.lumen.metal}
                 transparent
                 opacity={mute ? 0.18 : 0.42}
                 side={THREE.DoubleSide}
@@ -114,14 +123,10 @@ function Echelles({ mode }: { mode: Plongement }) {
         />
       </mesh>
       <Html position={[R_HORIZON + 0.5, yH, 0]} pointerEvents="none" zIndexRange={[1, 0]}>
-        <span className="whitespace-nowrap font-mono text-[10px] text-fer">
-          horizon · r_s
-        </span>
+        <span className="whitespace-nowrap font-mono text-[10px] text-fer">horizon · r_s</span>
       </Html>
       <Html position={[R_PHOTON + 0.5, yP, 0]} pointerEvents="none" zIndexRange={[1, 0]}>
-        <span className="whitespace-nowrap font-mono text-[10px] text-etain">
-          photon · 3/2 r_s
-        </span>
+        <span className="whitespace-nowrap font-mono text-[10px] text-etain">photon · 3/2 r_s</span>
       </Html>
     </group>
   );
@@ -130,14 +135,16 @@ function Echelles({ mode }: { mode: Plongement }) {
 function Spine({
   selected,
   mode,
+  scene,
   onPick,
 }: {
   selected: Selection;
   mode: Plongement;
+  scene: LumenScene;
   onPick: (s: Selection) => void;
 }) {
-  const top = yPremier(0, mode);
-  const bot = yPremier(PREMIERS.length - 1, mode);
+  const top = yPremier(0, mode, scene);
+  const bot = yPremier(PREMIERS.length - 1, mode, scene);
   const h = Math.abs(top - bot);
   const mid = (top + bot) / 2;
   return (
@@ -147,13 +154,14 @@ function Spine({
         <meshStandardMaterial
           color="#c9a227"
           emissive="#c9a227"
-          emissiveIntensity={0.35}
+          emissiveIntensity={scene.lumen.culmination ? 0.7 : 0.35}
           roughness={0.4}
         />
       </mesh>
       {PREMIERS.map((p, i) => {
         const actif = selected?.kind === "premier" && selected.p === p;
-        const y = yPremier(i, mode);
+        const pic = p === PREMIER_CULMINATION && scene.lumen.culmination;
+        const y = yPremier(i, mode, scene);
         return (
           <group key={p}>
             <mesh
@@ -163,11 +171,11 @@ function Spine({
                 onPick({ kind: "premier", p, index: i });
               }}
             >
-              <sphereGeometry args={[actif ? 0.22 : 0.16, 16, 16]} />
+              <sphereGeometry args={[pic ? 0.28 : actif ? 0.22 : 0.16, 16, 16]} />
               <meshStandardMaterial
-                color={actif ? "#dde1e6" : "#c9a227"}
+                color={pic || actif ? "#dde1e6" : "#c9a227"}
                 emissive="#c9a227"
-                emissiveIntensity={actif ? 0.8 : 0.45}
+                emissiveIntensity={pic ? 1.15 : actif ? 0.8 : 0.45}
                 roughness={0.35}
               />
             </mesh>
@@ -179,7 +187,7 @@ function Spine({
             >
               <span
                 className={
-                  actif
+                  pic || actif
                     ? "font-mono text-[11px] text-encre"
                     : "font-mono text-[11px] text-or"
                 }
@@ -204,12 +212,14 @@ function Noeuds({
   selected,
   mode,
   operateur,
+  scene,
   onPick,
 }: {
   filtre: number | null;
   selected: Selection;
   mode: Plongement;
   operateur: Operateur | null;
+  scene: LumenScene;
   onPick: (s: Selection) => void;
 }) {
   const data = useMemo(() => arbre(), []);
@@ -222,11 +232,16 @@ function Noeuds({
     const mesh = ref.current;
     if (!mesh) return;
     const selId = selected?.kind === "noeud" ? selected.noeud.id : -1;
+    const { lumen, charges, chargeMax, chaudNoeud, chaudSecteur } = scene;
     data.noeuds.forEach((n, i) => {
       const mute = filtre != null && n.famille !== filtre && selId !== n.id;
-      const p = poser(n, mode);
+      const charge = charges.get(n.id) ?? 0;
+      const p = poserLumen(n, n, mode, lumen, charge, chargeMax);
       dummy.position.set(p.x, p.y, p.z);
-      dummy.scale.setScalar(selId === n.id ? 0.2 : mute ? 0.07 : 0.12);
+      const gros = selId === n.id || chaudNoeud === n.id;
+      dummy.scale.setScalar(
+        gros ? 0.22 : mute ? 0.07 : 0.12 * (1 + 0.7 * (chargeMax > 0 ? charge / chargeMax : 0)),
+      );
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
       const c = champ.noeuds[n.id]!;
@@ -239,7 +254,7 @@ function Noeuds({
       } else if (operateur === "grad") {
         color.copy(ETAIN);
       } else {
-        color.set(couleurSecteur(n.secteur));
+        color.set(chromaNoeud(n, lumen, { chaudNoeud, chaudSecteur }));
       }
       if (mute) color.multiplyScalar(0.18);
       mesh.setColorAt(i, color);
@@ -273,9 +288,11 @@ function Noeuds({
 function Autorites({
   filtre,
   mode,
+  scene,
 }: {
   filtre: number | null;
   mode: Plongement;
+  scene: LumenScene;
 }) {
   const data = useMemo(() => arbre(), []);
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -285,21 +302,23 @@ function Autorites({
   useEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
+    const { lumen, charges, chargeMax, chaudNoeud, chaudSecteur } = scene;
     data.autorites.forEach((a, i) => {
       const n = data.noeuds[a.noeud]!;
       const mute = filtre != null && n.famille !== filtre;
-      const p = poser(a, mode);
+      const charge = charges.get(n.id) ?? 0;
+      const p = poserLumen(a, n, mode, lumen, charge, chargeMax);
       dummy.position.set(p.x, p.y, p.z);
       dummy.scale.setScalar(mute ? 0.015 : 0.028);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
-      color.set(couleurSecteur(a.secteur));
+      color.set(chromaNoeud(n, lumen, { chaudNoeud, chaudSecteur }));
       if (mute) color.multiplyScalar(0.15);
       mesh.setColorAt(i, color);
     });
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  }, [data, filtre, dummy, color, mode]);
+  }, [data, filtre, dummy, color, mode, scene]);
 
   return (
     <instancedMesh ref={ref} args={[undefined, undefined, data.autorites.length]}>
@@ -309,46 +328,61 @@ function Autorites({
   );
 }
 
-function Liens({ filtre, mode }: { filtre: number | null; mode: Plongement }) {
+function Liens({
+  filtre,
+  mode,
+  scene,
+}: {
+  filtre: number | null;
+  mode: Plongement;
+  scene: LumenScene;
+}) {
   const geo = useMemo(() => {
     const data = arbre();
     const pos: number[] = [];
     const col: number[] = [];
     const c = new THREE.Color();
+    const { lumen, charges, chargeMax, chaudNoeud, chaudSecteur } = scene;
     for (const n of data.noeuds) {
       if (n.parent == null) continue;
-      const p = poser(data.noeuds[n.parent]!, mode);
-      const q = poser(n, mode);
+      const par = data.noeuds[n.parent]!;
+      const p = poserLumen(par, par, mode, lumen, charges.get(par.id) ?? 0, chargeMax);
+      const q = poserLumen(n, n, mode, lumen, charges.get(n.id) ?? 0, chargeMax);
       pos.push(p.x, p.y, p.z, q.x, q.y, q.z);
-      c.set(couleurSecteur(n.secteur));
+      c.set(chromaNoeud(n, lumen, { chaudNoeud, chaudSecteur }));
       col.push(c.r, c.g, c.b, c.r, c.g, c.b);
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
     return g;
-  }, [mode]);
+  }, [mode, scene]);
 
   useEffect(() => () => geo.dispose(), [geo]);
 
   return (
     <lineSegments geometry={geo}>
-      <lineBasicMaterial
-        vertexColors
-        transparent
-        opacity={filtre == null ? 0.22 : 0.08}
-      />
+      <lineBasicMaterial vertexColors transparent opacity={filtre == null ? 0.22 : 0.08} />
     </lineSegments>
   );
 }
 
-function Gradients({ mode, visible }: { mode: Plongement; visible: boolean }) {
+function Gradients({
+  mode,
+  visible,
+  scene,
+}: {
+  mode: Plongement;
+  visible: boolean;
+  scene: LumenScene;
+}) {
   const geo = useMemo(() => {
     const data = arbre();
     const champ = calculerChamp(data, mode);
     const pos: number[] = [];
+    const { lumen, charges, chargeMax } = scene;
     for (const n of data.noeuds) {
-      const p = poser(n, mode);
+      const p = poserLumen(n, n, mode, lumen, charges.get(n.id) ?? 0, chargeMax);
       const g = champ.noeuds[n.id]!.grad;
       const mag = Math.hypot(g.x, g.y, g.z) || 1;
       const s = 0.55 / mag;
@@ -357,7 +391,7 @@ function Gradients({ mode, visible }: { mode: Plongement; visible: boolean }) {
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
     return g;
-  }, [mode]);
+  }, [mode, scene]);
 
   useEffect(() => () => geo.dispose(), [geo]);
   if (!visible) return null;
@@ -371,9 +405,11 @@ function Gradients({ mode, visible }: { mode: Plongement; visible: boolean }) {
 function SortiesAncrees({
   mode,
   ids,
+  scene,
 }: {
   mode: Plongement;
   ids: Map<number, number>;
+  scene: LumenScene;
 }) {
   const data = useMemo(() => arbre(), []);
   const ref = useRef<THREE.InstancedMesh>(null);
@@ -383,10 +419,11 @@ function SortiesAncrees({
   useEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
+    const { lumen, charges, chargeMax } = scene;
     list.forEach((id, i) => {
       const n = data.noeuds[id];
       if (!n) return;
-      const p = poser(n, mode);
+      const p = poserLumen(n, n, mode, lumen, charges.get(n.id) ?? 0, chargeMax);
       dummy.position.set(p.x, p.y, p.z);
       dummy.scale.setScalar(0.28);
       dummy.updateMatrix();
@@ -394,7 +431,7 @@ function SortiesAncrees({
     });
     mesh.instanceMatrix.needsUpdate = true;
     mesh.count = list.length;
-  }, [data, dummy, list, mode]);
+  }, [data, dummy, list, mode, scene]);
 
   if (list.length === 0) return null;
   return (
@@ -410,13 +447,7 @@ function SortiesAncrees({
   );
 }
 
-function CameraRig({
-  vue,
-  mode,
-}: {
-  vue: Vue;
-  mode: Plongement;
-}) {
+function CameraRig({ vue, mode }: { vue: Vue; mode: Plongement }) {
   const camera = useThree((s) => s.camera);
   const key = `${vue}:${mode}`;
   const applied = useRef("");
@@ -450,6 +481,7 @@ function SceneInner({
   operateur,
   vue,
   ancrages,
+  scene,
 }: {
   filtre: number | null;
   selected: Selection;
@@ -459,6 +491,7 @@ function SceneInner({
   operateur: Operateur | null;
   vue: Vue;
   ancrages: Map<number, number>;
+  scene: LumenScene;
 }) {
   return (
     <>
@@ -466,25 +499,32 @@ function SceneInner({
       <fog attach="fog" args={["#12151a", 22, 58]} />
       <ambientLight intensity={0.55} />
       <directionalLight position={[8, 18, 10]} intensity={0.85} color="#dde1e6" />
-      <pointLight position={[0, 14, 0]} intensity={1.4} color="#c9a227" distance={28} />
+      <pointLight
+        position={[0, 14, 0]}
+        intensity={scene.lumen.culmination ? 1.9 : 1.4}
+        color="#c9a227"
+        distance={28}
+      />
       <Paliers
         filtre={filtre}
         mode={mode}
+        scene={scene}
         onPalier={(t) => onPick({ kind: "palier", palier: t })}
       />
       <Echelles mode={mode} />
-      <Liens filtre={filtre} mode={mode} />
-      <Gradients mode={mode} visible={operateur === "grad"} />
-      <Autorites filtre={filtre} mode={mode} />
+      <Liens filtre={filtre} mode={mode} scene={scene} />
+      <Gradients mode={mode} visible={operateur === "grad"} scene={scene} />
+      <Autorites filtre={filtre} mode={mode} scene={scene} />
       <Noeuds
         filtre={filtre}
         selected={selected}
         mode={mode}
         operateur={operateur}
+        scene={scene}
         onPick={onPick}
       />
-      <SortiesAncrees mode={mode} ids={ancrages} />
-      <Spine selected={selected} mode={mode} onPick={onPick} />
+      <SortiesAncrees mode={mode} ids={ancrages} scene={scene} />
+      <Spine selected={selected} mode={mode} scene={scene} onPick={onPick} />
       <OrbitControls
         makeDefault
         enableDamping
@@ -508,12 +548,14 @@ function Fiche({
   operateur,
   ancrages,
   montants,
+  scene,
 }: {
   selected: Selection;
   onClose: () => void;
   operateur: Operateur | null;
   ancrages: Map<number, number>;
   montants: Map<number, number>;
+  scene: LumenScene;
 }) {
   const { t: tr } = useI18n();
   const data = arbre();
@@ -533,11 +575,7 @@ function Fiche({
     const t = TIERS[selected.palier]!;
     const n = data.noeuds.filter((x) => x.palier === selected.palier).length;
     titre = `D${t.id} · ${t.nom}`;
-    corps = [
-      t.aide,
-      `${n} nœuds à ce palier.`,
-      tr("arbre.palier"),
-    ];
+    corps = [t.aide, `${n} nœuds à ce palier.`, tr("arbre.palier")];
     secteurs = Array.from({ length: N_SECTEURS }, (_, i) => nomSecteur(i));
   } else if (selected.kind === "famille") {
     const f = FAMILLES[selected.famille]!;
@@ -571,6 +609,13 @@ function Fiche({
     }
     if (operateur === "curl") {
       corps.push(tr("arbre.curl"));
+    }
+    const charge = scene.charges.get(n.id) ?? 0;
+    if (charge > 0) {
+      corps.push(tr("arbre.charge", { m: formaterAtomes(charge) }));
+    }
+    if (scene.chaudNoeud === n.id) {
+      corps.push(tr("arbre.chaud"));
     }
   }
   return (
@@ -616,13 +661,13 @@ const OPS: { id: Operateur; glyph: string; nom: string }[] = [
   { id: "lap", glyph: "∇²", nom: "laplacien" },
 ];
 
-function lecture(op: Operateur | null, mode: Plongement, vue: Vue): string {
+function lecture(op: Operateur | null, mode: Plongement, vue: Vue, scene: LumenScene): string {
   if (vue === "axiale") {
     return t("arbre.axial");
   }
   if (mode === "puits") {
-    const t = palierLePlusProche(R_PHOTON);
-    return `Plongement puits — D0 au fond (analogue d'horizon), D9 à la lèvre. r_ph = 3/2 r_s ne tombe sur aucun palier (le plus proche est D${t}). Ce n'est pas 2GM/c².`;
+    const pal = palierLePlusProche(R_PHOTON);
+    return `Plongement puits — D0 au fond (analogue d'horizon), D9 à la lèvre. r_ph = 3/2 r_s ne tombe sur aucun palier (le plus proche est D${pal}). Ce n'est pas 2GM/c².`;
   }
   if (op === "grad") {
     return "∇Φ pointe vers le parent : la plus grande pente de continuité. Φ = 9 − palier.";
@@ -636,7 +681,11 @@ function lecture(op: Operateur | null, mode: Plongement, vue: Vue): string {
   if (op === "lap") {
     return "∇²Φ mesure le branchement. Feuille = −1, nœud à k enfants = k − 1.";
   }
-  return t("arbre.intro");
+  return t("arbre.souffle", {
+    rho: scene.lumen.rho.toFixed(3),
+    h: scene.lumen.h,
+    age: scene.lumen.age,
+  });
 }
 
 export function ArbreView({ noeudCible }: { noeudCible?: number }) {
@@ -649,6 +698,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
   const [operateur, setOperateur] = useState<Operateur | null>(null);
   const [vue, setVue] = useState<Vue>("orbite");
   const [open, setOpen] = useState(false);
+  const [etat, setEtat] = useState<EtatReseau | null>(null);
 
   const coffre = useCoffre((s) => s.coffre);
   const hydrater = useCoffre((s) => s.hydrater);
@@ -656,6 +706,18 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
   useEffect(() => {
     hydrater();
   }, [hydrater]);
+
+  useEffect(() => {
+    let cancel = false;
+    chargerEtat().then((e) => {
+      if (!cancel) setEtat(e);
+    });
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  const scene = useMemo(() => sceneOuVide(etat), [etat]);
 
   useEffect(() => {
     if (noeudCible == null) return;
@@ -702,6 +764,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
             operateur={operateur}
             vue={vue}
             ancrages={ancrages}
+            scene={scene}
           />
         </Canvas>
       ) : (
@@ -728,6 +791,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
                 operateur={operateur}
                 ancrages={ancrages}
                 montants={montants}
+                scene={scene}
               />
             </div>
           ) : null}
@@ -788,7 +852,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
               </button>
             </div>
             <p className="text-center font-mono text-[11px] leading-relaxed text-sourd text-pretty">
-              {lecture(operateur, mode, vue)}
+              {lecture(operateur, mode, vue, scene)}
             </p>
             {open ? (
               <>

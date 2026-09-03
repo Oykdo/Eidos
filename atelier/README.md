@@ -42,7 +42,7 @@ Deux arbres, pas un.
 
 1. **Merkle du carnet.** Chaque sortie est une feuille `SHA-256d(txid ‖ rang ‖ adresse ‖ montant)`. Paires SHA-256d, dernière feuille recopiée si impair — même règle que `utxo.py`. Un chemin de frères **prouve** qu’une pièce est dans le coffre.
 2. **Chaîne locale.** Bloc 0 = genèse gelée (Merkle du *message*, 18 bits de PoW). Les suivants : merkle du carnet, bits 0 — un proposant, ce navigateur. Altérer `prev` rompt le chainage.
-3. **Arbre des premiers** (D0–D9). Une punaise FNV pose la même adresse sur un nœud. Ce n’est pas une preuve.
+3. **Arbre des premiers** (D0–D9). Une punaise FNV pose la même adresse sur un nœud. Ce n’est pas une preuve. L’émission du réseau (`etat.json`) souffle les proéminences : `ρ = R(h)/a`, chroma d’âge, secteur chaud = ancre du trésor. Pas un `(h·41 mod 425)`.
 
 Les coller en un seul objet serait un mensonge : l’un engage le carnet, l’autre cartographie des régimes.
 

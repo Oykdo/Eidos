@@ -1,10 +1,11 @@
 {
  "spec": "eidos-etat/1",
  "reseau": "essai",
- "maj_unix": 1788428257,
+ "maj_unix": 1788428792,
  "hauteur": 76,
  "blocs": 77,
  "tete": "af4d7b2a7a3fd707302eb6fba4ec54167eaa82abf1df49d867fc7eea1690fd08",
+ "tresor_adresse": "673923204cb04ec20bab7b2f13269a3963c8cb19",
  "dernier_creneau": 8857,
  "age": "Satya",
  "a_courant": 40,

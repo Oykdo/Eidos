@@ -129,7 +129,8 @@ export const FR = {
   "cles.afficher": "Afficher la graine",
 
   "chaine.titre": "Chaîne",
-  "chaine.lede": "Bloc 0 gelé (18 bits). Les suivants : Merkle du carnet, bits 0. Exporter la tête.",
+  "chaine.lede":
+    "Bloc 0 gelé (18 bits). Les suivants : Merkle du carnet, bits 0. Exporter la tête.",
   "emission.ligne": "{age} · hauteur {h} · R(h) = {r} — miné, pas tapé.",
   "chaine.ok": "Tête · bloc {h} · chainage intact",
   "chaine.ko": "Chainage rompu",
@@ -149,7 +150,8 @@ export const FR = {
   "merkle.alterer": "Altérer la feuille",
 
   "temoin.titre": "Témoin",
-  "temoin.lede": "Seconde mémoire, sans les clés. Importer une tête : un autre appareil juge une preuve.",
+  "temoin.lede":
+    "Seconde mémoire, sans les clés. Importer une tête : un autre appareil juge une preuve.",
   "temoin.tete": "Tête connue · bloc {h}",
   "temoin.vide": "Aucune tête. Importer, ou suivre le journal s'il est ici.",
   "temoin.suivre": "Suivre la tête",
@@ -158,9 +160,11 @@ export const FR = {
 
   "guide.sous": "Guide — réseau d'essai",
   "guide.h": "Comment lire",
-  "guide.lede": "Coffre : dépenser. Journal : genèse. Témoin : une tête. Arbre : une carte. Reliques : lumen. Glyphes : 6 bits.",
+  "guide.lede":
+    "Coffre : dépenser. Journal : genèse. Témoin : une tête. Arbre : une carte. Reliques : lumen. Glyphes : 6 bits.",
   "guide.01": "Coffre",
-  "guide.01p": "Un bouton : créer le coffre. Puis dépenser. Glouton au plus trois. Poussière sous 10 000 atomes.",
+  "guide.01p":
+    "Un bouton : créer le coffre. Puis dépenser. Glouton au plus trois. Poussière sous 10 000 atomes.",
   "guide.02": "Journal",
   "guide.02p": "Lancer la genèse. Toucher « preuve » sur une sortie. Exporter la tête.",
   "guide.03": "Témoin",
@@ -178,7 +182,8 @@ export const FR = {
   "guide.07p": "Pas de nœud réseau, pas de fédération, pas de monnaie.",
 
   "arbre.intro": "Épine des premiers. Dix paliers. Trente-trois secteurs. Tournez. Touchez.",
-  "arbre.axial": "Vue axiale : anneaux et axe. Les traces d'un collisionneur ne sont pas des transactions.",
+  "arbre.axial":
+    "Vue axiale : anneaux et axe. Les traces d'un collisionneur ne sont pas des transactions.",
   "arbre.premier": "Nombre premier : irréductible.",
   "arbre.palier": "Ce qui est en bas hérite des contraintes d'en haut.",
   "arbre.racine": "Racine de continuité",
@@ -186,6 +191,10 @@ export const FR = {
   "arbre.curl": "Circulation azimutale presque nulle : pas de tourbillon.",
   "arbre.fermer": "Fermer",
   "arbre.ouv": "Ouverture de l'arbre…",
+  "arbre.souffle":
+    "Souffle ρ = {rho} · h = {h} · {age}. Proéminences = sorties ancrées. p = 41 à la culmination.",
+  "arbre.charge": "charge réseau · {m}",
+  "arbre.chaud": "Secteur de la coinbase — ancre du trésor.",
 
   "relique.lede": "Lumen = ellipse a × a/2. Pas un glyphe. Le ratio ne grandit pas.",
   "relique.coupe": "Coupe",
@@ -198,7 +207,8 @@ export const FR = {
   "relique.epoques": "époques",
 
   "glyphes.h": "Quatre figures",
-  "glyphes.lede": "2 bits chacune. 31 groupes : 27 + 4. Loi gelée : pas de Reed-Solomon, pas de Huffman.",
+  "glyphes.lede":
+    "2 bits chacune. 31 groupes : 27 + 4. Loi gelée : pas de Reed-Solomon, pas de Huffman.",
   "glyphes.empiler": "Empiler",
   "glyphes.empilerLede": "Haut, milieu, bas. Le code est la lecture des trois étages.",
   "glyphes.64": "Les 64",
@@ -220,7 +230,8 @@ export const FR = {
   "creer.popup": "Ouvrir l'issue si le popup est bloqué",
   "psnx.exporter": "Exporter le coffre",
   "psnx.importer": "Ouvrir un fichier",
-  "psnx.aide": "Téléphone : un .eidos ouvre le coffre. Un .psnx Eidolon ne donne que l'empreinte — pas la graine Lamport.",
+  "psnx.aide":
+    "Téléphone : un .eidos ouvre le coffre. Un .psnx Eidolon ne donne que l'empreinte — pas la graine Lamport.",
   "psnx.refus": "Empreinte PSNX lue. Ce n'est pas la graine. Exportez un .eidos depuis ce coffre.",
   "psnx.importe": "Coffre ouvert depuis le fichier.",
   "psnx.digest": "digest",
@@ -324,7 +335,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "decision.exact.aide": "Inputs equal m. No change.",
   "decision.rendu.titre": "Change",
   "decision.rendu.aide": "A change output, fresh address.",
-  "decision.note": "The greedy path classifies four outcomes, capped at three. This is not D = b² − 4ac.",
+  "decision.note":
+    "The greedy path classifies four outcomes, capped at three. This is not D = b² − 4ac.",
 
   "sorties.titre": "Book · {n} output{s}",
   "sorties.lede": "A Lamport key signs once. “Proof”: path to the book root.",
@@ -383,9 +395,11 @@ export const EN: { [K in keyof typeof FR]: string } = {
 
   "guide.sous": "Guide — test network",
   "guide.h": "How to read",
-  "guide.lede": "Vault: spend. Ledger: genesis. Witness: a tip. Tree: a map. Relics: lumen. Glyphs: 6 bits.",
+  "guide.lede":
+    "Vault: spend. Ledger: genesis. Witness: a tip. Tree: a map. Relics: lumen. Glyphs: 6 bits.",
   "guide.01": "Vault",
-  "guide.01p": "One button: create the vault. Then spend. Greedy, at most three. Dust under 10,000 atoms.",
+  "guide.01p":
+    "One button: create the vault. Then spend. Greedy, at most three. Dust under 10,000 atoms.",
   "guide.02": "Ledger",
   "guide.02p": "Run genesis. Tap “proof” on an output. Export the tip.",
   "guide.03": "Witness",
@@ -411,6 +425,10 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "arbre.curl": "Azimuthal circulation almost nil: no vortex.",
   "arbre.fermer": "Close",
   "arbre.ouv": "Opening the tree…",
+  "arbre.souffle":
+    "Breath ρ = {rho} · h = {h} · {age}. Prominences = anchored outputs. p = 41 at culmination.",
+  "arbre.charge": "network charge · {m}",
+  "arbre.chaud": "Coinbase sector — treasury pin.",
 
   "relique.lede": "Lumen = ellipse a × a/2. Not a glyph. The ratio does not grow.",
   "relique.coupe": "Cut",
@@ -445,7 +463,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "creer.popup": "Open the issue if the popup was blocked",
   "psnx.exporter": "Export the vault",
   "psnx.importer": "Open a file",
-  "psnx.aide": "Phone: a .eidos file opens the vault. An Eidolon .psnx is only a fingerprint — not the Lamport seed.",
+  "psnx.aide":
+    "Phone: a .eidos file opens the vault. An Eidolon .psnx is only a fingerprint — not the Lamport seed.",
   "psnx.refus": "PSNX fingerprint read. That is not the seed. Export a .eidos from this vault.",
   "psnx.importe": "Vault opened from file.",
   "psnx.digest": "digest",
@@ -500,7 +519,7 @@ export function t(key: Msg, vars?: Record<string, string | number>): string {
       s = s.replaceAll(`{${k}}`, String(v));
     }
   }
-  return s.replaceAll("{s}", vars && Number(vars.n) === 1 ? "" : (locale === "en" ? "s" : "s"));
+  return s.replaceAll("{s}", vars && Number(vars.n) === 1 ? "" : locale === "en" ? "s" : "s");
 }
 
 export function useI18n(): { locale: Locale; t: typeof t; setLocale: typeof setLocale } {
