@@ -1,6 +1,15 @@
 node_modules/
 .vercel/
+.output/
 dist/
 .grok/
+coverage/
+screenshots/
 *.local
 .DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+public/__grok/

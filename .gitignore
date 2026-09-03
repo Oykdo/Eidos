@@ -1,6 +1,7 @@
 # état local, jamais versionné
 chaine.dat
 portefeuille.json
+portefeuille-*.json
 *.psnx
 *.blend_data
 *seed*
@@ -8,9 +9,30 @@ portefeuille.json
 __pycache__/
 *.pyc
 .DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Journal de testnet : déjà dans l'index (le nœud CI le force-add).
+# Ignorés ici pour qu'un forge local ne se glisse pas dans `git add .`
+# s'ils venaient à être retirés de l'arbre.
+chaine-eidos.dat
+etat.json
+mempool.json
 
 # atelier web
 atelier/node_modules/
 atelier/.vercel/
+atelier/.output/
 atelier/dist/
 atelier/.grok/
+atelier/coverage/
+atelier/screenshots/
+atelier/*.local
+atelier/.env
+atelier/.env.*
+atelier/public/__grok/
