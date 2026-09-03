@@ -16,6 +16,13 @@
    "issue": 3,
    "montant_atomes": 100000000,
    "etat": "en_attente"
+  },
+  {
+   "type": "robinet",
+   "adresse": "a0267a406254a375b4e9ca8e9bed6e7496620d3e",
+   "issue": 4,
+   "montant_atomes": 100000000,
+   "etat": "en_attente"
   }
  ]
 }
