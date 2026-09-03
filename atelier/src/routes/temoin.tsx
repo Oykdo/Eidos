@@ -43,7 +43,7 @@ function TemoinPage() {
   }, [preuve, soumettrePreuve]);
 
   return (
-    <Shell actuel="temoin" sous="Seconde mémoire — sans les clés">
+    <Shell actuel="temoin">
       <Temoin />
     </Shell>
   );

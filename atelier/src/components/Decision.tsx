@@ -1,6 +1,7 @@
 import { cheminDecision } from "@/lib/eidos/decision.ts";
 import type { Sortie } from "@/lib/eidos/types.ts";
 import { cn } from "@/lib/utils";
+import { useI18n, type Msg } from "@/lib/i18n.ts";
 
 export function Decision({
   sorties,
@@ -9,18 +10,23 @@ export function Decision({
   sorties: Sortie[];
   montant: number | null;
 }) {
+  const { t } = useI18n();
   const chemin = cheminDecision(sorties, montant);
   const fer =
     chemin.feuille.id === "fragmente" ||
     chemin.feuille.id === "insuffisant" ||
     chemin.feuille.id === "invalide" ||
     chemin.feuille.id === "vide";
-  const or = chemin.feuille.id === "poussiere" || chemin.feuille.id === "rendu" || chemin.feuille.id === "exact";
+  const or =
+    chemin.feuille.id === "poussiere" ||
+    chemin.feuille.id === "rendu" ||
+    chemin.feuille.id === "exact";
+  const id = chemin.feuille.id;
 
   return (
     <div className="mt-5 border-t border-trait pt-4">
       <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
-        Décision · glouton, pas quadratique
+        {t("decision.titre")}
       </p>
       <ol className="flex flex-col gap-1.5">
         {chemin.questions.map((q) => (
@@ -29,7 +35,7 @@ export function Decision({
               ?
             </span>
             <span className="min-w-0 flex-1 font-mono text-[12.5px] text-encre">
-              {q.question}
+              {t(`decision.q.${q.id}` as Msg)}
             </span>
             <span
               className={cn(
@@ -39,7 +45,7 @@ export function Decision({
                   : "bg-fer/15 text-fer",
               )}
             >
-              {q.reponse}
+              {q.reponse === "oui" ? t("decision.oui") : t("decision.non")}
             </span>
           </li>
         ))}
@@ -51,16 +57,16 @@ export function Decision({
           or && "bg-or/10 shadow-[0_0_0_1px_rgb(201_162_39_/_0.28)]",
         )}
       >
-        <p className="font-mono text-sm text-encre">{chemin.feuille.titre}</p>
+        <p className="font-mono text-sm text-encre">
+          {t(`decision.${id}.titre` as Msg)}
+        </p>
         <p className="mt-1 font-mono text-[12px] text-or">{chemin.feuille.formule}</p>
         <p className="mt-1 font-mono text-[12.5px] leading-relaxed text-sourd">
-          {chemin.feuille.aide}
+          {t(`decision.${id}.aide` as Msg)}
         </p>
       </div>
       <p className="mt-3 font-mono text-[11px] leading-relaxed text-sourd text-pretty">
-        Un discriminant D = b² − 4ac classe les racines d'un polynôme. Ici
-        le glouton classe quatre issues, borné à trois entrées. Ce n'est pas
-        une équation du second degré.
+        {t("decision.note")}
       </p>
     </div>
   );

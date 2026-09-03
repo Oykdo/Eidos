@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Button } from "@/components/ui/button";
 import { useCoffre } from "@/lib/store.ts";
+import { useI18n } from "@/lib/i18n.ts";
 
 function Etape({ n, titre, children }: { n: string; titre: string; children: ReactNode }) {
   return (
@@ -17,73 +18,70 @@ function Etape({ n, titre, children }: { n: string; titre: string; children: Rea
 }
 
 export function Guide() {
-  const charger = useCoffre((s) => s.charger);
+  const { t } = useI18n();
+  const creer = useCoffre((s) => s.creer);
   const navigate = useNavigate();
 
   return (
-    <Shell actuel="guide" sous="Guide — réseau d'essai">
+    <Shell actuel="guide">
       <section className="rounded-lg bg-carte px-5 py-6 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]">
-        <h2 className="font-display text-[26px] font-light text-or">Comment lire</h2>
+        <h2 className="font-display text-[26px] font-light text-or">{t("guide.h")}</h2>
         <p className="mt-3 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-          Coffre : dépenser. Journal : genèse, chaîne, preuve. Témoin : une
-          tête, sans les clés — y compris sur un autre appareil si on lui
-          passe la tête. Arbre : une carte, pas un Merkle.
+          {t("guide.lede")}
         </p>
       </section>
 
-      <Etape n="01" titre="Coffre">
-        <p>
-          Mixte, puis les montants. Glouton au plus trois. Poussière sous
-          10 000 atomes. Fragmenté : regrouper d'abord.
-        </p>
+      <Etape n="01" titre={t("guide.01")}>
+        <p>{t("guide.01p")}</p>
         <Button
           type="button"
           variant="or"
           onClick={() => {
-            charger("mixte");
+            creer();
             void navigate({ to: "/" });
           }}
         >
-          Charger Mixte
+          {t("creer.bouton")}
         </Button>
       </Etape>
 
-      <Etape n="02" titre="Journal">
-        <p>
-          Lancer la genèse. Le Merkle du carnet s'ancre dans la tête de
-          chaîne. Exporter la tête : JSON ou lien vers le témoin.
-        </p>
+      <Etape n="02" titre={t("guide.02")}>
+        <p>{t("guide.02p")}</p>
         <Button asChild variant="discret">
-          <Link to="/journal">Ouvrir le journal</Link>
+          <Link to="/journal">{t("nav.journal")}</Link>
         </Button>
       </Etape>
 
-      <Etape n="03" titre="Témoin — autre mémoire">
-        <p>
-          Il n'a pas les clés. Il adopte une tête (import ou lien), puis juge
-          une preuve. Si la racine n'est pas celle de sa tête : étrangère.
-          Deux onglets, deux appareils : même règle.
-        </p>
+      <Etape n="03" titre={t("guide.03")}>
+        <p>{t("guide.03p")}</p>
         <Button asChild variant="discret">
-          <Link to="/temoin">Ouvrir le témoin</Link>
+          <Link to="/temoin">{t("nav.temoin")}</Link>
         </Button>
       </Etape>
 
-      <Etape n="04" titre="Arbre">
-        <p>
-          Épine, dix paliers, 33 secteurs. ∇, puits, axiale : le bandeau
-          Contrôles. Une punaise FNV n'est pas une preuve.
-        </p>
+      <Etape n="04" titre={t("guide.04")}>
+        <p>{t("guide.04p")}</p>
         <Button asChild variant="discret">
-          <Link to="/arbre">Voir l'arbre</Link>
+          <Link to="/arbre">{t("guide.04b")}</Link>
         </Button>
       </Etape>
 
-      <Etape n="05" titre="Ce que ce n'est pas">
-        <p>
-          Pas de nœud réseau, pas de fédération, pas de monnaie. Le témoin
-          croit la tête qu'on lui donne tant qu'il ne rejoue pas le journal.
-        </p>
+      <Etape n="05" titre={t("guide.05")}>
+        <p>{t("guide.05p")}</p>
+        <Button asChild variant="discret">
+          <Link to="/reliques">{t("guide.05b")}</Link>
+        </Button>
+      </Etape>
+
+      <Etape n="06" titre={t("guide.06")}>
+        <p>{t("guide.06p")}</p>
+        <Button asChild variant="discret">
+          <Link to="/glyphes">{t("guide.06b")}</Link>
+        </Button>
+      </Etape>
+
+      <Etape n="07" titre={t("guide.07")}>
+        <p>{t("guide.07p")}</p>
       </Etape>
     </Shell>
   );

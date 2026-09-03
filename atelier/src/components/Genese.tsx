@@ -8,6 +8,7 @@ import {
   type Rapport,
 } from "@/lib/eidos/genese.ts";
 import { useCoffre } from "@/lib/store.ts";
+import { useI18n } from "@/lib/i18n.ts";
 
 function Marque({ ok }: { ok: boolean }) {
   return ok ? (
@@ -42,16 +43,8 @@ function Liste({ controles }: { controles: Controle[] }) {
   );
 }
 
-function EnTete({ rapport }: { rapport: Rapport }) {
-  return (
-    <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
-      {rapport.titre} · {rapport.passes} ok
-      {rapport.echecs > 0 ? ` · ${rapport.echecs} échec${rapport.echecs > 1 ? "s" : ""}` : ""}
-    </p>
-  );
-}
-
 export function Genese() {
+  const { t } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
   const [busy, setBusy] = useState(false);
   const [etape, setEtape] = useState<string | null>(null);
@@ -61,14 +54,14 @@ export function Genese() {
   function lancer() {
     if (busy) return;
     setBusy(true);
-    setEtape("Genèse…");
+    setEtape(t("genese.busyG"));
     setGenese(null);
     setPrealables(null);
     window.setTimeout(() => {
       try {
         const g = lancerGenese();
         setGenese(g);
-        setEtape("Portefeuille et échanges…");
+        setEtape(t("genese.busyP"));
         window.setTimeout(() => {
           try {
             setPrealables(lancerPrealables(coffre));
@@ -81,7 +74,7 @@ export function Genese() {
         setEtape(null);
         setBusy(false);
         setGenese({
-          titre: "Genèse",
+          titre: t("genese.titre"),
           ok: false,
           passes: 0,
           echecs: 1,
@@ -89,7 +82,7 @@ export function Genese() {
             {
               id: "crash",
               ok: false,
-              label: "rejeu interrompu",
+              label: t("genese.crash"),
               detail: e instanceof Error ? e.message : "erreur",
             },
           ],
@@ -98,16 +91,13 @@ export function Genese() {
     }, 30);
   }
 
-  const pret =
-    genese?.ok === true &&
-    prealables?.ok === true;
+  const pret = genese?.ok === true && prealables?.ok === true;
 
   return (
     <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
-      <h2 className="font-mono text-base font-normal text-encre">Genèse</h2>
+      <h2 className="font-mono text-base font-normal text-encre">{t("genese.titre")}</h2>
       <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-        Rejouer le fichier gelé, puis les tests du portefeuille. Rien ne se
-        croit.
+        {t("genese.lede")}
       </p>
 
       <Button type="button" disabled={busy} onClick={() => lancer()}>
@@ -116,25 +106,29 @@ export function Genese() {
         ) : (
           <Play className="size-4" strokeWidth={1.75} />
         )}
-        {busy ? etape ?? "Rejeu…" : "Lancer la genèse et les tests"}
+        {busy ? etape ?? t("genese.busy") : t("genese.lancer")}
       </Button>
 
       {pret ? (
-        <p className="mt-4 font-mono text-sm text-cuivre">
-          Portefeuille en place. Échanges signés possibles.
-        </p>
+        <p className="mt-4 font-mono text-sm text-cuivre">{t("genese.ok")}</p>
       ) : null}
 
       {genese ? (
         <div className="mt-5">
-          <EnTete rapport={genese} />
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
+            {t("genese.okCount", { titre: genese.titre, n: genese.passes })}
+            {genese.echecs > 0 ? t("genese.fail", { n: genese.echecs }) : ""}
+          </p>
           <Liste controles={genese.controles} />
         </div>
       ) : null}
 
       {prealables ? (
         <div className="mt-6 border-t border-trait pt-4">
-          <EnTete rapport={prealables} />
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
+            {t("genese.okCount", { titre: prealables.titre, n: prealables.passes })}
+            {prealables.echecs > 0 ? t("genese.fail", { n: prealables.echecs }) : ""}
+          </p>
           <Liste controles={prealables.controles} />
         </div>
       ) : null}

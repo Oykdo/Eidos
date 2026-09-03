@@ -20,5 +20,25 @@ export const OCTETS_PK = 16_384;
 export const OCTETS_SIG = 8_192;
 export const OCTETS_TEMOIN = 1 + OCTETS_PK + OCTETS_SIG; // 24 577
 
+/** Prototype de mine : 14 bits, comme le nœud Python. Le bloc 0 est à 18. */
+export const BITS_MINE = 14;
+
 export const FIGURES = ["\u00b7", "\u25cb", "\u263d", "\u271a"] as const;
 export const FIGURE_NOMS = ["vide", "cercle", "croissant", "croix"] as const;
+
+/**
+ * Loi des glyphes — gelée.
+ * Pas de Reed-Solomon, pas de Huffman, pas de 32ᵉ symbole.
+ * Une figure = 2 bits. Trois étages = 6 bits. 31 groupes par adresse.
+ * Changer un de ces nombres casse robinet.py, la CI, et chaque adresse déjà lue.
+ */
+export const LOI_GLYPHES = {
+  bitsParFigure: 2,
+  etages: 3,
+  payload: 27,
+  controle: 4,
+  adresse: 31,
+  bourrageBits: 2,
+  octetsAdresse: 20,
+  octetsControle: 3,
+} as const;

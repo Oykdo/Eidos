@@ -51,7 +51,8 @@ export type MotifBloc =
   | "atelier"
   | "envoi"
   | "regroupement"
-  | "robinet";
+  | "robinet"
+  | "mine";
 
 export type BlocLocal = {
   hauteur: number;
@@ -85,6 +86,6 @@ export type HistoriqueTx = {
   rendu: number;
   frais: number;
   poussiere: boolean;
-  kind: "envoi" | "regroupement" | "robinet";
+  kind: "envoi" | "regroupement" | "robinet" | "mine";
   note: string;
 };

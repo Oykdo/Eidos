@@ -9,7 +9,8 @@ import {
 } from "./chaine.ts";
 import { genesis } from "./genesis-data.ts";
 import { preuvePourSortie, verifierPreuve } from "./merkle.ts";
-import { appliquerEnvoi, coffreAtelier } from "./wallet.ts";
+import { appliquerEnvoi, coffreAtelier, minerCoffre } from "./wallet.ts";
+import { rewardAt } from "./eonis.ts";
 
 describe("chaîne locale", () => {
   it("atelier Mixte : genèse + un bloc carnet", () => {
@@ -69,5 +70,18 @@ describe("chaîne locale", () => {
     const g = blocGenese();
     assert.equal(g.hash, genesis.bloc_genese.hash);
     assert.equal(g.hauteur, 0);
+  });
+
+  it("miner un bloc : nonce, bits, R(h) sur une sortie neuve", () => {
+    const avant = coffreAtelier("vide");
+    const c = minerCoffre(avant, 10, 1_756_540_680);
+    const tip = c.chaine[c.chaine.length - 1]!;
+    assert.equal(tip.motif, "mine");
+    assert.equal(tip.bits, 10);
+    assert.ok(tip.nonce >= 0);
+    assert.equal(hashReproduit(tip), true);
+    assert.equal(tip.prev, avant.chaine[avant.chaine.length - 1]!.hash);
+    assert.equal(c.sorties[c.sorties.length - 1]!.montant, rewardAt(tip.hauteur));
+    assert.equal(chaineSaine(c), true);
   });
 });

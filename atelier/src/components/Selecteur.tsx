@@ -3,6 +3,7 @@ import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { MAX_ENTREES, POUSSIERE_ATOMES } from "@/lib/eidos/constantes.ts";
 import type { Selection, Sortie } from "@/lib/eidos/types.ts";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n.ts";
 
 function KoIcon() {
   return <AlertTriangle className="size-4 text-fer" strokeWidth={1.75} />;
@@ -17,6 +18,7 @@ export function Selecteur({
   sorties: Sortie[];
   className?: string;
 }) {
+  const { t } = useI18n();
   const max = sorties.reduce((m, s) => Math.max(m, s.montant), 1);
   const choisies = new Set(
     selection && selection.ok ? selection.entrees.map((e) => e.ref) : [],
@@ -26,10 +28,10 @@ export function Selecteur({
     <div className={cn("flex flex-col gap-4", className)}>
       <div>
         <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
-          Sorties · glouton borné à {MAX_ENTREES}
+          {t("selecteur.titre", { max: MAX_ENTREES })}
         </p>
         {sorties.length === 0 ? (
-          <p className="font-mono text-sm text-sourd">Coffre vide.</p>
+          <p className="font-mono text-sm text-sourd">{t("selecteur.vide")}</p>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {sorties

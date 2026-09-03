@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArbreRouteImport } from './routes/arbre'
+import { Route as GlyphesRouteImport } from './routes/glyphes'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as JournalRouteImport } from './routes/journal'
+import { Route as ReliquesRouteImport } from './routes/reliques'
 import { Route as TemoinRouteImport } from './routes/temoin'
 
 const IndexRoute = IndexRouteImport.update({
@@ -25,6 +27,11 @@ const ArbreRoute = ArbreRouteImport.update({
   path: '/arbre',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GlyphesRoute = GlyphesRouteImport.update({
+  id: '/glyphes',
+  path: '/glyphes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuideRoute = GuideRouteImport.update({
   id: '/guide',
   path: '/guide',
@@ -33,6 +40,11 @@ const GuideRoute = GuideRouteImport.update({
 const JournalRoute = JournalRouteImport.update({
   id: '/journal',
   path: '/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReliquesRoute = ReliquesRouteImport.update({
+  id: '/reliques',
+  path: '/reliques',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TemoinRoute = TemoinRouteImport.update({
@@ -44,38 +56,68 @@ const TemoinRoute = TemoinRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
+  '/reliques': typeof ReliquesRoute
   '/temoin': typeof TemoinRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
+  '/reliques': typeof ReliquesRoute
   '/temoin': typeof TemoinRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
+  '/reliques': typeof ReliquesRoute
   '/temoin': typeof TemoinRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/arbre' | '/guide' | '/journal' | '/temoin'
+  fullPaths:
+    | '/'
+    | '/arbre'
+    | '/glyphes'
+    | '/guide'
+    | '/journal'
+    | '/reliques'
+    | '/temoin'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/arbre' | '/guide' | '/journal' | '/temoin'
-  id: '__root__' | '/' | '/arbre' | '/guide' | '/journal' | '/temoin'
+  to:
+    | '/'
+    | '/arbre'
+    | '/glyphes'
+    | '/guide'
+    | '/journal'
+    | '/reliques'
+    | '/temoin'
+  id:
+    | '__root__'
+    | '/'
+    | '/arbre'
+    | '/glyphes'
+    | '/guide'
+    | '/journal'
+    | '/reliques'
+    | '/temoin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArbreRoute: typeof ArbreRoute
+  GlyphesRoute: typeof GlyphesRoute
   GuideRoute: typeof GuideRoute
   JournalRoute: typeof JournalRoute
+  ReliquesRoute: typeof ReliquesRoute
   TemoinRoute: typeof TemoinRoute
 }
 
@@ -95,6 +137,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArbreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/glyphes': {
+      id: '/glyphes'
+      path: '/glyphes'
+      fullPath: '/glyphes'
+      preLoaderRoute: typeof GlyphesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guide': {
       id: '/guide'
       path: '/guide'
@@ -107,6 +156,13 @@ declare module '@tanstack/react-router' {
       path: '/journal'
       fullPath: '/journal'
       preLoaderRoute: typeof JournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reliques': {
+      id: '/reliques'
+      path: '/reliques'
+      fullPath: '/reliques'
+      preLoaderRoute: typeof ReliquesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/temoin': {
@@ -122,8 +178,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArbreRoute: ArbreRoute,
+  GlyphesRoute: GlyphesRoute,
   GuideRoute: GuideRoute,
   JournalRoute: JournalRoute,
+  ReliquesRoute: ReliquesRoute,
   TemoinRoute: TemoinRoute,
 }
 export const routeTree = rootRouteImport

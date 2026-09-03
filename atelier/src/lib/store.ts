@@ -6,6 +6,7 @@ import {
   verserRobinet,
   appliquerEnvoi,
   appliquerRegroupement,
+  minerCoffre,
 } from "./eidos/wallet.ts";
 import { blocGenese, sceller } from "./eidos/chaine.ts";
 import {
@@ -20,6 +21,9 @@ import type { Coffre, ScenarioId } from "./eidos/types.ts";
 import type { PreuvePortable } from "./eidos/merkle.ts";
 import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
+import { t, type Msg } from "./i18n.ts";
+import { exporterCoffre, parserCoffrePortable, estPsnx } from "./eidos/portable.ts";
+import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
 
 const KEY = "eidos-coffre-v2";
 const KEY_TEMOIN = "eidos-temoin-v1";
@@ -43,6 +47,8 @@ type Etat = {
   regrouper: () => void;
   personnel: () => void;
   atelier: () => void;
+  creer: () => void;
+  miner: () => void;
   setMontant: (s: string) => void;
   setDest: (s: string) => void;
   setDestInterne: (v: boolean) => void;
@@ -51,6 +57,9 @@ type Etat = {
   soumettrePreuve: (p: PreuvePortable) => void;
   oublierTemoin: () => void;
   importerTete: (raw: string) => void;
+  exporterFichier: () => string;
+  importerFichier: (nom: string, data: ArrayBuffer | string) => void;
+  psnx: SpinorPublic | null;
 };
 
 function persister(c: Coffre) {
@@ -88,6 +97,7 @@ export const useCoffre = create<Etat>((set, get) => ({
   temoin: temoinVide(),
   temoinFlash: null,
   demandeReseau: null,
+  psnx: null,
 
   hydrater: () => {
     try {
@@ -130,7 +140,7 @@ export const useCoffre = create<Etat>((set, get) => ({
       coffre: next,
       saisieMontant: montantPour(id),
       erreur: null,
-      flash: `Atelier : ${id}`,
+      flash: t("flash.scenario", { id }),
       preuveRef: next.sorties[0]?.ref ?? null,
     });
   },
@@ -138,13 +148,13 @@ export const useCoffre = create<Etat>((set, get) => ({
   robinet: () => {
     const next = verserRobinet(get().coffre);
     persister(next);
-    set({ coffre: next, flash: "Robinet : +1,000000 eidôlon (ce navigateur)", erreur: null });
+    set({ coffre: next, flash: t("flash.robinet"), erreur: null });
   },
 
   robinetReseau: () => {
     const r = demanderAuReseau(get().coffre);
     if ("refus" in r) {
-      set({ erreur: r.refus, demandeReseau: null });
+      set({ erreur: t("err.atelier"), demandeReseau: null });
       return;
     }
     try {
@@ -155,7 +165,7 @@ export const useCoffre = create<Etat>((set, get) => ({
     set({
       demandeReseau: r,
       erreur: null,
-      flash: "Validez l'issue GitHub. Le nœud verse au prochain bloc (une heure au plus).",
+      flash: t("flash.reseau"),
     });
   },
 
@@ -163,25 +173,25 @@ export const useCoffre = create<Etat>((set, get) => ({
     const { coffre, saisieMontant, destInterne, saisieDest } = get();
     const m = parserMontant(saisieMontant);
     if (m == null) {
-      set({ erreur: "Montant invalide." });
+      set({ erreur: t("err.montant") });
       return;
     }
     const sel = selectionner(coffre.sorties, m);
     if (!sel.ok) {
-      set({ erreur: sel.message });
+      set({ erreur: t(`err.${sel.code}` as Msg) });
       return;
     }
     let dest = "00".repeat(20);
     if (!destInterne && saisieDest.trim()) {
       dest = saisieDest.trim().toLowerCase().replace(/[^0-9a-f]/g, "").slice(0, 40);
       if (dest.length !== 40) {
-        set({ erreur: "Adresse de destination invalide." });
+        set({ erreur: t("err.dest") });
         return;
       }
     }
     const { coffre: next, selection } = appliquerEnvoi(coffre, m, dest);
     if (!selection.ok) {
-      set({ erreur: selection.message });
+      set({ erreur: t(`err.${selection.code}` as Msg) });
       return;
     }
     persister(next);
@@ -189,31 +199,55 @@ export const useCoffre = create<Etat>((set, get) => ({
       coffre: next,
       erreur: null,
       flash: selection.poussiere
-        ? `Signé (Lamport). Poussière absorbée — ${selection.frais} atomes de frais.`
-        : `Signé (Lamport). ${selection.entrees.length} entrée${selection.entrees.length > 1 ? "s" : ""}.`,
+        ? t("flash.sigPoussiere", { n: selection.frais })
+        : t("flash.sig", { n: selection.entrees.length }),
     });
   },
 
   regrouper: () => {
     const { coffre } = get();
     if (coffre.sorties.length < 2) {
-      set({ erreur: "Rien à regrouper — il faut au moins deux sorties." });
+      set({ erreur: t("err.regrouper") });
       return;
     }
     const next = appliquerRegroupement(coffre);
     persister(next);
-    set({ coffre: next, erreur: null, flash: "Regroupement signé : 3 sorties au plus → 1." });
+    set({ coffre: next, erreur: null, flash: t("flash.regrouper") });
   },
 
   personnel: () => {
-    const id = get().coffre.scenario ?? "mixte";
-    const next = coffreNeuf(id);
+    const next = coffreNeuf("vide");
     persister(next);
     set({
       coffre: next,
-      saisieMontant: montantPour(id),
+      saisieMontant: "",
       erreur: null,
-      flash: "Coffre personnel — graine tirée par le navigateur.",
+      flash: t("flash.personnel"),
+    });
+  },
+
+  creer: () => {
+    if (get().coffre.nature === "personnel") return;
+    let next = coffreNeuf("vide");
+    next = verserRobinet(next);
+    persister(next);
+    set({
+      coffre: next,
+      saisieMontant: "0.50",
+      erreur: null,
+      flash: t("creer.fait"),
+      demandeReseau: null,
+    });
+  },
+
+  miner: () => {
+    const next = minerCoffre(get().coffre);
+    persister(next);
+    const tip = next.chaine[next.chaine.length - 1]!;
+    set({
+      coffre: next,
+      erreur: null,
+      flash: t("flash.mine", { h: String(tip.hauteur), n: String(tip.nonce) }),
     });
   },
 
@@ -225,7 +259,7 @@ export const useCoffre = create<Etat>((set, get) => ({
       coffre: next,
       saisieMontant: montantPour(id),
       erreur: null,
-      flash: "Atelier public — graine connue, sans valeur.",
+      flash: t("flash.atelier"),
     });
   },
 
@@ -265,6 +299,42 @@ export const useCoffre = create<Etat>((set, get) => ({
     set({
       temoin: next,
       temoinFlash: `tête importée · bloc ${lu.hauteur} — non rejouée depuis le journal`,
+    });
+  },
+
+  exporterFichier: () => exporterCoffre(get().coffre),
+
+  importerFichier: (nom, data) => {
+    const octets =
+      typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
+    if (estPsnx(nom, octets)) {
+      const spin = spinorDepuisOctets(octets);
+      set({
+        psnx: spin,
+        erreur: null,
+        flash: t("psnx.refus"),
+      });
+      return;
+    }
+    const texte = typeof data === "string" ? data : new TextDecoder().decode(octets);
+    const lu = parserCoffrePortable(texte);
+    if ("erreur" in lu) {
+      set({ erreur: lu.erreur, flash: null });
+      return;
+    }
+    let coffre = lu.coffre;
+    if (!Array.isArray(coffre.clesUsees)) coffre.clesUsees = [];
+    if (coffre.nature !== "personnel") coffre.nature = "atelier";
+    if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
+      coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");
+    }
+    persister(coffre);
+    set({
+      coffre,
+      saisieMontant: montantPour(coffre.scenario ?? "vide"),
+      erreur: null,
+      flash: t("psnx.importe"),
+      psnx: null,
     });
   },
 }));

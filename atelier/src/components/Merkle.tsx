@@ -13,12 +13,14 @@ import {
 } from "@/lib/eidos/merkle.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n.ts";
 
 function court(h: string): string {
   return `${h.slice(0, 8)}…${h.slice(-4)}`;
 }
 
 export function Merkle() {
+  const { t } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
   const preuveRef = useCoffre((s) => s.preuveRef);
   const setPreuveRef = useCoffre((s) => s.setPreuveRef);
@@ -56,9 +58,9 @@ export function Merkle() {
         id="preuve-inclusion"
         className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6"
       >
-        <h2 className="font-mono text-base font-normal text-encre">Preuve d'inclusion</h2>
+        <h2 className="font-mono text-base font-normal text-encre">{t("merkle.titre")}</h2>
         <p className="mt-2 font-mono text-[12.5px] leading-relaxed text-sourd">
-          Pas de feuille. Le robinet en crée une.
+          {t("merkle.vide")}
         </p>
       </section>
     );
@@ -115,7 +117,7 @@ export function Merkle() {
       id="preuve-inclusion"
       className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6"
     >
-      <h2 className="font-mono text-base font-normal text-encre">Preuve d'inclusion</h2>
+      <h2 className="font-mono text-base font-normal text-encre">{t("merkle.titre")}</h2>
       <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
         Feuille, frères, racine — puis la tête de chaîne. Si la racine de la
         preuve est celle du dernier bloc, la pièce est dans ce carnet scellé.
@@ -194,8 +196,8 @@ export function Merkle() {
           </ol>
           <p className={cn("mt-3 font-mono text-sm", ok ? "text-cuivre" : "text-fer")}>
             {ok
-              ? "Racine reproduite. La pièce est dans le carnet."
-              : "Racine rompue. La pièce n'est pas dans ce carnet."}
+              ? t("merkle.ok")
+              : t("merkle.ko")}
           </p>
           {ancree && tip ? (
             <p className="mt-1 font-mono text-[12px] text-sourd">
@@ -204,7 +206,7 @@ export function Merkle() {
           ) : null}
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Button type="button" variant="discret" className="w-auto" onClick={() => void copier()}>
-              {copie ? "Copiée" : "Copier la preuve"}
+              {copie ? t("merkle.copie") : t("merkle.copier")}
             </Button>
             <Button
               type="button"
@@ -224,7 +226,7 @@ export function Merkle() {
               className="w-auto"
               onClick={() => setAlteree((v) => !v)}
             >
-              {alteree ? "Restaurer la feuille" : "Altérer la feuille"}
+              {alteree ? t("merkle.restaurer") : t("merkle.alterer")}
             </Button>
           </div>
         </div>

@@ -2,19 +2,12 @@ import { useMemo } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
-import { Selecteur } from "@/components/Selecteur";
-import { Decision } from "@/components/Decision";
 import { useCoffre } from "@/lib/store.ts";
 import { parserMontant, selectionner } from "@/lib/eidos/coinselect.ts";
-
-const RAPIDES: { label: string; valeur: string; hint: string }[] = [
-  { label: "0,50", valeur: "0.50", hint: "deux petites" },
-  { label: "1,00", valeur: "1.00", hint: "poussière" },
-  { label: "3,00", valeur: "3.00", hint: "trois pièces" },
-  { label: "4,00", valeur: "4.00", hint: "fragmenté" },
-];
+import { useI18n } from "@/lib/i18n.ts";
 
 export function Envoi() {
+  const { t } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
   const saisie = useCoffre((s) => s.saisieMontant);
   const setMontant = useCoffre((s) => s.setMontant);
@@ -35,62 +28,30 @@ export function Envoi() {
 
   return (
     <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
-      <h2 className="font-mono text-base font-normal text-encre">Envoyer</h2>
-      <p className="mb-5 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-        Les plus petites sorties qui atteignent le montant + la poussière, au plus
-        trois. Une signature Lamport par entrée.
-      </p>
+      <h2 className="font-mono text-base font-normal text-encre">{t("envoi.titre")}</h2>
 
-      <Label htmlFor="montant">Montant (eidôlon)</Label>
+      <Label htmlFor="montant">{t("envoi.montant")}</Label>
       <Input
         id="montant"
         inputMode="decimal"
         autoComplete="off"
-        placeholder="0.000000"
+        placeholder="0.50"
         value={saisie}
         onChange={(e) => setMontant(e.target.value)}
         className="tabular-nums"
       />
 
-      <div className="mt-2 mb-5 flex flex-wrap gap-1.5">
-        {RAPIDES.map((r) => (
-          <Button
-            key={r.valeur}
-            type="button"
-            variant={saisie === r.valeur ? "or" : "discret"}
-            size="chip"
-            className="w-auto"
-            onClick={() => setMontant(r.valeur)}
-          >
-            {r.label}
-            <span className="text-[10px] opacity-70">{r.hint}</span>
-          </Button>
-        ))}
-      </div>
-
-      <Selecteur selection={sel} sorties={coffre.sorties} />
-
-      <Decision sorties={coffre.sorties} montant={m} />
-
-      <div className="mt-5 flex flex-col gap-2">
+      <div className="mt-4 flex flex-col gap-2">
         {fragmente ? (
           <Button type="button" onClick={() => void regrouper()}>
-            Regrouper d'abord
+            {t("envoi.regrouper")}
           </Button>
         ) : (
           <Button type="button" disabled={!pret} onClick={() => void envoyer()}>
             <ArrowUpRight className="size-4" strokeWidth={1.75} />
-            Préparer l'envoi
+            {t("envoi.envoyer")}
           </Button>
         )}
-        <Button
-          type="button"
-          variant="discret"
-          disabled={coffre.sorties.length < 2}
-          onClick={() => void regrouper()}
-        >
-          Regrouper (≤ 3 sorties → 1)
-        </Button>
       </div>
 
       <p className="verdict mt-3 min-h-5 font-mono text-sm" role="status">

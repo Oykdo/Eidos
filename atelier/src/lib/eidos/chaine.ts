@@ -67,6 +67,24 @@ function powOk(hashHex: string, bits: number): boolean {
   return n < (1n << BigInt(256 - bits));
 }
 
+export function chercherNonce(p: {
+  hauteur: number;
+  prev: string;
+  merkle: string;
+  ts: number;
+  bits: number;
+}): { nonce: number; hash: string; glyphes: string } {
+  let nonce = 0;
+  for (;;) {
+    const b = forgerBloc({ ...p, nonce, motif: "mine" });
+    if (powOk(b.hash, p.bits)) {
+      return { nonce, hash: b.hash, glyphes: b.glyphes };
+    }
+    nonce += 1;
+    if (nonce > 8_000_000) throw new Error("nonce : plafond");
+  }
+}
+
 export function tete(chaine: BlocLocal[]): BlocLocal | null {
   return chaine.length ? chaine[chaine.length - 1]! : null;
 }
@@ -127,7 +145,7 @@ export function verifierChaine(coffre: Coffre): ControleChaine[] {
       chainage = false;
       break;
     }
-    if (b.bits !== 0) chainage = false;
+    if (b.bits > 0 && !powOk(b.hash, b.bits)) chainage = false;
   }
   out.push(
     C(

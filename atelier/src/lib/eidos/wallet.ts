@@ -1,5 +1,7 @@
-import { sceller, blocGenese } from "./chaine.ts";
-import { ATOMES } from "./constantes.ts";
+import { sceller, blocGenese, merkleCarnet, chercherNonce } from "./chaine.ts";
+import { ATOMES, BITS_MINE } from "./constantes.ts";
+import { genesis } from "./genesis-data.ts";
+import { rewardAt } from "./eonis.ts";
 import { fromHex, hexOf } from "./hash.ts";
 import {
   adresseDe,
@@ -142,6 +144,70 @@ export function verserRobinet(coffre: Coffre, atomes = ATOMES): Coffre {
     },
     "robinet",
   );
+}
+
+export function minerCoffre(coffre: Coffre, bits = BITS_MINE, tsFixe?: number): Coffre {
+  const base = coffre.chaine?.length ? coffre.chaine : [blocGenese()];
+  const prev = base[base.length - 1]!;
+  const hauteur = prev.hauteur + 1;
+  const atomes = rewardAt(hauteur);
+  if (atomes <= 0) return coffre;
+  const indice = coffre.n;
+  const adresse = adresseDe(coffre.maitre, indice);
+  const txid = txidLabel(`mine/${hauteur}/${adresse}`);
+  const sortie: Sortie = {
+    ref: `${txid}:0`,
+    txid,
+    rang: 0,
+    adresse,
+    indice,
+    montant: atomes,
+  };
+  const sorties = [...coffre.sorties, sortie];
+  const merkle = merkleCarnet(sorties);
+  const ts =
+    tsFixe ??
+    (coffre.nature === "atelier"
+      ? genesis.bloc_genese.horodatage_unix + base.length
+      : Math.floor(Date.now() / 1000));
+  const trouve = chercherNonce({
+    hauteur,
+    prev: prev.hash,
+    merkle,
+    ts,
+    bits,
+  });
+  const histo: HistoriqueTx = {
+    txid,
+    at: ts * 1000,
+    montant: atomes,
+    entrees: 0,
+    rendu: 0,
+    frais: 0,
+    poussiere: false,
+    kind: "mine",
+    note: `Mine · bloc ${hauteur}`,
+  };
+  return {
+    ...coffre,
+    n: indice + 1,
+    sorties,
+    historique: [histo, ...coffre.historique],
+    chaine: [
+      ...base,
+      {
+        hauteur,
+        prev: prev.hash,
+        merkle,
+        ts,
+        nonce: trouve.nonce,
+        bits,
+        hash: trouve.hash,
+        glyphes: trouve.glyphes,
+        motif: "mine",
+      },
+    ],
+  };
 }
 
 export function appliquerEnvoi(

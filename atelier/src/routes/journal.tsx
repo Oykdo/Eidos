@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
+import { Atelier } from "@/components/Atelier";
 import { Genese } from "@/components/Genese";
 import { Cles } from "@/components/Cles";
 import { Chaine } from "@/components/Chaine";
@@ -16,7 +17,8 @@ function JournalPage() {
   }, [hydrater]);
 
   return (
-    <Shell actuel="journal" sous="Genèse, clés, chaîne, preuve">
+    <Shell actuel="journal">
+      <Atelier />
       <Genese />
       <Cles />
       <Chaine />

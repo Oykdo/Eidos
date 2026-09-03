@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { parserPreuve } from "@/lib/eidos/merkle.ts";
 import { useCoffre } from "@/lib/store.ts";
+import { useI18n } from "@/lib/i18n.ts";
 import { cn } from "@/lib/utils";
 
 function court(h: string): string {
@@ -9,6 +10,7 @@ function court(h: string): string {
 }
 
 export function Temoin() {
+  const { t } = useI18n();
   const temoin = useCoffre((s) => s.temoin);
   const flash = useCoffre((s) => s.temoinFlash);
   const suivre = useCoffre((s) => s.suivreTete);
@@ -34,17 +36,15 @@ export function Temoin() {
       id="temoin"
       className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6"
     >
-      <h2 className="font-mono text-base font-normal text-encre">Témoin</h2>
+      <h2 className="font-mono text-base font-normal text-encre">{t("temoin.titre")}</h2>
       <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-        Seconde mémoire, sans les clés. Importer une tête (JSON exporté, ou
-        lien) : un autre appareil peut juger une preuve. Suivre n'est possible
-        que si ce navigateur a aussi le journal.
+        {t("temoin.lede")}
       </p>
 
       {temoin.tete ? (
         <div className="rounded-md bg-creux px-3 py-3 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]">
           <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
-            Tête connue · bloc {temoin.tete.hauteur}
+            {t("temoin.tete", { h: temoin.tete.hauteur })}
           </p>
           <p className="mt-1 font-mono text-[12px] text-encre">
             {court(temoin.tete.hash)}
@@ -55,16 +55,16 @@ export function Temoin() {
         </div>
       ) : (
         <p className="font-mono text-sm text-sourd">
-          Aucune tête. Importer, ou suivre le journal s'il est ici.
+          {t("temoin.vide")}
         </p>
       )}
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         <Button type="button" variant="or" className="w-auto" onClick={() => suivre()}>
-          Suivre la tête
+          {t("temoin.suivre")}
         </Button>
         <Button type="button" variant="discret" className="w-auto" onClick={() => oublier()}>
-          Oublier
+          {t("temoin.oublier")}
         </Button>
       </div>
 
@@ -74,7 +74,7 @@ export function Temoin() {
 
       <div className="mt-4 border-t border-trait pt-4">
         <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
-          Importer une tête
+          {t("temoin.importer")}
         </p>
         <textarea
           value={teteRaw}

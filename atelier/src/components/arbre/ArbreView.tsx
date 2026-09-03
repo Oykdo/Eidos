@@ -26,7 +26,9 @@ import {
 } from "@/lib/arbre/champ.ts";
 import { ancreDe } from "@/lib/arbre/ancre.ts";
 import { Nav } from "@/components/Nav";
+import { Langue } from "@/components/Langue";
 import { cn } from "@/lib/utils";
+import { useI18n, t } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 
@@ -513,6 +515,7 @@ function Fiche({
   ancrages: Map<number, number>;
   montants: Map<number, number>;
 }) {
+  const { t: tr } = useI18n();
   const data = arbre();
   const champ = useMemo(() => calculerChamp(data, "cone"), [data]);
   if (!selected) return null;
@@ -524,7 +527,7 @@ function Fiche({
     corps = [
       `Épine · rang ${selected.index + 1} / ${PREMIERS.length}`,
       `x_p = log ${selected.p}`,
-      "Nombre premier : irréductible. Rien ne se compose en dessous.",
+      tr("arbre.premier"),
     ];
   } else if (selected.kind === "palier") {
     const t = TIERS[selected.palier]!;
@@ -533,7 +536,7 @@ function Fiche({
     corps = [
       t.aide,
       `${n} nœuds à ce palier.`,
-      "Ce qui est en bas hérite des contraintes d'en haut.",
+      tr("arbre.palier"),
     ];
     secteurs = Array.from({ length: N_SECTEURS }, (_, i) => nomSecteur(i));
   } else if (selected.kind === "famille") {
@@ -556,7 +559,7 @@ function Fiche({
       `D${n.palier} · ${TIERS[n.palier]!.nom}`,
       nomSecteur(n.secteur),
       `${n.autorites} autorités terminales`,
-      parent ? `Parent ${parent.id} (D${parent.palier})` : "Racine de continuité",
+      parent ? tr("arbre.parent", { id: parent.id, p: parent.palier }) : tr("arbre.racine"),
       `Φ = ${c.phi}`,
       `∇·v = ${c.div}  ·  ∇²Φ = ${c.laplacien}  ·  ∇×v_θ = ${c.curlAzim.toFixed(3)}`,
     ];
@@ -567,7 +570,7 @@ function Fiche({
       );
     }
     if (operateur === "curl") {
-      corps.push("Circulation azimutale presque nulle : pas de tourbillon.");
+      corps.push(tr("arbre.curl"));
     }
   }
   return (
@@ -579,7 +582,7 @@ function Fiche({
           className="font-mono text-[11px] text-sourd hover:text-encre"
           onClick={onClose}
         >
-          Fermer
+          {tr("arbre.fermer")}
         </button>
       </div>
       <ul className="mt-2 flex flex-col gap-1">
@@ -615,7 +618,7 @@ const OPS: { id: Operateur; glyph: string; nom: string }[] = [
 
 function lecture(op: Operateur | null, mode: Plongement, vue: Vue): string {
   if (vue === "axiale") {
-    return "Vue axiale : anneaux et axe, comme un détecteur. Les traces d'un collisionneur ne sont pas des transactions.";
+    return t("arbre.axial");
   }
   if (mode === "puits") {
     const t = palierLePlusProche(R_PHOTON);
@@ -633,10 +636,11 @@ function lecture(op: Operateur | null, mode: Plongement, vue: Vue): string {
   if (op === "lap") {
     return "∇²Φ mesure le branchement. Feuille = −1, nœud à k enfants = k − 1.";
   }
-  return "Épine des premiers. Dix paliers. Trente-trois secteurs. Tournez. Touchez un nœud, un premier, un disque.";
+  return t("arbre.intro");
 }
 
 export function ArbreView({ noeudCible }: { noeudCible?: number }) {
+  const { t } = useI18n();
   const [ready, setReady] = useState(false);
   const [filtre, setFiltre] = useState<number | null>(null);
   const [selected, setSelected] = useState<Selection>(null);
@@ -702,7 +706,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
         </Canvas>
       ) : (
         <div className="flex h-full items-center justify-center font-mono text-sm text-sourd">
-          Ouverture de l'arbre…
+          {t("arbre.ouv")}
         </div>
       )}
 
@@ -712,6 +716,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
             Eidos
           </p>
           <Nav actuel="arbre" />
+          <Langue />
         </header>
 
         <div className="mt-auto flex flex-col gap-3 px-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-5">

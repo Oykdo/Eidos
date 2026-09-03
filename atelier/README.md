@@ -12,8 +12,8 @@ L’unité est l’**eidôlon** (10⁸ atomes). La forme est la règle ; l’ima
 
 | Page | Rôle |
 |---|---|
-| **Coffre** | Solde, atelier, envoi, carnet. Dépenser, pas vérifier. |
-| **Journal** | Genèse, clés Lamport, chaîne locale, preuve Merkle. |
+| **Coffre** | Solde, créer, envoyer. Un tap à la naissance. |
+| **Journal** | Genèse, clés, chaîne, **miner** (`R(h)`), preuve Merkle. |
 | **Témoin** | Seconde mémoire. Une tête, pas les clés. Juge une preuve. |
 | **Arbre** | 20 premiers, 10 paliers, 33 secteurs. Carte, pas Merkle. |
 | **Guide** | Mode d’emploi. |
@@ -64,12 +64,13 @@ Le validateur accepte encore un atome de rendu. C’est le coffre qui refuse.
 
 Le **Guide** dans l’app reprend ces pas.
 
-1. **Coffre · Mixte** — 0,50 (deux ou trois petites), **Poussière** (1,00), **4,00** (fragmenté → regrouper).
-2. **Journal** — lancer la genèse. Toucher « preuve » sur une sortie. Exporter la tête.
-3. **Témoin** — adopter la tête, juger. Envoyer 0,50 sans suivre : racine étrangère.
-4. **Clés** — rejouer l’attaque de réemploi. Graine d’atelier **publique**. « Coffre personnel » tire 256 bits dans le navigateur.
-5. **Robinet** — *Atelier · +1 ici* crédite ce navigateur. *Réseau · 1 eidôlon* ouvre une issue GitHub (coffre personnel, 31 glyphes) ; le nœud verse au bloc suivant.
-6. **Arbre** — bandeau ∇ / puits / axiale ; **régimes** pour D0–D9. Sphères d’or = sorties actuelles.
+1. **Coffre** — **Créer mon coffre**. 1 eidôlon versé une fois. Envoyer.
+2. **Journal** — lancer la genèse. **Miner** : nonce (14 bits), `R(h)` sur une adresse neuve (~20 eidôlon au bloc suivant, Satya). Ce navigateur seulement.
+3. **Témoin** — adopter la tête, juger. Envoyer sans suivre : racine étrangère.
+4. **Clés** — rejouer l’attaque de réemploi. Graine d’atelier **publique**.
+5. **Arbre** — bandeau ∇ / puits / axiale ; **régimes** pour D0–D9.
+6. **Reliques** — lumen d’époque : ellipse `a × a/2`. Pas un glyphe.
+7. **Glyphes** — 4 figures × 3 étages = 64 empilements. 31 groupes. **Interdit** d’en tirer une graine.
 
 ---
 

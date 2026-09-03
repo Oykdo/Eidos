@@ -4,6 +4,7 @@ import { encoderAdresse, etagesDe, groupesUtiles } from "@/lib/eidos/glyphs";
 import { fromHex } from "@/lib/eidos/hash";
 import { GlypheSvg } from "./Mark";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n.ts";
 
 export function GlyphAddress({
   hexa,
@@ -54,7 +55,7 @@ export function GlyphAddress({
           type="button"
           onClick={() => void copier()}
           className="relative mt-0.5 inline-flex size-8 shrink-0 items-center justify-center text-sourd after:absolute after:top-1/2 after:left-1/2 after:size-11 after:-translate-x-1/2 after:-translate-y-1/2 hover:text-encre"
-          aria-label="Copier l'adresse"
+          aria-label={t("copy.adresse")}
         >
           {copied ? <Check className="size-3.5 text-cuivre" /> : <Copy className="size-3.5" />}
         </button>

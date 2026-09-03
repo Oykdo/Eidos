@@ -100,6 +100,20 @@ export function etagesDe(groupe: string): [number, number, number] {
   ];
 }
 
+/** 3 étages × 2 bits = un octet 0..63. */
+export function codeDuGroupe(etages: [number, number, number]): number {
+  return ((etages[0] & 3) << 4) | ((etages[1] & 3) << 2) | (etages[2] & 3);
+}
+
+export function groupeDuCode(code: number): [number, number, number] {
+  const c = code & 63;
+  return [(c >> 4) & 3, (c >> 2) & 3, c & 3];
+}
+
+export function figuresDuCode(code: number): string {
+  return groupeDuCode(code).map((k) => FIGURES[k]).join("");
+}
+
 export function groupesUtiles(a20hex: string): string[] {
   return encoderGlyphes(fromHex(a20hex)).split(" ");
 }

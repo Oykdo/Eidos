@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { chaineSaine, tete, verifierChaine } from "@/lib/eidos/chaine.ts";
+import { ageOf, rewardAt } from "@/lib/eidos/eonis.ts";
+import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import {
   encoderJson,
   serialiserTete,
@@ -9,6 +11,7 @@ import {
 } from "@/lib/eidos/temoin.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n.ts";
 
 const MOTIF: Record<string, string> = {
   genese: "genèse",
@@ -16,6 +19,7 @@ const MOTIF: Record<string, string> = {
   envoi: "envoi",
   regroupement: "regroupement",
   robinet: "robinet",
+  mine: "mine",
 };
 
 function court(h: string): string {
@@ -23,7 +27,10 @@ function court(h: string): string {
 }
 
 export function Chaine() {
+  const { t } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
+  const miner = useCoffre((s) => s.miner);
+  const flash = useCoffre((s) => s.flash);
   const ch = coffre.chaine ?? [];
   const tip = tete(ch);
   const controles = verifierChaine(coffre);
@@ -45,20 +52,39 @@ export function Chaine() {
     }
   }
 
+  const h = tip?.hauteur ?? 0;
+  const age = ageOf(h);
+  const r = rewardAt(h);
+  const suivant = rewardAt(h + 1);
+
   return (
     <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
-      <h2 className="font-mono text-base font-normal text-encre">Chaîne</h2>
+      <h2 className="font-mono text-base font-normal text-encre">{t("chaine.titre")}</h2>
       <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-        Bloc 0 : Merkle du message de genèse, 18 bits de travail, gelé. Les
-        suivants : Merkle du carnet, bits 0. Exporter la tête : un autre
-        appareil peut l'adopter sans ouvrir ce coffre.
+        {t("chaine.lede")}
       </p>
 
       <p className={cn("mb-3 font-mono text-sm", ok ? "text-cuivre" : "text-fer")}>
         {ok
-          ? `Tête · bloc ${tip?.hauteur ?? "—"} · chainage intact`
-          : "Chainage rompu"}
+          ? t("chaine.ok", { h: String(tip?.hauteur ?? "—") })
+          : t("chaine.ko")}
       </p>
+      {age ? (
+        <p className="mb-3 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
+          {t("emission.ligne", {
+            age: age.nom,
+            h: String(h),
+            r: formaterAtomes(r),
+          })}
+        </p>
+      ) : null}
+
+      <Button type="button" className="mb-4" onClick={() => void miner()}>
+        {t("mine.bouton", { r: formaterAtomes(suivant) })}
+      </Button>
+      {flash ? (
+        <p className="mb-3 font-mono text-sm text-cuivre">{flash}</p>
+      ) : null}
 
       <ol className="flex flex-col gap-2">
         {recents.map((b, i) => (
@@ -97,11 +123,11 @@ export function Chaine() {
       {portable && codeTete ? (
         <div className="mt-4 flex flex-wrap gap-1.5">
           <Button type="button" variant="discret" className="w-auto" onClick={() => void exporter()}>
-            {copie ? "Tête copiée" : "Exporter la tête"}
+            {copie ? t("chaine.copie") : t("chaine.exporter")}
           </Button>
           <Button asChild variant="or" className="w-auto">
             <Link to="/temoin" search={{ tete: codeTete }}>
-              Ouvrir dans le témoin
+              {t("chaine.ouvrir")}
             </Link>
           </Button>
         </div>

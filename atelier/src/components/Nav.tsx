@@ -1,17 +1,32 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { useI18n, type Msg } from "@/lib/i18n.ts";
 
-export type NavId = "coffre" | "journal" | "temoin" | "arbre" | "guide";
+export type NavId =
+  | "coffre"
+  | "journal"
+  | "temoin"
+  | "arbre"
+  | "reliques"
+  | "glyphes"
+  | "guide";
 
-const ITEMS: { to: "/" | "/journal" | "/temoin" | "/arbre" | "/guide"; id: NavId; label: string }[] = [
-  { to: "/", id: "coffre", label: "Coffre" },
-  { to: "/journal", id: "journal", label: "Journal" },
-  { to: "/temoin", id: "temoin", label: "Témoin" },
-  { to: "/arbre", id: "arbre", label: "Arbre" },
-  { to: "/guide", id: "guide", label: "Guide" },
+const ITEMS: {
+  to: "/" | "/journal" | "/temoin" | "/arbre" | "/reliques" | "/glyphes" | "/guide";
+  id: NavId;
+  label: Msg;
+}[] = [
+  { to: "/", id: "coffre", label: "nav.coffre" },
+  { to: "/journal", id: "journal", label: "nav.journal" },
+  { to: "/temoin", id: "temoin", label: "nav.temoin" },
+  { to: "/arbre", id: "arbre", label: "nav.arbre" },
+  { to: "/reliques", id: "reliques", label: "nav.reliques" },
+  { to: "/glyphes", id: "glyphes", label: "nav.glyphes" },
+  { to: "/guide", id: "guide", label: "nav.guide" },
 ];
 
 export function Nav({ actuel }: { actuel: NavId }) {
+  const { t } = useI18n();
   return (
     <nav className="flex flex-wrap items-center justify-center gap-1" aria-label="Sections">
       {ITEMS.map((it) => (
@@ -26,7 +41,7 @@ export function Nav({ actuel }: { actuel: NavId }) {
               : "text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)] hover:text-encre",
           )}
         >
-          {it.label}
+          {t(it.label)}
         </Link>
       ))}
     </nav>

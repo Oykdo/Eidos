@@ -4,8 +4,6 @@ import {
   Check,
   Eye,
   EyeOff,
-  KeyRound,
-  RotateCcw,
   Shield,
   X,
 } from "lucide-react";
@@ -19,6 +17,7 @@ import {
 } from "@/lib/eidos/lamport.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n.ts";
 
 function Marque({ etat }: { etat: EtatConstat }) {
   if (etat === "ok") return <Check className="size-4 text-cuivre" strokeWidth={1.75} />;
@@ -34,9 +33,8 @@ function masque(maitre: string): string {
 }
 
 export function Cles() {
+  const { t } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
-  const personnel = useCoffre((s) => s.personnel);
-  const atelier = useCoffre((s) => s.atelier);
   const [montre, setMontre] = useState(false);
   const [forge, setForge] = useState<ForgeDemo | null>(null);
 
@@ -49,10 +47,9 @@ export function Cles() {
     <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="font-mono text-base font-normal text-encre">Clés</h2>
+          <h2 className="font-mono text-base font-normal text-encre">{t("cles.titre")}</h2>
           <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-            Rien ne se croit : chaque constat se rejoue ici. Une clé Lamport
-            ne signe qu'une fois.
+            {t("cles.lede")}
           </p>
         </div>
         <Shield className="mt-0.5 size-4 shrink-0 text-sourd" strokeWidth={1.5} />
@@ -60,10 +57,10 @@ export function Cles() {
 
       <p className="mb-4 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
         {fautes === 0 && attentions === 0
-          ? "Tous les constats tiennent"
+          ? t("cles.tous")
           : fautes > 0
-            ? `${fautes} faute${fautes > 1 ? "s" : ""} · ${attentions} attention${attentions > 1 ? "s" : ""}`
-            : `${attentions} attention${attentions > 1 ? "s" : ""} — réseau d'essai`}
+            ? t("cles.fautes", { n: fautes, a: attentions })
+            : t("cles.attentions", { a: attentions })}
       </p>
 
       <ul className="flex flex-col gap-2.5">
@@ -94,7 +91,7 @@ export function Cles() {
             type="button"
             onClick={() => setMontre((v) => !v)}
             className="relative inline-flex size-8 items-center justify-center text-sourd after:absolute after:top-1/2 after:left-1/2 after:size-11 after:-translate-x-1/2 after:-translate-y-1/2 hover:text-encre"
-            aria-label={montre ? "Masquer la graine" : "Afficher la graine"}
+            aria-label={montre ? t("cles.masquer") : t("cles.afficher")}
           >
             {montre ? (
               <EyeOff className="size-3.5" strokeWidth={1.75} />
@@ -111,20 +108,6 @@ export function Cles() {
         >
           {montre ? coffre.maitre : masque(coffre.maitre)}
         </p>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-2">
-        {coffre.nature === "atelier" ? (
-          <Button type="button" onClick={() => void personnel()}>
-            <KeyRound className="size-4" strokeWidth={1.75} />
-            Coffre personnel · 256 bits
-          </Button>
-        ) : (
-          <Button type="button" variant="discret" onClick={() => void atelier()}>
-            <RotateCcw className="size-4" strokeWidth={1.75} />
-            Revenir à l'atelier public
-          </Button>
-        )}
       </div>
 
       <div className="mt-6 border-t border-trait pt-4">
