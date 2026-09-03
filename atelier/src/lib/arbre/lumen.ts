@@ -2,8 +2,8 @@
  * Lumen de l'arbre — l'image sur la forme.
  *
  * La forme (modele.ts, champ.ts) ne bouge pas : 425 nœuds, Φ = 9 − palier, forêt.
- * Ici : ρ = R(h)/a souffle les proéminences, la chroma d'âge module les 11 familles.
- * Ce n'est pas un Merkle, pas un (h·41 mod 425). Les charges viennent des UTXO ancrées.
+ * Ici : ρ = R(h)/a souffle ; la charge UTXO pique à part (même à D9, même à ρ = 1).
+ * La chroma d'âge module les 11 familles. Pas un Merkle, pas un (h·41 mod 425).
  */
 
 import { ageOf, rewardAt, T, H0 } from "../eidos/eonis.ts";
@@ -26,6 +26,8 @@ const A_SATYA = 40;
 const SOUFFLE_ANNEAU = 0.06;
 const AMP_CAP = 0.35;
 const AMP_K = 0.28;
+/** Poids de la circulation. Même rapport que b/a des reliques — pas un second souffle. */
+export const CHARGE_POIDS = 0.5;
 
 export type NomAgeLumen = keyof typeof METAUX;
 
@@ -100,7 +102,12 @@ export function sceneVide(h = 0): LumenScene {
   };
 }
 
-/** Amplitude radiale, bornée. D0 (Φ = 9) gonfle le plus. */
+/**
+ * Amplitude radiale, bornée.
+ * Deux termes : le souffle (ρ, Φ) et la circulation (UTXO).
+ * D9 a Φ = 0 : il ne respire pas, il porte encore la charge.
+ * À ρ = 1 le souffle s'annule ; les nœuds chargés restent proéminents.
+ */
 export function amplitude(
   n: Pick<Noeud, "palier" | "x" | "z">,
   L: LumenArbre,
@@ -112,7 +119,7 @@ export function amplitude(
   const souffle = (L.rho - 1) * (phi / 9);
   const cap = Math.min(AMP_CAP, AMP_K * r);
   const frac = chargeMax > 0 ? charge / chargeMax : 0;
-  return souffle * cap * (1 + frac);
+  return cap * (souffle + CHARGE_POIDS * frac);
 }
 
 /** Déplacement dans l'espace de la forme, avant plongement. */

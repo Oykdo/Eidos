@@ -4,6 +4,7 @@ import { ATOMES } from "../eidos/constantes.ts";
 import { H0, T, rewardAt } from "../eidos/eonis.ts";
 import { construireArbre, rayonDuPalier } from "./modele.ts";
 import {
+  CHARGE_POIDS,
   METAUX,
   PREMIER_CULMINATION,
   amplitude,
@@ -61,19 +62,30 @@ describe("lumen de l'arbre", () => {
     assert.equal(rayonDuPalier(0) < rayonDuPalier(1), true);
   });
 
-  it("proéminence nulle à ρ = 1, D0 plus ample que D9, cap < écart d'anneau", () => {
+  it("souffle et charge sont séparés : D9 et ρ = 1 montrent la circulation", () => {
     const a = construireArbre();
     const midi = lumenArbre(H0 + T / 4);
+    const pic = lumenArbre(H0);
     const d0 = a.noeuds.find((n) => n.palier === 0)!;
     const d9 = a.noeuds.find((n) => n.palier === 9)!;
-    assert.ok(Math.abs(amplitude(d0, midi)) < 0.01);
-    const pic = lumenArbre(H0);
-    const a0 = amplitude(d0, pic);
-    const a9 = amplitude(d9, pic);
-    assert.ok(a0 > a9);
-    assert.ok(Math.abs(a0) < 0.36);
-    const charge = amplitude(d0, pic, 100, 100);
-    assert.ok(Math.abs(charge) > Math.abs(a0));
+
+    assert.equal(CHARGE_POIDS, 0.5);
+    assert.ok(Math.abs(amplitude(d0, midi)) < 0.01, "midi sans charge : plat");
+    assert.ok(Math.abs(amplitude(d9, pic)) < 0.01, "D9 sans charge : muet");
+
+    const d0Midi = amplitude(d0, midi, 100, 100);
+    const d9Midi = amplitude(d9, midi, 100, 100);
+    assert.ok(d0Midi > 0.05, `D0 à ρ=1 ${d0Midi}`);
+    assert.ok(d9Midi > 0.05, `D9 à ρ=1 ${d9Midi}`);
+
+    const d0Pic = amplitude(d0, pic);
+    const d0PicCharge = amplitude(d0, pic, 100, 100);
+    const d9PicCharge = amplitude(d9, pic, 100, 100);
+    assert.ok(d0Pic > 0);
+    assert.ok(d0PicCharge > d0Pic);
+    assert.ok(d9PicCharge > 0);
+    assert.ok(Math.abs(d0PicCharge) < 0.6, "cap sous l'écart d'anneau");
+    assert.ok(Math.abs(d9PicCharge) < 0.6);
   });
 
   it("chroma : nuit = métal, jour tire vers la famille, nœud chaud vers l'or", () => {
