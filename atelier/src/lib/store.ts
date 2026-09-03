@@ -24,10 +24,9 @@ import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { t, type Msg } from "./i18n.ts";
 import {
-  exporterPsnx,
-  parserPsnx,
   estPsnxEtranger,
 } from "./eidos/portable.ts";
+import { exporterCarnet, ouvrirFichier } from "./eidos/carnet.ts";
 import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
 
 const KEY = "eidos-coffre-v2";
@@ -323,7 +322,7 @@ export const useCoffre = create<Etat>((set, get) => ({
     });
   },
 
-  exporterFichier: () => exporterPsnx(get().coffre),
+  exporterFichier: () => exporterCarnet(get().coffre),
 
   importerFichier: (nom, data) => {
     const octets =
@@ -337,8 +336,7 @@ export const useCoffre = create<Etat>((set, get) => ({
       });
       return;
     }
-    const texte = typeof data === "string" ? data : new TextDecoder().decode(octets);
-    const lu = parserPsnx(texte);
+    const lu = ouvrirFichier(nom, data);
     if ("erreur" in lu) {
       set({ erreur: lu.erreur, flash: null });
       return;

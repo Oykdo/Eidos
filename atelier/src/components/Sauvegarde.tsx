@@ -3,11 +3,10 @@ import { Download, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCoffre } from "@/lib/store.ts";
 import { useI18n } from "@/lib/i18n.ts";
-import { nomFichierPsnx } from "@/lib/eidos/portable.ts";
+import { NOM_CARNET } from "@/lib/eidos/carnet.ts";
 
 export function Sauvegarde() {
   const { t } = useI18n();
-  const coffre = useCoffre((s) => s.coffre);
   const exporterFichier = useCoffre((s) => s.exporterFichier);
   const importerFichier = useCoffre((s) => s.importerFichier);
   const flash = useCoffre((s) => s.flash);
@@ -21,7 +20,7 @@ export function Sauvegarde() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = nomFichierPsnx(coffre);
+    a.download = NOM_CARNET;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -54,7 +53,7 @@ export function Sauvegarde() {
         <input
           ref={inputRef}
           type="file"
-          accept=".psnx,.json,application/json"
+          accept=".carnet,.psnx,.json,application/json,application/octet-stream"
           className="sr-only"
           onChange={(e) => {
             const f = e.target.files?.[0];

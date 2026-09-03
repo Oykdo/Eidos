@@ -12,11 +12,11 @@ L’unité est l’**eidôlon** (10⁸ atomes). La forme est la règle ; l’ima
 
 | Page | Rôle |
 |---|---|
-| **Coffre** | Solde, créer, envoyer, sauver `.psnx`. |
+| **Coffre** | Solde, créer, envoyer, sauver `eidos.carnet`. |
 | **Journal** | Genèse, clés, chaîne, **miner** (`R(h)`), preuve Merkle. |
 | **Témoin** | Seconde mémoire. Une tête, pas les clés. Juge une preuve. |
 | **Arbre** | 20 premiers, 10 paliers, 33 secteurs. Carte, pas Merkle. |
-| **Reliques** | Lumen d’époque. Prix abordables. Sauvegarde `.psnx`. |
+| **Reliques** | Lumen d’époque. Prix abordables. Sauvegarde `eidos.carnet`. |
 | **Glyphes** | 4 figures, 64 empilements. 31 groupes. |
 | **Signes** | Signatures planétaires : lecture des 64. Pas un 5ᵉ glyphe. |
 | **Guide** | Mode d’emploi. |
@@ -67,12 +67,12 @@ Le validateur accepte encore un atome de rendu. C’est le coffre qui refuse.
 
 Le **Guide** dans l’app reprend ces pas.
 
-1. **Coffre** — **Créer mon coffre**. 1 eidôlon versé une fois. Envoyer. **Sauver .psnx**.
+1. **Coffre** — **Créer mon coffre**. 1 eidôlon versé une fois. Envoyer. **Sauver eidos.carnet**.
 2. **Journal** — lancer la genèse. **Miner** : nonce (14 bits), `R(h)` sur une adresse neuve (~20 eidôlon au bloc suivant, Satya). Ce navigateur seulement.
 3. **Témoin** — adopter la tête, juger. Envoyer sans suivre : racine étrangère.
 4. **Clés** — rejouer l’attaque de réemploi. Graine d’atelier **publique**.
 5. **Arbre** — bandeau ∇ / puits / axiale ; **régimes** pour D0–D9.
-6. **Reliques** — ellipse `a × a/2`. Kali 2,10 · Satya 33,55. Acheter, sauver en `.psnx`.
+6. **Reliques** — ellipse `a × a/2`. Kali 2,10 · Satya 33,55. Acheter, sauver en `eidos.carnet`.
 7. **Glyphes** — 4 figures × 3 étages = 64 empilements. 31 groupes. **Interdit** d’en tirer une graine.
 8. **Signes** — neuf lectures des mêmes 64. Paracelse n’ajoute pas de figure. 9 ≠ 33.
 
