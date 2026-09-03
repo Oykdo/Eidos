@@ -39,6 +39,14 @@ import { cn } from "@/lib/utils";
 import { useI18n, t } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
+import {
+  ATELIER_DPR,
+  ATELIER_FOND,
+  ATELIER_GL,
+  LUMIERE_AMB,
+  LUMIERE_DIR,
+  useOngletVisible,
+} from "@/components/canvas/atelier.ts";
 
 function yPremier(i: number, mode: Plongement, scene: LumenScene): number {
   const t = (i / (PREMIERS.length - 1)) * 9;
@@ -496,10 +504,10 @@ function SceneInner({
 }) {
   return (
     <>
-      <color attach="background" args={["#12151a"]} />
-      <fog attach="fog" args={["#12151a", 22, 58]} />
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[8, 18, 10]} intensity={0.85} color="#dde1e6" />
+      <color attach="background" args={[ATELIER_FOND]} />
+      <fog attach="fog" args={[ATELIER_FOND, 22, 58]} />
+      <ambientLight intensity={LUMIERE_AMB} />
+      <directionalLight position={LUMIERE_DIR.position} intensity={LUMIERE_DIR.intensity} color={LUMIERE_DIR.color} />
       <pointLight
         position={[0, 14, 0]}
         intensity={scene.lumen.culmination ? 1.9 : 1.4}
@@ -703,6 +711,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
 
   const coffre = useCoffre((s) => s.coffre);
   const hydrater = useCoffre((s) => s.hydrater);
+  const visible = useOngletVisible();
 
   useEffect(() => {
     hydrater();
@@ -751,9 +760,10 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
       {ready ? (
         <Canvas
           className="h-full w-full touch-none"
-          dpr={[1, 1.75]}
+          dpr={ATELIER_DPR}
           camera={{ position: [14, 7.5, 18], fov: 42, near: 0.1, far: 120 }}
-          gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+          gl={ATELIER_GL}
+          frameloop={visible ? "always" : "never"}
           onPointerMissed={() => setSelected(null)}
         >
           <SceneInner
