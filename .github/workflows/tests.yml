@@ -64,12 +64,16 @@ jobs:
       - name: Calculer l'empreinte des quatre tables
         shell: bash
         run: |
-          python - <<'PY' > empreinte.txt
+          python - <<'PY'
           import hashlib, eonis as E
+          lines = []
           for nom, a, _ in E.AGES:
               W = E.build_epoch_table(a)
               blob = ("\n".join(str(x) for x in W) + "\n").encode("ascii")
-              print(nom, hashlib.sha256(blob).hexdigest())
+              lines.append(f"{nom} {hashlib.sha256(blob).hexdigest()}")
+          open("empreinte.txt", "w", newline="\n", encoding="ascii").write(
+              "\n".join(lines) + "\n"
+          )
           PY
           cat empreinte.txt
 
@@ -90,16 +94,20 @@ jobs:
       - name: Les trois systemes doivent produire le meme texte
         shell: bash
         run: |
-          find empreintes -name empreinte.txt | sort | while read f; do
-            echo "--- $f"; cat "$f"
-          done
-          n=$(find empreintes -name empreinte.txt -exec sha256sum {} \; \
-              | awk '{print $1}' | sort -u | wc -l)
-          if [ "$n" -ne 1 ]; then
-            echo "ECHEC : les tables different selon la plateforme."
-            exit 1
-          fi
-          echo "OK : empreintes identiques sur les trois systemes."
+          python - <<'PY'
+          from pathlib import Path
+          texts = []
+          for p in sorted(Path("empreintes").rglob("empreinte.txt")):
+              t = p.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+              print("---", p)
+              print(t.decode("ascii"), end="")
+              texts.append(t)
+          if len(texts) < 3:
+              raise SystemExit(f"ECHEC : {len(texts)} artefact(s), 3 attendus.")
+          if len(set(texts)) != 1:
+              raise SystemExit("ECHEC : les tables different selon la plateforme.")
+          print("OK : empreintes identiques sur les trois systemes.")
+          PY
 
   hygiene:
     name: hygiene
@@ -115,7 +123,9 @@ jobs:
           python - <<'PY'
           import hashlib, json, sys
           g = json.load(open("genesis.json"))
-          d = hashlib.sha256(open("eonis.py", "rb").read()).hexdigest()
+          d = hashlib.sha256(
+              open("eonis.py", "rb").read().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+          ).hexdigest()
           attendu = g["generation_des_tables"]["generateur_sha256"]
           print("calcule ", d)
           print("declare ", attendu)

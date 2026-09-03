@@ -23,6 +23,11 @@ except ImportError:
     sys.exit("eonis.py introuvable dans le meme dossier.")
 
 
+def lf(b):
+    """L'empreinte du générateur est celle du source Unix (LF), pas du checkout Windows."""
+    return b.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
 def canon(W):
     """Serialisation canonique declaree dans le fichier de genese."""
     return ("\n".join(str(x) for x in W) + "\n").encode("ascii")
@@ -53,7 +58,7 @@ def main():
             failed += 1
 
     # -- 0. le generateur est bien celui qui est declare ---------------------
-    src = open(os.path.join(HERE, "eonis.py"), "rb").read()
+    src = lf(open(os.path.join(HERE, "eonis.py"), "rb").read())
     check("empreinte du generateur eonis.py",
           hashlib.sha256(src).hexdigest() == g["generation_des_tables"]["generateur_sha256"],
           hashlib.sha256(src).hexdigest()[:16])

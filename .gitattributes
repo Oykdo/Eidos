@@ -1,0 +1,19 @@
+# Un seul octet de fin de ligne : LF. Windows a fait échouer
+# verify_genesis.py (empreinte d'eonis.py) et la comparaison
+# d'empreintes (sha256sum de fichiers CRLF).
+* text=auto eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.svg text eol=lf
+*.dat binary
+*.png binary
+*.jpg binary
