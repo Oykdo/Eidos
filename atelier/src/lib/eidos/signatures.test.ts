@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { FIGURES } from "./constantes.ts";
-import { SIGNATURES, TRIA_PRIMA, codeDe, figuresDe } from "./signatures.ts";
+import { SIGNATURES, TRIA_PRIMA, artefactDeGoutte, codeDe, figuresDe } from "./signatures.ts";
 
 describe("signatures planétaires", () => {
   it("neuf lectures, pas un 5ᵉ glyphe", () => {
@@ -42,5 +42,14 @@ describe("signatures planétaires", () => {
     assert.equal(FIGURES[1], "\u25cb");
     assert.equal(FIGURES[2], "\u263d");
     assert.equal(FIGURES[3], "\u271a");
+  });
+
+  it("œuf robinet : même tag Python/TS, ~1 goutte sur 7", () => {
+    const adresse = "11".repeat(20);
+    const lune = artefactDeGoutte("00".repeat(32), adresse);
+    assert.equal(lune?.id, "lune");
+    assert.equal(lune?.code, 42);
+    assert.equal(artefactDeGoutte("00".repeat(31) + "02", adresse), null);
+    assert.equal(artefactDeGoutte("ab", adresse), null);
   });
 });

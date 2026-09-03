@@ -1,7 +1,7 @@
 {
  "spec": "eidos-etat/1",
  "reseau": "essai",
- "maj_unix": 1788429832,
+ "maj_unix": 1788432022,
  "hauteur": 76,
  "blocs": 77,
  "tete": "af4d7b2a7a3fd707302eb6fba4ec54167eaa82abf1df49d867fc7eea1690fd08",
@@ -15,6 +15,26 @@
  "sorties_non_depensees": 86,
  "robinet_epoque_atomes": 900000000,
  "robinet_budget_atomes": 504000000000,
+ "artefacts": [
+  {
+   "id": "terre",
+   "code": 3,
+   "txid": "0a26b7b67e7bdc7f89ca0caf4b9607631419ff8f956e89bd3977f84da2195f54",
+   "adresse": "1a56415346085a7afc028ccc90426f67762e6d10"
+  },
+  {
+   "id": "lune",
+   "code": 42,
+   "txid": "f497f852ec21d832df367c4e356fbc4c54a368d3b8c18cdcecbc55d8483581c3",
+   "adresse": "1a56415346085a7afc028ccc90426f67762e6d10"
+  },
+  {
+   "id": "soleil",
+   "code": 21,
+   "txid": "d3c35c9f30dfbe85cf61981a3272aec1586fea406e793c799ce480866150aa0e",
+   "adresse": "1a56415346085a7afc028ccc90426f67762e6d10"
+  }
+ ],
  "cles_consommees": 77,
  "atomes_par_unite": 100000000,
  "emission_totale_atomes": 6289920000000000,

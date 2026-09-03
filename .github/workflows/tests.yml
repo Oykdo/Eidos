@@ -36,6 +36,9 @@ jobs:
       - name: Robinet (file, carnet, budget)
         run: python robinet.py --test
 
+      - name: Artefacts robinet (œufs Paracelse)
+        run: python -c "import noeud as N; N._test_artefact()"
+
       - name: Difficulte et travail cumule (6 controles)
         run: python consensus.py
 

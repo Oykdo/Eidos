@@ -22,6 +22,7 @@ describe("état réseau → champ d'arbre", () => {
     assert.equal(e.hauteur, 71);
     assert.equal(e.sorties.length, 2);
     assert.equal(e.tresor_adresse?.length, 40);
+    assert.equal(e.artefacts.length, 0);
   });
 
   it("charges : somme = circulation, même pont FNV que les punaises", () => {

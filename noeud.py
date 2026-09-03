@@ -236,16 +236,17 @@ def noter_gouttes(ch, blk):
     for tx in blk["txs"]:
         if not est_goutte(tx):
             continue
+        txid = tx.txid()
         for addr, m in tx.outputs:
             if m == MONTANT_ROBINET:
-                ch.robinet_gouttes.append((h, addr.hex()))
+                ch.robinet_gouttes.append((h, txid, addr.hex()))
                 break
 
 
 def robinet_epoque_atomes(ch, h):
     debut = epoque_debut(h)
     gouttes = getattr(ch, "robinet_gouttes", [])
-    return sum(MONTANT_ROBINET for gh, _ in gouttes if gh >= debut)
+    return sum(MONTANT_ROBINET for gh, *_ in gouttes if gh >= debut)
 
 
 def verse_deja(ch, adresse_hex):
@@ -254,6 +255,38 @@ def verse_deja(ch, adresse_hex):
         if a.hex() == adresse_hex:
             return True
     return False
+
+
+# 9 empilements du chœur. Même table que atelier/src/lib/eidos/signatures.ts
+CODES_ARTEFACT = {
+    0: "uranie", 48: "saturne", 20: "jupiter", 63: "mars",
+    21: "soleil", 29: "venus", 27: "mercure", 42: "lune", 3: "terre",
+}
+TAG_ARTEFACT = b"eidos-artefact/1"
+
+
+def artefact_de_goutte(txid: bytes, adresse: bytes):
+    """Œuf Paracelse dans une extraction. Muet pour le carnet."""
+    h = E.sha256d(TAG_ARTEFACT + txid + adresse)
+    code = h[0] & 63
+    ident = CODES_ARTEFACT.get(code)
+    if ident is None:
+        return None
+    return {
+        "id": ident,
+        "code": code,
+        "txid": txid.hex(),
+        "adresse": adresse.hex(),
+    }
+
+
+def artefacts_du_carnet(ch):
+    out = []
+    for _h, txid, adr in getattr(ch, "robinet_gouttes", []):
+        a = artefact_de_goutte(txid, bytes.fromhex(adr))
+        if a:
+            out.append(a)
+    return out
 
 
 def sorties_tresor(ch, combien):
@@ -331,6 +364,10 @@ def construire_paiements(ch, hauteur_bloc):
         d["txid"] = tx.txid().hex()
         print(f"  robinet : {MONTANT_ROBINET / E.ATOMES:.2f} vers "
               f"{d['adresse'][:16]}… (issue #{d['issue']})")
+        art = artefact_de_goutte(tx.txid(), dest)
+        if art:
+            d["artefact"] = art["id"]
+            print(f"    artefact : {art['id']}")
     return txs, f, True
 
 
@@ -408,6 +445,7 @@ def ecrire_etat(ch, blocs):
         "sorties_non_depensees": len(carnet.utxo),
         "robinet_epoque_atomes": robinet_epoque_atomes(ch, max(carnet.hauteur, 0)),
         "robinet_budget_atomes": budget_epoque(max(carnet.hauteur, 0)),
+        "artefacts": artefacts_du_carnet(ch),
         "cles_consommees": sum(len(s) for s in ch.indices.values()),
         "atomes_par_unite": E.ATOMES,
         "emission_totale_atomes": 62_899_200 * E.ATOMES,
@@ -428,6 +466,14 @@ def ecrire_etat(ch, blocs):
           f"invariant {'OK' if etat['invariant'] else 'ROMPU'}")
     if not etat["invariant"]:
         raise SystemExit("invariant rompu — publication refusée")
+
+
+def _test_artefact():
+    ad = bytes([0x11]) * 20
+    a = artefact_de_goutte(bytes(32), ad)
+    assert a and a["id"] == "lune" and a["code"] == 42, a
+    assert artefact_de_goutte((2).to_bytes(32, "big"), ad) is None
+    print("ok : artefact robinet (lune / muet)")
 
 
 # ==========================================================================

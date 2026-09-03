@@ -6,6 +6,7 @@
 
 import { FIGURES } from "./constantes.ts";
 import { codeDuGroupe } from "./glyphs.ts";
+import { concat, fromHex, sha256d, utf8 } from "./hash.ts";
 
 export type SignatureId =
   "uranie" | "saturne" | "jupiter" | "mars" | "soleil" | "venus" | "mercure" | "lune" | "terre";
@@ -43,4 +44,32 @@ export function figuresDe(s: Signature): string {
 
 export function codeDe(s: Signature): number {
   return codeDuGroupe(s.etages);
+}
+
+/** Même table que noeud.py. 9 codes parmi 64 — ~1 goutte sur 7. */
+export const CODES_ARTEFACT: ReadonlyMap<number, SignatureId> = new Map(
+  SIGNATURES.map((s) => [codeDe(s), s.id]),
+);
+
+const TAG_ARTEFACT = utf8("eidos-artefact/1");
+
+export type Artefact = {
+  id: SignatureId;
+  code: number;
+  txid: string;
+  adresse: string;
+};
+
+/**
+ * Œuf dans une extraction robinet.
+ * sha256d(tag || txid || adresse)[0] & 63 ∈ codes du chœur.
+ * Muet pour le carnet : pas de sortie, pas de 5ᵉ glyphe.
+ */
+export function artefactDeGoutte(txid: string, adresse: string): Artefact | null {
+  if (txid.length !== 64 || adresse.length !== 40) return null;
+  const h = sha256d(concat(TAG_ARTEFACT, fromHex(txid), fromHex(adresse)));
+  const code = h[0]! & 63;
+  const id = CODES_ARTEFACT.get(code);
+  if (!id) return null;
+  return { id, code, txid, adresse };
 }

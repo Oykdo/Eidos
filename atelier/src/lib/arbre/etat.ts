@@ -8,7 +8,14 @@ import { lumenArbre, sceneVide, type LumenScene } from "./lumen.ts";
 
 export const ETAT_URL = "https://raw.githubusercontent.com/Oykdo/Eidos/main/etat.json";
 
-export type SortieReseau = { adresse: string; montant: number };
+export type SortieReseau = { adresse: string; montant: number; txid?: string };
+
+export type ArtefactReseau = {
+  id: string;
+  code: number;
+  txid: string;
+  adresse: string;
+};
 
 export type EtatReseau = {
   hauteur: number;
@@ -17,6 +24,7 @@ export type EtatReseau = {
   recompense_courante_atomes: number;
   tresor_adresse: string | null;
   sorties: SortieReseau[];
+  artefacts: ArtefactReseau[];
 };
 
 export function parserEtat(raw: unknown): EtatReseau {
@@ -24,10 +32,29 @@ export function parserEtat(raw: unknown): EtatReseau {
   const sortiesRaw = o.sorties;
   const sorties: SortieReseau[] = [];
   if (sortiesRaw && typeof sortiesRaw === "object") {
-    for (const v of Object.values(sortiesRaw as Record<string, unknown>)) {
+    for (const [k, v] of Object.entries(sortiesRaw as Record<string, unknown>)) {
       const s = v as { adresse?: unknown; montant?: unknown };
       if (typeof s.adresse === "string" && typeof s.montant === "number") {
-        sorties.push({ adresse: s.adresse, montant: s.montant });
+        const txid = k.split(":")[0];
+        sorties.push({
+          adresse: s.adresse,
+          montant: s.montant,
+          txid: txid && txid.length === 64 ? txid : undefined,
+        });
+      }
+    }
+  }
+  const artefacts: ArtefactReseau[] = [];
+  if (Array.isArray(o.artefacts)) {
+    for (const x of o.artefacts) {
+      const a = x as { id?: unknown; code?: unknown; txid?: unknown; adresse?: unknown };
+      if (
+        typeof a.id === "string" &&
+        typeof a.code === "number" &&
+        typeof a.txid === "string" &&
+        typeof a.adresse === "string"
+      ) {
+        artefacts.push({ id: a.id, code: a.code, txid: a.txid, adresse: a.adresse });
       }
     }
   }
@@ -43,6 +70,7 @@ export function parserEtat(raw: unknown): EtatReseau {
       typeof o.recompense_courante_atomes === "number" ? o.recompense_courante_atomes : 0,
     tresor_adresse: tresor,
     sorties,
+    artefacts,
   };
 }
 

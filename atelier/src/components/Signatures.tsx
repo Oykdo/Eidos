@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { GlypheSvg } from "@/components/Mark";
 import { SIGNATURES, TRIA_PRIMA, codeDe, type Signature } from "@/lib/eidos/signatures.ts";
+import { chargerEtat } from "@/lib/arbre/etat.ts";
 import { cn } from "@/lib/utils";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 
@@ -39,7 +40,15 @@ const TRIA: Record<(typeof TRIA_PRIMA)[number]["id"], Msg> = {
 export function Signatures() {
   const { t } = useI18n();
   const [sel, setSel] = useState<Signature["id"]>("lune");
+  const [trouves, setTrouves] = useState<Set<string>>(new Set());
   const s = SIGNATURES.find((x) => x.id === sel) ?? SIGNATURES[7]!;
+
+  useEffect(() => {
+    void chargerEtat().then((e) => {
+      if (!e) return;
+      setTrouves(new Set(e.artefacts.map((a) => a.id)));
+    });
+  }, []);
 
   return (
     <Shell actuel="signatures">
@@ -85,6 +94,11 @@ export function Signatures() {
               <GlypheSvg etages={x.etages} className="h-14 w-7" />
               <span className="font-mono text-[16px] leading-none">{x.astre}</span>
               <span className="font-mono text-[10px] tracking-wide">{x.muse}</span>
+              {trouves.has(x.id) ? (
+                <span className="font-mono text-[9px] uppercase tracking-[0.12em] opacity-80">
+                  {t("sig.trouve")}
+                </span>
+              ) : null}
             </button>
           ))}
         </div>

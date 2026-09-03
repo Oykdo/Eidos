@@ -227,7 +227,7 @@ export const FR = {
 
   "sig.h": "Signatures",
   "sig.lede":
-    "Neuf manières de tenir le temps. Les mêmes quatre figures. Ce n'est pas un 5ᵉ glyphe, pas un secteur de l'arbre.",
+    "Neuf manières de tenir le temps. Les mêmes quatre figures. Œufs : certaines gouttes du robinet, ~1 sur 7, portent une lecture. Muet pour le carnet.",
   "sig.tria": "Tria prima",
   "sig.triaLede": "Trois étages, trois principes. Pas trois signes nouveaux.",
   "sig.tria.sel": "Sel — le corps, en haut",
@@ -238,6 +238,7 @@ export const FR = {
   "sig.code": "empilement {n} / 63",
   "sig.pas":
     "9 ne divise pas 33. Une muse n'est pas un palier. Clio : ce qui est déjà écrit et qu'on relit.",
+  "sig.trouve": "trouvaille",
   "sig.uranie": "Étoiles fixes. Continuité — ce qui ne se divise pas.",
   "sig.saturne": "Le temps qui pèse. Croix sur le vide.",
   "sig.jupiter": "L'expansion. Le cercle, deux fois, puis le vide.",
@@ -497,7 +498,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
 
   "sig.h": "Signatures",
   "sig.lede":
-    "Nine ways of holding time. The same four figures. Not a 5th glyph, not a tree sector.",
+    "Nine ways of holding time. The same four figures. Eggs: some faucet drops, ~1 in 7, carry a reading. Mute for the ledger.",
   "sig.tria": "Tria prima",
   "sig.triaLede": "Three floors, three principles. Not three new signs.",
   "sig.tria.sel": "Salt — the body, at the top",
@@ -508,6 +509,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "sig.code": "stack {n} / 63",
   "sig.pas":
     "9 does not divide 33. A muse is not a tier. Clio: what is already written, and reread.",
+  "sig.trouve": "find",
   "sig.uranie": "Fixed stars. Continuity — that which does not divide.",
   "sig.saturne": "Time that weighs. Cross over void.",
   "sig.jupiter": "Expansion. The circle, twice, then void.",
