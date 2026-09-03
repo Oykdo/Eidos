@@ -8,3 +8,9 @@ portefeuille.json
 __pycache__/
 *.pyc
 .DS_Store
+
+# atelier web
+atelier/node_modules/
+atelier/.vercel/
+atelier/dist/
+atelier/.grok/

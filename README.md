@@ -118,6 +118,23 @@ Règles d'horodatage disponibles pour une variante en preuve de travail : cible 
 
 ---
 
+## Atelier web
+
+Le répertoire `atelier/` est l'interface du **coffre** et de l'**arbre** (réseau d'essai, sans valeur monétaire).
+
+- Coffre : sélection des sorties (glouton ≤ 3, poussière < 10 000 atomes), signatures Lamport à usage unique.
+- Arbre : 20 premiers, 10 paliers, 33 secteurs, 425 nœuds. Les sorties s'ancrent par hachage d'adresse — ce n'est pas un Merkle d'émission.
+- Guide : tutoriel dans l'app.
+
+```bash
+cd atelier
+npm install
+npm test
+npm run dev
+```
+
+---
+
 ## Démarrage
 
 Aucune installation. Python 3.9 ou plus récent.
