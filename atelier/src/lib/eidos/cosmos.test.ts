@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { concat, utf8 } from "./hash.ts";
+import { VECTEUR_EMPREINTES } from "./cosmos-empreintes.ts";
 import {
   CYCLE_FEDERATION,
   GRAINE_COSMOS,
@@ -93,5 +94,24 @@ describe("eidos-objets/1 cosmos", () => {
 
   it("sept régimes", () => {
     assert.equal(REGIMES.length, 7);
+  });
+
+  it("vecteur des 101 empreintes", () => {
+    const vecteur = VECTEUR_EMPREINTES;
+    assert.equal(vecteur.length, 101);
+    const vues = new Set<string>();
+    for (const o of vecteur) {
+      const q = o.orientation.map((n) => BigInt(n)) as [bigint, bigint, bigint, bigint];
+      assert.equal(norme2(q), NORME, `norme rang ${o.rang}`);
+      assert.equal(
+        empreinteNoyau(o.rang, o.regime, o.classe, q),
+        o.empreinte,
+        `empreinte rang ${o.rang}`,
+      );
+      assert.equal(vues.has(o.empreinte), false, `doublon ${o.rang}`);
+      vues.add(o.empreinte);
+    }
+    assert.equal(vecteur[0]!.rang, 0);
+    assert.equal(vecteur[100]!.rang, 100);
   });
 });
