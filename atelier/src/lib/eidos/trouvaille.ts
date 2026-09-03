@@ -60,7 +60,8 @@ export function asciiTrouvaille(lumen: Lumen, phase: number): string {
   const corps = asciiEllipse(lumen.a, lumen.b, phase, W, H);
   const r = lumen.recompense(phase);
   const pied =
-    `${lumen.age.nomAffiche}  prix ${lumen.prix.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} eidôla` +
+    `${lumen.age.nomAffiche}  a=${lumen.a} b=${lumen.b}` +
+    `  prix ${lumen.prix.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} eidôla` +
     `  R=${r.toFixed(2)}`;
   return `${corps}\n${pied}`;
 }

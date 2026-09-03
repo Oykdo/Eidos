@@ -39,6 +39,8 @@ export type ScenarioId = "mixte" | "poussiere" | "fragmente" | "une-piece" | "vi
 
 export type NatureCoffre = "atelier" | "personnel";
 
+export type NomAge = "Satya" | "Treta" | "Dvapara" | "Kali";
+
 export type DerniereSig = {
   txid: string;
   ok: boolean;
@@ -76,6 +78,7 @@ export type Coffre = {
   clesUsees: string[];
   derniereSig: DerniereSig | null;
   chaine: BlocLocal[];
+  reliques: NomAge[];
 };
 
 export type HistoriqueTx = {
@@ -86,6 +89,6 @@ export type HistoriqueTx = {
   rendu: number;
   frais: number;
   poussiere: boolean;
-  kind: "envoi" | "regroupement" | "robinet" | "mine";
+  kind: "envoi" | "regroupement" | "robinet" | "mine" | "relique";
   note: string;
 };

@@ -7,6 +7,7 @@ import {
   appliquerEnvoi,
   appliquerRegroupement,
   minerCoffre,
+  acheterRelique as appliquerAchat,
 } from "./eidos/wallet.ts";
 import { blocGenese, sceller } from "./eidos/chaine.ts";
 import {
@@ -17,12 +18,16 @@ import {
   temoinVide,
   type Temoin,
 } from "./eidos/temoin.ts";
-import type { Coffre, ScenarioId } from "./eidos/types.ts";
+import type { Coffre, NomAge, ScenarioId } from "./eidos/types.ts";
 import type { PreuvePortable } from "./eidos/merkle.ts";
 import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { t, type Msg } from "./i18n.ts";
-import { exporterCoffre, parserCoffrePortable, estPsnx } from "./eidos/portable.ts";
+import {
+  exporterPsnx,
+  parserPsnx,
+  estPsnxEtranger,
+} from "./eidos/portable.ts";
 import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
 
 const KEY = "eidos-coffre-v2";
@@ -49,6 +54,7 @@ type Etat = {
   atelier: () => void;
   creer: () => void;
   miner: () => void;
+  acheterRelique: (nom: NomAge) => void;
   setMontant: (s: string) => void;
   setDest: (s: string) => void;
   setDestInterne: (v: boolean) => void;
@@ -108,6 +114,7 @@ export const useCoffre = create<Etat>((set, get) => ({
           if (!Array.isArray(coffre.clesUsees)) coffre.clesUsees = [];
           if (coffre.nature !== "personnel") coffre.nature = "atelier";
           if (coffre.derniereSig === undefined) coffre.derniereSig = null;
+          if (!Array.isArray(coffre.reliques)) coffre.reliques = [];
           if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
             coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");
           }
@@ -302,12 +309,26 @@ export const useCoffre = create<Etat>((set, get) => ({
     });
   },
 
-  exporterFichier: () => exporterCoffre(get().coffre),
+  acheterRelique: (nom) => {
+    const { coffre: next, selection } = appliquerAchat(get().coffre, nom);
+    if (!selection.ok) {
+      set({ erreur: t(`err.${selection.code}` as Msg), flash: null });
+      return;
+    }
+    persister(next);
+    set({
+      coffre: next,
+      erreur: null,
+      flash: t("relique.achetee", { nom }),
+    });
+  },
+
+  exporterFichier: () => exporterPsnx(get().coffre),
 
   importerFichier: (nom, data) => {
     const octets =
       typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
-    if (estPsnx(nom, octets)) {
+    if (estPsnxEtranger(nom, octets)) {
       const spin = spinorDepuisOctets(octets);
       set({
         psnx: spin,
@@ -317,13 +338,14 @@ export const useCoffre = create<Etat>((set, get) => ({
       return;
     }
     const texte = typeof data === "string" ? data : new TextDecoder().decode(octets);
-    const lu = parserCoffrePortable(texte);
+    const lu = parserPsnx(texte);
     if ("erreur" in lu) {
       set({ erreur: lu.erreur, flash: null });
       return;
     }
     let coffre = lu.coffre;
     if (!Array.isArray(coffre.clesUsees)) coffre.clesUsees = [];
+    if (!Array.isArray(coffre.reliques)) coffre.reliques = [];
     if (coffre.nature !== "personnel") coffre.nature = "atelier";
     if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
       coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");

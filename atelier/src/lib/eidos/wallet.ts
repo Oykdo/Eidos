@@ -8,8 +8,9 @@ import {
   signerEntrees,
   txidLabel,
 } from "./lamport.ts";
-import type { Coffre, HistoriqueTx, ScenarioId, Sortie } from "./types.ts";
+import type { Coffre, HistoriqueTx, NomAge, ScenarioId, Sortie } from "./types.ts";
 import { choisirRegroupement, selectionner } from "./coinselect.ts";
+import { adresseRelique, prixReliqueAtomes, AGES_RELIQUE } from "./relique.ts";
 
 function aleaHex(n = 32): string {
   const b = new Uint8Array(n);
@@ -68,6 +69,7 @@ function coffreVide(
     clesUsees: [],
     derniereSig: null,
     chaine: [blocGenese()],
+    reliques: [],
   };
 }
 
@@ -107,6 +109,7 @@ export function chargerScenario(coffre: Coffre, scenario: ScenarioId): Coffre {
       clesUsees: [],
       derniereSig: null,
       chaine: [blocGenese()],
+      reliques: [],
     },
     "atelier",
   );
@@ -377,4 +380,128 @@ export function appliquerRegroupement(coffre: Coffre): Coffre {
     },
     "regroupement",
   );
+}
+
+export function acheterRelique(
+  coffre: Coffre,
+  nom: NomAge,
+): { coffre: Coffre; selection: ReturnType<typeof selectionner> } {
+  const deja = coffre.reliques ?? [];
+  if (deja.includes(nom)) {
+    const solde = coffre.sorties.reduce((s, o) => s + o.montant, 0);
+    return {
+      coffre,
+      selection: {
+        ok: false,
+        code: "cle",
+        message: "Relique déjà dans le coffre.",
+        solde,
+        couvertureMax: 0,
+      },
+    };
+  }
+  const age = AGES_RELIQUE.find((a) => a.nom === nom);
+  if (!age) {
+    const solde = coffre.sorties.reduce((s, o) => s + o.montant, 0);
+    return {
+      coffre,
+      selection: {
+        ok: false,
+        code: "montant",
+        message: "Relique inconnue.",
+        solde,
+        couvertureMax: 0,
+      },
+    };
+  }
+  const montant = prixReliqueAtomes(age);
+  const sel = selectionner(coffre.sorties, montant);
+  if (!sel.ok) return { coffre, selection: sel };
+
+  const dest = adresseRelique(nom);
+  const consommees = new Set(sel.entrees.map((e) => e.ref));
+  const restant = coffre.sorties.filter((s) => !consommees.has(s.ref));
+  let n = coffre.n;
+  const indiceRendu = sel.rendu > 0 ? n : null;
+  if (indiceRendu != null) n += 1;
+
+  const sig = signerEntrees(
+    coffre.maitre,
+    sel.entrees,
+    dest,
+    montant,
+    sel.rendu,
+    indiceRendu,
+  );
+  if (!sig.ok) {
+    return {
+      coffre,
+      selection: {
+        ok: false,
+        code: "cle",
+        message: sig.erreur ?? "Signature refusée.",
+        solde: coffre.sorties.reduce((s, o) => s + o.montant, 0),
+        couvertureMax: 0,
+      },
+    };
+  }
+  for (const emp of sig.empreintes) {
+    if (coffre.clesUsees.includes(emp)) {
+      return {
+        coffre,
+        selection: {
+          ok: false,
+          code: "cle",
+          message: "Clé Lamport déjà employée — usage unique.",
+          solde: coffre.sorties.reduce((s, o) => s + o.montant, 0),
+          couvertureMax: 0,
+        },
+      };
+    }
+  }
+
+  const nôtres: Sortie[] = [...restant];
+  if (sel.rendu > 0 && indiceRendu != null && sig.adresseRendu) {
+    nôtres.push({
+      ref: `${sig.txid}:1`,
+      txid: sig.txid,
+      rang: 1,
+      adresse: sig.adresseRendu,
+      indice: indiceRendu,
+      montant: sel.rendu,
+    });
+  }
+
+  const histo: HistoriqueTx = {
+    txid: sig.txid,
+    at: Date.now(),
+    montant,
+    entrees: sel.entrees.length,
+    rendu: sel.rendu,
+    frais: sel.frais,
+    poussiere: sel.poussiere,
+    kind: "relique",
+    note: `Relique ${nom}`,
+  };
+
+  return {
+    coffre: sceller(
+      {
+        ...coffre,
+        n,
+        sorties: nôtres,
+        historique: [histo, ...coffre.historique],
+        clesUsees: [...coffre.clesUsees, ...sig.empreintes],
+        reliques: [...deja, nom],
+        derniereSig: {
+          txid: sig.txid,
+          ok: true,
+          entrees: sel.entrees.length,
+          octets: sig.octets,
+        },
+      },
+      "envoi",
+    ),
+    selection: sel,
+  };
 }

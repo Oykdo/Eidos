@@ -1,12 +1,18 @@
 /**
- * Reliques — une par âge, prix propre, élevé, progressif.
+ * Reliques — une par âge, prix propre, progressif, abordable.
  *
- * Prix = émission de l'âge / 1000 = a · T · époques / 1000.
- * Même rapport 16 : 9 : 4 : 1, trois zéros en moins.
+ * Prix = émission de l'âge / 1 000 000 = a · T · époques / 1e6.
+ * Même rapport 16 : 9 : 4 : 1. Kali ≈ 2,10 ; Satya ≈ 33,55.
+ * Un robinet (1) n'y suffit pas : miner, puis acheter.
  */
+
+import { ATOMES } from "./constantes.ts";
+import { sha256, utf8 } from "./hash.ts";
 
 export const B_SUR_A = 0.5;
 export const T_EPOQUE = 1008;
+/** Ancien diviseur 1 000 (dizaines de milliers). Trop haut pour l'essai. */
+export const DIVISEUR_PRIX = 1_000_000;
 
 export type NomAge = "Satya" | "Treta" | "Dvapara" | "Kali";
 
@@ -31,14 +37,20 @@ export type Lumen = {
   b: number;
   ratio: number;
   aire: number;
-  /** Prix en eidôla — unique à cette relique. */
+  /** Prix en eidôla. */
   prix: number;
+  /** Prix en atomes — entier, pour le glouton. */
+  prixAtomes: number;
   /** Récompense oscillante R(θ) = a + b·cos(θ). */
   recompense: (phase: number) => number;
 };
 
 export function prixRelique(age: AgeRelique): number {
-  return (age.a * T_EPOQUE * age.epoques) / 1000;
+  return (age.a * T_EPOQUE * age.epoques) / DIVISEUR_PRIX;
+}
+
+export function prixReliqueAtomes(age: AgeRelique): number {
+  return age.a * T_EPOQUE * age.epoques * (ATOMES / DIVISEUR_PRIX);
 }
 
 export function formaterPrix(n: number): string {
@@ -55,6 +67,7 @@ export function lumenDe(age: AgeRelique): Lumen {
     ratio: B_SUR_A,
     aire: Math.PI * a * b,
     prix: prixRelique(age),
+    prixAtomes: prixReliqueAtomes(age),
     recompense: (phase: number) => a + b * Math.cos(phase),
   };
 }
@@ -78,4 +91,13 @@ export function prixSontProgressifs(liste = lumens()): boolean {
     if (i > 0 && p >= liste[i - 1]!.prix) return false;
   }
   return true;
+}
+
+export function estNomAge(s: string): s is NomAge {
+  return s === "Satya" || s === "Treta" || s === "Dvapara" || s === "Kali";
+}
+
+/** Adresse de versement — hachage, pas une courbe. La relique n'est pas une UTXO. */
+export function adresseRelique(nom: NomAge): Uint8Array {
+  return sha256(utf8(`eidos-relique/1/${nom}`)).slice(0, 20);
 }

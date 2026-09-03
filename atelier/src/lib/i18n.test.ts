@@ -11,19 +11,20 @@ describe("i18n", () => {
 
   it("genèse courte", () => {
     setLocale("fr");
-    assert.equal(t("genese.lede"), "Rejouer le fichier gelé.");
-    assert.equal(t("genese.lancer"), "Lancer la genèse");
+    assert.equal(t("genese.lede"), "Vérifier que tout est en place.");
+    assert.equal(t("genese.lancer"), "Vérifier");
     setLocale("en");
-    assert.equal(t("genese.lede"), "Replay the frozen file.");
-    assert.equal(t("genese.lancer"), "Run genesis");
+    assert.equal(t("genese.lede"), "Check that everything is in place.");
+    assert.equal(t("genese.lancer"), "Check");
   });
 
   it("interpolation et pluriel", () => {
     setLocale("fr");
-    assert.equal(t("coffre.sorties", { n: 1, dust: 10000 }), "1 sortie · poussière 10000 atomes");
-    assert.equal(t("coffre.sorties", { n: 8, dust: 10000 }), "8 sorties · poussière 10000 atomes");
+    assert.equal(t("coffre.sorties", { n: 1 }), "1 pièce");
+    assert.equal(t("coffre.sorties", { n: 8 }), "8 pièces");
     setLocale("en");
-    assert.equal(t("coffre.sorties", { n: 1, dust: 10000 }), "1 output · dust 10000 atoms");
+    assert.equal(t("coffre.sorties", { n: 1 }), "1 coin");
+    assert.equal(t("coffre.sorties", { n: 8 }), "8 coins");
   });
 
   it("aucune valeur vide", () => {

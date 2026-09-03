@@ -4,6 +4,7 @@ import { Shell } from "@/components/Shell";
 import { Creer } from "@/components/Creer";
 import { Envoi } from "@/components/Envoi";
 import { Sorties } from "@/components/Sorties";
+import { Sauvegarde } from "@/components/Sauvegarde";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { useCoffre } from "@/lib/store";
 import { useI18n } from "@/lib/i18n.ts";
@@ -35,6 +36,7 @@ function Home() {
       <Creer />
       {coffre.nature === "personnel" ? <Envoi /> : null}
       <Sorties />
+      <Sauvegarde />
     </Shell>
   );
 }
