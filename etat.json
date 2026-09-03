@@ -1,21 +1,21 @@
 {
  "spec": "eidos-etat/1",
  "reseau": "essai",
- "maj_unix": 1788408630,
- "hauteur": 71,
- "blocs": 72,
- "tete": "ea08a6e0439772c51d4082d8bc8e0bc0bf56ac6a9818fa232a86823381787c83",
- "dernier_creneau": 8852,
+ "maj_unix": 1788428257,
+ "hauteur": 76,
+ "blocs": 77,
+ "tete": "af4d7b2a7a3fd707302eb6fba4ec54167eaa82abf1df49d867fc7eea1690fd08",
+ "dernier_creneau": 8857,
  "age": "Satya",
  "a_courant": 40,
- "recompense_courante_atomes": 2261749563,
- "emission_cumulee_atomes": 151418706981,
- "en_circulation_atomes": 151418706981,
- "sorties_non_depensees": 79,
- "cles_consommees": 72,
+ "recompense_courante_atomes": 2293418237,
+ "emission_cumulee_atomes": 162821791518,
+ "en_circulation_atomes": 162821791518,
+ "sorties_non_depensees": 86,
+ "cles_consommees": 77,
  "atomes_par_unite": 100000000,
  "emission_totale_atomes": 6289920000000000,
- "taille_chaine_octets": 1975383,
+ "taille_chaine_octets": 2149929,
  "soldes": {
   "a098dd7b9b54eb9b05bfe5e87281e0671e6beb6e": 2005592406,
   "ca660c96e0800dc159766f9b42a98d6309f8f87d": 2006562778,
@@ -89,7 +89,14 @@
   "5a1b7697cea84c75b19125e412874e621b394476": 2243556853,
   "251fb3c53238683d7f70527e29882deb28f54d7e": 2249553156,
   "13f7d94c5c7c0e968c6799eca07afe92173770dd": 2255617471,
-  "4427dc1b5cfb62520439ed1f62c9f88d8d4811ef": 2261749563
+  "4427dc1b5cfb62520439ed1f62c9f88d8d4811ef": 2261749563,
+  "b564d89f87457079fab97ff1a281a75c6b4175a7": 2267949192,
+  "a4e72df01f8a0b14aeb08d20ea3bd6f0992f9fcf": 2274216119,
+  "673923204cb04ec20bab7b2f13269a3963c8cb19": 2293418237,
+  "eeee1e159d8996c6858701af53bc7a446ce01dab": 100000000,
+  "c6fb103dfa9c98730a249e534c1a9c07fde018a9": 2186950889,
+  "a0267a406254a375b4e9ca8e9bed6e7496620d3e": 100000000,
+  "92120a570bc469295b10c33bbe20fc5d05d24d8c": 2180550100
  },
  "sorties": {
   "fb3c7d4e17bfaa03fcc39f1d693eb712c8d5f673003bcb7e429cf646a470fa59:0": {
@@ -407,6 +414,34 @@
   "e62feebcaf5f3be4c1941bd3069c173cebd1aa779b303706575048be15ff8e97:0": {
    "adresse": "4427dc1b5cfb62520439ed1f62c9f88d8d4811ef",
    "montant": 2261749563
+  },
+  "70d024f0b447245d238bac4d357ad69a261c3f71a3cdb79658a06d9792d040db:0": {
+   "adresse": "b564d89f87457079fab97ff1a281a75c6b4175a7",
+   "montant": 2267949192
+  },
+  "a21f43de3741931614ee077b47b25d8f5b85f24b1e44b0f788933efba05f9299:0": {
+   "adresse": "a4e72df01f8a0b14aeb08d20ea3bd6f0992f9fcf",
+   "montant": 2274216119
+  },
+  "22e735f80eb601cb80b1088d2369f4cb665dc814fe8af5dedb6c19e24a93e68e:0": {
+   "adresse": "673923204cb04ec20bab7b2f13269a3963c8cb19",
+   "montant": 2293418237
+  },
+  "7331a777f3d5ac3f81d5778dfe65c806cf4d7ec566414c0f00d486111a01992a:0": {
+   "adresse": "eeee1e159d8996c6858701af53bc7a446ce01dab",
+   "montant": 100000000
+  },
+  "7331a777f3d5ac3f81d5778dfe65c806cf4d7ec566414c0f00d486111a01992a:1": {
+   "adresse": "c6fb103dfa9c98730a249e534c1a9c07fde018a9",
+   "montant": 2186950889
+  },
+  "9b0f8ca45c6050da981c89de5d5ac8f8fb5c6ac0d19177b96bb2246cb44b298f:0": {
+   "adresse": "a0267a406254a375b4e9ca8e9bed6e7496620d3e",
+   "montant": 100000000
+  },
+  "9b0f8ca45c6050da981c89de5d5ac8f8fb5c6ac0d19177b96bb2246cb44b298f:1": {
+   "adresse": "92120a570bc469295b10c33bbe20fc5d05d24d8c",
+   "montant": 2180550100
   }
  },
  "invariant": true
