@@ -19,6 +19,7 @@ import {
   graineDe,
 } from "./lamport.ts";
 import { MSG_FRAGMENTE, selectionner } from "./coinselect.ts";
+import { verifierChaine } from "./chaine.ts";
 import {
   appliquerEnvoi,
   coffreAtelier,
@@ -314,6 +315,12 @@ export function verifierEchanges(coffre: Coffre): Controle[] {
   ];
 }
 
+export function verifierJournal(coffre: Coffre): Controle[] {
+  return verifierChaine(coffre).map((c) =>
+    C(c.id, c.ok, c.label, c.detail),
+  );
+}
+
 export function lancerGenese(): Rapport {
   const controles = [
     ...verifierParametres(),
@@ -337,6 +344,7 @@ export function lancerPrealables(coffre: Coffre): Rapport {
     ...verifierCrypto(),
     ...verifierPortefeuille(coffre),
     ...verifierEchanges(coffre),
+    ...verifierJournal(coffre),
   ];
   const passes = controles.filter((c) => c.ok).length;
   const echecs = controles.length - passes;

@@ -46,6 +46,25 @@ export type DerniereSig = {
   octets: number;
 };
 
+export type MotifBloc =
+  | "genese"
+  | "atelier"
+  | "envoi"
+  | "regroupement"
+  | "robinet";
+
+export type BlocLocal = {
+  hauteur: number;
+  prev: string;
+  merkle: string;
+  ts: number;
+  nonce: number;
+  bits: number;
+  hash: string;
+  glyphes: string;
+  motif: MotifBloc;
+};
+
 export type Coffre = {
   maitre: string;
   n: number;
@@ -55,6 +74,7 @@ export type Coffre = {
   nature: NatureCoffre;
   clesUsees: string[];
   derniereSig: DerniereSig | null;
+  chaine: BlocLocal[];
 };
 
 export type HistoriqueTx = {

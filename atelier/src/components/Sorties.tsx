@@ -6,6 +6,8 @@ import { GlyphAddress } from "./GlyphAddress";
 
 export function Sorties() {
   const coffre = useCoffre((s) => s.coffre);
+  const preuveRef = useCoffre((s) => s.preuveRef);
+  const setPreuveRef = useCoffre((s) => s.setPreuveRef);
   if (!coffre) return null;
   const sorties = [...coffre.sorties].sort((a, b) => b.montant - a.montant);
 
@@ -15,8 +17,8 @@ export function Sorties() {
         Carnet · {sorties.length} sortie{sorties.length === 1 ? "" : "s"}
       </h2>
       <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-        Une clé Lamport ne signe qu'une fois. Chaque sortie s'ancre sur un nœud
-        de l'arbre par l'adresse — pas un Merkle.
+        Une clé Lamport ne signe qu'une fois. Toucher « preuve » calcule le
+        chemin Merkle de cette sortie jusqu'à la racine du carnet.
       </p>
       {sorties.length === 0 ? (
         <p className="font-mono text-sm text-sourd">Aucune sortie. Servez le robinet.</p>
@@ -38,13 +40,26 @@ export function Sorties() {
                   </span>
                 </div>
                 <GlyphAddress hexa={s.adresse} compact />
-                <Link
-                  to="/arbre"
-                  search={{ noeud: ancre.noeud }}
-                  className="mt-2 inline-flex h-8 items-center rounded-sm px-0 font-mono text-[11px] text-or hover:text-encre"
-                >
-                  nœud {ancre.noeud} · {etiquetteAncre(ancre)}
-                </Link>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3">
+                  <Link
+                    to="/arbre"
+                    search={{ noeud: ancre.noeud }}
+                    className="inline-flex h-8 items-center font-mono text-[11px] text-or hover:text-encre"
+                  >
+                    nœud {ancre.noeud} · {etiquetteAncre(ancre)}
+                  </Link>
+                  <Link
+                    to="/journal"
+                    className={
+                      preuveRef === s.ref
+                        ? "inline-flex h-8 items-center font-mono text-[11px] text-encre"
+                        : "inline-flex h-8 items-center font-mono text-[11px] text-sourd hover:text-encre"
+                    }
+                    onClick={() => setPreuveRef(s.ref)}
+                  >
+                    preuve
+                  </Link>
+                </div>
               </li>
             );
           })}

@@ -1,3 +1,4 @@
+import { sceller, blocGenese } from "./chaine.ts";
 import { ATOMES } from "./constantes.ts";
 import { fromHex, hexOf } from "./hash.ts";
 import {
@@ -64,6 +65,7 @@ function coffreVide(
     nature,
     clesUsees: [],
     derniereSig: null,
+    chaine: [blocGenese()],
   };
 }
 
@@ -93,15 +95,19 @@ export function chargerScenario(coffre: Coffre, scenario: ScenarioId): Coffre {
       montant: spec.montants[i]!,
     });
   }
-  return {
-    ...coffre,
-    n,
-    sorties,
-    scenario,
-    historique: [],
-    clesUsees: [],
-    derniereSig: null,
-  };
+  return sceller(
+    {
+      ...coffre,
+      n,
+      sorties,
+      scenario,
+      historique: [],
+      clesUsees: [],
+      derniereSig: null,
+      chaine: [blocGenese()],
+    },
+    "atelier",
+  );
 }
 
 export function verserRobinet(coffre: Coffre, atomes = ATOMES): Coffre {
@@ -127,12 +133,15 @@ export function verserRobinet(coffre: Coffre, atomes = ATOMES): Coffre {
     kind: "robinet",
     note: "Robinet — 1 eidôlon",
   };
-  return {
-    ...coffre,
-    n: indice + 1,
-    sorties: [...coffre.sorties, sortie],
-    historique: [histo, ...coffre.historique],
-  };
+  return sceller(
+    {
+      ...coffre,
+      n: indice + 1,
+      sorties: [...coffre.sorties, sortie],
+      historique: [histo, ...coffre.historique],
+    },
+    "robinet",
+  );
 }
 
 export function appliquerEnvoi(
@@ -227,19 +236,22 @@ export function appliquerEnvoi(
   };
 
   return {
-    coffre: {
-      ...coffre,
-      n,
-      sorties: nôtres,
-      historique: [histo, ...coffre.historique],
-      clesUsees: [...coffre.clesUsees, ...sig.empreintes],
-      derniereSig: {
-        txid: sig.txid,
-        ok: true,
-        entrees: sel.entrees.length,
-        octets: sig.octets,
+    coffre: sceller(
+      {
+        ...coffre,
+        n,
+        sorties: nôtres,
+        historique: [histo, ...coffre.historique],
+        clesUsees: [...coffre.clesUsees, ...sig.empreintes],
+        derniereSig: {
+          txid: sig.txid,
+          ok: true,
+          entrees: sel.entrees.length,
+          octets: sig.octets,
+        },
       },
-    },
+      "envoi",
+    ),
     selection: sel,
   };
 }
@@ -283,17 +295,20 @@ export function appliquerRegroupement(coffre: Coffre): Coffre {
     kind: "regroupement",
     note: `Regroupement ${prises.length} → 1`,
   };
-  return {
-    ...coffre,
-    n: indice + 1,
-    sorties: [...restant, fusion],
-    historique: [histo, ...coffre.historique],
-    clesUsees: [...coffre.clesUsees, ...sig.empreintes],
-    derniereSig: {
-      txid: sig.txid,
-      ok: true,
-      entrees: prises.length,
-      octets: sig.octets,
+  return sceller(
+    {
+      ...coffre,
+      n: indice + 1,
+      sorties: [...restant, fusion],
+      historique: [histo, ...coffre.historique],
+      clesUsees: [...coffre.clesUsees, ...sig.empreintes],
+      derniereSig: {
+        txid: sig.txid,
+        ok: true,
+        entrees: prises.length,
+        octets: sig.octets,
+      },
     },
-  };
+    "regroupement",
+  );
 }

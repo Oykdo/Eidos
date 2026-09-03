@@ -120,11 +120,14 @@ Règles d'horodatage disponibles pour une variante en preuve de travail : cible 
 
 ## Atelier web
 
-Le répertoire `atelier/` est l'interface du **coffre** et de l'**arbre** (réseau d'essai, sans valeur monétaire).
+Le répertoire `atelier/` est l'interface (réseau d'essai, sans valeur monétaire). Cinq pages : **Coffre** (dépenser) · **Journal** (genèse, chaîne, preuve Merkle) · **Témoin** (seconde mémoire : une tête, pas les clés) · **Arbre** · **Guide**.
 
-- Coffre : sélection des sorties (glouton ≤ 3, poussière < 10 000 atomes), signatures Lamport à usage unique.
-- Arbre : 20 premiers, 10 paliers, 33 secteurs, 425 nœuds. Les sorties s'ancrent par hachage d'adresse — ce n'est pas un Merkle d'émission.
-- Guide : tutoriel dans l'app.
+- Coffre : glouton ≤ 3, poussière < 10 000 atomes, signatures Lamport à usage unique.
+- Journal : la racine du carnet s'ancre dans la tête de chaîne (bloc 0 = genèse, bits 0 ensuite).
+- Témoin : exporter la tête (JSON ou lien). Un autre appareil juge une preuve si `preuve.racine` est celle de sa tête. Pas un nœud réseau.
+- Arbre : 20 premiers, 10 paliers, 33 secteurs. Les sorties s'ancrent par hachage d'adresse — ce n'est pas un Merkle d'émission.
+
+Détail : `atelier/README.md`.
 
 ```bash
 cd atelier

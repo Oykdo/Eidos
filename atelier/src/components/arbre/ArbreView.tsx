@@ -4,15 +4,12 @@ import { Html, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import {
   FAMILLES,
-  N_AUTORITES,
-  N_NOEUDS,
   N_SECTEURS,
   PREMIERS,
   TIERS,
   arbre,
   couleurSecteur,
   nomSecteur,
-  rayonDuPalier,
   type Noeud,
   type Selection,
 } from "@/lib/arbre/modele.ts";
@@ -29,7 +26,6 @@ import {
 } from "@/lib/arbre/champ.ts";
 import { ancreDe } from "@/lib/arbre/ancre.ts";
 import { Nav } from "@/components/Nav";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCoffre } from "@/lib/store.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
@@ -648,6 +644,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
   const [mode, setMode] = useState<Plongement>("cone");
   const [operateur, setOperateur] = useState<Operateur | null>(null);
   const [vue, setVue] = useState<Vue>("orbite");
+  const [open, setOpen] = useState(false);
 
   const coffre = useCoffre((s) => s.coffre);
   const hydrater = useCoffre((s) => s.hydrater);
@@ -710,58 +707,11 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
       )}
 
       <div className="pointer-events-none absolute inset-0 flex flex-col">
-        <header className="pointer-events-auto flex flex-col items-center gap-3 px-4 pt-[max(12px,env(safe-area-inset-top))] pb-2">
-          <p className="font-display text-[22px] font-light tracking-[0.38em] text-encre uppercase">
+        <header className="pointer-events-auto flex flex-col items-center gap-2 px-4 pt-[max(12px,env(safe-area-inset-top))] pb-1">
+          <p className="font-display text-[18px] font-light tracking-[0.38em] text-encre uppercase">
             Eidos
           </p>
           <Nav actuel="arbre" />
-          <div className="text-center">
-            <h1 className="font-display text-[26px] font-light text-or">Arbre</h1>
-            <p className="mt-1 max-w-[34rem] font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-              {lecture(operateur, mode, vue)}
-            </p>
-          </div>
-          <div className="flex max-w-[34rem] flex-wrap items-center justify-center gap-1">
-            {OPS.map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => setOperateur((cur) => (cur === o.id ? null : o.id))}
-                className={cn(
-                  "h-8 rounded-sm px-2.5 font-mono text-[11px] tracking-wide",
-                  operateur === o.id
-                    ? "bg-or text-or-fg"
-                    : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
-                )}
-              >
-                {o.glyph} {o.nom}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setMode((m) => (m === "cone" ? "puits" : "cone"))}
-              className={cn(
-                "h-8 rounded-sm px-2.5 font-mono text-[11px] tracking-wide",
-                mode === "puits"
-                  ? "bg-or text-or-fg"
-                  : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
-              )}
-            >
-              puits
-            </button>
-            <button
-              type="button"
-              onClick={() => setVue((v) => (v === "axiale" ? "orbite" : "axiale"))}
-              className={cn(
-                "h-8 rounded-sm px-2.5 font-mono text-[11px] tracking-wide",
-                vue === "axiale"
-                  ? "bg-or text-or-fg"
-                  : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
-              )}
-            >
-              axiale
-            </button>
-          </div>
         </header>
 
         <div className="mt-auto flex flex-col gap-3 px-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-5">
@@ -778,73 +728,113 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
           ) : null}
 
           <div className="pointer-events-auto mx-auto w-full max-w-[560px] rounded-lg bg-carte/90 p-3 shadow-[0_0_0_1px_rgb(198_203_209_/_0.12)] backdrop-blur-sm">
-            <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
-              {N_SECTEURS} secteurs · {N_NOEUDS} nœuds ·{" "}
-              {N_AUTORITES.toLocaleString("fr-FR")} autorités
-              {ancrages.size > 0
-                ? ` · ${coffre.sorties.length} sortie${coffre.sorties.length > 1 ? "s" : ""} ancrée${coffre.sorties.length > 1 ? "s" : ""}`
-                : ""}
-            </p>
-            <div className="mb-2 flex flex-wrap gap-1">
-              {TIERS.map((t) => (
+            <div className="mb-2 flex flex-wrap items-center justify-center gap-1">
+              {OPS.map((o) => (
                 <button
-                  key={t.id}
+                  key={o.id}
                   type="button"
-                  onClick={() => setSelected({ kind: "palier", palier: t.id })}
+                  onClick={() => setOperateur((cur) => (cur === o.id ? null : o.id))}
                   className={cn(
-                    "h-8 min-w-8 rounded-sm px-2 font-mono text-[11px] tracking-wide",
-                    selected?.kind === "palier" && selected.palier === t.id
+                    "h-8 rounded-sm px-2.5 font-mono text-[11px] tracking-wide",
+                    operateur === o.id
                       ? "bg-or text-or-fg"
-                      : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.18)]",
+                      : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
                   )}
+                  title={o.nom}
                 >
-                  D{t.id}
+                  {o.glyph}
                 </button>
               ))}
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {FAMILLES.map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() =>
-                    setFiltre((cur) => {
-                      const next = cur === f.id ? null : f.id;
-                      setSelected(next == null ? null : { kind: "famille", famille: f.id });
-                      return next;
-                    })
-                  }
-                  className={cn(
-                    "h-8 rounded-sm px-2 font-mono text-[10px] tracking-wide",
-                    filtre === f.id
-                      ? "text-or-fg"
-                      : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.18)]",
-                  )}
-                  style={
-                    filtre === f.id
-                      ? { background: f.couleur }
-                      : filtre == null
-                        ? { boxShadow: `inset 3px 0 0 ${f.couleur}` }
-                        : undefined
-                  }
-                >
-                  {f.nom}
-                </button>
-              ))}
-            </div>
-            {filtre != null ? (
-              <Button
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className="mt-2 h-8 w-auto px-2"
-                onClick={() => {
-                  setFiltre(null);
-                  setSelected(null);
-                }}
+                onClick={() => setMode((m) => (m === "cone" ? "puits" : "cone"))}
+                className={cn(
+                  "h-8 rounded-sm px-2.5 font-mono text-[11px] tracking-wide",
+                  mode === "puits"
+                    ? "bg-or text-or-fg"
+                    : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+                )}
               >
-                Tous les régimes
-              </Button>
+                puits
+              </button>
+              <button
+                type="button"
+                onClick={() => setVue((v) => (v === "axiale" ? "orbite" : "axiale"))}
+                className={cn(
+                  "h-8 rounded-sm px-2.5 font-mono text-[11px] tracking-wide",
+                  vue === "axiale"
+                    ? "bg-or text-or-fg"
+                    : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+                )}
+              >
+                axiale
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className={cn(
+                  "h-8 rounded-sm px-2.5 font-mono text-[11px] tracking-wide",
+                  open
+                    ? "bg-or text-or-fg"
+                    : "text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+                )}
+              >
+                {open ? "régimes −" : "régimes"}
+              </button>
+            </div>
+            <p className="text-center font-mono text-[11px] leading-relaxed text-sourd text-pretty">
+              {lecture(operateur, mode, vue)}
+            </p>
+            {open ? (
+              <>
+                <div className="mt-2 flex flex-wrap justify-center gap-1">
+                  {TIERS.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setSelected({ kind: "palier", palier: t.id })}
+                      className={cn(
+                        "h-8 min-w-8 rounded-sm px-2 font-mono text-[11px] tracking-wide",
+                        selected?.kind === "palier" && selected.palier === t.id
+                          ? "bg-or text-or-fg"
+                          : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.18)]",
+                      )}
+                    >
+                      D{t.id}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-2 flex flex-wrap justify-center gap-1">
+                  {FAMILLES.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() =>
+                        setFiltre((cur) => {
+                          const next = cur === f.id ? null : f.id;
+                          setSelected(next == null ? null : { kind: "famille", famille: f.id });
+                          return next;
+                        })
+                      }
+                      className={cn(
+                        "h-8 rounded-sm px-2 font-mono text-[10px] tracking-wide",
+                        filtre === f.id
+                          ? "text-or-fg"
+                          : "text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.18)]",
+                      )}
+                      style={
+                        filtre === f.id
+                          ? { background: f.couleur }
+                          : filtre == null
+                            ? { boxShadow: `inset 3px 0 0 ${f.couleur}` }
+                            : undefined
+                      }
+                    >
+                      {f.nom}
+                    </button>
+                  ))}
+                </div>
+              </>
             ) : null}
           </div>
         </div>

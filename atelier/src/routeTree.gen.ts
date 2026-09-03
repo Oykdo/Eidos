@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArbreRouteImport } from './routes/arbre'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as JournalRouteImport } from './routes/journal'
+import { Route as TemoinRouteImport } from './routes/temoin'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +30,53 @@ const GuideRoute = GuideRouteImport.update({
   path: '/guide',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JournalRoute = JournalRouteImport.update({
+  id: '/journal',
+  path: '/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TemoinRoute = TemoinRouteImport.update({
+  id: '/temoin',
+  path: '/temoin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
   '/guide': typeof GuideRoute
+  '/journal': typeof JournalRoute
+  '/temoin': typeof TemoinRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
   '/guide': typeof GuideRoute
+  '/journal': typeof JournalRoute
+  '/temoin': typeof TemoinRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
   '/guide': typeof GuideRoute
+  '/journal': typeof JournalRoute
+  '/temoin': typeof TemoinRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/arbre' | '/guide'
+  fullPaths: '/' | '/arbre' | '/guide' | '/journal' | '/temoin'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/arbre' | '/guide'
-  id: '__root__' | '/' | '/arbre' | '/guide'
+  to: '/' | '/arbre' | '/guide' | '/journal' | '/temoin'
+  id: '__root__' | '/' | '/arbre' | '/guide' | '/journal' | '/temoin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArbreRoute: typeof ArbreRoute
   GuideRoute: typeof GuideRoute
+  JournalRoute: typeof JournalRoute
+  TemoinRoute: typeof TemoinRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +102,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/journal': {
+      id: '/journal'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof JournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/temoin': {
+      id: '/temoin'
+      path: '/temoin'
+      fullPath: '/temoin'
+      preLoaderRoute: typeof TemoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +123,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArbreRoute: ArbreRoute,
   GuideRoute: GuideRoute,
+  JournalRoute: JournalRoute,
+  TemoinRoute: TemoinRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

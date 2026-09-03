@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Nav } from "@/components/Nav";
-import { Mark } from "@/components/Mark";
+import { Shell } from "@/components/Shell";
 import { Button } from "@/components/ui/button";
 import { useCoffre } from "@/lib/store.ts";
 
@@ -22,119 +21,70 @@ export function Guide() {
   const navigate = useNavigate();
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-[560px] px-[18px] pt-[max(20px,env(safe-area-inset-top))] pb-[calc(32px+env(safe-area-inset-bottom))]">
-      <header className="relative px-1 pb-7 pt-5 text-center">
-        <div className="mb-3 flex justify-center">
-          <Mark size={36} />
-        </div>
-        <h1 className="font-display text-[30px] font-light tracking-[0.42em] text-encre uppercase">
-          Eidos
-        </h1>
-        <p className="mt-2 font-mono text-xs text-sourd">Guide — réseau d'essai</p>
-        <div className="mt-4">
-          <Nav actuel="guide" />
-        </div>
-      </header>
+    <Shell actuel="guide" sous="Guide — réseau d'essai">
+      <section className="rounded-lg bg-carte px-5 py-6 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]">
+        <h2 className="font-display text-[26px] font-light text-or">Comment lire</h2>
+        <p className="mt-3 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
+          Coffre : dépenser. Journal : genèse, chaîne, preuve. Témoin : une
+          tête, sans les clés — y compris sur un autre appareil si on lui
+          passe la tête. Arbre : une carte, pas un Merkle.
+        </p>
+      </section>
 
-      <div className="flex flex-col gap-4">
-        <section className="rounded-lg bg-carte px-5 py-6 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]">
-          <h2 className="font-display text-[26px] font-light text-or">Comment lire</h2>
-          <p className="mt-3 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-            Deux faces. Le coffre dépense. L'arbre situe. Ils partagent les
-            sorties, pas le consensus : une adresse est posée sur un nœud par
-            hachage, ce n'est pas un Merkle d'émission.
-          </p>
-        </section>
+      <Etape n="01" titre="Coffre">
+        <p>
+          Mixte, puis les montants. Glouton au plus trois. Poussière sous
+          10 000 atomes. Fragmenté : regrouper d'abord.
+        </p>
+        <Button
+          type="button"
+          variant="or"
+          onClick={() => {
+            charger("mixte");
+            void navigate({ to: "/" });
+          }}
+        >
+          Charger Mixte
+        </Button>
+      </Etape>
 
-        <Etape n="01" titre="Genèse">
-          <p>
-            Sur le coffre, lancer la genèse. Dix-neuf contrôles rejouent le
-            fichier gelé (émission, Merkle, bloc 0, glyphes), puis les tests du
-            portefeuille. Rien ne se croit.
-          </p>
-          <Button asChild variant="discret">
-            <Link to="/">Ouvrir le coffre</Link>
-          </Button>
-        </Etape>
+      <Etape n="02" titre="Journal">
+        <p>
+          Lancer la genèse. Le Merkle du carnet s'ancre dans la tête de
+          chaîne. Exporter la tête : JSON ou lien vers le témoin.
+        </p>
+        <Button asChild variant="discret">
+          <Link to="/journal">Ouvrir le journal</Link>
+        </Button>
+      </Etape>
 
-        <Etape n="02" titre="Les deux trous">
-          <p>
-            Atelier Mixte, puis les montants. Le glouton prend au plus trois
-            sorties, les plus petites qui atteignent. Un rendu sous 10 000 atomes
-            n'est pas créé : l'écart devient frais. Si le solde suffit mais trois
-            pièces ne couvrent pas : « solde suffisant mais fragmenté — regrouper
-            d'abord ».
-          </p>
-          <ul className="flex flex-col gap-1.5 text-encre">
-            <li>0,50 — deux ou trois petites</li>
-            <li>Poussière — 1,00 sur une pièce à 1,000090</li>
-            <li>4,00 — fragmenté, puis regrouper</li>
-          </ul>
-          <Button
-            type="button"
-            variant="or"
-            onClick={() => {
-              charger("mixte");
-              void navigate({ to: "/" });
-            }}
-          >
-            Charger Mixte
-          </Button>
-        </Etape>
+      <Etape n="03" titre="Témoin — autre mémoire">
+        <p>
+          Il n'a pas les clés. Il adopte une tête (import ou lien), puis juge
+          une preuve. Si la racine n'est pas celle de sa tête : étrangère.
+          Deux onglets, deux appareils : même règle.
+        </p>
+        <Button asChild variant="discret">
+          <Link to="/temoin">Ouvrir le témoin</Link>
+        </Button>
+      </Etape>
 
-        <Etape n="03" titre="Clés Lamport">
-          <p>
-            Une clé signe une fois. Deux signatures sur la même clé révèlent
-            assez de moitiés du secret pour forger. Le panneau Clés rejoue
-            l'attaque. L'atelier a une graine publique : démonstration, pas un
-            coffre. « Coffre personnel » tire 256 bits dans le navigateur.
-          </p>
-        </Etape>
+      <Etape n="04" titre="Arbre">
+        <p>
+          Épine, dix paliers, 33 secteurs. ∇, puits, axiale : le bandeau
+          Contrôles. Une punaise FNV n'est pas une preuve.
+        </p>
+        <Button asChild variant="discret">
+          <Link to="/arbre">Voir l'arbre</Link>
+        </Button>
+      </Etape>
 
-        <Etape n="04" titre="Le pont coffre → arbre">
-          <p>
-            Chaque sortie a une adresse de 20 octets. On en fait un entier (FNV),
-            modulo 425 nœuds. Même adresse, même nœud, toujours. Ce n'est pas une
-            signature, pas un Merkle, pas la fédération.
-          </p>
-          <p>
-            Dépenser consomme les clés et en crée d'autres : le rendu naît sur
-            une adresse neuve, donc souvent un autre nœud. Les sphères d'or sur
-            l'arbre sont les sorties actuelles. Dans le carnet, chaque ligne
-            porte son palier (D0–D9) et son secteur. Toucher le libellé ouvre
-            l'arbre sur ce nœud.
-          </p>
-          <Button asChild variant="discret">
-            <Link to="/arbre">Voir l'arbre</Link>
-          </Button>
-        </Etape>
-
-        <Etape n="05" titre="Lire l'arbre">
-          <p>
-            Épine des vingt premiers. Dix paliers de descendance. Trente-trois
-            secteurs, onze familles. Tourner, toucher un disque, un premier, un
-            nœud.
-          </p>
-          <p>
-            ∇ Φ pointe vers le parent. ∇·v : sources en D0, puits en D9, somme
-            nulle. ∇×v = 0 (forêt, pas de cycle). ∇²Φ mesure le branchement.
-          </p>
-          <p>
-            Puits : même graphe, D0 au fond. Les anneaux horizon et 3/2 r_s sont
-            une comparaison — ce n'est pas 2GM/c². Axiale : anneaux et axe,
-            comme un détecteur, pas une collision.
-          </p>
-        </Etape>
-
-        <Etape n="06" titre="Ce que ce n'est pas">
-          <p>
-            Pas de nœud réseau, pas de fédération réelle, pas de monnaie. Le
-            carnet vit dans ce navigateur. Le validateur n'a pas été modifié :
-            un atome de rendu reste légal. C'est le portefeuille qui refuse d'en
-            créer un.
-          </p>
-        </Etape>
-      </div>
-    </main>
+      <Etape n="05" titre="Ce que ce n'est pas">
+        <p>
+          Pas de nœud réseau, pas de fédération, pas de monnaie. Le témoin
+          croit la tête qu'on lui donne tant qu'il ne rejoue pas le journal.
+        </p>
+      </Etape>
+    </Shell>
   );
 }
