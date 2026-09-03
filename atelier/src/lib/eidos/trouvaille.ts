@@ -1,8 +1,9 @@
 /**
- * Trouvaille — rendu ASCII dynamique, une silhouette par relique.
+ * Trouvaille — relique ASCII.
  * La taille suit a. La croix suit R(θ) = a + b·cos(θ).
  */
 
+import { FIGURES } from "./constantes.ts";
 import type { Lumen } from "./relique.ts";
 
 const FIG = ["\u00b7", "\u25cb", "\u263d", "\u271a"] as const;
@@ -48,6 +49,10 @@ export function asciiEllipse(
   if (grid[jc] && grid[jc]![ic] === " ") grid[jc]![ic] = FIG[2];
 
   return grid.map((row) => row.join("")).join("\n");
+}
+
+export function asciiGlyphe(etages: [number, number, number]): string {
+  return etages.map((k) => `  ${FIGURES[k]}`).join("\n");
 }
 
 export function asciiTrouvaille(lumen: Lumen, phase: number): string {
