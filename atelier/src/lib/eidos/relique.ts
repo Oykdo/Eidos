@@ -54,7 +54,10 @@ export function prixReliqueAtomes(age: AgeRelique): number {
 }
 
 export function formaterPrix(n: number): string {
-  return n.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+  return n.toLocaleString("fr-FR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 export function lumenDe(age: AgeRelique): Lumen {
