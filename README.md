@@ -2,15 +2,21 @@
 
 # Eidos
 
-**Chaîne à émission bornée sans halving, consensus fédéré, cryptographie post-quantique par hachage pur.**
+[Français](#français) · [English](#english)
 
-Prototype de spécification écrit en Python de la bibliothèque standard uniquement. Aucune dépendance, aucune extension compilée : il tourne tel quel sur un serveur Linux comme sur un téléphone.
+**FR.** Chaîne à émission bornée sans halving, consensus fédéré, cryptographie post-quantique par hachage pur. Un fichier : `eidos.carnet`.
 
-L'unité de compte est l'**eidôlon** — εἴδωλον, l'image — en regard d'*eidos*, εἶδος, la forme. La forme est la règle ; l'image est ce qui circule.
+**EN.** Bounded-emission chain without halving. Federated consensus. Hash-only post-quantum signatures. One file: `eidos.carnet`.
+
+Prototype Python, bibliothèque standard uniquement — no dependencies, no compiled extensions. Atelier web : [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/).
 
 ---
 
-## Les cinq propositions
+## Français
+
+L'unité de compte est l'**eidôlon** — εἴδωλον, l'image — en regard d'*eidos*, εἶδος, la forme. La forme est la règle ; l'image est ce qui circule. 1 eidôlon = 10⁸ atomes.
+
+### Les cinq propositions
 
 1. **La récompense ne se divise jamais.** Elle oscille selon un cosinus borné, et la somme d'une époque est exacte à l'atome près.
 2. **La semaine n'est pas une convention.** 24 = 3 × 7 + 3 ; ce reste de trois engendre l'ordre des jours, et sert ici de rotation des proposants.
@@ -18,15 +24,13 @@ L'unité de compte est l'**eidôlon** — εἴδωλον, l'image — en regard
 4. **L'énergie est bornée par le consensus, pas par la récompense.** Une preuve de travail ne borne jamais l'énergie ; une fédération, si.
 5. **Rien ne se croit, tout se rejoue.** Le carnet UTXO n'est jamais enregistré : il est reconstruit par rejeu intégral à chaque ouverture.
 
----
-
-## Émission
+### Émission
 
 ```
 R(h) = a + b·cos( 2π(h − h₀) / T )     avec b = a/2
 ```
 
-La somme des cosinus sur une période complète est nulle — c'est la somme des racines T-ièmes de l'unité. Donc l'émission d'une époque vaut **exactement** `a·T`, quelle que soit l'oscillation.
+La somme des cosinus sur une période complète est nulle. L'émission d'une époque vaut **exactement** `a·T`.
 
 | Paramètre | Valeur | Origine |
 |---|---|---|
@@ -35,24 +39,18 @@ La somme des cosinus sur une période complète est nulle — c'est la somme des
 | `h₀` — culmination | **492** | 41 / 84 de l'époque, entier exact |
 | Bornes | `[a/2, 3a/2]` | rapport max/min = 3 |
 
-### Les quatre âges
+#### Les quatre âges
 
-| Âge | `a` | Époques | Blocs | Émission | Empreinte de table |
+| Âge | `a` | Époques | Blocs | Émission | Relique (atelier) |
 |---|---|---|---|---|---|
-| Satya | 40 | 832 | 838 656 | 33 546 240 | `2c4dc817…` |
-| Trétâ | 30 | 624 | 628 992 | 18 869 760 | `adb95a75…` |
-| Dvâpara | 20 | 416 | 419 328 | 8 386 560 | `f10ceef5…` |
-| Kali | 10 | 208 | 209 664 | 2 096 640 | `ec54de67…` |
+| Satya | 40 | 832 | 838 656 | 33 546 240 | 33,55 eidôla |
+| Trétâ | 30 | 624 | 628 992 | 18 869 760 | 18,87 |
+| Dvâpara | 20 | 416 | 419 328 | 8 386 560 | 8,39 |
+| Kali | 10 | 208 | 209 664 | 2 096 640 | 2,10 |
 
-**Émission totale : 62 899 200** sur 2 096 640 blocs, soit 2 080 semaines ≈ 39,9 ans. Rapport entre âges : 16 : 9 : 4 : 1. La décroissance est forte, mais le pas d'un bloc au suivant reste borné par `2b` — jamais un facteur 2 sur `a`.
+**Émission totale : 62 899 200** sur 2 096 640 blocs, soit 2 080 semaines ≈ 39,9 ans. Rapport 16 : 9 : 4 : 1. Prix d'atelier = émission / 1 000 000.
 
-1 eidôlon = 10⁸ atomes.
-
-### Reproductibilité
-
-`math.cos` dépend de la libm de la plateforme : deux nœuds peuvent diverger sur le dernier bit, et la chaîne se scinde. Eidos calcule le cosinus en `decimal.Decimal` par série de Taylor, avec π à 68 décimales et une précision de 60 chiffres. Les arrondis sont répartis au plus fort reste, égalités tranchées par index croissant.
-
-Les tables sont figées dans `genesis.json` par leur seule empreinte, avec celle du générateur. **Toute modification de `eonis.py`, même d'un commentaire, invalide la genèse.**
+`math.cos` dépend de la libm : deux nœuds peuvent diverger. Eidos calcule le cosinus en `decimal.Decimal` (π à 68 décimales). Les tables sont figées dans `genesis.json`. **Toute modification de `eonis.py`, même d'un commentaire, invalide la genèse.**
 
 ```
 genesis.json  06b47645abedb5e0ac7d2fc7a1dd6fcd386ef493874fd2774544565ac46dbe28
@@ -60,13 +58,9 @@ eonis.py      cc94ad1e6eadf7027414a1347e870a4842689431b8fca2c1b381f93f4f1dfabc
 bloc 0        00003d32ffa7a1dc7f1ace8ec08d0c739126ad4449fe004ea772710baec2c7b6
 ```
 
----
+### Glyphes
 
-## Encodage à trois figures
-
-Trois étages, quatre états par étage : vide `00`, cercle `01`, croissant `10`, croix `11`. Un glyphe porte **6 bits**, soit 64 points de code. Lecture de haut en bas, l'étage supérieur en poids fort.
-
-Un simple masque de présence à trois bits ne suffirait pas : deux empilements peuvent employer les mêmes figures et ne différer que par leur ordre. L'ordre porte de l'information.
+Trois étages, quatre états : vide `00`, cercle `01`, croissant `10`, croix `11`. Un glyphe porte **6 bits**. Lecture de haut en bas.
 
 | Usage | Bits | Glyphes |
 |---|---|---|
@@ -74,127 +68,154 @@ Un simple masque de présence à trois bits ne suffirait pas : deux empilements 
 | Somme de contrôle | 24 | 4 |
 | Empreinte pleine | 256 | 43 |
 
-160 bits tiennent en 27 glyphes contre 32 caractères en base-32 : l'encodage est plus compact que l'usage courant tout en restant lisible. Les quatre glyphes de contrôle dépassent les 32 bits habituels et se vérifient d'un coup d'œil.
+Les 2 bits de bourrage du 27ᵉ glyphe doivent être nuls — sinon l'adresse est refusée. **Interdit** : dériver une clé ou une graine de cet alphabet.
 
-**Interdit** : dériver une clé, une graine ou un nonce de cet alphabet. Un glyphe porte 6 bits ; toute sélection « signifiante » d'empilements effondre l'entropie réelle.
+### Signatures
 
----
+Tout repose sur SHA-256, **sans aucune courbe elliptique**. La résistance quantique est structurelle.
 
-## Signatures
+- **Lamport** pour les transactions. 16 384 octets de clé publique, 8 192 de signature. Une clé ne signe **qu'une fois**. Le portefeuille produit une adresse fraîche à chaque usage.
+- **Merkle (XMSS réduit)** pour les validateurs. 2^k clés Lamport, clé publique = racine (32 octets). Schéma à état : restaurer une sauvegarde ancienne, c'est rejouer des indices déjà publiés.
 
-Tout repose sur SHA-256, sans aucune courbe elliptique. La résistance quantique est structurelle, pas ajoutée.
+### Consensus fédéré
 
-**Lamport** pour les transactions. 16 384 octets de clé publique, 8 192 de signature, 0,6 ms pour générer et signer, 0,22 ms pour vérifier. Une clé ne signe **qu'une fois** : signer deux fois révèle assez de moitiés du secret pour forger. La règle est inscrite dans la validation — une clé publique ne peut apparaître qu'une fois dans toute la chaîne. Le portefeuille produit donc une adresse fraîche à chaque usage.
+`n` validateurs, créneau de 600 s. Proposant de `s` : `V[(3·s) mod n]`. Avec `n = 7` : `[0, 3, 6, 2, 5, 1, 4]`. Un `n` divisible par trois est refusé.
 
-**Merkle (XMSS réduit à l'essentiel)** pour les validateurs, qui doivent signer des milliers de blocs. 2^k clés Lamport rangées dans un arbre de Merkle ; la clé publique est la racine, 32 octets, immuable. 24 772 octets par signature.
+**Finalité** : seuil `⌊2n/3⌋ + 1`, **indépendant du pas de rotation**. Sept validateurs → cinq signatures.
 
-Ce schéma est **à état**. Le compteur d'indice doit survivre aux redémarrages : restaurer une sauvegarde ancienne, c'est rejouer des indices déjà publiés — donc se faire exclure, ou se faire voler sa clé.
+**Vivacité** : un créneau `s > créneau(now) + 1` est refusé. Sans cette borne, un seul bloc daté trop loin gèle la chaîne. Sauter un créneau (silence) reste permis. Les trous sont publiés (`creneaux_sautes`). Au plus six créneaux rattrapés par exécution.
 
----
+### Fichier unique — `eidos.carnet`
 
-## Consensus fédéré
+Le coffre de l'atelier s'écrit dans **un seul fichier**.
 
-`n` validateurs, un créneau de 600 s chacun. Le proposant du créneau `s` est `V[(3·s) mod n]`.
+- Lamport signe une **dépense**, pas le fichier. Une sauvegarde signée brûlerait une clé à usage unique.
+- La **trace** est SHA-256d, liée à l'adresse Lamport courante (graine + indice).
+- Aucune courbe. Ce n'est pas le vault holographique d'Eidolon.
+- Un ancien `.psnx` JSON d'Eidos s'ouvre encore, puis se réécrit en `.carnet`.
 
-Le pas de trois est celui qui engendre l'ordre des jours à partir de l'ordre des heures. Comme `pgcd(3, n) = 1` dès que `n` n'est pas divisible par trois, la rotation parcourt tous les validateurs sans en sauter aucun. Avec `n = 7` : `[0, 3, 6, 2, 5, 1, 4]`. Un `n` divisible par trois est refusé au chargement.
-
-**Finalité** : un bloc est final dès que plus de `2n/3` validateurs distincts ont bâti par-dessus. Le seuil est `2·n//3 + 1`, **indépendant du pas de rotation** — changer le pas ne doit pas déplacer le quorum. Avec sept validateurs, cinq suffisent — soit environ cinquante minutes. Trois validateurs silencieux suffisent à bloquer la finalité.
-
-**Vivacité** : un créneau `s > créneau(now) + 1` est refusé. Sans cette borne, un seul bloc signé daté trop loin dans le futur gèle la chaîne — tout créneau réel devient « déjà passé ». Sauter un créneau (silence du proposant) reste permis : `s > dernier` suffit. Les trous se reconstruisent depuis la liste des créneaux et sont publiés dans `etat.json` (`creneaux_sautes`). Le nœud ne rattrape jamais plus de six créneaux par exécution.
-
-**Coût** : 0,69 ms par bloc, signature et vérification comprises, contre ≈ 262 000 hachages pour une preuve de travail à 18 bits. C'est ici, et nulle part ailleurs, que la sobriété énergétique est obtenue.
-
-Règles d'horodatage disponibles pour une variante en preuve de travail : cible compacte sur 4 octets, travail cumulé (la chaîne la plus lourde, jamais la plus longue), réajustement toutes les 1008 fenêtres borné à ×4, median-time-past sur 11 blocs et 2 h de tolérance future.
-
----
-
-## Fichiers
+### Fichiers
 
 | Fichier | Lignes | Rôle |
 |---|---|---|
-| `eonis.py` | 267 | émission, codec à trois figures, minage jouet |
+| `eonis.py` | 267 | émission, codec à trois figures |
 | `genesis.json` | 105 | paramètres gelés et empreintes |
-| `verify_genesis.py` | 129 | vérification indépendante — 32 contrôles |
+| `verify_genesis.py` | 134 | vérification indépendante — 32 contrôles |
 | `utxo.py` | 439 | carnet, Lamport, validation — 11 contrôles |
 | `store.py` | 278 | persistance et rejeu intégral |
 | `consensus.py` | 204 | difficulté et travail cumulé — 6 contrôles |
-| `federation.py` | 398 | signatures Merkle, rotation, vivacité — 14 contrôles |
+| `federation.py` | 398 | MSS, rotation, vivacité — 14 contrôles |
+| `robinet.py` | 272 | robinet, budget, artefacts |
+| `noeud.py` | 507 | nœud, créneaux sautés, état publié |
 
----
+### Atelier web
 
-## Atelier web
+Le répertoire `atelier/` est l'interface (réseau d'essai, sans valeur monétaire).
 
-Le répertoire `atelier/` est l'interface (réseau d'essai, sans valeur monétaire). Cinq pages : **Coffre** (dépenser) · **Journal** (genèse, chaîne, preuve Merkle) · **Témoin** (seconde mémoire : une tête, pas les clés) · **Arbre** · **Guide**.
+| Page | Rôle |
+|---|---|
+| **Coffre** | Solde, envoyer, sauver `eidos.carnet` |
+| **Journal** | Genèse, chaîne, preuve Merkle |
+| **Témoin** | Seconde mémoire : une tête, pas les clés |
+| **Arbre** | Carte des régimes, pas une preuve |
+| **Reliques** | Kali 2,10 · Satya 33,55. Creuser, acheter, sauver |
+| **Glyphes** | 64 empilements, bourrage refusé |
+| **Signes** | Lectures des mêmes 64 |
+| **Guide** | Mode d'emploi |
 
-- Coffre : glouton ≤ 3, poussière < 10 000 atomes, signatures Lamport à usage unique.
-- Journal : la racine du carnet s'ancre dans la tête de chaîne (bloc 0 = genèse, bits 0 ensuite).
-- Témoin : exporter la tête (JSON ou lien). Un autre appareil juge une preuve si `preuve.racine` est celle de sa tête. Pas un nœud réseau.
-- Arbre : 20 premiers, 10 paliers, 33 secteurs. Les sorties s'ancrent par hachage d'adresse — ce n'est pas un Merkle d'émission.
-
-Détail : `atelier/README.md`.
-
-Live : [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/) (GitHub Pages, export statique).
-
-```bash
-cd atelier
-npm install
-npm test
-npm run dev
-npm run build:pages   # export statique → dist/client
-```
-
----
-
-## Démarrage
-
-Aucune installation. Python 3.9 ou plus récent.
+Détail : [`atelier/README.md`](atelier/README.md). Live : [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/).
 
 ```bash
-python3 verify_genesis.py     # 32 contrôles : la genèse est-elle reproductible ?
-python3 utxo.py               # 11 contrôles : carnet et signatures
-python3 federation.py --demo  # 14 blocs, deux tours de rotation
+python3 verify_genesis.py     # 32 contrôles
+python3 utxo.py               # 11 contrôles
+python3 federation.py --demo  # vivacité, rotation
+cd atelier && npm test && npm run dev
 ```
 
-Persistance :
+### Ce que ce dépôt ne fait pas
 
-```bash
-python3 store.py --init
-python3 store.py --mine 3
-python3 store.py --pay
-python3 store.py --verify     # rejeu intégral depuis chaine.dat
-```
+- **Pas de réseau.** Ni pairs, ni résolution de fork réelle.
+- **Pas de stockage de clés sécurisé.** La graine est en clair dans le fichier.
+- **Pas d'audit externe.** Lamport et Merkle sont des implémentations maison.
+- **Une fédération n'est pas sans confiance.** `n` signataires connus peuvent s'entendre.
+- **La question ouverte est la gouvernance**, pas la cryptographie.
+- **Cadre réglementaire.** Prototyper est libre ; émettre et distribuer relève de MiCA dans l'UE.
 
-Sans dépendances ni compilation, le protocole tourne aussi sur téléphone : sous iOS, l'application a-Shell fournit un Python 3 complet et suffit à exécuter l'ensemble.
-
-`verify_genesis.py` ne fait confiance à rien. Il reconstruit les quatre tables à partir des seuls paramètres déclarés, recalcule les empreintes, refait la preuve de travail du bloc 0 et recompte les totaux. Modifier l'émission totale d'un seul atome le fait échouer.
-
----
-
-## Ce que ce dépôt ne fait pas
-
-À lire avant tout usage.
-
-- **Pas de réseau.** Ni pairs, ni propagation, ni résolution de fork en conditions réelles.
-- **Pas de stockage de clés sécurisé.** Le fichier de portefeuille contient une graine en clair.
-- **Pas d'audit.** Aucune revue externe, et les schémas Lamport et Merkle sont ici des implémentations maison — corrects sur le papier, non durcis contre les attaques par canal auxiliaire.
-- **Une fédération n'est pas sans confiance.** `n` signataires connus peuvent s'entendre, ou être contraints par la même juridiction. Eidos échange la résistance à la censure contre la sobriété. C'est un choix politique autant que technique, et il doit être assumé publiquement.
-- **La question ouverte est la gouvernance**, pas la cryptographie : qui sont les validateurs, comment l'ensemble évolue, qui arbitre.
-- **Cadre réglementaire.** Une émission publique relève de MiCA dans l'Union européenne. Prototyper et horodater est libre ; émettre et distribuer ne l'est pas.
-
----
-
-## Antériorité
-
-Les empreintes SHA-256 ci-dessus sont destinées à être ancrées auprès d'un tiers horodateur — OpenTimestamps, service RFC 3161, ou dépôt e-Soleau de l'INPI, qui n'exige que l'empreinte et non le contenu. Une date inscrite dans un fichier ne prouve rien par elle-même.
-
----
-
-## Licence
+### Licence
 
 [Apache License 2.0](LICENSE). Copyright 2026 Jeremy Zgonec.
 
-Une chaîne dont personne ne peut auditer les règles de consensus est
-difficile à faire adopter : le protocole est lisible, et la licence le reste.
+---
+
+## English
+
+The unit is the **eidôlon** (εἴδωλον, the image) against *eidos* (εἶδος, the form). The form is the rule; the image is what circulates. 1 eidôlon = 10⁸ atoms.
+
+### Five claims
+
+1. **The reward never halves.** It oscillates on a bounded cosine; an epoch sums to the atom.
+2. **The week is not a convention.** 24 = 3 × 7 + 3. That remainder of three orders the days and rotates proposers.
+3. **An address is readable.** Three stacked figures, six bits per glyph, a checksum the eye can check.
+4. **Energy is bounded by consensus, not by the reward.** Proof of work never caps energy; a federation can.
+5. **Nothing is trusted, everything is replayed.** The UTXO ledger is never stored: it is rebuilt by full replay on every open.
+
+### Emission
+
+`R(h) = a + b·cos(2π(h − h₀)/T)` with `b = a/2`, `T = 1008`, `h₀ = 492`. Epoch sum = `a·T` exactly. Four ages (Satya 40, Trétâ 30, Dvâpara 20, Kali 10), ratio **16 : 9 : 4 : 1**. Total **62 899 200** eidôla over ≈ 39.9 years.
+
+Cosine is `decimal.Decimal`, not `math.cos` (libm would split the chain). Tables are frozen in `genesis.json`. Changing `eonis.py`, even a comment, invalidates genesis.
+
+Atelier relic prices = age emission / 1 000 000: **Kali 2.10 · Satya 33.55**.
+
+### Glyphs
+
+Three storeys, four states (empty, circle, crescent, cross). 6 bits per glyph. Address = 27 payload + 4 checksum. Padding bits of the 27th glyph must be zero or the address is refused. Do not derive keys from this alphabet.
+
+### Signatures
+
+SHA-256 only. **No elliptic curves.** Quantum resistance is structural.
+
+- **Lamport** for spends. 16 384-byte public key, 8 192-byte signature. A key signs **once**. The wallet emits a fresh address after every use.
+- **Merkle (reduced XMSS)** for validators. Stateful: restoring an old snapshot replays published indices.
+
+Lamport signs a **spend**, not the snapshot. Signing `eidos.carnet` would burn a one-time key.
+
+### Federated consensus
+
+`n` validators, 600 s slots. Proposer of slot `s`: `V[(3·s) mod n]`. `n` divisible by three is rejected.
+
+**Finality:** `⌊2n/3⌋ + 1`, **decoupled from the rotation step**. Seven validators → five signatures.
+
+**Liveness:** a slot `s > slot(now) + 1` is refused. Without that bound, one future-dated block freezes the chain. Skipping a slot (silence) remains legal. Holes are published (`creneaux_sautes`). At most six slots are caught up per run.
+
+### Unique file — `eidos.carnet`
+
+One file holds the seed, coins, relics and chain.
+
+- Trace = SHA-256d, bound to the current Lamport address (seed + index).
+- No curve. This is not Eidolon’s holographic vault.
+- A legacy Eidos JSON `.psnx` still opens, then rewrites as `.carnet`.
+
+### Layout
+
+Python spec at the repo root (`eonis.py`, `utxo.py`, `federation.py`, `noeud.py`, …). Web atelier in `atelier/` (testnet, no monetary value): vault, log, witness, tree, relics, glyphs, guide.
+
+```bash
+python3 verify_genesis.py
+python3 utxo.py
+python3 federation.py --demo
+cd atelier && npm test && npm run dev
+```
+
+Live: [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/).
+
+### What this repository is not
+
+No peer network. No hardened key store (the seed is plaintext). No external audit. A federation of known signers can collude. Governance is the open question, not cryptography. Prototyping is free; issuing and distributing a public token is not (MiCA in the EU).
+
+### Licence
+
+[Apache License 2.0](LICENSE). Copyright 2026 Jeremy Zgonec.
 
 ---
 

@@ -1,7 +1,7 @@
 {
-  "name": "Eidos — portefeuille",
+  "name": "Eidos",
   "short_name": "Eidos",
-  "description": "Portefeuille et client léger Eidos : adresses en glyphes à trois figures, courbe d'émission.",
+  "description": "Eidos — chaîne fédérée post-quantique. Lamport, glyphes, eidos.carnet. / Post-quantum federated ledger.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

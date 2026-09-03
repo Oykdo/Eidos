@@ -17,7 +17,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Portefeuille Eidos — signatures Lamport, usage unique, sélection des sorties.",
+          "Eidos — Lamport, glyphes, eidos.carnet. Post-quantum federated ledger.",
       },
     ],
     links: [
