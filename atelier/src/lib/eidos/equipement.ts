@@ -21,6 +21,7 @@ import type {
 export type { Affixe, Emplacement, EmplacementArmure, Genre };
 
 export const GENRES = [
+  "trouve",
   "pierre",
   "arme",
   "armure",
@@ -119,6 +120,7 @@ export function nomDe(genre: Genre, emplacement: Emplacement | null, roll: numbe
   if (genre === "pierre" || genre === "gemme") return affixeDe(roll);
   if (genre === "lair") return `lair-${1 + (roll % 3)}`;
   if (genre === "philosophale") return "philosophale";
+  if (genre === "trouve") return "trouve";
   return genre;
 }
 

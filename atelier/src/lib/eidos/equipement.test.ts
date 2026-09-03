@@ -19,6 +19,7 @@ import {
   peutPhilosopher,
   tourner,
 } from "./equipement.ts";
+import { normaliserObjets } from "./inventaire.ts";
 import type { ObjetPorte } from "./types.ts";
 
 const GRAINE = sha256d(utf8("eidos-objet-genese"));
@@ -33,8 +34,16 @@ function piece(over: Partial<ObjetPorte> = {}): ObjetPorte {
 }
 
 describe("équipement", () => {
-  it("six genres, neuf emplacements d'armure, sept armes, six affixes", () => {
-    assert.deepEqual([...GENRES], ["pierre", "arme", "armure", "gemme", "philosophale", "lair"]);
+  it("sept genres, neuf emplacements d'armure, sept armes, six affixes", () => {
+    assert.deepEqual([...GENRES], [
+      "trouve",
+      "pierre",
+      "arme",
+      "armure",
+      "gemme",
+      "philosophale",
+      "lair",
+    ]);
     assert.equal(EMPLACEMENTS_ARMURE.length, 9);
     assert.equal(NOMS_ARME.length, 7);
     assert.equal(AFFIXES.length, 6);
@@ -102,5 +111,23 @@ describe("équipement", () => {
     assert.equal(peutPhilosopher({ ...base, n: 11 }), false);
     assert.equal(peutPhilosopher({ ...base, nature: "atelier" }), false);
     assert.equal(peutPhilosopher({ ...base, philosophale: "Lame" }), false);
+  });
+
+  it("objet nu : mot intact, genre trouve, jauge stable", () => {
+    const nu = {
+      mot: objetDepuisGraine(GRAINE, "Satya").mot,
+      archetype: "saturne",
+      age: "Satya" as const,
+      nonce: 1,
+      hauteur: 4,
+    };
+    const a = normaliserObjets([nu])[0]!;
+    const b = normaliserObjets([nu])[0]!;
+    assert.equal(a.mot, nu.mot);
+    assert.equal(a.genre, "trouve");
+    assert.deepEqual(a, b);
+    const arme = normaliserObjets([{ ...a, genre: "arme" }])[0]!;
+    assert.equal(arme.genre, "arme");
+    assert.equal(arme.mot, nu.mot);
   });
 });

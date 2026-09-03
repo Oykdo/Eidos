@@ -41,7 +41,7 @@ export type NatureCoffre = "atelier" | "personnel";
 
 export type NomAge = "Satya" | "Treta" | "Dvapara" | "Kali";
 
-export type Genre = "pierre" | "arme" | "armure" | "gemme" | "philosophale" | "lair";
+export type Genre = "trouve" | "pierre" | "arme" | "armure" | "gemme" | "philosophale" | "lair";
 export type EmplacementArmure =
   | "casque"
   | "plastron"

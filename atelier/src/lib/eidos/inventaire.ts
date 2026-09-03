@@ -12,7 +12,7 @@ import { fromHex, utf8 } from "./hash.ts";
 import { objetDepuisGraine, graineTirage, racineObjets, type Objet } from "./objets.ts";
 import { SIGNATURES, type SignatureId } from "./signatures.ts";
 import type { Affixe, Coffre, NomAge, ObjetPorte } from "./types.ts";
-import { AFFIXES, habille } from "./equipement.ts";
+import { AFFIXES, GENRES, habille } from "./equipement.ts";
 
 export function estObjetPorte(x: unknown): x is ObjetPorte {
   if (!x || typeof x !== "object") return false;
@@ -47,7 +47,7 @@ export function normaliserObjets(xs: unknown): ObjetPorte[] {
         },
         mot,
         {
-          genre: x.genre,
+          genre: x.genre && (GENRES as readonly string[]).includes(x.genre) ? x.genre : "trouve",
           emplacement: x.emplacement,
           affixe: x.affixe && (AFFIXES as readonly string[]).includes(x.affixe) ? (x.affixe as Affixe) : null,
           sockets: x.sockets,
