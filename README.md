@@ -129,11 +129,14 @@ Le répertoire `atelier/` est l'interface (réseau d'essai, sans valeur monétai
 
 Détail : `atelier/README.md`.
 
+Live : [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/) (GitHub Pages, export statique).
+
 ```bash
 cd atelier
 npm install
 npm test
 npm run dev
+npm run build:pages   # export statique → dist/client
 ```
 
 ---

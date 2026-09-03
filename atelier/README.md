@@ -104,6 +104,8 @@ npm test
 npm run dev
 ```
 
+**Pages.** [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/) — export statique (`npm run build:pages`). Base `/Eidos/`. Le preview Grok reste un build Vercel.
+
 ---
 
 ## Contrôles
