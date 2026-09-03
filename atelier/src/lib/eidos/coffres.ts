@@ -54,6 +54,10 @@ export const COFFRE_FOND = {
   palette: PALETTE_FOND,
 };
 
+/** Serrure, repère local du coffre (z avant, y milieu). Origine de la cage. */
+export const SERRURE_LOCALE = [0, 0.15, 0.6] as const;
+export const COUVERCLE_Y = 0.75;
+
 /** z = exp(-(x² + y²)) — socle. */
 export function gaussienne(x: number, y: number): number {
   return Math.exp(-(x * x + y * y));
@@ -264,5 +268,15 @@ export function voxelsOrnementSpherique(): VoxelOrnement[] {
     }
   }
   return [...m.values()];
+}
+
+/** Tas sur le couvercle — cellules entières au-dessus de y = 3. */
+export function voxelsTasCouvercle(): { x: number; y: number; z: number }[] {
+  const out: { x: number; y: number; z: number }[] = [];
+  for (let x = -1; x <= 1; x++) {
+    for (let z = -1; z <= 1; z++) out.push({ x, y: 4, z });
+  }
+  out.push({ x: 0, y: 5, z: 0 });
+  return out;
 }
 

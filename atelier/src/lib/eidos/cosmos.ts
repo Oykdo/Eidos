@@ -2,11 +2,13 @@
  * eidos-objets/1 — quaternions entiers, norme 10⁸.
  * Aucun flottant dans l'invariant. BigInt partout.
  * Le mot u32 de objets.ts reste l'affichage atelier ; ceci est le catalogue.
+ * Source des 101 : objets.py --json → cosmos-empreintes.ts. Ne pas régénérer.
  */
 
 import { concat, hexOf, sha256d, u32, utf8 } from "./hash.ts";
+import { ATOMES } from "./constantes.ts";
 
-export const NORME = 100_000_000n;
+export const NORME = BigInt(ATOMES);
 export const RACINE = 10_000n;
 export const GRAINE_COSMOS = utf8("eidos-objets-cosmos-v1");
 export const TAG_GRIND = utf8("eidos-grind/1");
@@ -181,6 +183,33 @@ export function ascendant(i: number): number {
 }
 
 export const CYCLE_FEDERATION = [0, 3, 6, 2, 5, 1, 4] as const;
+
+/**
+ * Paliers du catalogue — multiplient les tirages, jamais la norme.
+ * Distincts du poste du jour (jauge locale, POSTE_JOUR).
+ * Fondateur / Pionnier : rangs > 100, grind, pas les 101.
+ */
+export const PALIERS_OBJET = [
+  { nom: "Origine", lo: 0, hi: 0, tiragesMilliemes: 0 },
+  { nom: "Supreme", lo: 1, hi: 33, tiragesMilliemes: 2500 },
+  { nom: "Elite", lo: 34, hi: 100, tiragesMilliemes: 1500 },
+] as const;
+
+export type PalierObjet = (typeof PALIERS_OBJET)[number]["nom"];
+
+export function palierDe(rang: number): (typeof PALIERS_OBJET)[number] {
+  for (const p of PALIERS_OBJET) {
+    if (rang >= p.lo && rang <= p.hi) return p;
+  }
+  return PALIERS_OBJET[PALIERS_OBJET.length - 1]!;
+}
+
+/** Legendre : n = b²+c²+d² ⇔ n n'est pas 4^k(8m+7). */
+export function sommeDeTroisCarres(n: bigint): boolean {
+  let x = n;
+  while (x > 0n && x % 4n === 0n) x /= 4n;
+  return x % 8n !== 7n;
+}
 
 /** Depuis l'ascendant de la cible : deux compositions par tour. */
 export function coupsParTour(regimeAttaquant: Regime, regimeCible: Regime): 1 | 2 {

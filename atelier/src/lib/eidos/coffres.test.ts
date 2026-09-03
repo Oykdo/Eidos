@@ -8,6 +8,7 @@ import {
   PALETTE_FOND,
   SPHERE_P,
   SPHERE_R,
+  SERRURE_LOCALE,
   amplitudeDuSolde,
   cartesiens,
   gaussienne,
@@ -15,6 +16,7 @@ import {
   soldeAtomes,
   teinte,
   voxelsOrnementSpherique,
+  voxelsTasCouvercle,
 } from "./coffres.ts";
 
 describe("coffres 3D — audit", () => {
@@ -78,5 +80,11 @@ describe("coffres 3D — audit", () => {
     assert.equal(vs.length, 265);
     assert.ok(vs.some((v) => v.kind === "rayon"));
     assert.ok(vs.some((v) => v.x === SPHERE_P[0] && v.y === SPHERE_P[1] && v.z === SPHERE_P[2] && v.kind === "point"));
+  });
+
+  it("la serrure est sur la face avant, le tas a 10 voxels", () => {
+    assert.equal(SERRURE_LOCALE[2], 0.6);
+    assert.ok(SERRURE_LOCALE[2] > 0);
+    assert.equal(voxelsTasCouvercle().length, 10);
   });
 });

@@ -14,11 +14,14 @@ import {
   coupsParTour,
   empreinteNoyau,
   graineGrind,
+  impactDepuis,
   norme2,
   orientationGrind,
+  palierDe,
   parer,
   produit,
   quadrupleDepuis,
+  sommeDeTroisCarres,
   troisCarres,
 } from "./cosmos.ts";
 
@@ -36,12 +39,28 @@ describe("eidos-objets/1 cosmos", () => {
   });
 
   it("troisCarres : même ordre, d entier", () => {
-    const r = NORME - 5000n * 5000n;
+    const r = 49n;
     const reps = troisCarres(r);
     assert.ok(reps.length > 0);
     for (const [b, c, d] of reps) {
       assert.equal(b * b + c * c + d * d, r);
     }
+  });
+
+  it("9945 vise un reste 8m+7 : la spirale saute", () => {
+    const vise = 9945n;
+    assert.equal(sommeDeTroisCarres(NORME - vise * vise), false);
+    const q = impactDepuis(utf8("impact-test"), 9945);
+    assert.equal(norme2(q), NORME);
+    assert.equal(sommeDeTroisCarres(NORME - q[0] * q[0]), true);
+  });
+
+  it("paliers : tirages, pas la norme", () => {
+    assert.equal(palierDe(0).tiragesMilliemes, 0);
+    assert.equal(palierDe(1).tiragesMilliemes, 2500);
+    assert.equal(palierDe(33).nom, "Supreme");
+    assert.equal(palierDe(34).nom, "Elite");
+    assert.equal(palierDe(100).tiragesMilliemes, 1500);
   });
 
   it("quadruple : norme exacte, q = −q", () => {

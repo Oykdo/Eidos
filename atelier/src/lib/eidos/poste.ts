@@ -4,6 +4,9 @@
  * ∫∫ e^{-(x²+y²)} dx dy = π. Un jour, POSTE_JOUR blocs.
  * Hors invariant : le réseau n'en sait rien. Jauge locale, coffre personnel.
  * L'atelier public reste sans plafond (démonstration).
+ *
+ * Autre robinet : PALIERS_OBJET.tiragesMilliemes (2500 ‰ / 1500 ‰) —
+ * rareté du catalogue, pas du calendrier. Ne pas les fusionner.
  */
 
 import type { Coffre } from "./types.ts";

@@ -1,7 +1,8 @@
 /**
  * Scène muette des deux coffres.
  * Formules : docs/SPEC_AUDIT_COFFRES.md et lib/eidos/coffres.ts.
- * L'amplitude vient du solde réel du carnet.
+ * Cage (r,θ,φ) née sur la serrure du coffre de fond.
+ * Fond atelier, pas parchemin — écart volontaire, noté dans l'audit.
  */
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -16,9 +17,11 @@ import {
 import {
   COFFRE_AVANT,
   COFFRE_FOND,
+  SERRURE_LOCALE,
   gaussienne,
   ORNEMENT_TEINTE,
   voxelsOrnementSpherique,
+  voxelsTasCouvercle,
   type Palette8,
 } from "@/lib/eidos/coffres.ts";
 
@@ -50,18 +53,17 @@ function Gaussienne({ amplitude }: { amplitude: number }) {
 
 function CoffreVoxel({
   palette,
-  scale,
-  position,
+  serrure,
+  or,
 }: {
   palette: Palette8;
-  scale: number;
-  position: readonly [number, number, number];
+  serrure: number;
+  or: number;
 }) {
-  const group = useRef<THREE.Group>(null);
   const mesh = useMemo(() => {
     const geo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
     const mat = new THREE.MeshStandardMaterial({
-      color: palette[4],
+      color: "#ffffff",
       roughness: 0.42,
       metalness: 0.55,
     });
@@ -79,11 +81,17 @@ function CoffreVoxel({
           let i = 4;
           if (couvercle) i = 2;
           if (ay === 3 && ax <= 1 && az === 3) i = 1;
-          if (ax === 0 && y === 0 && az === 3) i = 0;
+          if (ax === 0 && y === 0 && az === 3) i = serrure;
           if (ax === 4 && ay <= 1) i = 6;
           cells.push({ p: new THREE.Vector3(x * 0.2, y * 0.2 + 0.15, z * 0.2), i });
         }
       }
+    }
+    for (const v of voxelsTasCouvercle()) {
+      cells.push({
+        p: new THREE.Vector3(v.x * 0.16, v.y * 0.16 + 0.12, v.z * 0.16),
+        i: or,
+      });
     }
     const inst = new THREE.InstancedMesh(geo, mat, cells.length);
     cells.forEach((c, n) => {
@@ -95,29 +103,18 @@ function CoffreVoxel({
     inst.instanceMatrix.needsUpdate = true;
     if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     return inst;
-  }, [palette]);
+  }, [palette, serrure, or]);
 
-  useFrame((_, dt) => {
-    if (!group.current) return;
-    group.current.rotation.y += Math.min(dt, 0.08) * 0.12;
-  });
-
-  return (
-    <group ref={group} position={[...position]} scale={scale}>
-      <primitive object={mesh} />
-    </group>
-  );
+  return <primitive object={mesh} />;
 }
 
-function SphereCoords({ amplitude }: { amplitude: number }) {
-  const group = useRef<THREE.Group>(null);
+function CageSerrure() {
   const mesh = useMemo(() => {
     const vs = voxelsOrnementSpherique();
     const geo = new THREE.BoxGeometry(0.92, 0.92, 0.92);
     const mat = new THREE.MeshStandardMaterial({
       roughness: 0.35,
       metalness: 0.55,
-      vertexColors: false,
     });
     const inst = new THREE.InstancedMesh(geo, mat, vs.length);
     const dummy = new THREE.Object3D();
@@ -131,19 +128,37 @@ function SphereCoords({ amplitude }: { amplitude: number }) {
     if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     return inst;
   }, []);
+  return (
+    <group position={[...SERRURE_LOCALE]} scale={0.085}>
+      <primitive object={mesh} />
+    </group>
+  );
+}
 
+function GroupeCoffre({
+  palette,
+  scale,
+  position,
+  serrure,
+  or,
+  cage,
+}: {
+  palette: Palette8;
+  scale: number;
+  position: readonly [number, number, number];
+  serrure: number;
+  or: number;
+  cage: boolean;
+}) {
+  const group = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
     if (!group.current) return;
-    group.current.rotation.y += Math.min(dt, 0.08) * 0.18;
+    group.current.rotation.y += Math.min(dt, 0.08) * (cage ? 0.1 : 0.06);
   });
-
   return (
-    <group
-      ref={group}
-      position={[0, 0.95 + amplitude * 0.35, -0.35]}
-      scale={0.11 + amplitude * 0.02}
-    >
-      <primitive object={mesh} />
+    <group ref={group} position={[...position]} scale={scale}>
+      <CoffreVoxel palette={palette} serrure={serrure} or={or} />
+      {cage ? <CageSerrure /> : null}
     </group>
   );
 }
@@ -156,6 +171,7 @@ export default function CoffreScene({
 }) {
   const visible = useOngletVisible();
   const echelle = 0.72 + amplitude * 0.38;
+  const pic = gaussienne(0, 0) * (0.55 + amplitude);
   return (
     <Canvas
       className="absolute inset-0 h-full w-full touch-none"
@@ -174,24 +190,21 @@ export default function CoffreScene({
       />
       <directionalLight position={[-4, 3, -3]} intensity={0.35} color="#8FCBFF" />
       <Gaussienne amplitude={amplitude} />
-      <SphereCoords amplitude={amplitude} />
-      <CoffreVoxel
+      <GroupeCoffre
         palette={COFFRE_FOND.palette}
         scale={COFFRE_FOND.scale * echelle}
-        position={[
-          COFFRE_FOND.position[0],
-          0.55 + amplitude * 0.55,
-          COFFRE_FOND.position[2],
-        ]}
+        position={[COFFRE_FOND.position[0], pic + 0.15, COFFRE_FOND.position[2]]}
+        serrure={7}
+        or={0}
+        cage
       />
-      <CoffreVoxel
+      <GroupeCoffre
         palette={COFFRE_AVANT.palette}
         scale={COFFRE_AVANT.scale * echelle}
-        position={[
-          COFFRE_AVANT.position[0],
-          0.18 + amplitude * 0.22,
-          COFFRE_AVANT.position[2],
-        ]}
+        position={[COFFRE_AVANT.position[0], 0.12 + amplitude * 0.18, COFFRE_AVANT.position[2]]}
+        serrure={1}
+        or={1}
+        cage={false}
       />
     </Canvas>
   );
