@@ -29,6 +29,7 @@ import {
 import { exporterCarnet, ouvrirFichier } from "./eidos/carnet.ts";
 import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
 import { tirerDansCoffre, normaliserObjets, signatureDe } from "./eidos/inventaire.ts";
+import { peutMiner } from "./eidos/poste.ts";
 
 const KEY = "eidos-coffre-v2";
 const KEY_TEMOIN = "eidos-temoin-v1";
@@ -250,7 +251,12 @@ export const useCoffre = create<Etat>((set, get) => ({
   },
 
   miner: () => {
-    const next = minerCoffre(get().coffre);
+    const actuel = get().coffre;
+    if (!peutMiner(actuel)) {
+      set({ erreur: t("inv.epuise"), flash: null });
+      return;
+    }
+    const next = minerCoffre(actuel);
     persister(next);
     const tip = next.chaine[next.chaine.length - 1]!;
     set({

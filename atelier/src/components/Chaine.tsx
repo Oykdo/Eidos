@@ -12,6 +12,7 @@ import {
 import { useCoffre } from "@/lib/store.ts";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n.ts";
+import { posteDe } from "@/lib/eidos/poste.ts";
 
 const MOTIF: Record<string, string> = {
   genese: "genèse",
@@ -31,6 +32,8 @@ export function Chaine() {
   const coffre = useCoffre((s) => s.coffre);
   const miner = useCoffre((s) => s.miner);
   const flash = useCoffre((s) => s.flash);
+  const erreur = useCoffre((s) => s.erreur);
+  const poste = posteDe(coffre);
   const ch = coffre.chaine ?? [];
   const tip = tete(ch);
   const controles = verifierChaine(coffre);
@@ -79,10 +82,12 @@ export function Chaine() {
         </p>
       ) : null}
 
-      <Button type="button" className="mb-4" onClick={() => void miner()}>
+      <Button type="button" className="mb-4" disabled={poste.restant <= 0} onClick={() => void miner()}>
         {t("mine.bouton", { r: formaterAtomes(suivant) })}
       </Button>
-      {flash ? (
+      {erreur ? (
+        <p className="mb-3 font-mono text-sm text-fer">{erreur}</p>
+      ) : flash ? (
         <p className="mb-3 font-mono text-sm text-cuivre">{flash}</p>
       ) : null}
 

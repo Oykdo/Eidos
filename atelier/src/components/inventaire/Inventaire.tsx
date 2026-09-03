@@ -10,6 +10,7 @@ import { sceauObjet } from "@/lib/eidos/objets.ts";
 import { combatDe, COMBAT_AXES, COMBAT_BUDGET } from "@/lib/eidos/combat.ts";
 import { ageOf, rewardAt } from "@/lib/eidos/eonis.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
+import { posteDe, POSTE_JOUR } from "@/lib/eidos/poste.ts";
 import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";
 
 const VoxelCanvas = lazy(() => import("./VoxelCanvas"));
@@ -27,6 +28,8 @@ export function Inventaire() {
   const suivant = rewardAt(h + 1);
   const deja = objets.some((o) => o.hauteur === h);
   const age = ageOf(h + 1);
+  const poste = posteDe(coffre);
+  const epuise = poste.restant <= 0;
   const [sel, setSel] = useState<number | null>(null);
   const [gl, setGl] = useState(false);
   const reduced = usePrefersReducedMotion();
@@ -50,9 +53,12 @@ export function Inventaire() {
           r: formaterAtomes(suivant),
         })}
       </p>
+      <p className="mt-1 font-mono text-[11px] text-sourd">
+        {t("inv.poste", { n: poste.borne ? poste.restant : POSTE_JOUR, max: POSTE_JOUR })}
+      </p>
 
       <div className="mt-4 flex flex-col gap-2">
-        <Button type="button" variant="or" onClick={() => miner()}>
+        <Button type="button" variant="or" disabled={epuise} onClick={() => miner()}>
           {t("inv.miner", { r: formaterAtomes(suivant) })}
         </Button>
         <Button type="button" variant="discret" disabled={deja} onClick={() => tirer()}>
