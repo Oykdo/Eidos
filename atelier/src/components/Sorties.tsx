@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { ATOMES } from "@/lib/eidos/constantes.ts";
-import { artefactDeGoutte, SIGNATURES } from "@/lib/eidos/signatures.ts";
+import { artefactDeGoutte, preuveArtefact, SIGNATURES } from "@/lib/eidos/signatures.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { GlyphAddress } from "./GlyphAddress";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n.ts";
 
 export function Sorties() {
   const { t } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
+  const [copie, setCopie] = useState<string | null>(null);
   if (!coffre) return null;
   const sorties = [...coffre.sorties].sort((a, b) => b.montant - a.montant);
   if (sorties.length === 0) return null;
@@ -35,6 +38,22 @@ export function Sorties() {
                 ) : null}
               </p>
               <GlyphAddress hexa={s.adresse} compact />
+              {oeuf ? (
+                <Button
+                  type="button"
+                  variant="discret"
+                  size="sm"
+                  className="mt-2 w-auto"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(
+                      JSON.stringify(preuveArtefact(oeuf), null, 1),
+                    );
+                    setCopie(s.ref);
+                  }}
+                >
+                  {copie === s.ref ? t("sig.copie") : t("sig.preuve")}
+                </Button>
+              ) : null}
             </li>
           );
         })}

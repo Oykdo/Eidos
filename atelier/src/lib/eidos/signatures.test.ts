@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { FIGURES } from "./constantes.ts";
-import { SIGNATURES, TRIA_PRIMA, artefactDeGoutte, codeDe, figuresDe } from "./signatures.ts";
+import {
+  SIGNATURES,
+  TRIA_PRIMA,
+  artefactDeGoutte,
+  codeDe,
+  figuresDe,
+  parserPreuveArtefact,
+  preuveArtefact,
+  verifierPreuveArtefact,
+} from "./signatures.ts";
 
 describe("signatures planétaires", () => {
   it("neuf lectures, pas un 5ᵉ glyphe", () => {
@@ -49,7 +58,21 @@ describe("signatures planétaires", () => {
     const lune = artefactDeGoutte("00".repeat(32), adresse);
     assert.equal(lune?.id, "lune");
     assert.equal(lune?.code, 42);
+    assert.equal(lune?.digest.length, 64);
     assert.equal(artefactDeGoutte("00".repeat(31) + "02", adresse), null);
     assert.equal(artefactDeGoutte("ab", adresse), null);
+  });
+
+  it("preuve d'artefact : se rejoue, un étage changé rompt", () => {
+    const a = artefactDeGoutte("00".repeat(32), "11".repeat(20))!;
+    const p = preuveArtefact(a);
+    const ok = verifierPreuveArtefact(p);
+    assert.equal(ok.ok, true);
+    const lu = parserPreuveArtefact(JSON.stringify(p));
+    assert.ok(!("erreur" in lu));
+    const faux = { ...p, id: "mars" as const, code: 63 };
+    assert.equal(verifierPreuveArtefact(faux).ok, false);
+    const digestFaux = { ...p, digest: "00".repeat(32) };
+    assert.equal(verifierPreuveArtefact(digestFaux).ok, false);
   });
 });

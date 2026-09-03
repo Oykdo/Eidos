@@ -15,6 +15,7 @@ export type ArtefactReseau = {
   code: number;
   txid: string;
   adresse: string;
+  digest?: string;
 };
 
 export type EtatReseau = {
@@ -47,14 +48,26 @@ export function parserEtat(raw: unknown): EtatReseau {
   const artefacts: ArtefactReseau[] = [];
   if (Array.isArray(o.artefacts)) {
     for (const x of o.artefacts) {
-      const a = x as { id?: unknown; code?: unknown; txid?: unknown; adresse?: unknown };
+      const a = x as {
+        id?: unknown;
+        code?: unknown;
+        txid?: unknown;
+        adresse?: unknown;
+        digest?: unknown;
+      };
       if (
         typeof a.id === "string" &&
         typeof a.code === "number" &&
         typeof a.txid === "string" &&
         typeof a.adresse === "string"
       ) {
-        artefacts.push({ id: a.id, code: a.code, txid: a.txid, adresse: a.adresse });
+        artefacts.push({
+          id: a.id,
+          code: a.code,
+          txid: a.txid,
+          adresse: a.adresse,
+          digest: typeof a.digest === "string" ? a.digest : undefined,
+        });
       }
     }
   }

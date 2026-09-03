@@ -273,10 +273,13 @@ def artefact_de_goutte(txid: bytes, adresse: bytes):
     if ident is None:
         return None
     return {
+        "v": 1,
+        "spec": "eidos-artefact/1",
         "id": ident,
         "code": code,
         "txid": txid.hex(),
         "adresse": adresse.hex(),
+        "digest": h.hex(),
     }
 
 
@@ -472,8 +475,10 @@ def _test_artefact():
     ad = bytes([0x11]) * 20
     a = artefact_de_goutte(bytes(32), ad)
     assert a and a["id"] == "lune" and a["code"] == 42, a
+    assert a["digest"] == E.sha256d(TAG_ARTEFACT + bytes(32) + ad).hex()
+    assert a["spec"] == "eidos-artefact/1"
     assert artefact_de_goutte((2).to_bytes(32, "big"), ad) is None
-    print("ok : artefact robinet (lune / muet)")
+    print("ok : artefact robinet (lune / preuve / muet)")
 
 
 # ==========================================================================

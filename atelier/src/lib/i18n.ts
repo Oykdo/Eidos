@@ -239,6 +239,14 @@ export const FR = {
   "sig.pas":
     "9 ne divise pas 33. Une muse n'est pas un palier. Clio : ce qui est déjà écrit et qu'on relit.",
   "sig.trouve": "trouvaille",
+  "sig.preuve": "Copier la preuve",
+  "sig.copie": "Copiée",
+  "sig.juger": "Juger une découverte",
+  "sig.jugerLede":
+    "Coller la preuve. On rejoue sha256d(tag‖txid‖adresse). Ce n'est pas une inclusion Merkle.",
+  "sig.rejouer": "Rejouer",
+  "sig.intacte": "Découverte intacte · {muse}",
+  "sig.rompue": "Preuve rompue. Ce n'est pas une glyphe du chœur, ou le digest ment.",
   "sig.uranie": "Étoiles fixes. Continuité — ce qui ne se divise pas.",
   "sig.saturne": "Le temps qui pèse. Croix sur le vide.",
   "sig.jupiter": "L'expansion. Le cercle, deux fois, puis le vide.",
@@ -510,6 +518,14 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "sig.pas":
     "9 does not divide 33. A muse is not a tier. Clio: what is already written, and reread.",
   "sig.trouve": "find",
+  "sig.preuve": "Copy the proof",
+  "sig.copie": "Copied",
+  "sig.juger": "Judge a find",
+  "sig.jugerLede":
+    "Paste the proof. Replay sha256d(tag‖txid‖address). This is not a Merkle inclusion.",
+  "sig.rejouer": "Replay",
+  "sig.intacte": "Find intact · {muse}",
+  "sig.rompue": "Broken proof. Not a choir glyph, or the digest lies.",
   "sig.uranie": "Fixed stars. Continuity — that which does not divide.",
   "sig.saturne": "Time that weighs. Cross over void.",
   "sig.jupiter": "Expansion. The circle, twice, then void.",

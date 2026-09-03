@@ -2,8 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { GlypheSvg } from "@/components/Mark";
-import { SIGNATURES, TRIA_PRIMA, codeDe, type Signature } from "@/lib/eidos/signatures.ts";
+import {
+  SIGNATURES,
+  TRIA_PRIMA,
+  codeDe,
+  parserPreuveArtefact,
+  verifierPreuveArtefact,
+  type Signature,
+} from "@/lib/eidos/signatures.ts";
 import { chargerEtat } from "@/lib/arbre/etat.ts";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 
@@ -41,6 +49,8 @@ export function Signatures() {
   const { t } = useI18n();
   const [sel, setSel] = useState<Signature["id"]>("lune");
   const [trouves, setTrouves] = useState<Set<string>>(new Set());
+  const [colle, setColle] = useState("");
+  const [verdict, setVerdict] = useState<{ ok: boolean; texte: string } | null>(null);
   const s = SIGNATURES.find((x) => x.id === sel) ?? SIGNATURES[7]!;
 
   useEffect(() => {
@@ -131,6 +141,54 @@ export function Signatures() {
             {t("guide.06b")}
           </Link>
         </p>
+      </section>
+
+      <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
+        <h2 className="font-mono text-base font-normal text-encre">{t("sig.juger")}</h2>
+        <p className="mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
+          {t("sig.jugerLede")}
+        </p>
+        <textarea
+          value={colle}
+          onChange={(e) => {
+            setColle(e.target.value);
+            setVerdict(null);
+          }}
+          rows={8}
+          spellCheck={false}
+          className="mt-3 w-full rounded-sm bg-creux p-3 font-mono text-[11px] text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]"
+          placeholder='{"v":1,"spec":"eidos-artefact/1",…}'
+        />
+        <Button
+          type="button"
+          variant="discret"
+          className="mt-3"
+          onClick={() => {
+            const p = parserPreuveArtefact(colle);
+            if ("erreur" in p) {
+              setVerdict({ ok: false, texte: t("sig.rompue") });
+              return;
+            }
+            const v = verifierPreuveArtefact(p);
+            if (!v.ok) {
+              setVerdict({ ok: false, texte: t("sig.rompue") });
+              return;
+            }
+            const sig = SIGNATURES.find((x) => x.id === v.artefact.id);
+            setVerdict({
+              ok: true,
+              texte: t("sig.intacte", { muse: sig?.muse ?? v.artefact.id }),
+            });
+            setSel(v.artefact.id);
+          }}
+        >
+          {t("sig.rejouer")}
+        </Button>
+        {verdict ? (
+          <p className={cn("mt-3 font-mono text-sm", verdict.ok ? "text-cuivre" : "text-fer")}>
+            {verdict.texte}
+          </p>
+        ) : null}
       </section>
     </Shell>
   );
