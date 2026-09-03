@@ -8,6 +8,9 @@ import type { ObjetPorte } from "@/lib/eidos/types.ts";
 import { objetDePorte, racineDuCoffre, signatureDe } from "@/lib/eidos/inventaire.ts";
 import { sceauObjet } from "@/lib/eidos/objets.ts";
 import { combatDe, COMBAT_AXES, COMBAT_BUDGET } from "@/lib/eidos/combat.ts";
+import { conjugue, produit, type Q } from "@/lib/eidos/cosmos.ts";
+import { memeOrbite, memeRayon } from "@/lib/eidos/groupe.ts";
+import { paireDe, qDeMot, resonanceDe, type Polarite } from "@/lib/eidos/resonance.ts";
 import { ageOf, rewardAt } from "@/lib/eidos/eonis.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { posteDe, POSTE_JOUR } from "@/lib/eidos/poste.ts";
@@ -31,9 +34,11 @@ export function Inventaire() {
   const poste = posteDe(coffre);
   const epuise = poste.restant <= 0;
   const [sel, setSel] = useState<number | null>(null);
+  const [contre, setContre] = useState<number | null>(null);
   const [gl, setGl] = useState(false);
   const reduced = usePrefersReducedMotion();
   const choisi = sel != null ? (objets[sel] ?? null) : (objets[objets.length - 1] ?? null);
+  const autre = contre != null ? (objets[contre] ?? null) : null;
   const racine = useMemo(() => racineDuCoffre(coffre), [coffre]);
 
   useEffect(() => {
@@ -81,12 +86,21 @@ export function Inventaire() {
               <button
                 key={`${o.mot}-${o.hauteur}`}
                 type="button"
-                onClick={() => setSel(i)}
+                onClick={() => {
+                  if (sel === i) {
+                    if (contre != null) setContre(null);
+                    else setSel(null);
+                  } else if (contre === i) setContre(null);
+                  else if (sel == null) setSel(i);
+                  else setContre(i);
+                }}
                 className={cn(
                   "flex min-h-11 flex-col items-center rounded-sm bg-fond px-1 py-2",
                   on
                     ? "shadow-[0_0_0_2px_#c9a227]"
-                    : "shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+                    : contre === i
+                      ? "shadow-[0_0_0_2px_#8a6a32]"
+                      : "shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
                 )}
               >
                 <VoxelIcon objet={o} size={64} />
@@ -128,6 +142,12 @@ export function Inventaire() {
             {choisi.age} · #{choisi.hauteur}
           </pre>
           <CombatBars porte={choisi} />
+          <Resonance
+            objets={objets}
+            i={sel ?? objets.length - 1}
+            j={contre}
+            autre={autre}
+          />
         </div>
       ) : null}
     </section>
@@ -157,4 +177,81 @@ function CombatBars({ porte }: { porte: ObjetPorte }) {
     </div>
   );
 }
+
+function qStr(q: Q): string {
+  return q.map((x) => x.toString()).join("  ");
+}
+
+function libellePolarite(p: Polarite): Msg {
+  if (p === "constructif") return "inv.res.constructif";
+  if (p === "destructif") return "inv.res.destructif";
+  return "inv.res.neutre";
+}
+
+function Resonance({
+  objets,
+  i,
+  j,
+  autre,
+}: {
+  objets: ObjetPorte[];
+  i: number;
+  j: number | null;
+  autre: ObjetPorte | null;
+}) {
+  const { t } = useI18n();
+  const membres = useMemo(
+    () => objets.map((o) => ({ q: qDeMot(o.mot), classe: o.archetype })),
+    [objets],
+  );
+  const a = membres[i];
+  const b = j != null ? membres[j] : null;
+
+  if (objets.length < 2 || !a) {
+    return <p className="mt-3 font-mono text-[11px] text-sourd">{t("inv.res.seul")}</p>;
+  }
+
+  if (autre && b) {
+    const lec = paireDe(a, b, i, j!);
+    const ab = produit(a.q, b.q);
+    const ba = produit(b.q, a.q);
+    const rendu = produit(conjugue(a.q), ab);
+    const paré = memeRayon(rendu, b.q);
+    const orbite = memeOrbite(ab, ba);
+    return (
+      <div className="mt-4 font-mono text-[11px] text-sourd">
+        <p className="text-encre">{t("inv.res.paire")}</p>
+        <p className={lec.polarite === "destructif" ? "text-fer" : "text-cuivre"}>
+          {t(libellePolarite(lec.polarite))}
+        </p>
+        <pre className="mt-2 overflow-x-auto leading-relaxed">
+          {t("inv.res.ab")}
+          {"\n"}
+          {qStr(ab)}
+          {"\n"}
+          {t("inv.res.ba")}
+          {"\n"}
+          {qStr(ba)}
+        </pre>
+        <p className="mt-2">
+          {t("inv.res.orbite")} · {t(orbite ? "inv.res.oui" : "inv.res.non")}
+        </p>
+        <p>{t("inv.res.parer")} · {t(paré ? "inv.res.oui" : "inv.res.non")}</p>
+      </div>
+    );
+  }
+
+  const ens = resonanceDe(membres);
+  return (
+    <div className="mt-4 font-mono text-[11px] text-sourd">
+      <p className="text-encre">{t("inv.res.titre")}</p>
+      <p className="mt-1">{t("inv.res.hint")}</p>
+      <p className="mt-1 text-cuivre">{t("inv.res.tenue", { n: ens.tenue.toString() })}</p>
+      <p>
+        {ens.nConstructif} {t("inv.res.constructif")} · {ens.nDestructif} {t("inv.res.destructif")}
+      </p>
+    </div>
+  );
+}
+
 
