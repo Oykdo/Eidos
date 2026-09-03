@@ -1,18 +1,23 @@
 {
  "spec": "eidos-etat/1",
  "reseau": "essai",
- "maj_unix": 1788432388,
- "hauteur": 76,
- "blocs": 77,
- "tete": "af4d7b2a7a3fd707302eb6fba4ec54167eaa82abf1df49d867fc7eea1690fd08",
- "tresor_adresse": "673923204cb04ec20bab7b2f13269a3963c8cb19",
- "dernier_creneau": 8857,
+ "maj_unix": 1788445391,
+ "hauteur": 81,
+ "blocs": 82,
+ "tete": "93f436a24f6bf605a709663bb5c26309daca5be9a60c7ec2f60a72896b6920f9",
+ "tresor_adresse": "7525e04d5f0c8a79cab098042f2ba5eb6952aa00",
+ "dernier_creneau": 8862,
+ "creneaux_sautes": [
+  8784,
+  8785,
+  8786
+ ],
  "age": "Satya",
  "a_courant": 40,
- "recompense_courante_atomes": 2293418237,
- "emission_cumulee_atomes": 162821791518,
- "en_circulation_atomes": 162821791518,
- "sorties_non_depensees": 86,
+ "recompense_courante_atomes": 2326744476,
+ "emission_cumulee_atomes": 174388204750,
+ "en_circulation_atomes": 174388204750,
+ "sorties_non_depensees": 91,
  "robinet_epoque_atomes": 900000000,
  "robinet_budget_atomes": 504000000000,
  "artefacts": [
@@ -44,10 +49,10 @@
    "digest": "95e5308b2308cb43256104db054361e684ba08ece0bfe1a29c9f5829b18eb3b2"
   }
  ],
- "cles_consommees": 77,
+ "cles_consommees": 82,
  "atomes_par_unite": 100000000,
  "emission_totale_atomes": 6289920000000000,
- "taille_chaine_octets": 2149929,
+ "taille_chaine_octets": 2275109,
  "soldes": {
   "a098dd7b9b54eb9b05bfe5e87281e0671e6beb6e": 2005592406,
   "ca660c96e0800dc159766f9b42a98d6309f8f87d": 2006562778,
@@ -128,7 +133,12 @@
   "eeee1e159d8996c6858701af53bc7a446ce01dab": 100000000,
   "c6fb103dfa9c98730a249e534c1a9c07fde018a9": 2186950889,
   "a0267a406254a375b4e9ca8e9bed6e7496620d3e": 100000000,
-  "92120a570bc469295b10c33bbe20fc5d05d24d8c": 2180550100
+  "92120a570bc469295b10c33bbe20fc5d05d24d8c": 2180550100,
+  "83948113e0ea13a73e45906b9941503e68f597e5": 2299951892,
+  "f5fe6e98ecf66dd5dcc300287b947c458f24db1d": 2306551602,
+  "f7a54d21d98f8bd76e39095fe0d81ec0cfc40d6b": 2313217108,
+  "fb09ead5c78fa3b9a1eb0f218c3979c3db50a346": 2319948154,
+  "7525e04d5f0c8a79cab098042f2ba5eb6952aa00": 2326744476
  },
  "sorties": {
   "fb3c7d4e17bfaa03fcc39f1d693eb712c8d5f673003bcb7e429cf646a470fa59:0": {
@@ -474,6 +484,26 @@
   "9b0f8ca45c6050da981c89de5d5ac8f8fb5c6ac0d19177b96bb2246cb44b298f:1": {
    "adresse": "92120a570bc469295b10c33bbe20fc5d05d24d8c",
    "montant": 2180550100
+  },
+  "19833c98062ad8c70d235a587fd3c4f1f1fe4716cb94f205cdbaad18e7b2a2a8:0": {
+   "adresse": "83948113e0ea13a73e45906b9941503e68f597e5",
+   "montant": 2299951892
+  },
+  "9612cd7b9c79c907937f2527c6a8bca6a3a92ced69b7e39630443e9b980e179f:0": {
+   "adresse": "f5fe6e98ecf66dd5dcc300287b947c458f24db1d",
+   "montant": 2306551602
+  },
+  "42f02f5962e66acfb618adfef7a6ad5b61f80a3f35cb2bd0b3ded863d8b36ccb:0": {
+   "adresse": "f7a54d21d98f8bd76e39095fe0d81ec0cfc40d6b",
+   "montant": 2313217108
+  },
+  "04b7a43522d0bc96317ae7e7d599309f745164eb1b7957165b18f1c16364b990:0": {
+   "adresse": "fb09ead5c78fa3b9a1eb0f218c3979c3db50a346",
+   "montant": 2319948154
+  },
+  "9de692ca91da459de764f991d519121c81f56d6fe8e087742a798c80050b4c10:0": {
+   "adresse": "7525e04d5f0c8a79cab098042f2ba5eb6952aa00",
+   "montant": 2326744476
   }
  },
  "invariant": true
