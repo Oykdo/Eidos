@@ -21,14 +21,19 @@ export function Mark({ className, size = 28 }: { className?: string; size?: numb
 
 export function Bandeau({ className }: { className?: string }) {
   return (
-    <a href={import.meta.env.BASE_URL} className={cn("mx-auto block max-w-[560px]", className)}>
-      <img
-        src={`${import.meta.env.BASE_URL}bandeau.svg`}
-        alt="Eidos"
-        width={1280}
-        height={220}
-        className="mx-auto h-[72px] w-auto max-w-full"
-      />
+    <a
+      href={import.meta.env.BASE_URL || "/"}
+      className={cn("mx-auto flex w-full max-w-[560px] items-center gap-3 no-underline", className)}
+    >
+      <Mark size={40} />
+      <span className="min-w-0 flex-1 text-left">
+        <span className="block font-display text-[26px] font-light leading-none tracking-[0.22em] text-encre">
+          EIDOS
+        </span>
+        <span className="mt-1 block truncate font-mono text-[10px] leading-snug text-sourd">
+          εἶδος · la forme — hub · réseau d'essai
+        </span>
+      </span>
     </a>
   );
 }

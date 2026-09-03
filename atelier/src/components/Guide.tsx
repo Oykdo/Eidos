@@ -90,6 +90,10 @@ export function Guide() {
       <Etape n="08" titre={t("guide.08")}>
         <p>{t("guide.08p")}</p>
       </Etape>
+
+      <Etape n="09" titre={t("guide.09")}>
+        <p>{t("guide.09p")}</p>
+      </Etape>
     </Shell>
   );
 }

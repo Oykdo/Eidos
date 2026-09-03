@@ -70,6 +70,7 @@ function coffreVide(
     derniereSig: null,
     chaine: [blocGenese()],
     reliques: [],
+    objets: [],
   };
 }
 
@@ -110,6 +111,7 @@ export function chargerScenario(coffre: Coffre, scenario: ScenarioId): Coffre {
       derniereSig: null,
       chaine: [blocGenese()],
       reliques: [],
+      objets: [],
     },
     "atelier",
   );

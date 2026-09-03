@@ -19,6 +19,7 @@ import {
   estPsnxEtranger,
   parserPsnx,
 } from "./portable.ts";
+import { normaliserObjets } from "./inventaire.ts";
 
 export const KIND_CARNET = "eidos-carnet/1";
 export const TAG_CARNET = "eidos-carnet/1";
@@ -46,6 +47,7 @@ function normaliser(c: Coffre): Coffre {
     ...c,
     clesUsees: Array.isArray(c.clesUsees) ? c.clesUsees : [],
     reliques: Array.isArray(c.reliques) ? c.reliques.filter(estNomAge) : [],
+    objets: normaliserObjets(c.objets),
   };
 }
 
@@ -121,9 +123,13 @@ export function parserCarnet(raw: string): SnapshotCarnet | { erreur: string } {
   return { erreur: "ce n'est pas un carnet Eidos" };
 }
 
-export function ouvrirFichier(nom: string, data: ArrayBuffer | string): Ouverture {
+export function ouvrirFichier(nom: string, data: ArrayBuffer | Uint8Array | string): Ouverture {
   const octets =
-    typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
+    typeof data === "string"
+      ? new TextEncoder().encode(data)
+      : data instanceof Uint8Array
+        ? data
+        : new Uint8Array(data);
 
   if (estPsnxEtranger(nom, octets)) {
     return {

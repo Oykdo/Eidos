@@ -4,6 +4,7 @@ import { Shell } from "@/components/Shell";
 import { Creer } from "@/components/Creer";
 import { Envoi } from "@/components/Envoi";
 import { Sorties } from "@/components/Sorties";
+import { Inventaire } from "@/components/inventaire/Inventaire";
 import { Sauvegarde } from "@/components/Sauvegarde";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { useCoffre } from "@/lib/store";
@@ -32,6 +33,8 @@ function Home() {
           {t("coffre.eidolon")}
         </p>
       </section>
+
+      <Inventaire />
 
       <Creer />
       {coffre.nature === "personnel" ? <Envoi /> : null}

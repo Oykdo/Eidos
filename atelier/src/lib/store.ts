@@ -28,6 +28,7 @@ import {
 } from "./eidos/portable.ts";
 import { exporterCarnet, ouvrirFichier } from "./eidos/carnet.ts";
 import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
+import { tirerDansCoffre, normaliserObjets, signatureDe } from "./eidos/inventaire.ts";
 
 const KEY = "eidos-coffre-v2";
 const KEY_TEMOIN = "eidos-temoin-v1";
@@ -54,6 +55,7 @@ type Etat = {
   creer: () => void;
   miner: () => void;
   acheterRelique: (nom: NomAge) => void;
+  tirer: () => void;
   setMontant: (s: string) => void;
   setDest: (s: string) => void;
   setDestInterne: (v: boolean) => void;
@@ -114,6 +116,7 @@ export const useCoffre = create<Etat>((set, get) => ({
           if (coffre.nature !== "personnel") coffre.nature = "atelier";
           if (coffre.derniereSig === undefined) coffre.derniereSig = null;
           if (!Array.isArray(coffre.reliques)) coffre.reliques = [];
+          coffre.objets = normaliserObjets(coffre.objets);
           if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
             coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");
           }
@@ -322,6 +325,23 @@ export const useCoffre = create<Etat>((set, get) => ({
     });
   },
 
+  tirer: () => {
+    const r = tirerDansCoffre(get().coffre);
+    if (!r.ok) {
+      set({
+        erreur: t(r.code === "hauteur" ? "inv.deja" : "inv.hash"),
+        flash: null,
+      });
+      return;
+    }
+    persister(r.coffre);
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: t("flash.tirage", { muse: signatureDe(r.objet.archetype).muse, age: r.objet.age }),
+    });
+  },
+
   exporterFichier: () => exporterCarnet(get().coffre),
 
   importerFichier: (nom, data) => {
@@ -344,6 +364,7 @@ export const useCoffre = create<Etat>((set, get) => ({
     let coffre = lu.coffre;
     if (!Array.isArray(coffre.clesUsees)) coffre.clesUsees = [];
     if (!Array.isArray(coffre.reliques)) coffre.reliques = [];
+    coffre.objets = normaliserObjets(coffre.objets);
     if (coffre.nature !== "personnel") coffre.nature = "atelier";
     if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
       coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");

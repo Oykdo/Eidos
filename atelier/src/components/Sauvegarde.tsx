@@ -1,9 +1,16 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Download, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCoffre } from "@/lib/store.ts";
-import { useI18n } from "@/lib/i18n.ts";
-import { NOM_CARNET } from "@/lib/eidos/carnet.ts";
+import { useI18n, type Msg } from "@/lib/i18n.ts";
+import { proposerCarnet, type IssueSauver } from "@/lib/eidos/sauver.ts";
+
+const FLASH: Record<IssueSauver, Msg> = {
+  partage: "psnx.sauve",
+  telechargement: "psnx.sauve",
+  "presse-papiers": "psnx.copie",
+  annule: "psnx.annule",
+};
 
 export function Sauvegarde() {
   const { t } = useI18n();
@@ -13,16 +20,12 @@ export function Sauvegarde() {
   const erreur = useCoffre((s) => s.erreur);
   const psnx = useCoffre((s) => s.psnx);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [statut, setStatut] = useState<string | null>(null);
 
-  function sauver() {
+  async function sauver() {
     const raw = exporterFichier();
-    const blob = new Blob([raw], { type: "application/octet-stream" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = NOM_CARNET;
-    a.click();
-    URL.revokeObjectURL(url);
+    const issue = await proposerCarnet(raw);
+    setStatut(t(FLASH[issue]));
   }
 
   function ouvrir(f: File) {
@@ -31,6 +34,7 @@ export function Sauvegarde() {
       const r = reader.result;
       if (r instanceof ArrayBuffer) importerFichier(f.name, r);
       else if (typeof r === "string") importerFichier(f.name, r);
+      setStatut(null);
     };
     reader.readAsArrayBuffer(f);
   }
@@ -42,7 +46,7 @@ export function Sauvegarde() {
         {t("psnx.aide")}
       </p>
       <div className="flex flex-col gap-2">
-        <Button type="button" variant="or" onClick={sauver}>
+        <Button type="button" variant="or" onClick={() => void sauver()}>
           <Download className="size-4" strokeWidth={1.75} />
           {t("psnx.exporter")}
         </Button>
@@ -63,8 +67,9 @@ export function Sauvegarde() {
         />
       </div>
       <p className="mt-3 min-h-5 font-mono text-sm" role="status">
-        {erreur ? <span className="text-fer">{erreur}</span> : null}
-        {!erreur && flash ? <span className="text-cuivre">{flash}</span> : null}
+        {statut ? <span className="text-cuivre">{statut}</span> : null}
+        {!statut && erreur ? <span className="text-fer">{erreur}</span> : null}
+        {!statut && !erreur && flash ? <span className="text-cuivre">{flash}</span> : null}
         {psnx ? (
           <span className="mt-1 block text-[11px] text-sourd">
             {t("psnx.digest")} · {psnx.digest.slice(0, 16)}…

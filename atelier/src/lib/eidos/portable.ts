@@ -12,6 +12,7 @@
 import type { Coffre, NomAge } from "./types.ts";
 import { fromHex, hexOf, sha256d, utf8 } from "./hash.ts";
 import { estNomAge } from "./relique.ts";
+import { normaliserObjets } from "./inventaire.ts";
 
 export const KIND_EIDOS = "eidos-coffre";
 export const KIND_PSNX = "eidos-psnx/1";
@@ -39,6 +40,7 @@ function normaliserCoffre(c: Coffre): Coffre {
     reliques: Array.isArray(c.reliques)
       ? c.reliques.filter(estNomAge)
       : [],
+    objets: normaliserObjets((c as Coffre).objets),
   };
 }
 

@@ -33,4 +33,25 @@ describe("i18n", () => {
       assert.ok(EN[k].length > 0, k);
     }
   });
+
+  it("reliques : libellés gelés", () => {
+    assert.equal(
+      FR["relique.lede"],
+      "Quatre reliques. Un objet par graine. Rien ne se croit, tout se rejoue.",
+    );
+    assert.equal(
+      EN["relique.lede"],
+      "Four relics. One object per seed. Nothing is believed; everything is replayed.",
+    );
+    assert.equal(FR["relique.preuveAide"], "Collez eidos-artefact/1. Même preuve, même relique.");
+    assert.equal(EN["relique.preuveAide"], "Paste eidos-artefact/1. Same proof, same relic.");
+    assert.equal(
+      FR["guide.09p"],
+      "Un coffre, une racine. L'objet tient en 32 bits. La puissance ne grandit pas.",
+    );
+    assert.equal(
+      EN["guide.09p"],
+      "One vault, one root. The item fits in 32 bits. Power does not grow.",
+    );
+  });
 });

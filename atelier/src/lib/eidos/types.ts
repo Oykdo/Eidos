@@ -41,6 +41,16 @@ export type NatureCoffre = "atelier" | "personnel";
 
 export type NomAge = "Satya" | "Treta" | "Dvapara" | "Kali";
 
+/** Jauge locale hors feuille : nonce et hauteur ne sont pas l'invariant. */
+export type ObjetPorte = {
+  mot: number;
+  archetype: string;
+  age: NomAge;
+  nonce: number;
+  hauteur: number;
+};
+
+
 export type DerniereSig = {
   txid: string;
   ok: boolean;
@@ -79,6 +89,7 @@ export type Coffre = {
   derniereSig: DerniereSig | null;
   chaine: BlocLocal[];
   reliques: NomAge[];
+  objets: ObjetPorte[];
 };
 
 export type HistoriqueTx = {
