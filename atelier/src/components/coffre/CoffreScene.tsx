@@ -1,6 +1,7 @@
 /**
  * Scène muette des deux coffres.
  * Formules : docs/SPEC_AUDIT_COFFRES.md et lib/eidos/coffres.ts.
+ * L'amplitude vient du solde réel du carnet.
  */
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
@@ -19,18 +20,18 @@ import {
   type Palette8,
 } from "@/lib/eidos/coffres.ts";
 
-function Gaussienne() {
+function Gaussienne({ amplitude }: { amplitude: number }) {
   const geo = useMemo(() => {
     const g = new THREE.PlaneGeometry(7.2, 7.2, 56, 56);
     const pos = g.attributes.position!;
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
       const y = pos.getY(i);
-      pos.setZ(i, gaussienne(x * 0.55, y * 0.55) * 1.05);
+      pos.setZ(i, gaussienne(x * 0.55, y * 0.55) * (0.55 + amplitude));
     }
     g.computeVertexNormals();
     return g;
-  }, []);
+  }, [amplitude]);
   return (
     <mesh geometry={geo} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <meshStandardMaterial
@@ -39,7 +40,7 @@ function Gaussienne() {
         metalness={0.18}
         wireframe
         emissive="#c9a227"
-        emissiveIntensity={0.12}
+        emissiveIntensity={0.08 + amplitude * 0.12}
       />
     </mesh>
   );
@@ -106,17 +107,23 @@ function CoffreVoxel({
   );
 }
 
-function SphereCoords() {
+function SphereCoords({ amplitude }: { amplitude: number }) {
   return (
-    <mesh position={[0, 1.55, -0.15]}>
-      <sphereGeometry args={[0.72, 16, 12]} />
+    <mesh position={[0, 0.85 + amplitude * 0.7, -0.15]}>
+      <sphereGeometry args={[0.55 + amplitude * 0.18, 16, 12]} />
       <meshBasicMaterial color="#c9a227" wireframe transparent opacity={0.55} />
     </mesh>
   );
 }
 
-export default function CoffreScene() {
+export default function CoffreScene({
+  amplitude,
+}: {
+  atomes: number;
+  amplitude: number;
+}) {
   const visible = useOngletVisible();
+  const echelle = 0.72 + amplitude * 0.38;
   return (
     <Canvas
       className="absolute inset-0 h-full w-full touch-none"
@@ -134,17 +141,25 @@ export default function CoffreScene() {
         color={LUMIERE_DIR.color}
       />
       <directionalLight position={[-4, 3, -3]} intensity={0.35} color="#8FCBFF" />
-      <Gaussienne />
-      <SphereCoords />
+      <Gaussienne amplitude={amplitude} />
+      <SphereCoords amplitude={amplitude} />
       <CoffreVoxel
         palette={COFFRE_FOND.palette}
-        scale={COFFRE_FOND.scale}
-        position={COFFRE_FOND.position}
+        scale={COFFRE_FOND.scale * echelle}
+        position={[
+          COFFRE_FOND.position[0],
+          0.55 + amplitude * 0.55,
+          COFFRE_FOND.position[2],
+        ]}
       />
       <CoffreVoxel
         palette={COFFRE_AVANT.palette}
-        scale={COFFRE_AVANT.scale}
-        position={COFFRE_AVANT.position}
+        scale={COFFRE_AVANT.scale * echelle}
+        position={[
+          COFFRE_AVANT.position[0],
+          0.18 + amplitude * 0.22,
+          COFFRE_AVANT.position[2],
+        ]}
       />
     </Canvas>
   );

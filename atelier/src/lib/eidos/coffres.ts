@@ -4,6 +4,9 @@
  * La scène n'affiche aucune équation.
  */
 
+import { ATOMES } from "./constantes.ts";
+import type { Sortie } from "./types.ts";
+
 export const PALETTE_FOND = [
   "#FFFFFF",
   "#E8F4FF",
@@ -88,4 +91,18 @@ export function integraleGaussienne(nr = 256, nphi = 256): number {
 export function teinte(palette: Palette8, index: number): string {
   const i = ((index % 8) + 8) % 8;
   return palette[i]!;
+}
+
+export function soldeAtomes(sorties: readonly Pick<Sortie, "montant">[]): number {
+  return sorties.reduce((s, o) => s + o.montant, 0);
+}
+
+/**
+ * Amplitude de la cloche depuis le solde du carnet (atomes).
+ * 0 → 0.28 ; 1 eidôlon → ~0.72 ; croît en log10, plafonné à 1.85.
+ */
+export function amplitudeDuSolde(atomes: number): number {
+  const n = Number.isFinite(atomes) && atomes > 0 ? atomes : 0;
+  const e = n / ATOMES;
+  return Math.min(1.85, 0.28 + Math.log10(1 + e) * 0.72);
 }
