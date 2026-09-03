@@ -3,16 +3,10 @@ import { cn } from "@/lib/utils";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 
 export type NavId =
-  | "coffre"
-  | "journal"
-  | "temoin"
-  | "arbre"
-  | "reliques"
-  | "glyphes"
-  | "guide";
+  "coffre" | "journal" | "temoin" | "arbre" | "reliques" | "glyphes" | "signatures" | "guide";
 
 const ITEMS: {
-  to: "/" | "/journal" | "/temoin" | "/arbre" | "/reliques" | "/glyphes" | "/guide";
+  to: "/" | "/journal" | "/temoin" | "/arbre" | "/reliques" | "/glyphes" | "/signatures" | "/guide";
   id: NavId;
   label: Msg;
 }[] = [
@@ -22,6 +16,7 @@ const ITEMS: {
   { to: "/arbre", id: "arbre", label: "nav.arbre" },
   { to: "/reliques", id: "reliques", label: "nav.reliques" },
   { to: "/glyphes", id: "glyphes", label: "nav.glyphes" },
+  { to: "/signatures", id: "signatures", label: "nav.signatures" },
   { to: "/guide", id: "guide", label: "nav.guide" },
 ];
 

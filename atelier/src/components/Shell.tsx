@@ -11,6 +11,7 @@ const SOUS: Record<NavId, Msg> = {
   arbre: "sous.arbre",
   reliques: "sous.reliques",
   glyphes: "sous.glyphes",
+  signatures: "sous.signatures",
   guide: "sous.guide",
 };
 

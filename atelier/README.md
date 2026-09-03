@@ -16,6 +16,9 @@ L’unité est l’**eidôlon** (10⁸ atomes). La forme est la règle ; l’ima
 | **Journal** | Genèse, clés, chaîne, **miner** (`R(h)`), preuve Merkle. |
 | **Témoin** | Seconde mémoire. Une tête, pas les clés. Juge une preuve. |
 | **Arbre** | 20 premiers, 10 paliers, 33 secteurs. Carte, pas Merkle. |
+| **Reliques** | Lumen d’époque : ellipse `a × a/2`. |
+| **Glyphes** | 4 figures, 64 empilements. 31 groupes. |
+| **Signes** | Signatures planétaires : lecture des 64. Pas un 5ᵉ glyphe. |
 | **Guide** | Mode d’emploi. |
 
 Auth et base distante : **off**. Le carnet vit dans ce navigateur (`localStorage`). Pas de comptes, pas de fédération réelle, pas de nœud réseau.
@@ -71,6 +74,7 @@ Le **Guide** dans l’app reprend ces pas.
 5. **Arbre** — bandeau ∇ / puits / axiale ; **régimes** pour D0–D9.
 6. **Reliques** — lumen d’époque : ellipse `a × a/2`. Pas un glyphe.
 7. **Glyphes** — 4 figures × 3 étages = 64 empilements. 31 groupes. **Interdit** d’en tirer une graine.
+8. **Signes** — neuf lectures des mêmes 64. Paracelse n’ajoute pas de figure. 9 ≠ 33.
 
 ---
 

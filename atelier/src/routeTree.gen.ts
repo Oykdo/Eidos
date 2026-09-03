@@ -15,6 +15,7 @@ import { Route as GlyphesRouteImport } from './routes/glyphes'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as JournalRouteImport } from './routes/journal'
 import { Route as ReliquesRouteImport } from './routes/reliques'
+import { Route as SignaturesRouteImport } from './routes/signatures'
 import { Route as TemoinRouteImport } from './routes/temoin'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const ReliquesRoute = ReliquesRouteImport.update({
   path: '/reliques',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignaturesRoute = SignaturesRouteImport.update({
+  id: '/signatures',
+  path: '/signatures',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TemoinRoute = TemoinRouteImport.update({
   id: '/temoin',
   path: '/temoin',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
   '/reliques': typeof ReliquesRoute
+  '/signatures': typeof SignaturesRoute
   '/temoin': typeof TemoinRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
   '/reliques': typeof ReliquesRoute
+  '/signatures': typeof SignaturesRoute
   '/temoin': typeof TemoinRoute
 }
 export interface FileRoutesById {
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
   '/reliques': typeof ReliquesRoute
+  '/signatures': typeof SignaturesRoute
   '/temoin': typeof TemoinRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/guide'
     | '/journal'
     | '/reliques'
+    | '/signatures'
     | '/temoin'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/guide'
     | '/journal'
     | '/reliques'
+    | '/signatures'
     | '/temoin'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/guide'
     | '/journal'
     | '/reliques'
+    | '/signatures'
     | '/temoin'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +130,7 @@ export interface RootRouteChildren {
   GuideRoute: typeof GuideRoute
   JournalRoute: typeof JournalRoute
   ReliquesRoute: typeof ReliquesRoute
+  SignaturesRoute: typeof SignaturesRoute
   TemoinRoute: typeof TemoinRoute
 }
 
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReliquesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signatures': {
+      id: '/signatures'
+      path: '/signatures'
+      fullPath: '/signatures'
+      preLoaderRoute: typeof SignaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/temoin': {
       id: '/temoin'
       path: '/temoin'
@@ -182,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuideRoute: GuideRoute,
   JournalRoute: JournalRoute,
   ReliquesRoute: ReliquesRoute,
+  SignaturesRoute: SignaturesRoute,
   TemoinRoute: TemoinRoute,
 }
 export const routeTree = rootRouteImport
