@@ -34,6 +34,7 @@ import {
 import { chargerEtat, sceneOuVide, type EtatReseau } from "@/lib/arbre/etat.ts";
 import { Nav } from "@/components/Nav";
 import { Langue } from "@/components/Langue";
+import { Bandeau } from "@/components/Mark";
 import { cn } from "@/lib/utils";
 import { useI18n, t } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
@@ -775,9 +776,7 @@ export function ArbreView({ noeudCible }: { noeudCible?: number }) {
 
       <div className="pointer-events-none absolute inset-0 flex flex-col">
         <header className="pointer-events-auto flex flex-col items-center gap-2 px-4 pt-[max(12px,env(safe-area-inset-top))] pb-1">
-          <p className="font-display text-[18px] font-light tracking-[0.38em] text-encre uppercase">
-            Eidos
-          </p>
+          <Bandeau className="[&_img]:h-10" />
           <Nav actuel="arbre" />
           <Langue />
         </header>

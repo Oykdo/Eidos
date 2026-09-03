@@ -19,6 +19,20 @@ export function Mark({ className, size = 28 }: { className?: string; size?: numb
   );
 }
 
+export function Bandeau({ className }: { className?: string }) {
+  return (
+    <a href={import.meta.env.BASE_URL} className={cn("mx-auto block max-w-[560px]", className)}>
+      <img
+        src={`${import.meta.env.BASE_URL}bandeau.svg`}
+        alt="Eidos"
+        width={1280}
+        height={220}
+        className="mx-auto h-[72px] w-auto max-w-full"
+      />
+    </a>
+  );
+}
+
 const STROKE = ["#6E7581", "#C9A227", "#C6CBD1", "#3A6EA5"];
 
 function Figure({ kind, y }: { kind: number; y: number }) {

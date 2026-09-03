@@ -1,3 +1,5 @@
+[<img src="bandeau.svg" alt="Eidos — hub" width="1280" />](https://oykdo.github.io/Eidos/)
+
 # Eidos
 
 **Chaîne à émission bornée sans halving, consensus fédéré, cryptographie post-quantique par hachage pur.**

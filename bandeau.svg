@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 220" role="img" aria-label="Eidos — réseau d'essai">
+  <rect width="1280" height="220" fill="#12151A"/>
+  <rect x="0" y="218" width="1280" height="2" fill="#C9A227"/>
+
+  <!-- Marque : cercle, croissant, croix — les trois étages -->
+  <g fill="none" stroke-linecap="round" transform="translate(72 38)">
+    <circle cx="36" cy="22" r="16" stroke="#C9A227" stroke-width="4"/>
+    <path d="M20 62 a16 16 0 0 0 32 0" stroke="#C6CBD1" stroke-width="4"/>
+    <path d="M36 88 v32 M20 104 h32" stroke="#3A6EA5" stroke-width="4"/>
+  </g>
+
+  <text x="168" y="108" fill="#DDE1E6" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="300" letter-spacing="18">EIDOS</text>
+  <text x="168" y="148" fill="#79818E" font-family="ui-monospace, 'IBM Plex Mono', monospace" font-size="15">εἶδος · la forme — hub · réseau d'essai, sans valeur</text>
+  <text x="168" y="172" fill="#C9A227" font-family="ui-monospace, 'IBM Plex Mono', monospace" font-size="13">oykdo.github.io/Eidos</text>
+
+  <!-- Quatre figures, un étage chacune, lecture de gauche à droite -->
+  <g transform="translate(980 58)" fill="none" stroke-linecap="round" stroke-width="2.2">
+    <g transform="translate(0 0)">
+      <circle cx="16" cy="12" r="2.2" fill="#6E7581" stroke="none"/>
+      <circle cx="16" cy="36" r="2.2" fill="#6E7581" stroke="none"/>
+      <circle cx="16" cy="60" r="2.2" fill="#6E7581" stroke="none"/>
+    </g>
+    <g transform="translate(48 0)">
+      <circle cx="16" cy="12" r="8" stroke="#C9A227"/>
+      <circle cx="16" cy="36" r="8" stroke="#C9A227"/>
+      <circle cx="16" cy="60" r="8" stroke="#C9A227"/>
+    </g>
+    <g transform="translate(96 0)">
+      <path d="M8 12 a8 8 0 0 0 16 0" stroke="#C6CBD1"/>
+      <path d="M8 36 a8 8 0 0 0 16 0" stroke="#C6CBD1"/>
+      <path d="M8 60 a8 8 0 0 0 16 0" stroke="#C6CBD1"/>
+    </g>
+    <g transform="translate(144 0)">
+      <path d="M16 4 v16 M8 12 h16" stroke="#3A6EA5"/>
+      <path d="M16 28 v16 M8 36 h16" stroke="#3A6EA5"/>
+      <path d="M16 52 v16 M8 60 h16" stroke="#3A6EA5"/>
+    </g>
+  </g>
+</svg>

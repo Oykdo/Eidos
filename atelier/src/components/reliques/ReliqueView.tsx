@@ -4,29 +4,17 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Nav } from "@/components/Nav";
 import { Langue } from "@/components/Langue";
+import { Bandeau } from "@/components/Mark";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n.ts";
-import {
-  lumens,
-  echelleRelique,
-  type Lumen,
-} from "@/lib/eidos/relique.ts";
+import { lumens, echelleRelique, type Lumen } from "@/lib/eidos/relique.ts";
 import { asciiTrouvaille } from "@/lib/eidos/trouvaille.ts";
 
 const TOUS = lumens();
 
-function Coupe({
-  lumen,
-  coupe,
-}: {
-  lumen: Lumen;
-  coupe: boolean;
-}) {
+function Coupe({ lumen, coupe }: { lumen: Lumen; coupe: boolean }) {
   const s = echelleRelique(lumen);
-  const plane = useMemo(
-    () => new THREE.Plane(new THREE.Vector3(0, 0, -1), 0.02),
-    [],
-  );
+  const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, -1), 0.02), []);
   const clip = coupe ? [plane] : [];
   const paroi = "#7a4e68";
   const lumiere = "#7eb3c9";
@@ -79,12 +67,7 @@ function Scene({ lumen, coupe }: { lumen: Lumen; coupe: boolean }) {
       <directionalLight position={[6, 8, 4]} intensity={0.9} color="#dde1e6" />
       <pointLight position={[-3, 4, 5]} intensity={1.1} color="#c9a227" distance={16} />
       <Coupe lumen={lumen} coupe={coupe} />
-      <OrbitControls
-        enablePan={false}
-        minDistance={3}
-        maxDistance={14}
-        target={[0.4, 0, 0]}
-      />
+      <OrbitControls enablePan={false} minDistance={3} maxDistance={14} target={[0.4, 0, 0]} />
     </>
   );
 }
@@ -139,18 +122,14 @@ export function ReliqueView() {
 
       <div className="pointer-events-none absolute inset-0 flex flex-col">
         <header className="pointer-events-auto flex flex-col items-center gap-2 px-4 pt-[max(12px,env(safe-area-inset-top))] pb-1">
-          <p className="font-display text-[18px] font-light tracking-[0.38em] text-encre uppercase">
-            Eidos
-          </p>
+          <Bandeau className="[&_img]:h-10" />
           <Nav actuel="reliques" />
           <Langue />
         </header>
 
         <div className="mt-auto flex flex-col gap-3 px-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-5">
           <aside className="pointer-events-auto mx-auto w-full max-w-[420px] rounded-lg bg-carte/95 p-4 shadow-[0_0_0_1px_rgb(198_203_209_/_0.14)] backdrop-blur-sm">
-            <h2 className="font-display text-xl font-light text-or">
-              {lumen.age.nomAffiche}
-            </h2>
+            <h2 className="font-display text-xl font-light text-or">{lumen.age.nomAffiche}</h2>
             <p className="mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
               {t("relique.lede")}
             </p>
