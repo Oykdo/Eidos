@@ -1,18 +1,21 @@
 /**
  * Inventaire du coffre — tirage local.
  *
- * Un objet par hauteur. La graine d'atelier est
- *   SHA-256d(tag ‖ (maître:n:hauteur) ‖ hash_bloc)
- * On-chain, le premier terme serait la sig Lamport de la nouvelle racine.
- * Ici on ne brûle pas une clé par tirage : une entrée = 24 Ko.
+ * Un tirage par hauteur, pas un plafond de joueurs.
+ * Graine = SHA-256d(tag ‖ (maître:n:hauteur) ‖ hash_bloc).
+ * Deux maîtres, même bloc : deux objets. Le catalogue des 101 est
+ * l'espace des formes, pas un stock.
+ *
+ * Les objets tirés avant l'équipement n'ont pas de genre : lecture
+ * « trouvé ». Le mot n'est pas réécrit.
  */
 
 import { ageOf } from "./eonis.ts";
-import { fromHex, utf8 } from "./hash.ts";
+import { concat, fromHex, sha256d, utf8 } from "./hash.ts";
 import { objetDepuisGraine, graineTirage, racineObjets, type Objet } from "./objets.ts";
 import { SIGNATURES, type SignatureId } from "./signatures.ts";
 import type { Affixe, Coffre, NomAge, ObjetPorte } from "./types.ts";
-import { AFFIXES, GENRES, habille } from "./equipement.ts";
+import { AFFIXES, GENRES, affixeDe, habille, type Genre } from "./equipement.ts";
 
 export function estObjetPorte(x: unknown): x is ObjetPorte {
   if (!x || typeof x !== "object") return false;
@@ -47,7 +50,9 @@ export function normaliserObjets(xs: unknown): ObjetPorte[] {
         },
         mot,
         {
-          genre: x.genre && (GENRES as readonly string[]).includes(x.genre) ? x.genre : "trouve",
+          genre: (x.genre && (GENRES as readonly string[]).includes(x.genre)
+            ? (x.genre as Genre)
+            : "trouve"),
           emplacement: x.emplacement,
           affixe: x.affixe && (AFFIXES as readonly string[]).includes(x.affixe) ? (x.affixe as Affixe) : null,
           sockets: x.sockets,
@@ -103,10 +108,31 @@ export function tirerDansCoffre(c: Coffre): Tirage {
     },
     graine[10]!,
   );
+  const pierreGraine = sha256d(concat(graine, utf8("pierre")));
+  const pierreObjet = objetDepuisGraine(pierreGraine, ageNom);
+  const pierre = habille(
+    {
+      mot: pierreObjet.mot,
+      archetype: pierreObjet.archetype,
+      age: pierreObjet.age,
+      nonce: ((graine[12]! << 8) | graine[13]!) & 65535,
+      hauteur: tip.hauteur,
+    },
+    graine[11]!,
+    {
+      genre: "pierre",
+      emplacement: null,
+      affixe: affixeDe(graine[11]!),
+      sockets: 0,
+      palierLair: null,
+    },
+  );
+  const ajouts =
+    porte.genre === "pierre" || pierre.mot === porte.mot ? [porte] : [porte, pierre];
   return {
     ok: true,
     objet: porte,
-    coffre: { ...c, objets: [...objets, porte] },
+    coffre: { ...c, objets: [...objets, ...ajouts] },
   };
 }
 

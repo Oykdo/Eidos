@@ -55,7 +55,9 @@ describe("inventaire", () => {
     const d = tirerDansCoffre(mine);
     assert.equal(d.ok, true);
     if (!d.ok) return;
-    assert.equal(d.coffre.objets.length, 2);
+    const hauteurs = new Set(d.coffre.objets.map((o) => o.hauteur));
+    assert.equal(hauteurs.size, 2);
+    assert.ok(d.coffre.objets.some((o) => o.genre === "pierre"));
     assert.equal(racineDuCoffre(d.coffre), racineDuCoffre(d.coffre));
     assert.notEqual(racineDuCoffre(a.coffre), racineDuCoffre(d.coffre));
   });

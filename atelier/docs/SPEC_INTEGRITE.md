@@ -19,6 +19,8 @@ Ville = coffre (jauge). Tour = 255 coupes dans SU(2) (invariant).
 
 Les objets tirés avant les genres : mot intact. Sans champ `genre` au carnet → **trouvaille**. On n'invente pas un casque. Un tirage nouveau lit T/S/slot.
 
+Les 101 du catalogue sont des **formes**, pas un stock. Le grind (`sig ‖ bloc ‖ roll`) n'a pas de plafond de joueurs : deux maîtres, même bloc, deux objets. Le roll pose une pierre (T/S). Un tirage d'avant l'équipement reste une **trouvaille** : le mot n'est pas réécrit.
+
 Craft : une pierre **tourne** (T à gauche, S à droite). Une gemme s’enchâsse (mot inchangé, lecture composée). La philosophale : coffres 1–10, une arme divine, même norme. Les antres : plus tard.
 
 Tests : `integrite.test.ts`, `equipement.test.ts`.

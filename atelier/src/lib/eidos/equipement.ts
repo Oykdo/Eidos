@@ -178,7 +178,7 @@ export type CraftOk<T> = { ok: true; coffre: T; objet: ObjetPorte };
 export type Craft<T = Coffre> = CraftOk<T> | CraftKo;
 
 function pieceEtMod(a: ObjetPorte, b: ObjetPorte): { piece: ObjetPorte; mod: ObjetPorte } | null {
-  const piece = (x: ObjetPorte) => x.genre === "arme" || x.genre === "armure";
+  const piece = (x: ObjetPorte) => x.genre === "arme" || x.genre === "armure" || x.genre === "trouve";
   const mod = (x: ObjetPorte) => x.genre === "pierre" || x.genre === "gemme";
   if (piece(a) && mod(b)) return { piece: a, mod: b };
   if (piece(b) && mod(a)) return { piece: b, mod: a };

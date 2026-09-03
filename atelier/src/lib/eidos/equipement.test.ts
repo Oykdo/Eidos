@@ -19,7 +19,8 @@ import {
   peutPhilosopher,
   tourner,
 } from "./equipement.ts";
-import { normaliserObjets } from "./inventaire.ts";
+import { coffreNeuf } from "./wallet.ts";
+import { normaliserObjets, tirerDansCoffre } from "./inventaire.ts";
 import type { ObjetPorte } from "./types.ts";
 
 const GRAINE = sha256d(utf8("eidos-objet-genese"));
@@ -129,5 +130,19 @@ describe("équipement", () => {
     const arme = normaliserObjets([{ ...a, genre: "arme" }])[0]!;
     assert.equal(arme.genre, "arme");
     assert.equal(arme.mot, nu.mot);
+  });
+
+  it("deux maîtres, même bloc : deux objets ; le roll pose une pierre", () => {
+    const a = coffreNeuf("vide");
+    const b = { ...a, maitre: `${a.maitre}-autre`, n: a.n + 1 };
+    const ta = tirerDansCoffre(a);
+    const tb = tirerDansCoffre(b);
+    assert.equal(ta.ok, true);
+    assert.equal(tb.ok, true);
+    if (!ta.ok || !tb.ok) return;
+    assert.notEqual(ta.objet.mot, tb.objet.mot);
+    assert.ok(ta.coffre.objets.some((o) => o.genre === "pierre" && o.affixe));
+    assert.ok(tb.coffre.objets.some((o) => o.genre === "pierre" && o.affixe));
+    assert.equal(tirerDansCoffre(ta.coffre).ok, false);
   });
 });

@@ -203,7 +203,7 @@ export const FR = {
   "tour.sansObjet": "Tirez un objet en ville pour lire la paire.",
 
   "inv.titre": "Inventaire",
-  "inv.lede": "Poste du jour : trois blocs. Catalogue : 101 formes. Grind ouvert.",
+  "inv.lede": "Poste du jour : trois blocs. 101 formes, joueurs sans plafond. Le roll pose une pierre. Une trouvaille d'avant garde son mot.",
   "inv.vide": "Aucun objet. Créez un bloc, puis tirez.",
   "inv.tirer": "Tirer l'objet",
   "inv.miner": "Créer un bloc · {r}",
@@ -565,7 +565,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.sansObjet": "Draw an item in the city to read the pair.",
 
   "inv.titre": "Inventory",
-  "inv.lede": "Day post: three blocks. Catalogue: 101 forms. Grind open.",
+  "inv.lede": "Day post: three blocks. 101 forms, uncapped players. The roll sets a stone. An earlier find keeps its word.",
   "inv.vide": "No item. Make a block, then draw.",
   "inv.tirer": "Draw the item",
   "inv.miner": "Make a block · {r}",
