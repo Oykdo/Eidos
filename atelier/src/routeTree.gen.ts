@@ -17,6 +17,7 @@ import { Route as JournalRouteImport } from './routes/journal'
 import { Route as ReliquesRouteImport } from './routes/reliques'
 import { Route as SignaturesRouteImport } from './routes/signatures'
 import { Route as TemoinRouteImport } from './routes/temoin'
+import { Route as TourRouteImport } from './routes/tour'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,11 @@ const TemoinRoute = TemoinRouteImport.update({
   path: '/temoin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TourRoute = TourRouteImport.update({
+  id: '/tour',
+  path: '/tour',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/reliques': typeof ReliquesRoute
   '/signatures': typeof SignaturesRoute
   '/temoin': typeof TemoinRoute
+  '/tour': typeof TourRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/reliques': typeof ReliquesRoute
   '/signatures': typeof SignaturesRoute
   '/temoin': typeof TemoinRoute
+  '/tour': typeof TourRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/reliques': typeof ReliquesRoute
   '/signatures': typeof SignaturesRoute
   '/temoin': typeof TemoinRoute
+  '/tour': typeof TourRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/reliques'
     | '/signatures'
     | '/temoin'
+    | '/tour'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/reliques'
     | '/signatures'
     | '/temoin'
+    | '/tour'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/reliques'
     | '/signatures'
     | '/temoin'
+    | '/tour'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   ReliquesRoute: typeof ReliquesRoute
   SignaturesRoute: typeof SignaturesRoute
   TemoinRoute: typeof TemoinRoute
+  TourRoute: typeof TourRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TemoinRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tour': {
+      id: '/tour'
+      path: '/tour'
+      fullPath: '/tour'
+      preLoaderRoute: typeof TourRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReliquesRoute: ReliquesRoute,
   SignaturesRoute: SignaturesRoute,
   TemoinRoute: TemoinRoute,
+  TourRoute: TourRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

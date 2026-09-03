@@ -51,6 +51,11 @@ export const REGIMES = [
 
 export type Regime = (typeof REGIMES)[number];
 
+/** 3 classes × 7 régimes = treillis. Le quaternion vit entre les cases. */
+export const CLASSES = ["arme", "defense", "accessoire"] as const;
+export type Classe = (typeof CLASSES)[number];
+export const CELLULES_DOXA = CLASSES.length * REGIMES.length;
+
 export function norme2(q: Q): bigint {
   return q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3];
 }

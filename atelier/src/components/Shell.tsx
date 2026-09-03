@@ -6,6 +6,7 @@ import { useI18n, type Msg } from "@/lib/i18n.ts";
 
 const SOUS: Record<NavId, Msg> = {
   coffre: "sous.coffre",
+  tour: "sous.tour",
   journal: "sous.journal",
   temoin: "sous.temoin",
   arbre: "sous.arbre",

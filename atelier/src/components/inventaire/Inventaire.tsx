@@ -11,6 +11,7 @@ import { combatDe, COMBAT_AXES, COMBAT_BUDGET } from "@/lib/eidos/combat.ts";
 import { conjugue, produit, type Q } from "@/lib/eidos/cosmos.ts";
 import { memeOrbite, memeRayon } from "@/lib/eidos/groupe.ts";
 import { paireDe, qDeMot, resonanceDe, type Polarite } from "@/lib/eidos/resonance.ts";
+import { glypheLecture } from "@/lib/eidos/integrite.ts";
 import { ageOf, rewardAt } from "@/lib/eidos/eonis.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { posteDe, POSTE_JOUR } from "@/lib/eidos/poste.ts";
@@ -136,6 +137,8 @@ export function Inventaire() {
             {t("inv.mot")} {choisi.mot.toString(16).padStart(8, "0")}
             {"\n"}
             {t("inv.sceau")} {sceauObjet(objetDePorte(choisi)).split(" ")[0]}
+            {"\n"}
+            {t("inv.lecture")} {glypheLecture(qDeMot(choisi.mot))}
             {"\n"}
             {t("inv.racine")} {racine.slice(0, 8)}…{racine.slice(-8)}
             {"\n"}

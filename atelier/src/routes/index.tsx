@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Creer } from "@/components/Creer";
 import { Envoi } from "@/components/Envoi";
@@ -36,6 +36,15 @@ function Home() {
       </section>
 
       <CoffreVue />
+
+      <p className="text-center">
+        <Link
+          to="/tour"
+          className="inline-flex h-8 items-center rounded-sm px-2.5 font-mono text-[11px] tracking-wide text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)] hover:text-encre"
+        >
+          {t("tour.titre")}
+        </Link>
+      </p>
 
       <Inventaire />
 

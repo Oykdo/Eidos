@@ -94,6 +94,13 @@ export function Guide() {
       <Etape n="09" titre={t("guide.09")}>
         <p>{t("guide.09p")}</p>
       </Etape>
+
+      <Etape n="10" titre={t("guide.10")}>
+        <p>{t("guide.10p")}</p>
+        <Button asChild variant="discret">
+          <Link to="/tour">{t("guide.10b")}</Link>
+        </Button>
+      </Etape>
     </Shell>
   );
 }
