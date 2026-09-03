@@ -17,4 +17,6 @@ Deux atlas, pas un : régimes cosmiques (catalogue 101) et signatures planétair
 
 Ville = coffre (jauge). Tour = 255 coupes dans SU(2) (invariant).
 
-Tests : `integrite.test.ts`.
+Craft : une pierre **tourne** (T à gauche, S à droite). Une gemme s’enchâsse (mot inchangé, lecture composée). La philosophale : coffres 1–10, une arme divine, même norme. Les antres : plus tard.
+
+Tests : `integrite.test.ts`, `equipement.test.ts`.

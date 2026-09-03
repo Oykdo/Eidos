@@ -5,13 +5,21 @@ import { cn } from "@/lib/utils";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import type { ObjetPorte } from "@/lib/eidos/types.ts";
-import { objetDePorte, racineDuCoffre, signatureDe } from "@/lib/eidos/inventaire.ts";
+import { objetDePorte, racineDuCoffre } from "@/lib/eidos/inventaire.ts";
 import { sceauObjet } from "@/lib/eidos/objets.ts";
 import { combatDe, COMBAT_AXES, COMBAT_BUDGET } from "@/lib/eidos/combat.ts";
 import { conjugue, produit, type Q } from "@/lib/eidos/cosmos.ts";
 import { memeOrbite, memeRayon } from "@/lib/eidos/groupe.ts";
 import { paireDe, qDeMot, resonanceDe, type Polarite } from "@/lib/eidos/resonance.ts";
 import { glypheLecture } from "@/lib/eidos/integrite.ts";
+import {
+  GENRES,
+  NOMS_ARME,
+  motEffectif,
+  peutPhilosopher,
+  type Genre,
+  type NomArme,
+} from "@/lib/eidos/equipement.ts";
 import { ageOf, rewardAt } from "@/lib/eidos/eonis.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { posteDe, POSTE_JOUR } from "@/lib/eidos/poste.ts";
@@ -24,6 +32,8 @@ export function Inventaire() {
   const coffre = useCoffre((s) => s.coffre);
   const tirer = useCoffre((s) => s.tirer);
   const miner = useCoffre((s) => s.miner);
+  const craft = useCoffre((s) => s.craft);
+  const divin = useCoffre((s) => s.divin);
   const erreur = useCoffre((s) => s.erreur);
   const flash = useCoffre((s) => s.flash);
   const objets = coffre.objets ?? [];
@@ -36,10 +46,13 @@ export function Inventaire() {
   const epuise = poste.restant <= 0;
   const [sel, setSel] = useState<number | null>(null);
   const [contre, setContre] = useState<number | null>(null);
+  const [filtre, setFiltre] = useState<Genre | "tout">("tout");
   const [gl, setGl] = useState(false);
   const reduced = usePrefersReducedMotion();
   const choisi = sel != null ? (objets[sel] ?? null) : (objets[objets.length - 1] ?? null);
   const autre = contre != null ? (objets[contre] ?? null) : null;
+  const visibles = filtre === "tout" ? objets : objets.filter((o) => o.genre === filtre);
+  const philo = peutPhilosopher(coffre);
   const racine = useMemo(() => racineDuCoffre(coffre), [coffre]);
 
   useEffect(() => {
@@ -70,18 +83,67 @@ export function Inventaire() {
         <Button type="button" variant="discret" disabled={deja} onClick={() => tirer()}>
           {t("inv.tirer")}
         </Button>
+        <Button
+          type="button"
+          variant="discret"
+          disabled={sel == null || contre == null}
+          onClick={() => {
+            if (sel == null || contre == null) return;
+            craft(sel, contre);
+            setContre(null);
+          }}
+        >
+          {t("inv.craft")}
+        </Button>
       </div>
       <p className="mt-2 min-h-5 font-mono text-sm" role="status">
         {erreur ? <span className="text-fer">{erreur}</span> : null}
         {!erreur && flash ? <span className="text-cuivre">{flash}</span> : null}
       </p>
 
+      {philo ? (
+        <div className="mt-3 flex flex-wrap gap-1">
+          <p className="w-full font-mono text-[11px] text-cuivre">{t("inv.philo")}</p>
+          {NOMS_ARME.map((nom) => (
+            <Button key={nom} type="button" variant="discret" onClick={() => divin(nom as NomArme)}>
+              {nom}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap gap-1">
+        <button
+          type="button"
+          onClick={() => setFiltre("tout")}
+          className={cn(
+            "h-8 rounded-sm px-2 font-mono text-[10px]",
+            filtre === "tout" ? "bg-or text-or-fg" : "text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+          )}
+        >
+          {t("inv.filtre.tout")}
+        </button>
+        {GENRES.map((g) => (
+          <button
+            key={g}
+            type="button"
+            onClick={() => setFiltre(g)}
+            className={cn(
+              "h-8 rounded-sm px-2 font-mono text-[10px]",
+              filtre === g ? "bg-or text-or-fg" : "text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+            )}
+          >
+            {t(`inv.genre.${g}` as Msg)}
+          </button>
+        ))}
+      </div>
+
       {objets.length === 0 ? (
         <p className="mt-3 font-mono text-[12px] text-sourd">{t("inv.vide")}</p>
       ) : (
         <div className="mt-3 grid grid-cols-3 gap-2">
-          {objets.map((o, i) => {
-            const sig = signatureDe(o.archetype);
+          {visibles.map((o) => {
+            const i = objets.indexOf(o);
             const on = choisi === o;
             return (
               <button
@@ -106,7 +168,9 @@ export function Inventaire() {
               >
                 <VoxelIcon objet={o} size={64} />
                 <span className="mt-1 font-mono text-[10px] tracking-wide">
-                  {sig.astre} {sig.muse}
+                  {t(`inv.genre.${o.genre}` as Msg)}
+                  {o.affixe ? ` ${o.affixe}` : ""}
+                  {o.emplacement && o.genre === "armure" ? ` ${t(`inv.slot.${o.emplacement}` as Msg)}` : ""}
                 </span>
               </button>
             );
@@ -134,6 +198,11 @@ export function Inventaire() {
             )}
           </div>
           <pre className="mt-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-sourd">
+            {choisi.nom} · {t(`inv.genre.${choisi.genre}` as Msg)}
+            {choisi.affixe ? ` · ${choisi.affixe}` : ""}
+            {choisi.sockets ? ` · ${t("inv.sockets", { n: choisi.gemmes.length, max: choisi.sockets })}` : ""}
+            {choisi.palierLair ? ` · ${t("inv.lair", { n: choisi.palierLair })}` : ""}
+            {"\n"}
             {t("inv.mot")} {choisi.mot.toString(16).padStart(8, "0")}
             {"\n"}
             {t("inv.sceau")} {sceauObjet(objetDePorte(choisi)).split(" ")[0]}
@@ -159,7 +228,7 @@ export function Inventaire() {
 
 function CombatBars({ porte }: { porte: ObjetPorte }) {
   const { t } = useI18n();
-  const c = combatDe(objetDePorte(porte));
+  const c = combatDe({ ...objetDePorte(porte), mot: motEffectif(porte) });
   return (
     <div className="mt-3 flex flex-col gap-1.5">
       {COMBAT_AXES.map((axe) => (

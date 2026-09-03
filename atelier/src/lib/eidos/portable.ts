@@ -41,6 +41,7 @@ function normaliserCoffre(c: Coffre): Coffre {
       ? c.reliques.filter(estNomAge)
       : [],
     objets: normaliserObjets((c as Coffre).objets),
+    philosophale: c.philosophale ?? null,
   };
 }
 

@@ -48,6 +48,7 @@ function normaliser(c: Coffre): Coffre {
     clesUsees: Array.isArray(c.clesUsees) ? c.clesUsees : [],
     reliques: Array.isArray(c.reliques) ? c.reliques.filter(estNomAge) : [],
     objets: normaliserObjets(c.objets),
+    philosophale: c.philosophale ?? null,
   };
 }
 

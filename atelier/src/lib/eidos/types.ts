@@ -41,6 +41,20 @@ export type NatureCoffre = "atelier" | "personnel";
 
 export type NomAge = "Satya" | "Treta" | "Dvapara" | "Kali";
 
+export type Genre = "pierre" | "arme" | "armure" | "gemme" | "philosophale" | "lair";
+export type EmplacementArmure =
+  | "casque"
+  | "plastron"
+  | "epaulieres"
+  | "gants"
+  | "bottes"
+  | "amulette"
+  | "anneau1"
+  | "anneau2"
+  | "accessoire";
+export type Emplacement = "arme" | EmplacementArmure;
+export type Affixe = "T1" | "T2" | "T3" | "S1" | "S2" | "S3";
+
 /** Jauge locale hors feuille : nonce et hauteur ne sont pas l'invariant. */
 export type ObjetPorte = {
   mot: number;
@@ -48,6 +62,13 @@ export type ObjetPorte = {
   age: NomAge;
   nonce: number;
   hauteur: number;
+  genre: Genre;
+  emplacement: Emplacement | null;
+  affixe: Affixe | null;
+  sockets: number;
+  gemmes: Affixe[];
+  nom: string;
+  palierLair: number | null;
 };
 
 
@@ -90,6 +111,7 @@ export type Coffre = {
   chaine: BlocLocal[];
   reliques: NomAge[];
   objets: ObjetPorte[];
+  philosophale: string | null;
 };
 
 export type HistoriqueTx = {

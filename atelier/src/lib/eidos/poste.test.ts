@@ -30,6 +30,7 @@ function coffre(nature: Coffre["nature"], histo: HistoriqueTx[]): Coffre {
     chaine: [],
     reliques: [],
     objets: [],
+    philosophale: null,
   };
 }
 

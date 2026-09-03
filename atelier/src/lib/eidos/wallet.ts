@@ -71,6 +71,7 @@ function coffreVide(
     chaine: [blocGenese()],
     reliques: [],
     objets: [],
+    philosophale: null,
   };
 }
 
@@ -112,6 +113,7 @@ export function chargerScenario(coffre: Coffre, scenario: ScenarioId): Coffre {
       chaine: [blocGenese()],
       reliques: [],
       objets: [],
+      philosophale: null,
     },
     "atelier",
   );

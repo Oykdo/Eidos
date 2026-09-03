@@ -29,6 +29,7 @@ import {
 import { exporterCarnet, ouvrirFichier } from "./eidos/carnet.ts";
 import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
 import { tirerDansCoffre, normaliserObjets, signatureDe } from "./eidos/inventaire.ts";
+import { craftDansCoffre, divinDansCoffre, type NomArme } from "./eidos/equipement.ts";
 import { peutMiner } from "./eidos/poste.ts";
 
 const KEY = "eidos-coffre-v2";
@@ -57,6 +58,8 @@ type Etat = {
   miner: () => void;
   acheterRelique: (nom: NomAge) => void;
   tirer: () => void;
+  craft: (i: number, j: number) => void;
+  divin: (nom: NomArme) => void;
   setMontant: (s: string) => void;
   setDest: (s: string) => void;
   setDestInterne: (v: boolean) => void;
@@ -118,6 +121,7 @@ export const useCoffre = create<Etat>((set, get) => ({
           if (coffre.derniereSig === undefined) coffre.derniereSig = null;
           if (!Array.isArray(coffre.reliques)) coffre.reliques = [];
           coffre.objets = normaliserObjets(coffre.objets);
+          if (coffre.philosophale === undefined) coffre.philosophale = null;
           if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
             coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");
           }
@@ -344,8 +348,35 @@ export const useCoffre = create<Etat>((set, get) => ({
     set({
       coffre: r.coffre,
       erreur: null,
-      flash: t("flash.tirage", { muse: signatureDe(r.objet.archetype).muse, age: r.objet.age }),
+      flash: t("flash.tirage", {
+        muse: signatureDe(r.objet.archetype).muse,
+        age: r.objet.age,
+      }),
     });
+  },
+
+  craft: (i, j) => {
+    const r = craftDansCoffre(get().coffre, i, j);
+    if (!r.ok) {
+      set({ erreur: t(`inv.craft.${r.code}` as Msg), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: t("inv.craft.ok", { nom: r.objet.nom }),
+    });
+  },
+
+  divin: (nom) => {
+    const r = divinDansCoffre(get().coffre, nom);
+    if (!r.ok) {
+      set({ erreur: t("inv.philo.ko"), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({ coffre: r.coffre, erreur: null, flash: t("inv.philo.ok", { nom }) });
   },
 
   exporterFichier: () => exporterCarnet(get().coffre),
@@ -371,6 +402,7 @@ export const useCoffre = create<Etat>((set, get) => ({
     if (!Array.isArray(coffre.clesUsees)) coffre.clesUsees = [];
     if (!Array.isArray(coffre.reliques)) coffre.reliques = [];
     coffre.objets = normaliserObjets(coffre.objets);
+    if (coffre.philosophale === undefined) coffre.philosophale = null;
     if (coffre.nature !== "personnel") coffre.nature = "atelier";
     if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
       coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");

@@ -11,7 +11,8 @@ import { ageOf } from "./eonis.ts";
 import { fromHex, utf8 } from "./hash.ts";
 import { objetDepuisGraine, graineTirage, racineObjets, type Objet } from "./objets.ts";
 import { SIGNATURES, type SignatureId } from "./signatures.ts";
-import type { Coffre, NomAge, ObjetPorte } from "./types.ts";
+import type { Affixe, Coffre, NomAge, ObjetPorte } from "./types.ts";
+import { AFFIXES, habille } from "./equipement.ts";
 
 export function estObjetPorte(x: unknown): x is ObjetPorte {
   if (!x || typeof x !== "object") return false;
@@ -35,13 +36,27 @@ export function normaliserObjets(xs: unknown): ObjetPorte[] {
     const mot = x.mot >>> 0;
     if (seen.has(mot)) continue;
     seen.add(mot);
-    out.push({
-      mot,
-      archetype: x.archetype,
-      age: x.age,
-      nonce: x.nonce & 65535,
-      hauteur: x.hauteur | 0,
-    });
+    out.push(
+      habille(
+        {
+          mot,
+          archetype: x.archetype,
+          age: x.age,
+          nonce: x.nonce & 65535,
+          hauteur: x.hauteur | 0,
+        },
+        mot,
+        {
+          genre: x.genre,
+          emplacement: x.emplacement,
+          affixe: x.affixe && (AFFIXES as readonly string[]).includes(x.affixe) ? (x.affixe as Affixe) : null,
+          sockets: x.sockets,
+          gemmes: x.gemmes,
+          nom: x.nom,
+          palierLair: x.palierLair,
+        },
+      ),
+    );
   }
   return out;
 }
@@ -78,13 +93,16 @@ export function tirerDansCoffre(c: Coffre): Tirage {
   const sig = utf8(`${c.maitre}:${c.n}:${tip.hauteur}`);
   const graine = graineTirage(sig, hash);
   const o = objetDepuisGraine(graine, ageNom);
-  const porte: ObjetPorte = {
-    mot: o.mot,
-    archetype: o.archetype,
-    age: o.age,
-    nonce: ((graine[8]! << 8) | graine[9]!) & 65535,
-    hauteur: tip.hauteur,
-  };
+  const porte = habille(
+    {
+      mot: o.mot,
+      archetype: o.archetype,
+      age: o.age,
+      nonce: ((graine[8]! << 8) | graine[9]!) & 65535,
+      hauteur: tip.hauteur,
+    },
+    graine[10]!,
+  );
   return {
     ok: true,
     objet: porte,
