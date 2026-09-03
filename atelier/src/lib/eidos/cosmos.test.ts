@@ -36,7 +36,7 @@ describe("eidos-objets/1 cosmos", () => {
   });
 
   it("troisCarres : même ordre, d entier", () => {
-    const r = NORME - 9945n * 9945n;
+    const r = NORME - 5000n * 5000n;
     const reps = troisCarres(r);
     assert.ok(reps.length > 0);
     for (const [b, c, d] of reps) {

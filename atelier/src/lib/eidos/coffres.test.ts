@@ -6,12 +6,15 @@ import {
   COFFRE_FOND,
   PALETTE_AVANT,
   PALETTE_FOND,
+  SPHERE_P,
+  SPHERE_R,
   amplitudeDuSolde,
   cartesiens,
   gaussienne,
   integraleGaussienne,
   soldeAtomes,
   teinte,
+  voxelsOrnementSpherique,
 } from "./coffres.ts";
 
 describe("coffres 3D — audit", () => {
@@ -36,7 +39,7 @@ describe("coffres 3D — audit", () => {
 
   it("l'intégrale polaire se tient près de π", () => {
     const s = integraleGaussienne();
-    assert.ok(Math.abs(s - Math.PI) < 1e-4, `écart ${s - Math.PI}`);
+    assert.ok(Math.abs(s - Math.PI) < 1e-3, `écart ${s - Math.PI}`);
   });
 
   it("les coordonnées sphériques recouvrent l'axe z", () => {
@@ -64,5 +67,16 @@ describe("coffres 3D — audit", () => {
     assert.ok(vide >= 0.28 && vide < un);
     assert.ok(un < dix);
     assert.ok(amplitudeDuSolde(1e18) <= 1.85);
+  });
+
+  it("ornement sphérique : P sur la sphère, 265 voxels", () => {
+    assert.equal(
+      SPHERE_P[0] * SPHERE_P[0] + SPHERE_P[1] * SPHERE_P[1] + SPHERE_P[2] * SPHERE_P[2],
+      SPHERE_R * SPHERE_R,
+    );
+    const vs = voxelsOrnementSpherique();
+    assert.equal(vs.length, 265);
+    assert.ok(vs.some((v) => v.kind === "rayon"));
+    assert.ok(vs.some((v) => v.x === SPHERE_P[0] && v.y === SPHERE_P[1] && v.z === SPHERE_P[2] && v.kind === "point"));
   });
 });

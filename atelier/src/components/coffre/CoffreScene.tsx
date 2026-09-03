@@ -17,6 +17,8 @@ import {
   COFFRE_AVANT,
   COFFRE_FOND,
   gaussienne,
+  ORNEMENT_TEINTE,
+  voxelsOrnementSpherique,
   type Palette8,
 } from "@/lib/eidos/coffres.ts";
 
@@ -108,11 +110,41 @@ function CoffreVoxel({
 }
 
 function SphereCoords({ amplitude }: { amplitude: number }) {
+  const group = useRef<THREE.Group>(null);
+  const mesh = useMemo(() => {
+    const vs = voxelsOrnementSpherique();
+    const geo = new THREE.BoxGeometry(0.92, 0.92, 0.92);
+    const mat = new THREE.MeshStandardMaterial({
+      roughness: 0.35,
+      metalness: 0.55,
+      vertexColors: false,
+    });
+    const inst = new THREE.InstancedMesh(geo, mat, vs.length);
+    const dummy = new THREE.Object3D();
+    vs.forEach((v, i) => {
+      dummy.position.set(v.x, v.z, v.y);
+      dummy.updateMatrix();
+      inst.setMatrixAt(i, dummy.matrix);
+      inst.setColorAt(i, new THREE.Color(ORNEMENT_TEINTE[v.kind]));
+    });
+    inst.instanceMatrix.needsUpdate = true;
+    if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    return inst;
+  }, []);
+
+  useFrame((_, dt) => {
+    if (!group.current) return;
+    group.current.rotation.y += Math.min(dt, 0.08) * 0.18;
+  });
+
   return (
-    <mesh position={[0, 0.85 + amplitude * 0.7, -0.15]}>
-      <sphereGeometry args={[0.55 + amplitude * 0.18, 16, 12]} />
-      <meshBasicMaterial color="#c9a227" wireframe transparent opacity={0.55} />
-    </mesh>
+    <group
+      ref={group}
+      position={[0, 0.95 + amplitude * 0.35, -0.35]}
+      scale={0.11 + amplitude * 0.02}
+    >
+      <primitive object={mesh} />
+    </group>
   );
 }
 

@@ -24,6 +24,8 @@ export const FR = {
   "sous.guide": "Mode d'emploi",
 
   "coffre.eidolon": "solde",
+  "coffre.scene": "Coffre",
+  "coffre.sceneLede": "Sphère (r, θ, φ) en voxels. La cloche suit le solde. Les équations restent hors champ.",
   "coffre.sorties": "{n} pièce{s}",
   "coffre.ailleurs": "voir le journal.",
 
@@ -337,6 +339,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "sous.signatures": "Patterns",
   "sous.guide": "How to",
   "coffre.eidolon": "balance",
+  "coffre.scene": "Vault",
+  "coffre.sceneLede": "Sphere (r, θ, φ) in voxels. The bell follows the balance. Equations stay off-screen.",
   "coffre.sorties": "{n} coin{s}",
   "coffre.ailleurs": "see the log.",
   "atelier.titre": "Examples",
