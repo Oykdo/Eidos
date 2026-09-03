@@ -18,6 +18,7 @@ import {
 } from "./eidos/temoin.ts";
 import type { Coffre, ScenarioId } from "./eidos/types.ts";
 import type { PreuvePortable } from "./eidos/merkle.ts";
+import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 
 const KEY = "eidos-coffre-v2";
@@ -36,6 +37,8 @@ type Etat = {
   hydrater: () => void;
   charger: (id: ScenarioId) => void;
   robinet: () => void;
+  robinetReseau: () => void;
+  demandeReseau: DemandeRobinet | null;
   envoyer: () => void;
   regrouper: () => void;
   personnel: () => void;
@@ -84,6 +87,7 @@ export const useCoffre = create<Etat>((set, get) => ({
   preuveRef: null,
   temoin: temoinVide(),
   temoinFlash: null,
+  demandeReseau: null,
 
   hydrater: () => {
     try {
@@ -134,7 +138,25 @@ export const useCoffre = create<Etat>((set, get) => ({
   robinet: () => {
     const next = verserRobinet(get().coffre);
     persister(next);
-    set({ coffre: next, flash: "Robinet : +1,000000 eidôlon", erreur: null });
+    set({ coffre: next, flash: "Robinet : +1,000000 eidôlon (ce navigateur)", erreur: null });
+  },
+
+  robinetReseau: () => {
+    const r = demanderAuReseau(get().coffre);
+    if ("refus" in r) {
+      set({ erreur: r.refus, demandeReseau: null });
+      return;
+    }
+    try {
+      window.open(r.url, "_blank", "noopener");
+    } catch {
+      /* popup */
+    }
+    set({
+      demandeReseau: r,
+      erreur: null,
+      flash: "Validez l'issue GitHub. Le nœud verse au prochain bloc (une heure au plus).",
+    });
   },
 
   envoyer: () => {

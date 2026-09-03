@@ -68,7 +68,8 @@ Le **Guide** dans l’app reprend ces pas.
 2. **Journal** — lancer la genèse. Toucher « preuve » sur une sortie. Exporter la tête.
 3. **Témoin** — adopter la tête, juger. Envoyer 0,50 sans suivre : racine étrangère.
 4. **Clés** — rejouer l’attaque de réemploi. Graine d’atelier **publique**. « Coffre personnel » tire 256 bits dans le navigateur.
-5. **Arbre** — bandeau ∇ / puits / axiale ; **régimes** pour D0–D9. Sphères d’or = sorties actuelles.
+5. **Robinet** — *Atelier · +1 ici* crédite ce navigateur. *Réseau · 1 eidôlon* ouvre une issue GitHub (coffre personnel, 31 glyphes) ; le nœud verse au bloc suivant.
+6. **Arbre** — bandeau ∇ / puits / axiale ; **régimes** pour D0–D9. Sphères d’or = sorties actuelles.
 
 ---
 
