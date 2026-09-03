@@ -385,6 +385,9 @@ def forger(maintenant=None):
         return ch, 0
 
     depart = max(dernier + 1, creneau_courant - MAX_PAR_EXECUTION + 1)
+    if depart > dernier + 1:
+        print(f"créneaux sautés {dernier + 1}–{depart - 1} "
+              f"(garde-fou {MAX_PAR_EXECUTION} par exécution)")
     forges = 0
     for s in range(depart, creneau_courant + 1):
         v = fed.proposant(s)
@@ -440,6 +443,7 @@ def ecrire_etat(ch, blocs):
         "tresor_adresse": (adresse_du_bloc(carnet.hauteur).hex()
                            if carnet.hauteur >= 0 else None),
         "dernier_creneau": ch.creneaux[-1] if ch.creneaux else None,
+        "creneaux_sautes": ch.creneaux_sautes(),
         "age": nom,
         "a_courant": a,
         "recompense_courante_atomes": E.reward_at(max(carnet.hauteur, 0)),

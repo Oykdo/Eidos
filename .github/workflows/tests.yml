@@ -42,7 +42,7 @@ jobs:
       - name: Difficulte et travail cumule (6 controles)
         run: python consensus.py
 
-      - name: Consensus federe (11 controles)
+      - name: Consensus federe (vivacite, 14 controles)
         run: python federation.py
 
       - name: Persistance, aller-retour complet

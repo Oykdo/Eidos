@@ -98,7 +98,9 @@ Ce schéma est **à état**. Le compteur d'indice doit survivre aux redémarrage
 
 Le pas de trois est celui qui engendre l'ordre des jours à partir de l'ordre des heures. Comme `pgcd(3, n) = 1` dès que `n` n'est pas divisible par trois, la rotation parcourt tous les validateurs sans en sauter aucun. Avec `n = 7` : `[0, 3, 6, 2, 5, 1, 4]`. Un `n` divisible par trois est refusé au chargement.
 
-**Finalité** : un bloc est final dès que plus de `2n/3` validateurs distincts ont bâti par-dessus. Avec sept validateurs, cinq suffisent — soit environ cinquante minutes.
+**Finalité** : un bloc est final dès que plus de `2n/3` validateurs distincts ont bâti par-dessus. Le seuil est `2·n//3 + 1`, **indépendant du pas de rotation** — changer le pas ne doit pas déplacer le quorum. Avec sept validateurs, cinq suffisent — soit environ cinquante minutes. Trois validateurs silencieux suffisent à bloquer la finalité.
+
+**Vivacité** : un créneau `s > créneau(now) + 1` est refusé. Sans cette borne, un seul bloc signé daté trop loin dans le futur gèle la chaîne — tout créneau réel devient « déjà passé ». Sauter un créneau (silence du proposant) reste permis : `s > dernier` suffit. Les trous se reconstruisent depuis la liste des créneaux et sont publiés dans `etat.json` (`creneaux_sautes`). Le nœud ne rattrape jamais plus de six créneaux par exécution.
 
 **Coût** : 0,69 ms par bloc, signature et vérification comprises, contre ≈ 262 000 hachages pour une preuve de travail à 18 bits. C'est ici, et nulle part ailleurs, que la sobriété énergétique est obtenue.
 
@@ -116,7 +118,7 @@ Règles d'horodatage disponibles pour une variante en preuve de travail : cible 
 | `utxo.py` | 439 | carnet, Lamport, validation — 11 contrôles |
 | `store.py` | 278 | persistance et rejeu intégral |
 | `consensus.py` | 204 | difficulté et travail cumulé — 6 contrôles |
-| `federation.py` | 347 | signatures Merkle et rotation — 11 contrôles |
+| `federation.py` | 398 | signatures Merkle, rotation, vivacité — 14 contrôles |
 
 ---
 

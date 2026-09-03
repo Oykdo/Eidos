@@ -27,7 +27,14 @@ Trois pieces :
 
   3. Finalite aux deux tiers. Un bloc est final des que des blocs signes
      par plus de 2n/3 validateurs distincts reposent sur lui. Avec n = 7,
-     il faut 5 validateurs distincts.
+     il faut 5 validateurs distincts. Le seuil est 2*n//3+1 : il ne depend
+     pas du pas de rotation.
+
+  4. Borne de vivacite. Un creneau s > creneau(now)+1 est refuse. Sans
+     cette borne, un seul bloc signe date trop loin dans le futur gele la
+     chaine : tout creneau reel devient « deja passe ». Sauter un creneau
+     (silence du proposant) reste permis — s > dernier suffit. Les trous
+     se reconstruisent depuis la liste des creneaux.
 
 Usage :  python3 federation.py          auto-tests
          python3 federation.py --demo   14 blocs, deux tours complets
@@ -151,13 +158,20 @@ class ChaineFederee:
         return sha256d(E.header(blk["height"], blk["prev"], mr,
                                 blk["ts"], blk["nonce"]))
 
-    def valider(self, blk):
+    def valider(self, blk, maintenant=None):
         f = self.fed
         s = f.creneau(blk["ts"])
         if s < 0:
             raise U.Rejet("creneau anterieur a la genese")
         if self.creneaux and s <= self.creneaux[-1]:
             raise U.Rejet(f"creneau {s} deja passe (dernier {self.creneaux[-1]})")
+        # Gel temporel : un bloc date trop loin dans le futur rend tout
+        # creneau reel « deja passe ». Une marge d'un creneau absorbe le
+        # decalage d'horloge. Sauter un creneau (silence) reste permis.
+        now = int(time.time()) if maintenant is None else maintenant
+        courant = f.creneau(now)
+        if s > courant + 1:
+            raise U.Rejet(f"creneau {s} dans le futur (courant {courant})")
         attendu = f.proposant(s)
         v = blk.get("validateur")
         if v != attendu:
@@ -180,9 +194,17 @@ class ChaineFederee:
         self.indices.setdefault(v, set()).add(i)
         return h
 
+    def creneaux_sautes(self):
+        """Trous interieurs : creneaux sans bloc entre le premier et le dernier."""
+        sautes = []
+        for a, b in zip(self.creneaux, self.creneaux[1:]):
+            if b > a + 1:
+                sautes.extend(range(a + 1, b))
+        return sautes
+
     # ------------------------------------------------------------------
     def seuil(self) -> int:
-        return 2 * self.fed.n // PAS + 1        # strictement plus de 2n/3
+        return 2 * self.fed.n // 3 + 1        # independant du pas de rotation
 
     def finalise(self, hauteur: int) -> bool:
         """Vrai si plus de 2n/3 validateurs distincts ont bati par-dessus."""
@@ -298,6 +320,35 @@ def tests():
         blk["bits"] = 12
         ch.valider(blk)
     doit_echouer("difficulte non nulle", avec_preuve_de_travail)
+
+    def creneau_futur():
+        # gel temporel : un bloc signe en l'an 2100 rend tout creneau reel « passe »
+        ts = int(time.time()) + 100 * 365 * 24 * 3600
+        ch.valider(forger(ch, cles, [U.coinbase(7, p.nouvelle_adresse())], ts))
+    doit_echouer("creneau dans le futur", creneau_futur)
+
+    # -- vivacite : silence permis, quorum independant du pas --------------
+    cles_v = cles_de_test()
+    fed_v = Federation([c.racine for c in cles_v], t0, hauteur=6)
+    ch_v = ChaineFederee(fed_v)
+    p_v = U.Portefeuille("vivacite")
+    ch_v.valider(forger(ch_v, cles_v, [U.coinbase(0, p_v.nouvelle_adresse())], t0))
+    ch_v.valider(forger(ch_v, cles_v, [U.coinbase(1, p_v.nouvelle_adresse())],
+                        t0 + 2 * CRENEAU))
+    assert ch_v.creneaux == [0, 2] and ch_v.creneaux_sautes() == [1]
+    print("saut de creneau (silence)         : OK"); ok += 1
+
+    cles_q = cles_de_test()
+    fed_q = Federation([c.racine for c in cles_q], t0, hauteur=6)
+    ch_q = ChaineFederee(fed_q)
+    p_q = U.Portefeuille("quorum")
+    for h in range(4):
+        ch_q.valider(forger(ch_q, cles_q,
+                            [U.coinbase(h, p_q.nouvelle_adresse())],
+                            t0 + h * CRENEAU))
+    assert ch_q.seuil() == 2 * fed_q.n // 3 + 1 == 5
+    assert all(not ch_q.finalise(h) for h in range(4))
+    print("quorum 4/7 insuffisant            : OK"); ok += 1
 
     # -- finalite -----------------------------------------------------------
     print(f"\nseuil de finalite : {ch.seuil()} validateurs distincts sur {fed.n}")
