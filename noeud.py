@@ -42,6 +42,7 @@ FORMAT = 1
 MAX_PAR_EXECUTION = 6          # garde-fou : jamais plus de 6 blocs d'un coup
 MAX_PAIEMENTS = 3              # demandes servies par bloc
 MONTANT_ROBINET = 100_000_000  # 1 eidolon par demande
+BUDGET_RATIO = 8               # plafond d'époque : (a·T) / 8
 
 
 # ==========================================================================
@@ -163,6 +164,7 @@ def charger(fed, bavard=False):
         try:
             blk, i = deser_bloc(buf, i)
             ch.valider(blk)
+            noter_gouttes(ch, blk)
         except (U.Rejet, ValueError, IndexError) as e:
             raise SystemExit(f"chaîne corrompue au bloc {n} : {e}")
         n += 1
@@ -201,11 +203,57 @@ def adresse_du_bloc(hauteur):
 
 # ==========================================================================
 # Robinet : sert les demandes inscrites dans mempool.json
+# Le carnet tranche. La file ne fait pas foi.
 # ==========================================================================
 def charger_mempool():
     if not os.path.exists(MEMPOOL):
         return {"spec": "eidos-mempool/1", "demandes": []}
     return json.load(open(MEMPOOL, encoding="utf-8"))
+
+
+def budget_epoque(h):
+    """a·T/8 atomes sur l'époque courante. Le robinet redistribue, il ne frappe pas."""
+    _, a, _ = E.age_of(max(h, 0))
+    return a * E.T * E.ATOMES // BUDGET_RATIO
+
+
+def epoque_debut(h):
+    _, _, start = E.age_of(max(h, 0))
+    local = max(h, 0) - start
+    return start + (local // E.T) * E.T
+
+
+def est_goutte(tx):
+    if tx.is_coinbase():
+        return False
+    return any(m == MONTANT_ROBINET for _, m in tx.outputs)
+
+
+def noter_gouttes(ch, blk):
+    if not hasattr(ch, "robinet_gouttes"):
+        ch.robinet_gouttes = []
+    h = blk["height"]
+    for tx in blk["txs"]:
+        if not est_goutte(tx):
+            continue
+        for addr, m in tx.outputs:
+            if m == MONTANT_ROBINET:
+                ch.robinet_gouttes.append((h, addr.hex()))
+                break
+
+
+def robinet_epoque_atomes(ch, h):
+    debut = epoque_debut(h)
+    gouttes = getattr(ch, "robinet_gouttes", [])
+    return sum(MONTANT_ROBINET for gh, _ in gouttes if gh >= debut)
+
+
+def verse_deja(ch, adresse_hex):
+    """Une sortie non dépensée à cette adresse : dépenser d'abord."""
+    for a, _m in ch.carnet.utxo.values():
+        if a.hex() == adresse_hex:
+            return True
+    return False
 
 
 def sorties_tresor(ch, combien):
@@ -229,14 +277,49 @@ def sorties_tresor(ch, combien):
 
 def construire_paiements(ch, hauteur_bloc):
     """Une transaction par demande : le trésor verse, et rend la monnaie sur
-    une adresse fraîche. Frais nuls."""
+    une adresse fraîche. Frais nuls.
+
+    Refus si l'adresse a encore une sortie, ou si a·T/8 est atteint.
+    La file n'est pas le carnet : on relit l'UTXO à chaque forge.
+    """
     f = charger_mempool()
-    attente = [d for d in f["demandes"] if d["etat"] == "en_attente"][:MAX_PAIEMENTS]
+    attente = [d for d in f["demandes"]
+               if d.get("etat") == "en_attente"
+               and d.get("type", "robinet") == "robinet"]
     if not attente:
         return [], f, False
-    dispo = sorties_tresor(ch, len(attente))
+
+    budget = budget_epoque(hauteur_bloc)
+    depense = robinet_epoque_atomes(ch, hauteur_bloc)
+    eligibles = []
+    vus = set()
+    for d in attente:
+        adr = d.get("adresse", "")
+        if not adr or adr in vus:
+            d["etat"] = "refus"
+            d["motif"] = "doublon"
+            continue
+        vus.add(adr)
+        if verse_deja(ch, adr):
+            d["etat"] = "refus"
+            d["motif"] = "sortie non dépensée"
+            print(f"  robinet refus {adr[:16]}… : sortie non dépensée")
+            continue
+        if depense + MONTANT_ROBINET > budget:
+            print(f"  robinet : budget d'époque atteint "
+                  f"({depense / E.ATOMES:.0f}/{budget / E.ATOMES:.0f})")
+            break
+        eligibles.append(d)
+        depense += MONTANT_ROBINET
+        if len(eligibles) >= MAX_PAIEMENTS:
+            break
+    if not eligibles:
+        return [], f, True
+
+    dispo = sorties_tresor(ch, len(eligibles))
     txs = []
-    for k, (d, (cle, graine, montant)) in enumerate(zip(attente, dispo)):
+    for k, (d, slot) in enumerate(zip(eligibles, dispo)):
+        cle, graine, montant = slot
         dest = bytes.fromhex(d["adresse"])
         tx = U.Tx([cle], [(dest, MONTANT_ROBINET),
                           (adr(graine_rendu(hauteur_bloc, k)),
@@ -278,6 +361,7 @@ def forger(maintenant=None):
             paiements, file, servi = construire_paiements(ch, h)
         blk = _forger_un(ch, k, v, h, ts, paiements)
         d = ch.valider(blk)
+        noter_gouttes(ch, blk)
         ajouter(blk)
         if servi:
             json.dump(file, open(MEMPOOL, "w"), indent=1, ensure_ascii=False)
@@ -322,6 +406,8 @@ def ecrire_etat(ch, blocs):
         "emission_cumulee_atomes": carnet.emission_cumulee(),
         "en_circulation_atomes": sum(m for _, m in carnet.utxo.values()),
         "sorties_non_depensees": len(carnet.utxo),
+        "robinet_epoque_atomes": robinet_epoque_atomes(ch, max(carnet.hauteur, 0)),
+        "robinet_budget_atomes": budget_epoque(max(carnet.hauteur, 0)),
         "cles_consommees": sum(len(s) for s in ch.indices.values()),
         "atomes_par_unite": E.ATOMES,
         "emission_totale_atomes": 62_899_200 * E.ATOMES,

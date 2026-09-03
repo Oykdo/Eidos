@@ -6,6 +6,11 @@ robinet.py — file d'attente des demandes du reseau d'essai.
 Lit le corps d'une issue GitHub, y cherche une adresse Eidos valide, et
 l'inscrit dans mempool.json. Le noeud la servira au bloc suivant.
 
+Le carnet tranche, pas la file :
+  1. une sortie non depensee a cette adresse → refus (depenser d'abord)
+  2. budget d'epoque a·T/8 deja servi + file → refus
+  3. deja en_attente pour cette adresse → ignore
+
 SECURITE. Le texte de l'issue est ecrit par n'importe qui. Il n'est jamais
 interpole dans une commande : il arrive par la variable d'environnement
 EIDOS_ISSUE_BODY, et rien n'en est retenu qui n'ait passe trois filtres —
@@ -15,12 +20,14 @@ texte est ignore.
 
   python3 robinet.py --issue        lit l'environnement, ajoute a la file
   python3 robinet.py --file         affiche la file
+  python3 robinet.py --test         controles
 """
 
 import base64, hashlib, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MEMPOOL = os.path.join(HERE, "mempool.json")
+ETAT = os.path.join(HERE, "etat.json")
 
 FIGURES = "\u00b7\u25cb\u263d\u271a"          # vide, cercle, croissant, croix
 INDEX = {c: i for i, c in enumerate(FIGURES)}
@@ -28,6 +35,8 @@ GROUPE = re.compile("^[" + FIGURES + "]{3}$")
 
 MONTANT_ATOMES = 100_000_000                  # 1 eidolon par demande
 MAX_FILE = 200                                # garde-fou
+T_EPOQUE = 1008
+BUDGET_RATIO = 8
 
 
 def sha(b): return hashlib.sha256(b).digest()
@@ -80,6 +89,47 @@ def ecrire_file(f):
     json.dump(f, open(MEMPOOL, "w"), indent=1, ensure_ascii=False)
 
 
+def charger_etat():
+    if not os.path.exists(ETAT):
+        return None
+    return json.load(open(ETAT, encoding="utf-8"))
+
+
+def budget_depuis_a(a):
+    return a * T_EPOQUE * MONTANT_ATOMES // BUDGET_RATIO
+
+
+def adresse_a_une_sortie(etat, adresse):
+    if not etat:
+        return False
+    for s in (etat.get("sorties") or {}).values():
+        if s.get("adresse") == adresse:
+            return True
+    soldes = etat.get("soldes") or {}
+    return soldes.get(adresse, 0) > 0
+
+
+def pending_robinet(file):
+    return sum(1 for d in file["demandes"]
+               if d.get("type", "robinet") == "robinet"
+               and d.get("etat") == "en_attente")
+
+
+def budget_ok(etat, file, extra=1):
+    """Le carnet (etat) plus la file. Sans etat : on laisse le noeud trancher."""
+    if not etat:
+        return True
+    a = etat.get("a_courant", 40)
+    budget = etat.get("robinet_budget_atomes") or budget_depuis_a(a)
+    deja = etat.get("robinet_epoque_atomes", 0)
+    return deja + (pending_robinet(file) + extra) * MONTANT_ATOMES <= budget
+
+
+def refus(motif):
+    print(f"REFUS : {motif}")
+    raise SystemExit(2)
+
+
 DEBUT = "-----EIDOS-----"
 FIN = "-----FIN-----"
 B64 = re.compile(r"^[A-Za-z0-9+/=]{200,}$")
@@ -120,7 +170,7 @@ def ajouter_envoi():
 
     f = charger_file()
     if len(f["demandes"]) >= MAX_FILE:
-        raise SystemExit("REFUS : file pleine")
+        refus("file pleine")
     if any(d.get("donnees") == donnees for d in f["demandes"]):
         print("transaction deja en file")
         return
@@ -145,11 +195,17 @@ def ajouter():
     adresse = a20.hex()
 
     f = charger_file()
+    etat = charger_etat()
     if len(f["demandes"]) >= MAX_FILE:
-        raise SystemExit("REFUS : file pleine")
-    if any(d["adresse"] == adresse for d in f["demandes"]):
-        print(f"deja en file ou deja servie : {adresse}")
+        refus("file pleine")
+    if any(d.get("adresse") == adresse and d.get("etat") == "en_attente"
+           for d in f["demandes"]):
+        print(f"deja en file : {adresse}")
         return
+    if adresse_a_une_sortie(etat, adresse):
+        refus("sortie non depensee — depensez d'abord")
+    if not budget_ok(etat, f, extra=1):
+        refus("budget d'epoque atteint")
     f["demandes"].append({
         "type": "robinet",
         "adresse": adresse,
@@ -161,11 +217,46 @@ def ajouter():
     print(f"ajoutee : {adresse}  (issue #{numero})")
 
 
+def _tests():
+    assert budget_depuis_a(40) == 40 * 1008 * MONTANT_ATOMES // 8
+    assert budget_depuis_a(40) == 504_000_000_000
+    etat = {
+        "a_courant": 40,
+        "robinet_budget_atomes": 504_000_000_000,
+        "robinet_epoque_atomes": 0,
+        "sorties": {
+            "tx:0": {"adresse": "aa" * 20, "montant": 100000000},
+        },
+        "soldes": {"aa" * 20: 100000000},
+    }
+    file = {"demandes": []}
+    assert adresse_a_une_sortie(etat, "aa" * 20)
+    assert not adresse_a_une_sortie(etat, "bb" * 20)
+    assert not adresse_a_une_sortie(None, "aa" * 20)
+    assert budget_ok(etat, file, extra=1)
+    etat["robinet_epoque_atomes"] = 504_000_000_000
+    assert not budget_ok(etat, file, extra=1)
+    etat["robinet_epoque_atomes"] = 503_900_000_000
+    file = {"demandes": [
+        {"type": "robinet", "etat": "en_attente"},
+        {"type": "robinet", "etat": "servie"},
+    ]}
+    # 5039 eidolon servis + 1 en file + 1 extra = 5041 > 5040
+    assert not budget_ok(etat, file, extra=1)
+    file = {"demandes": []}
+    etat["robinet_epoque_atomes"] = 503_900_000_000
+    assert budget_ok(etat, file, extra=1)
+    print("ok : 8 controles robinet")
+
+
 if __name__ == "__main__":
-    if "--file" in sys.argv:
+    if "--test" in sys.argv:
+        _tests()
+    elif "--file" in sys.argv:
         f = charger_file()
         for d in f["demandes"]:
-            print(f"{d['etat']:<12} {d['adresse']}  issue #{d['issue']}")
+            adr = d.get("adresse", d.get("type", "?"))
+            print(f"{d['etat']:<12} {adr}  issue #{d['issue']}")
         print(f"{len(f['demandes'])} demande(s)")
     elif "--envoi" in sys.argv:
         try:

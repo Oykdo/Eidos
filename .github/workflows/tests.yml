@@ -33,6 +33,9 @@ jobs:
       - name: Carnet UTXO et signatures Lamport (11 controles)
         run: python utxo.py
 
+      - name: Robinet (file, carnet, budget)
+        run: python robinet.py --test
+
       - name: Difficulte et travail cumule (6 controles)
         run: python consensus.py
 
