@@ -24,7 +24,7 @@ export function Shell({
   const { t } = useI18n();
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[560px] px-[18px] pt-[max(20px,env(safe-area-inset-top))] pb-[calc(32px+env(safe-area-inset-bottom))]">
-      <header className="relative px-1 pb-7 pt-5 text-center">
+      <header className="sticky top-0 z-10 -mx-[18px] bg-fond/95 px-[18px] pt-[max(12px,env(safe-area-inset-top))] pb-4 text-center backdrop-blur-sm">
         <div className="mb-3 flex justify-center">
           <Mark size={36} />
         </div>

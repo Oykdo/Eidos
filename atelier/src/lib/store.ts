@@ -87,8 +87,8 @@ function montantPour(id: ScenarioId): string {
 }
 
 export const useCoffre = create<Etat>((set, get) => ({
-  coffre: coffreAtelier("mixte"),
-  saisieMontant: "4.00",
+  coffre: coffreAtelier("vide"),
+  saisieMontant: "",
   saisieDest: "",
   destInterne: true,
   erreur: null,
