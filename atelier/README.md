@@ -109,3 +109,10 @@ npm run dev
 ## Contrôles
 
 La genèse dans l’app rejoue les empreintes gelées. Les tests du dépôt couvrent le glouton, Lamport, la genèse, le Merkle, la chaîne, le témoin, le champ discret et les ancres. Un atome de rendu reste légal côté validateur ; seul le portefeuille l’évite.
+
+---
+
+## Licence
+
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). Copyright 2026 Jeremy Zgonec.
+

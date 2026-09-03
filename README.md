@@ -184,7 +184,10 @@ Les empreintes SHA-256 ci-dessus sont destinées à être ancrées auprès d'un 
 
 ## Licence
 
-À déterminer. Une chaîne dont personne ne peut auditer les règles de consensus est difficile à faire adopter : une licence permissive sur le protocole mérite d'être considérée.
+[Apache License 2.0](LICENSE). Copyright 2026 Jeremy Zgonec.
+
+Une chaîne dont personne ne peut auditer les règles de consensus est
+difficile à faire adopter : le protocole est lisible, et la licence le reste.
 
 ---
 
