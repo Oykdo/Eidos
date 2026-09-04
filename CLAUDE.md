@@ -407,7 +407,11 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   `texteFiche` en quatre registres FR/EN), `objets-lexique.ts` (21 caractères,
   4 orbites, 5 raretés, 4 âges, 10 genres, 6 affixes, 3 polarités, 9 tempéraments,
   chaque phrase cite une règle vraie), `FicheObjet.tsx` dans l'Inventaire ;
-  6 contrôles. **Limite découverte** : `objets.paqueter` omet la plus grande
+  6 contrôles. `titres.ts` (2026-09-04) : épithète = 21 figures de régime
+  (avec genre) × 12 adjectifs d'orbite accordés, suffixe = 5 tournures de
+  rareté × 9 muses, nom de base par genre ; trois tirages depuis
+  `sha256d("eidos-titre/1" ‖ mot canon)` : même mot, même titre partout ;
+  4 contrôles. **Limite découverte** : `objets.paqueter` omet la plus grande
   composante et perd son signe, `depaqueter` rend l'inverse de la rotation une
   fois sur deux ; 53 formes du catalogue sur 100 ne se relisent pas par
   `motDeQ` → `qDeMot` (nombre gelé dans `fiche.test.ts`). Correction = décision

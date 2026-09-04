@@ -41,6 +41,7 @@ import { alignementCentiemes, figureOrbite } from "./lecture.ts";
 import { Q_SCALE, canoniserMot, deconstruireMot, depaqueter, sceauObjet } from "./objets.ts";
 import * as L from "./objets-lexique.ts";
 import { paireDe, qDeMot, type Polarite } from "./resonance.ts";
+import { titreDe } from "./titres.ts";
 import type { SignatureId } from "./signatures.ts";
 import type { Affixe, Emplacement, Genre, NomAge, ObjetPorte } from "./types.ts";
 
@@ -213,7 +214,9 @@ export function texteFiche(f: Fiche, langue: L.Langue): Registres {
   const q = f.q;
   const fr = langue === "fr";
 
+  const titre = titreDe(f, langue).titre;
   const forme = [
+    fr ? `« ${titre} »` : `“${titre}”`,
     L.GENRES_TEXTE[f.genre][langue],
     fr
       ? `Forme la plus proche : rang ${f.forme.rang} du catalogue, ${classe} de ${regime(f.forme.regime)}, cellule ${f.cellule} ; proximité ${f.proximite}/100, ${rarete.nom.fr}.`
