@@ -401,6 +401,18 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   pierre une fois sur quatre) dérivé de (étage, case, coffre) : les cases sont
   à tous, le contenu à chacun. Occupants posés sur la dalle (`caseOccupant`,
   même règle que la scène). 6 contrôles. Cap proposé : `docs/CAP_METROIDVANIA.md`.
+- Fiche d'objet (2026-09-04) : `fiche.ts` (lecture pure d'un mot : forme du
+  catalogue la plus proche, cellule, proximité = rareté continue, palier, orbite,
+  ascendant force/faiblesse, axe à l'ancre, sceau, résonance avec le coffre ;
+  `texteFiche` en quatre registres FR/EN), `objets-lexique.ts` (21 caractères,
+  4 orbites, 5 raretés, 4 âges, 10 genres, 6 affixes, 3 polarités, 9 tempéraments,
+  chaque phrase cite une règle vraie), `FicheObjet.tsx` dans l'Inventaire ;
+  6 contrôles. **Limite découverte** : `objets.paqueter` omet la plus grande
+  composante et perd son signe, `depaqueter` rend l'inverse de la rotation une
+  fois sur deux ; 53 formes du catalogue sur 100 ne se relisent pas par
+  `motDeQ` → `qDeMot` (nombre gelé dans `fiche.test.ts`). Correction = décision
+  d'auteur (convention « composante omise ≥ 0 », touche `canoniserMot` donc les
+  feuilles) : ne pas corriger à la volée.
 - Brume des antres : `docs/SPEC_BROUILLARD.md` (spec proposée, 2026-09-04) —
   Earnshaw comme loi de la brume (neuf cases centrales jamais éclairées depuis
   le bord), coïncidence de deux faisceaux de couleurs différentes comme seule

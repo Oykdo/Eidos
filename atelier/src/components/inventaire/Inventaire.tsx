@@ -1,17 +1,16 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { VoxelIcon } from "@/components/inventaire/VoxelIcon";
+import { FicheObjet } from "@/components/inventaire/FicheObjet";
 import { cn } from "@/lib/utils";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import type { ObjetPorte } from "@/lib/eidos/types.ts";
 import { objetDePorte, racineDuCoffre } from "@/lib/eidos/inventaire.ts";
-import { sceauObjet } from "@/lib/eidos/objets.ts";
 import { combatDe, COMBAT_AXES, COMBAT_BUDGET } from "@/lib/eidos/combat.ts";
 import { conjugue, produit, type Q } from "@/lib/eidos/cosmos.ts";
 import { memeOrbite, memeRayon } from "@/lib/eidos/groupe.ts";
 import { paireDe, qDeMot, resonanceDe, type Polarite } from "@/lib/eidos/resonance.ts";
-import { glypheLecture } from "@/lib/eidos/integrite.ts";
 import {
   GENRES,
   NOMS_ARME,
@@ -65,7 +64,9 @@ export function Inventaire() {
         <h2 className="font-mono text-base font-normal text-encre">{t("inv.titre")}</h2>
         <p className="font-mono text-[11px] text-sourd">{t("inv.n", { n: objets.length })}</p>
       </div>
-      <p className="mt-2 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">{t("inv.lede")}</p>
+      <p className="mt-2 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
+        {t("inv.lede")}
+      </p>
       <p className="mt-1 font-mono text-[11px] text-sourd">
         {t("inv.debit", {
           age: age?.nom ?? "Satya",
@@ -118,7 +119,9 @@ export function Inventaire() {
           onClick={() => setFiltre("tout")}
           className={cn(
             "h-8 rounded-sm px-2 font-mono text-[10px]",
-            filtre === "tout" ? "bg-or text-or-fg" : "text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+            filtre === "tout"
+              ? "bg-or text-or-fg"
+              : "text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
           )}
         >
           {t("inv.filtre.tout")}
@@ -130,7 +133,9 @@ export function Inventaire() {
             onClick={() => setFiltre(g)}
             className={cn(
               "h-8 rounded-sm px-2 font-mono text-[10px]",
-              filtre === g ? "bg-or text-or-fg" : "text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+              filtre === g
+                ? "bg-or text-or-fg"
+                : "text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
             )}
           >
             {t(`inv.genre.${g}` as Msg)}
@@ -170,7 +175,9 @@ export function Inventaire() {
                 <span className="mt-1 font-mono text-[10px] tracking-wide">
                   {t(`inv.genre.${o.genre}` as Msg)}
                   {o.affixe ? ` ${o.affixe}` : ""}
-                  {o.emplacement && o.genre === "armure" ? ` ${t(`inv.slot.${o.emplacement}` as Msg)}` : ""}
+                  {o.emplacement && o.genre === "armure"
+                    ? ` ${t(`inv.slot.${o.emplacement}` as Msg)}`
+                    : ""}
                 </span>
               </button>
             );
@@ -197,29 +204,9 @@ export function Inventaire() {
               </div>
             )}
           </div>
-          <pre className="mt-3 overflow-x-auto font-mono text-[11px] leading-relaxed text-sourd">
-            {choisi.nom} · {t(`inv.genre.${choisi.genre}` as Msg)}
-            {choisi.affixe ? ` · ${choisi.affixe}` : ""}
-            {choisi.sockets ? ` · ${t("inv.sockets", { n: choisi.gemmes.length, max: choisi.sockets })}` : ""}
-            {choisi.palierLair ? ` · ${t("inv.lair", { n: choisi.palierLair })}` : ""}
-            {"\n"}
-            {t("inv.mot")} {choisi.mot.toString(16).padStart(8, "0")}
-            {"\n"}
-            {t("inv.sceau")} {sceauObjet(objetDePorte(choisi)).split(" ")[0]}
-            {"\n"}
-            {t("inv.lecture")} {glypheLecture(qDeMot(choisi.mot))}
-            {"\n"}
-            {t("inv.racine")} {racine.slice(0, 8)}…{racine.slice(-8)}
-            {"\n"}
-            {choisi.age} · #{choisi.hauteur}
-          </pre>
+          <FicheObjet objet={choisi} autres={objets} racine={racine} />
           <CombatBars porte={choisi} />
-          <Resonance
-            objets={objets}
-            i={sel ?? objets.length - 1}
-            j={contre}
-            autre={autre}
-          />
+          <Resonance objets={objets} i={sel ?? objets.length - 1} j={contre} autre={autre} />
         </div>
       ) : null}
     </section>
@@ -233,7 +220,9 @@ function CombatBars({ porte }: { porte: ObjetPorte }) {
     <div className="mt-3 flex flex-col gap-1.5">
       {COMBAT_AXES.map((axe) => (
         <div key={axe} className="flex items-center gap-2">
-          <span className="w-20 shrink-0 font-mono text-[11px] text-sourd">{t(`inv.${axe}` as Msg)}</span>
+          <span className="w-20 shrink-0 font-mono text-[11px] text-sourd">
+            {t(`inv.${axe}` as Msg)}
+          </span>
           <div className="h-2 flex-1 overflow-hidden rounded-sm bg-creux">
             <div
               className={cn("h-full rounded-sm", axe === c.pointe ? "bg-or" : "bg-etain")}
@@ -308,7 +297,9 @@ function Resonance({
         <p className="mt-2">
           {t("inv.res.orbite")} · {t(orbite ? "inv.res.oui" : "inv.res.non")}
         </p>
-        <p>{t("inv.res.parer")} · {t(paré ? "inv.res.oui" : "inv.res.non")}</p>
+        <p>
+          {t("inv.res.parer")} · {t(paré ? "inv.res.oui" : "inv.res.non")}
+        </p>
       </div>
     );
   }
@@ -325,5 +316,3 @@ function Resonance({
     </div>
   );
 }
-
-

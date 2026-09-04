@@ -492,6 +492,11 @@ export const FR = {
   "inv.slot.accessoire": "accessoire",
   "inv.sockets": "{n}/{max} gemmes",
   "inv.lair": "antre palier {n} — plus tard",
+  "fiche.forme": "Forme",
+  "fiche.caractere": "Caractère",
+  "fiche.traits": "Traits",
+  "fiche.technique": "Technique",
+  "fiche.emplacement": "Emplacement",
   "flash.tirage": "{muse} · {age}",
 
   "relique.lede":
@@ -1130,6 +1135,11 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "inv.slot.accessoire": "accessory",
   "inv.sockets": "{n}/{max} gems",
   "inv.lair": "lair tier {n} — later",
+  "fiche.forme": "Form",
+  "fiche.caractere": "Character",
+  "fiche.traits": "Traits",
+  "fiche.technique": "Technical",
+  "fiche.emplacement": "Slot",
   "flash.tirage": "{muse} · {age}",
   "relique.lede":
     "Four age seals: the stake of a world relic, the key to a Tower quarter, a verifiable trophy. A seal is found, never bought.",
