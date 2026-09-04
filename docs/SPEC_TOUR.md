@@ -110,6 +110,10 @@ Récompense : un don d'antre (`"eidos-antre/1"`), toujours une gemme ou une pier
 
 L'étage 254 est l'observatoire d'Uranie. Il ne donne rien : il **lit**. La tête signée du réseau (Témoin), les reliques du monde et leur statut, le nombre d'étages honorés du coffre. C'est la seule fenêtre de la Tour sur la chaîne, et elle reste une lecture.
 
+### 4.5 Fouilles (2026-09-04)
+
+La dalle se creuse case par case (`fouilles.ts`). Chaque étage cache des **trouvailles** à des cases fixes et publiques : une case pleine `(x, y)` en porte une si `sha256d("eidos-fouille/1" ‖ étage ‖ x ‖ y)[0] < 32` — une case pleine sur huit, d'une à douze par étage, cinq en moyenne, aucun étage sans (1 326 sur 10 379 cases pleines). **Trois coups de bêche** par étage et par coffre (`tour.fouilles : [étage, x, y][]`, jauge, relecture plafonnée à trois par étage) ; une case ne se creuse qu'une fois ; un coup à vide compte. Pendant une ascension, la **case d'arrivée du pendule donne toujours**, même sur un trou : « le loot dépend du spawn ». Le contenu est un objet du genre le plus humble, « trouve », ou une pierre une fois sur quatre, dérivé de (étage, case, coffre) : **les cases sont à tous, le contenu est à chacun**. Les occupants ont leur case sur la dalle (`caseOccupant(k)` = ((3k + 1) mod 9, (5k + 3) mod 9), la règle de la scène). Une fouille libre ne vaut rien à personne : jauge, hors feuille.
+
 ## 4bis. Monstres capturables : occupants et capsules
 
 Les monstres de la Tour existent déjà : ce sont les **occupants** d'étage, un à trois par coupe, quaternions de norme `ATOMES` de la classe du biome. On ne les tue pas (aucun point de vie) : on les **lit**, et on peut les **prendre**.
@@ -231,6 +235,8 @@ H2 (carte des reliques) et H3 (sceaux) du hub précèdent T5.
 4. **Une carte de la Tour**, 255 cases : atteint, ici, honoré, porte ouverte ou fermée. Les secrets n'y figurent qu'une fois découverts (alcôve ouverte, antre franchi). Les échos ne s'y dessinent pas : Polymnie les dit.
 5. **Une capture libérée par étage, au plus.** Elle entre dans la résonance d'ensemble du duel ; une capture de la classe du gardien dessert. Le choix est le jeu. La libération tombe en changeant d'étage.
 6. **Les 9 × 12 noms de capture** sont écrits, dans le même lexique : noms communs français (Chthon, Codex, Alambic, Pavane, Cothurne, Enclume, Aulos, Antienne, Astrolabe…), identiques en anglais. Une jauge ; l'identité est le mot.
+7. **La fin de salle se décide** (2026-09-04) : le pendule lit l'acte et le propose, le joueur décide parmi les trois, l'étage de chaque choix annoncé, la case jamais (`SPEC_PENDULE` §4bis révisé).
+8. **La dalle se creuse** (2026-09-04, §4.5) : trois coups de bêche par étage et par coffre, trouvailles à cases fixes, contenu propre au coffre ; le don de la case d'arrivée coûte un coup comme les autres (alternative ouverte : le rendre gratuit hors compteur).
 
 ## 12. Ce qui a été codé, et ce qui a changé au contact du code
 

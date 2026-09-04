@@ -119,12 +119,18 @@ Rien d'autre en phase 0 : ni hôte, ni texte, ni rendu. Si l'un des seuils tombe
 
 ## 4bis. Branchement dans la Tour — FAIT (2026-09-04)
 
-Décision d'auteur [FIXE] : **exploration libre, décision en fin de salle.** Le joueur explore
-chaque salle avec tout ce que la Tour offre (hôte, fouille, prise, élixirs, antre) ; en fin de
-salle, le pendule lit **l'acte du coffre dans la salle** comme choix — honoré : *offrir* ;
-alcôve, antre ou prise : *lire* ; rien : *monter* — et l'objet porté (`tour.porte`), puis dépose
-à l'étage et à la case qu'il calcule. Le joueur ne choisit jamais un jeton abstrait : son acte
-est son choix (`ascension.choixDeSalle`).
+Décision d'auteur [FIXE, révisée le 2026-09-04] : **exploration libre, décision en fin de
+salle.** Le joueur explore chaque salle avec tout ce que la Tour offre (hôte, bêche, prise,
+élixirs, antre) ; en fin de salle, le pendule lit **l'acte du coffre dans la salle** — honoré :
+*offrir* ; alcôve ouverte, antre franchi ou prise : *lire* ; rien : *monter*
+(`ascension.choixDeSalle`) — et le **propose** ; **le joueur décide** parmi les trois.
+Pour chaque choix, le pendule annonce **l'étage** où il déposerait (`destinationsDeSalle` :
+transition + `etageDe`, porte fermée signalée), **jamais la case** : elle reste au pendule,
+avec l'objet porté (`tour.porte`). Sans décision, il lit l'acte. À la dernière salle rien ne se
+décide : le sommet. La suite des choix décidés est ce que l'export porte et ce que le juge
+rejoue (`finDeSalleDansCoffre(c, monde, décision)`, 8 contrôles). Première rédaction (l'acte
+*était* le choix) abandonnée à la demande de l'auteur : « laisser libre choix à l'occupant du
+niveau de prendre une décision ».
 
 - **Libre** : graine `sha256d("eidos-run/1" ‖ maître/n ‖ tête de la chaîne locale)`. Une lecture.
 - **Ancrée** : tête signée et pièce du coffre gelées au départ (`ancrage.graineAncree`), exportée

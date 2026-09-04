@@ -323,8 +323,10 @@ Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
   `pendule-phase0.ts` (bot xorshift, trois mesures, `npm run phase0 [runs]`),
   `pendule.test.ts` (6 tests, table de vérité gelée). Toute retouche de la
   transition régénère la table sciemment. **Branché dans la Tour** (§4bis de la
-  spec) : exploration libre, décision en fin de salle lue dans l'acte du coffre
-  (`ascension.ts`, 6 tests ; composant `Pendule` ; jauge `tour.ascension`) ;
+  spec) : exploration libre, décision en fin de salle **prise par le joueur**
+  parmi les trois choix, l'acte du coffre n'étant que la proposition ; l'étage
+  de chaque choix est annoncé (`destinationsDeSalle`), la case jamais
+  (`ascension.ts`, 8 tests ; composant `Pendule` ; jauge `tour.ascension`) ;
   libre = lecture, ancrée sur bloc + pièce = ce qui compte, exportée au sommet ;
   une porte fermée arrête ; le don d'un hôte dépend de la case d'arrivée.
 
@@ -358,6 +360,14 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   lecture d'Uranie ; accord par le mercure (conjugué par l'objet porté, ancien
   mot dans `bus`) ; offrande à Terpsichore → gemme.
 - `sceaux.ts` : l'âge exact ouvre, le coffre d'atelier passe (démonstration).
+- `fouilles.ts` (2026-09-04) : la dalle se creuse case par case ; trouvailles à
+  des cases fixes et publiques (case pleine et `sha256d("eidos-fouille/1" ‖
+  étage ‖ x ‖ y)[0] < 32` : 1 326 sur 10 379, aucun étage sans), trois coups de
+  bêche par étage et par coffre (`tour.fouilles`, relecture plafonnée), la case
+  d'arrivée du pendule donne toujours (même sur un trou) ; contenu (« trouve »,
+  pierre une fois sur quatre) dérivé de (étage, case, coffre) : les cases sont
+  à tous, le contenu à chacun. Occupants posés sur la dalle (`caseOccupant`,
+  même règle que la scène). 6 contrôles. Cap proposé : `docs/CAP_METROIDVANIA.md`.
 - UI : `TourView` (hôte et répliques, objet porté, occupants et prise, élixirs,
   antre, fouiller, carte 255 cases sans secrets non découverts, observatoire),
   `Bestiaire` dans la page Coffre ; `GENRES` gagne elixir, capsule, capture.
