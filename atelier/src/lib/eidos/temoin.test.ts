@@ -5,8 +5,10 @@ import { preuveReseau as preuveReseauV, serialiser as serialiserV } from "./merk
 import {
   idBlocDe,
   jugerReseau,
+  jugerSortieReseau,
   parserFederation,
   parserTeteReseau,
+  suivreReseau,
   verifierTeteReseau,
 } from "./temoin.ts";
 
@@ -148,5 +150,37 @@ describe("témoin du réseau — tête signée, sans rejeu", () => {
     assert.equal(jugerReseau(tete, { ...serialiserV(p), racine: tete.utxoRoot }).code, "rompue");
     assert.ok("erreur" in parserTeteReseau({ ...VEC.tete.tete_signee, signature: "00" }));
     assert.ok("erreur" in parserFederation({ hauteur_mss: 4, racines: ["00"] }));
+  });
+});
+
+describe("suivre le réseau — etat.json + federation.json (fetch simulé)", () => {
+  const sortiesObj: Record<string, { adresse: string; montant: number }> = {};
+  for (const s of VEC.tete.sorties) sortiesObj[`${s.txid}:${s.rang}`] = { adresse: s.adresse, montant: s.montant };
+  const etat = { maj_unix: 1_788_000_000, tete_signee: VEC.tete.tete_signee, sorties: sortiesObj };
+  const fed = { hauteur_mss: 4, racines: VEC.tete.federation.racines, graines_publiques: VEC.tete.federation.graines_publiques };
+  const fetchOk = async (u: string) => ({ ok: true, json: async () => (u.endsWith("etat.json") ? etat : fed) });
+
+  it("tête vérifiée, sorties lues, une sortie jugée incluse, une absente étrangère", async () => {
+    const r = await suivreReseau(fetchOk);
+    assert.ok(!("erreur" in r), "erreur" in r ? r.erreur : "");
+    assert.equal(r.verdict.ok, true);
+    assert.equal(r.sorties.length, VEC.tete.sorties.length);
+    assert.equal(r.majUnix, 1_788_000_000);
+    const s0 = VEC.tete.sorties[0]!;
+    assert.equal(jugerSortieReseau(r, `${s0.txid}:${s0.rang}`).vue.code, "incluse");
+    assert.equal(jugerSortieReseau(r, "ff".repeat(32) + ":0").vue.code, "etrangere");
+  });
+
+  it("fédération injoignable ou tête altérée : erreur ou verdict négatif, jamais une inclusion", async () => {
+    const r = await suivreReseau(async (u) =>
+      u.endsWith("federation.json") ? { ok: false, status: 404, json: async () => null } : { ok: true, json: async () => etat },
+    );
+    assert.ok("erreur" in r && /federation/.test(r.erreur));
+    const altere = { ...etat, tete_signee: { ...VEC.tete.tete_signee, utxo_root: "00".repeat(32) } };
+    const r2 = await suivreReseau(async (u) => ({ ok: true, json: async () => (u.endsWith("etat.json") ? altere : fed) }));
+    assert.ok(!("erreur" in r2));
+    assert.equal(r2.verdict.ok, false);
+    const s0 = VEC.tete.sorties[0]!;
+    assert.equal(jugerSortieReseau(r2, `${s0.txid}:${s0.rang}`).vue.code, "aveugle");
   });
 });

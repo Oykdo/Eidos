@@ -19,8 +19,10 @@ Un temoin qui connait une tete signee juge une preuve sans rejouer.
 
 Contrainte a assumer : une cle WOTS+ ne signe QU'UNE FOIS. Signer deux
 fois avec la meme cle revele des maillons intermediaires et permet de
-forger. La regle est donc inscrite dans la validation : une empreinte de
-cle ne peut apparaitre qu'une seule fois dans toute la chaine.
+forger. La regle est donc inscrite dans la validation : une ADRESSE ne peut
+etre depensee qu'une seule fois dans toute la chaine (l'adresse est le
+prefixe de l'empreinte de cle : meme graine, meme adresse). Elle se note
+sans reconstruire la cle, donc aussi sur le chemin assume-valid.
 
 Usage :  python3 utxo.py           auto-tests
          python3 utxo.py --demo    construit et valide une chaine de 4 blocs
@@ -180,7 +182,7 @@ class Rejet(Exception):
 class Carnet:
     def __init__(self):
         self.utxo = {}            # (txid, vout) -> (adresse20, atomes)
-        self.cles_usees = set()   # empreintes de cles WOTS+ deja employees
+        self.cles_usees = set()   # adresses deja depensees = cles WOTS+ brulees
         self.hauteur = -1
         self.tete = bytes(32)
         self.racine_utxo = bytes(32)
@@ -197,7 +199,8 @@ class Carnet:
         Avec utxo_root, la racine declaree doit etre celle du carnet apres le
         bloc, et la tete devient sha256d(entete_federe). verifier_temoins=False
         saute la reconstruction des cles WOTS+ (assume-valid EXPLICITE de
-        noeud.py --depuis) : les cles de ces blocs ne sont pas notees."""
+        noeud.py --depuis) ; les adresses depensees sont notees dans tous les
+        cas, donc un reemploi de cle reste refuse apres une reprise."""
         txs = blk["txs"]
         if not txs or not txs[0].is_coinbase():
             raise Rejet("premiere transaction non coinbase")
@@ -233,6 +236,8 @@ class Carnet:
                 w = tx.witness[i]
                 if w is None:
                     raise Rejet("temoin absent")
+                if addr in self.cles_usees or addr in cles_bloc:
+                    raise Rejet("cle WOTS+ reutilisee — usage unique")
                 if verifier_temoins:
                     racine = W.racine_depuis_temoin(w, tx.sighash(i))
                     if racine is None:
@@ -240,10 +245,7 @@ class Carnet:
                     if W.adresse(w[0], racine) != addr:
                         raise Rejet("signature invalide : la cle reconstruite "
                                     "ne donne pas l'adresse")
-                    emp = W.empreinte(w[0], racine)
-                    if emp in self.cles_usees or emp in cles_bloc:
-                        raise Rejet("cle WOTS+ reutilisee — usage unique")
-                    cles_bloc.add(emp)
+                cles_bloc.add(addr)
                 depenses.add(cle)
                 entree += montant
             sortie = tx.total_out()

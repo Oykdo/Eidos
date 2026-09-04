@@ -48,7 +48,7 @@ jobs:
       - name: Envois (inclusion, double depense, malforme, expiration, 5 controles)
         run: python -c "import noeud as N; N._test_envois()"
 
-      - name: Reprise --depuis (point de controle explicite, 3 controles)
+      - name: Reprise --depuis (point de controle explicite, 4 controles)
         run: python -c "import noeud as N; N._test_depuis()"
 
       - name: Difficulte et travail cumule (6 controles)

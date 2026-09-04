@@ -74,7 +74,7 @@ Les 2 bits de bourrage du 27ᵉ glyphe doivent être nuls — sinon l'adresse es
 
 Tout repose sur SHA-256, **sans aucune courbe elliptique**. La résistance quantique est structurelle.
 
-- **WOTS+** pour les transactions (`wots.py`, RFC 8391 : w = 16, 67 chaînes SHA-256 tweakées par graine publique et adresse de hachage, arbre L). Le vérificateur reconstruit la clé publique depuis la signature : témoin de **2 176 octets** (graine publique 32 + signature 2 144), contre 24 576 en Lamport. Adresse = SHA-256(graine publique ‖ racine L)[:20]. Une clé ne signe **qu'une fois** : son empreinte ne peut apparaître qu'une fois dans la chaîne. Le portefeuille produit une adresse fraîche à chaque usage.
+- **WOTS+** pour les transactions (`wots.py`, RFC 8391 : w = 16, 67 chaînes SHA-256 tweakées par graine publique et adresse de hachage, arbre L). Le vérificateur reconstruit la clé publique depuis la signature : témoin de **2 176 octets** (graine publique 32 + signature 2 144), contre 24 576 en Lamport. Adresse = SHA-256(graine publique ‖ racine L)[:20]. Une clé ne signe **qu'une fois** : une adresse ne peut être dépensée qu'une fois dans la chaîne. Le portefeuille produit une adresse fraîche à chaque usage.
 - **XMSS** pour les validateurs. 2^k clés WOTS+ dans un arbre de Merkle tweaké, clé publique = (racine, graine publique). Signature de bloc : 4 + 2 144 + 32·k octets. Schéma à état : restaurer une sauvegarde ancienne, c'est rejouer des indices déjà publiés.
 - **Racine UTXO dans l'en-tête signé.** Chaque bloc déclare la racine de Merkle du carnet entier après lui (feuille = SHA-256d(txid ‖ rang ‖ adresse ‖ montant), ordre (txid, rang)) ; `id_bloc = SHA-256d(E.header ‖ racine)`. Un témoin qui reçoit la tête signée (`etat.json.tete_signee`) recompose `id_bloc`, vérifie la signature XMSS et juge une preuve de sortie sans rejouer. `noeud.py --depuis <h> <racine>` reprend à un point de contrôle explicite.
 - **Lamport** reste dans l'atelier comme démonstration (réemploi, audit), hors consensus.
@@ -109,7 +109,7 @@ Le coffre de l'atelier s'écrit dans **un seul fichier**.
 | `consensus.py` | 204 | difficulté et travail cumulé — 6 contrôles |
 | `federation.py` | 470 | XMSS, rotation, vivacité, tête signée — 16 contrôles |
 | `robinet.py` | 313 | robinet, budget, file des envois — 10 contrôles |
-| `noeud.py` | 805 | nœud, envois, `--depuis`, état publié — 5 + 3 contrôles |
+| `noeud.py` | 831 | nœud, envois, `--depuis`, état publié — 5 + 4 contrôles |
 | `vecteurs.py` | 147 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 6 familles) |
 
 ### Atelier web
@@ -136,7 +136,7 @@ python3 utxo.py               # 15 contrôles
 python3 vecteurs.py           # parité avec l'atelier
 python3 robinet.py --test     # 10 contrôles
 python3 -c "import noeud as N; N._test_envois()"   # 5 contrôles envoi
-python3 -c "import noeud as N; N._test_depuis()"   # 3 contrôles reprise
+python3 -c "import noeud as N; N._test_depuis()"   # 4 contrôles reprise
 python3 federation.py --demo  # vivacité, rotation
 cd atelier && npm test && npm run dev
 ```

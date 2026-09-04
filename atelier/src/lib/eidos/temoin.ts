@@ -8,7 +8,14 @@
 
 import { hashReproduit, tete as teteChaine } from "./chaine.ts";
 import { concat, fromHex, hexOf, sha256d, u64 } from "./hash.ts";
-import { parserPreuve, verifierPreuve, type PreuvePortable } from "./merkle.ts";
+import {
+  parserPreuve,
+  preuveReseau,
+  serialiser,
+  verifierPreuve,
+  type PreuvePortable,
+  type SortieMin,
+} from "./merkle.ts";
 import { verifierMss } from "./xmss.ts";
 import type { BlocLocal } from "./types.ts";
 
@@ -304,4 +311,89 @@ export function jugerReseau(
     return { code: "etrangere", detail: `racine étrangère — pas le carnet du bloc ${tete.hauteur}` };
   }
   return { code: "incluse", detail: `incluse · carnet du bloc ${tete.hauteur}` };
+}
+
+// ---------------------------------------------------------------------------
+// Suivre le réseau : etat.json + federation.json, vérifiés, sans rejeu
+// ---------------------------------------------------------------------------
+export const ETAT_RESEAU_URL = "https://raw.githubusercontent.com/Oykdo/Eidos/main/etat.json";
+export const FEDERATION_URL = "https://raw.githubusercontent.com/Oykdo/Eidos/main/federation.json";
+
+export type TemoinReseau = {
+  tete: TeteReseau;
+  verdict: VerdictTete;
+  sorties: SortieMin[];
+  majUnix: number | null;
+  lu: number;
+};
+
+type FetchMinimal = (url: string) => Promise<{ ok: boolean; status?: number; json(): Promise<unknown> }>;
+
+function sortiesDe(raw: unknown): SortieMin[] {
+  const o = (raw ?? {}) as { sorties?: Record<string, { adresse?: unknown; montant?: unknown }> };
+  const out: SortieMin[] = [];
+  for (const [cle, v] of Object.entries(o.sorties ?? {})) {
+    const [txid, rang] = cle.split(":");
+    if (!txid || !HEX32.test(txid) || !/^\d+$/.test(rang ?? "")) continue;
+    if (typeof v?.adresse !== "string" || typeof v?.montant !== "number") continue;
+    out.push({ txid, rang: Number(rang), adresse: v.adresse, montant: v.montant });
+  }
+  return out;
+}
+
+/** Lit l'état publié et la fédération, recompose la tête, vérifie la
+ *  signature. Le verdict est rendu même négatif : c'est au témoin de refuser. */
+export async function suivreReseau(
+  fetchImpl: FetchMinimal = (u) => fetch(u, { cache: "no-store" }),
+  urls: { etat?: string; federation?: string } = {},
+): Promise<TemoinReseau | { erreur: string }> {
+  let etat: unknown;
+  let fed: unknown;
+  try {
+    const [re, rf] = await Promise.all([
+      fetchImpl(urls.etat ?? ETAT_RESEAU_URL),
+      fetchImpl(urls.federation ?? FEDERATION_URL),
+    ]);
+    if (!re.ok) return { erreur: `etat.json injoignable (${re.status ?? "?"})` };
+    if (!rf.ok) return { erreur: `federation.json injoignable (${rf.status ?? "?"})` };
+    etat = await re.json();
+    fed = await rf.json();
+  } catch (e) {
+    return { erreur: `réseau injoignable : ${e instanceof Error ? e.message : String(e)}` };
+  }
+  const tete = parserTeteReseau(etat);
+  if ("erreur" in tete) return { erreur: `tête : ${tete.erreur}` };
+  const f = parserFederation(fed);
+  if ("erreur" in f) return { erreur: `fédération : ${f.erreur}` };
+  const o = etat as { maj_unix?: unknown };
+  return {
+    tete,
+    verdict: verifierTeteReseau(tete, f),
+    sorties: sortiesDe(etat),
+    majUnix: typeof o.maj_unix === "number" ? o.maj_unix : null,
+    lu: Date.now(),
+  };
+}
+
+/** Preuve d'une sortie publiée, jugée contre la tête suivie. */
+export function jugerSortieReseau(
+  r: TemoinReseau,
+  ref: string,
+): { vue: VuePreuve; preuve: PreuvePortable | null } {
+  const p = preuveReseau(r.sorties, ref);
+  if (!p) {
+    return {
+      vue: { at: Date.now(), feuille: "", racine: r.tete.utxoRoot, code: "etrangere",
+             detail: `${ref.slice(0, 12)}… absente de l'état publié` },
+      preuve: null,
+    };
+  }
+  const preuve = serialiser(p);
+  const j = r.verdict.ok
+    ? jugerReseau(r.tete, preuve)
+    : { code: "aveugle" as CodeVerdict, detail: "tête non vérifiée — signature refusée" };
+  return {
+    vue: { at: Date.now(), feuille: preuve.feuille, racine: preuve.racine, code: j.code, detail: j.detail },
+    preuve,
+  };
 }

@@ -38,7 +38,7 @@ wots.py             WOTS+ w=16 (RFC 8391), arbre L, adresses, empreintes (5 cont
 utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (15 contrôles)
 federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
 vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (6 familles)
-noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, etat.json (5 + 3 contrôles)
+noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, etat.json (5 + 4 contrôles)
 robinet.py          file mempool.json alimentée par issues GitHub (10 contrôles)
 consensus.py        difficulté PoW et travail cumulé — chemin HISTORIQUE
 store.py            chaîne PoW sur disque (chaine.dat) — chemin HISTORIQUE
@@ -81,9 +81,10 @@ empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
   `E.header` reste gelé, la racine s'ajoute à côté.
 - **Assume-valid jamais implicite.** `noeud.py --depuis` exige hauteur ET
   racine sur la ligne de commande ; sans `--depuis`, rejeu intégral.
-- **Une clé WOTS+ signe une fois.** L'empreinte `sha256(graine_pub ‖ racine_L)`
-  ne peut apparaître qu'une fois dans toute la chaîne (`cles_usees`). L'adresse
-  en est le préfixe de 20 octets.
+- **Une clé WOTS+ signe une fois.** Une adresse ne peut être dépensée qu'une
+  fois dans toute la chaîne (`cles_usees` note l'adresse, préfixe de 20 octets
+  de l'empreinte `sha256(graine_pub ‖ racine_L)`). Se note sans reconstruire
+  la clé : vaut aussi sur le chemin assume-valid de `--depuis`.
 - **Aucun hachage nu dans WOTS+.** Chaque maillon est tweaké par (graine
   publique, ADRS) selon la RFC 8391 ; `wots.py` et `wots.ts` doivent rester
   identiques à l'octet, ce que `vecteurs.json` contrôle.
@@ -112,7 +113,7 @@ python3 vecteurs.py            # parité Python ↔ TS (vecteurs.json)
 python3 robinet.py --test      # 10
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
-python3 -c "import noeud as N; N._test_depuis()"      # 3
+python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 16
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
@@ -227,9 +228,11 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
 - `vecteurs.json` : familles `carnet` (3 sorties, racine) et `tete` (fédération
   h=4, tête signée, sorties engagées) ; relues par `merkle.test.ts`,
   `temoin.test.ts`, `xmss.test.ts`.
-- Reste hors P3 : brancher la page Témoin sur `etat.json` + `federation.json`
-  (la bibliothèque est prête) ; `--depuis` ne note pas les clés WOTS+ des blocs
-  sautés (documenté).
+- Page Témoin branchée : `temoin.suivreReseau` lit `etat.json` et
+  `federation.json` (raw.githubusercontent), vérifie la tête, juge une sortie
+  publiée (`jugerSortieReseau`) ; store `reseau`, section « Réseau d'essai ».
+- `--depuis` note les adresses dépensées des blocs sautés : un réemploi de clé
+  brûlée avant le point de contrôle est refusé (4ᵉ contrôle).
 
 ### P4 — Vecteurs de test partagés Python ↔ TS
 Amorcé en P2/P3 : `vecteurs.json` (6 familles : paramètres, clé WOTS+, tx,

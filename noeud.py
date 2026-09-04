@@ -635,8 +635,9 @@ def tete_signee(ch):
 
 def _test_depuis():
     """Point de contrôle assume-valid : reprise à h avec la bonne racine,
-    refus d'une racine fausse, refus d'une hauteur absente. Chaîne de test
-    dans un dossier temporaire ; CHAINE est restauré ensuite."""
+    refus d'une racine fausse, refus d'une hauteur absente, et réemploi
+    d'une clé brûlée dans un bloc non vérifié refusé quand même. Chaîne de
+    test dans un dossier temporaire ; CHAINE est restauré ensuite."""
     global CHAINE
     import tempfile
     t0 = 1756540680
@@ -649,8 +650,18 @@ def _test_depuis():
     try:
         open(CHAINE, "wb").write(MAGIC + FORMAT.to_bytes(2, "big"))
         racines = []
+        a0 = p.nouvelle_adresse()
         for h in range(5):
-            blk = F.forger(ch, cles, [U.coinbase(h, p.nouvelle_adresse())], t0 + h * F.CRENEAU)
+            txs = [U.coinbase(h, p.nouvelle_adresse() if h else a0)]
+            if h == 1:
+                # bloc 1 : a0 dépense sa coinbase… vers a0 (seconde pièce à la
+                # même adresse) : la clé de a0 est brûlée dans un bloc que la
+                # reprise ne vérifiera pas
+                piece = [k for k, v in ch.carnet.utxo.items() if v[0] == a0][0]
+                t = U.Tx([piece], [(a0, ch.carnet.utxo[piece][1])])
+                p.signer(t, 0, a0)
+                txs.append(t)
+            blk = F.forger(ch, cles, txs, t0 + h * F.CRENEAU)
             ch.valider(blk, maintenant=t0 + h * F.CRENEAU)
             ajouter(blk)
             racines.append(ch.carnet.racine_utxo)
@@ -678,6 +689,21 @@ def _test_depuis():
         except SystemExit as e:
             assert "absent" in str(e), e
         print("reprise, hauteur absente          : refus"); ok += 1
+
+        # après reprise, la seconde pièce de a0 ne peut pas être dépensée :
+        # l'adresse a été notée au bloc 1 sans reconstruire la clé
+        ch2, _ = charger(fed, depuis=(2, racines[2]))
+        assert a0 in ch2.carnet.cles_usees
+        piece2 = [k for k, v in ch2.carnet.utxo.items() if v[0] == a0][0]
+        t = U.Tx([piece2], [(p.nouvelle_adresse(), 1)])
+        p.signer(t, 0, a0)
+        try:
+            blk = F.forger(ch2, cles, [U.coinbase(5, p.nouvelle_adresse(), ch2.carnet.utxo[piece2][1] - 1), t],
+                           t0 + 5 * F.CRENEAU)
+            raise AssertionError("reemploi accepte apres reprise")
+        except U.Rejet as e:
+            assert "reutilisee" in str(e), e
+        print("reemploi d'une cle brulee avant h : refus  (adresse notee sans verifier)"); ok += 1
         print(f"ok : {ok} controles reprise (--depuis)")
     finally:
         CHAINE = ancien

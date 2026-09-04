@@ -78,7 +78,7 @@ Les coller en un seul objet serait un mensonge : l’un engage le carnet, l’au
 
 - **WOTS+** pour les transactions (`wots.ts`, port de `wots.py` à l’octet près, vérifié par `vecteurs.json`). Témoin de 2 176 octets. Une clé ne signe qu’une fois.
 - **Lamport** conservé en démonstration (réemploi, audit des clés), hors consensus.
-- **XMSS** pour les validateurs — vérifié ici (`xmss.ts`) : le témoin lit la tête signée du réseau (`etat.json.tete_signee`), recompose `id_bloc`, contrôle la signature contre `federation.json` et juge une preuve contre la racine UTXO, sans rejouer.
+- **XMSS** pour les validateurs — vérifié ici (`xmss.ts`) : la page Témoin, bouton « Suivre le réseau », lit la tête signée (`etat.json.tete_signee`), recompose `id_bloc`, contrôle la signature contre `federation.json` et juge une sortie publiée contre la racine UTXO, sans rejouer.
 - Cosinus d’émission en `Decimal`, π à 68 décimales.
 
 L’atelier `eidos-atelier-reseau-essai-v1` est reproductible **parce que** la graine est connue. Ne pas y laisser de valeur.

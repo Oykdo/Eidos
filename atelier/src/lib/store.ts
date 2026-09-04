@@ -14,9 +14,12 @@ import {
   adopterTete,
   avancer,
   juger,
+  jugerSortieReseau,
   parserTete,
+  suivreReseau,
   temoinVide,
   type Temoin,
+  type TemoinReseau,
 } from "./eidos/temoin.ts";
 import type { Coffre, NomAge, ScenarioId } from "./eidos/types.ts";
 import type { PreuvePortable } from "./eidos/merkle.ts";
@@ -45,6 +48,11 @@ type Etat = {
   preuveRef: string | null;
   temoin: Temoin;
   temoinFlash: string | null;
+  /** Tête du réseau d'essai, vérifiée à la lecture ; jamais persistée. */
+  reseau: TemoinReseau | null;
+  reseauOccupe: boolean;
+  suivreReseau: () => Promise<void>;
+  jugerReseau: (ref: string) => void;
   hydrater: () => void;
   charger: (id: ScenarioId) => void;
   robinet: () => void;
@@ -107,6 +115,8 @@ export const useCoffre = create<Etat>((set, get) => ({
   preuveRef: null,
   temoin: temoinVide(),
   temoinFlash: null,
+  reseau: null,
+  reseauOccupe: false,
   demandeReseau: null,
   psnx: null,
 
@@ -304,7 +314,35 @@ export const useCoffre = create<Etat>((set, get) => ({
   oublierTemoin: () => {
     const t = temoinVide();
     persisterTemoin(t);
-    set({ temoin: t, temoinFlash: "mémoire du témoin effacée" });
+    set({ temoin: t, reseau: null, temoinFlash: "mémoire du témoin effacée" });
+  },
+
+  suivreReseau: async () => {
+    set({ reseauOccupe: true });
+    const r = await suivreReseau();
+    if ("erreur" in r) {
+      set({ reseauOccupe: false, temoinFlash: r.erreur });
+      return;
+    }
+    set({
+      reseau: r,
+      reseauOccupe: false,
+      temoinFlash: r.verdict.ok
+        ? `réseau · bloc ${r.tete.hauteur} signé par le validateur ${r.verdict.validateur} — vérifié`
+        : `réseau · bloc ${r.tete.hauteur} — signature refusée (${r.verdict.motif})`,
+    });
+  },
+
+  jugerReseau: (ref) => {
+    const { reseau, temoin } = get();
+    if (!reseau) {
+      set({ temoinFlash: "suivre d'abord le réseau" });
+      return;
+    }
+    const { vue } = jugerSortieReseau(reseau, ref);
+    const next = { ...temoin, vues: [vue, ...temoin.vues].slice(0, 8) };
+    persisterTemoin(next);
+    set({ temoin: next, temoinFlash: vue.detail });
   },
 
   importerTete: (raw) => {

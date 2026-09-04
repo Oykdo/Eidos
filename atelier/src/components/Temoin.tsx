@@ -17,6 +17,12 @@ export function Temoin() {
   const soumettre = useCoffre((s) => s.soumettrePreuve);
   const importerTete = useCoffre((s) => s.importerTete);
   const oublier = useCoffre((s) => s.oublierTemoin);
+  const reseau = useCoffre((s) => s.reseau);
+  const reseauOccupe = useCoffre((s) => s.reseauOccupe);
+  const suivreReseau = useCoffre((s) => s.suivreReseau);
+  const jugerReseau = useCoffre((s) => s.jugerReseau);
+  const coffre = useCoffre((s) => s.coffre);
+  const [refReseau, setRefReseau] = useState("");
   const [colle, setColle] = useState("");
   const [teteRaw, setTeteRaw] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -71,6 +77,71 @@ export function Temoin() {
       {flash ? (
         <p className="mt-3 font-mono text-[12.5px] leading-relaxed text-cuivre">{flash}</p>
       ) : null}
+
+      <div className="mt-4 border-t border-trait pt-4">
+        <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
+          {t("temoin.reseau")}
+        </p>
+        <p className="mb-2 font-mono text-[12px] leading-relaxed text-sourd text-pretty">
+          {t("temoin.reseau.lede")}
+        </p>
+        {reseau ? (
+          <div className="rounded-md bg-creux px-3 py-3 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]">
+            <p className={cn("font-mono text-[12px]", reseau.verdict.ok ? "text-cuivre" : "text-fer")}>
+              {reseau.verdict.ok
+                ? t("temoin.reseau.verifiee", { h: reseau.tete.hauteur, v: reseau.verdict.validateur })
+                : t("temoin.reseau.refusee", { h: reseau.tete.hauteur, m: reseau.verdict.motif })}
+            </p>
+            <p className="mt-1 font-mono text-[11px] text-sourd">
+              id_bloc · {court(reseau.tete.idBloc)} · utxo_root · {court(reseau.tete.utxoRoot)} ·{" "}
+              {reseau.sorties.length} {t("temoin.reseau.sorties")}
+            </p>
+          </div>
+        ) : null}
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <Button
+            type="button"
+            variant="or"
+            className="w-auto"
+            disabled={reseauOccupe}
+            onClick={() => void suivreReseau()}
+          >
+            {reseauOccupe ? "…" : t("temoin.reseau.suivre")}
+          </Button>
+        </div>
+        {reseau && reseau.verdict.ok ? (
+          <div className="mt-3">
+            <select
+              value={refReseau}
+              onChange={(e) => setRefReseau(e.target.value)}
+              className="w-full rounded-sm bg-creux px-3 py-2 font-mono text-[11px] text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.16)]"
+            >
+              <option value="">{t("temoin.reseau.choisir")}</option>
+              {coffre.sorties
+                .filter((s) => reseau.sorties.some((r) => `${r.txid}:${r.rang}` === s.ref))
+                .map((s) => (
+                  <option key={s.ref} value={s.ref}>
+                    {court(s.txid)}:{s.rang} · {s.montant} atomes
+                  </option>
+                ))}
+              {reseau.sorties.slice(0, 32).map((s) => (
+                <option key={`r-${s.txid}:${s.rang}`} value={`${s.txid}:${s.rang}`}>
+                  {court(s.txid)}:{s.rang} · {court(s.adresse)}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="discret"
+              className="mt-2 w-auto"
+              disabled={!refReseau}
+              onClick={() => jugerReseau(refReseau)}
+            >
+              {t("temoin.reseau.juger")}
+            </Button>
+          </div>
+        ) : null}
+      </div>
 
       <div className="mt-4 border-t border-trait pt-4">
         <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
