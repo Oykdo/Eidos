@@ -18,7 +18,10 @@ Trois pieces :
      signature revele une feuille et son chemin d'authentification :
      4 + 2 144 + 32·k octets. Entierement fonde sur le hachage, donc
      post-quantique. Il est ETATIQUE : un indice ne sert qu'une fois, et le
-     compteur doit survivre aux redemarrages.
+     compteur doit survivre aux redemarrages — CompteurMSS, fichier
+     indice-<v>.json, monotone, ecrit AVANT de rendre la signature. Rejouer
+     la chaine ne suffit pas : sur une fourche, deux branches diraient
+     « indice libre » pour le meme indice ; le fichier, lui, ne recule jamais.
 
   2. Rotation chaldeenne. Le proposant du creneau s est V[(3*s) mod n].
      Le pas de trois est celui qui engendre l'ordre des jours a partir de
@@ -45,7 +48,7 @@ Sept signataires connus peuvent s'entendre, ou etre contraints. C'est un choix
 politique autant que technique, a assumer publiquement.
 """
 
-import hashlib, os, sys, time
+import hashlib, json, os, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import eonis as E
@@ -72,6 +75,110 @@ def _ad_l(i):   return W.adrs(W.TYPE_LTREE, a=i)
 def _ad_arbre(hauteur, indice): return W.adrs(W.TYPE_ARBRE, b=hauteur, c=indice)
 
 
+class CompteurMSS:
+    """Etat persistant d'un validateur : le premier indice jamais signe.
+
+    Fichier indice-<v>.json : {"spec", "validateur", "racine", "prochain"}.
+    Monotone : on n'ecrit jamais en dessous. `reserver(i)` prend un verrou
+    exclusif sur indice-<v>.json.lock (fcntl sur POSIX, msvcrt sur Windows :
+    rendu a la mort du processus, jamais orphelin), RELIT le fichier sous le
+    verrou (le disque fait foi, pas la memoire : deux objets ou deux processus
+    sur le meme fichier voient le meme prochain), refuse i < prochain (compteur
+    recule : sauvegarde ancienne, fourche — l'autre branche a deja consomme i,
+    ou second ecrivain), puis ecrit prochain = i + 1 de facon atomique (fichier
+    temporaire + fsync + os.replace + fsync du repertoire) AVANT que la
+    signature soit rendue : si l'ecriture echoue, on ne signe pas ; si le
+    processus meurt juste apres, l'indice est perdu, jamais reutilise. Un
+    verrou deja tenu par un autre processus refuse la signature.
+
+    LIMITE. Un fichier est un etat local : perdu, le noeud REFUSE de repartir de
+    la chaine (max des indices publies + 1) sauf amorcage explicite
+    (noeud.py --amorcer-indice) : la chaine peut ignorer des blocs signes puis
+    perdus. Le sauvegarder, c'est le seul devoir d'un validateur."""
+
+    SPEC = "eidos-indice/1"
+
+    def __init__(self, chemin: str, validateur: int, racine: bytes):
+        self.chemin = chemin
+        self.validateur = validateur
+        self.racine = racine
+        self.prochain = self._charger()
+
+    MAX_PROCHAIN = 1 << 31
+
+    def _charger(self) -> int:
+        if not os.path.exists(self.chemin):
+            return 0
+        try:
+            f = json.load(open(self.chemin, encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            raise ValueError(f"{self.chemin} : illisible ({e})")
+        if not isinstance(f, dict):
+            raise ValueError(f"{self.chemin} : objet JSON attendu")
+        if f.get("spec") != self.SPEC:
+            raise ValueError(f"{self.chemin} : spec {f.get('spec')!r} inattendue")
+        if f.get("validateur") != self.validateur or f.get("racine") != self.racine.hex():
+            raise ValueError(f"{self.chemin} : etat d'une autre cle (validateur "
+                             f"{f.get('validateur')}, racine {str(f.get('racine'))[:16]}…)")
+        p = f.get("prochain")
+        if type(p) is not int or not (0 <= p <= self.MAX_PROCHAIN):
+            raise ValueError(f"{self.chemin} : prochain indice invalide {p!r}")
+        return p
+
+    def _verrou(self):
+        """Descripteur verrouille en exclusif, non bloquant ; U.Rejet si un
+        autre processus le tient. Rendu par os.close (et a la mort du processus)."""
+        fd = os.open(self.chemin + ".lock", os.O_RDWR | os.O_CREAT, 0o600)
+        try:
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            os.close(fd)
+            raise U.Rejet(f"{self.chemin} : compteur tenu par un autre processus, "
+                          f"signature refusee")
+        return fd
+
+    def _liberer(self, fd):
+        try:
+            if os.name == "nt":
+                import msvcrt
+                os.lseek(fd, 0, 0)
+                msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
+
+    def reserver(self, i: int):
+        fd = self._verrou()
+        try:
+            self.prochain = max(self.prochain, self._charger())   # le disque fait foi
+            if i < self.prochain:
+                raise U.Rejet(f"indice MSS {i} en dessous de l'etat persistant "
+                              f"({self.prochain}) : compteur recule, signature refusee")
+            tmp = self.chemin + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as fh:
+                json.dump({"spec": self.SPEC, "validateur": self.validateur,
+                           "racine": self.racine.hex(), "prochain": i + 1}, fh, indent=1)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, self.chemin)
+            if os.name != "nt":
+                d = os.open(os.path.dirname(os.path.abspath(self.chemin)), os.O_RDONLY)
+                try:
+                    os.fsync(d)
+                finally:
+                    os.close(d)
+            self.prochain = i + 1
+        finally:
+            self._liberer(fd)
+
+
 class CleValidateur:
     """Cle a 2^hauteur usages. Cle publique = (racine, graine publique),
     compteur prive. Feuille i = arbre L de la cle WOTS+ i, adresses de
@@ -93,6 +200,18 @@ class CleValidateur:
             k += 1
         self.racine = self.niveaux[-1][0]
         self.indice = 0
+        self.compteur = None
+
+    def attacher(self, compteur: "CompteurMSS"):
+        """Lie l'etat persistant : l'indice courant ne descend jamais sous lui."""
+        if compteur.racine != self.racine:
+            raise ValueError("compteur d'une autre cle")
+        if compteur.prochain > self.n:
+            raise ValueError(f"{compteur.chemin} : prochain {compteur.prochain} > 2^{self.hauteur} "
+                             f"signatures : fichier corrompu ou d'une autre cle")
+        self.compteur = compteur
+        self.indice = max(self.indice, compteur.prochain)
+        return self
 
     def _feuille(self, i):
         pk = W.cle_publique(_graine_ots(self.seed, i), self.graine_pub, _ad_ots(i))
@@ -109,7 +228,9 @@ class CleValidateur:
         if self.indice >= self.n:
             raise RuntimeError("cle epuisee — 2^%d signatures atteintes" % self.hauteur)
         i = self.indice
-        self.indice += 1
+        if self.compteur is not None:
+            self.compteur.reserver(i)          # ecrit, ou refuse — avant de signer
+        self.indice = i + 1
         sig = W.signer_wots(_graine_ots(self.seed, i), self.graine_pub, _ad_ots(i), msg32)
         return (i, sig, self.chemin(i))
 
@@ -430,6 +551,109 @@ def tests():
               f"au-dessus -> {etat}")
     assert ch.finalise(0) and not ch.finalise(5)
     print(f"derniere hauteur finalisee : {ch.derniere_finalisee()}"); ok += 1
+
+    # -- etat persistant : le compteur ne recule jamais ---------------------
+    import tempfile
+    dossier = tempfile.mkdtemp()
+    chemin = os.path.join(dossier, "indice-0.json")
+    kp = CleValidateur(sha256(b"validateur/persistant"), 4)
+    kp.attacher(CompteurMSS(chemin, 0, kp.racine))
+    s1 = kp.signer(m)
+    assert s1[0] == 0 and json.load(open(chemin))["prochain"] == 1
+    kp.signer(m)
+    kp.indice = 1                              # sauvegarde ancienne restauree
+    try:
+        kp.signer(m); raise AssertionError("indice recule accepte")
+    except U.Rejet as e:
+        assert "recule" in str(e)
+    # relecture depuis le fichier : on repart au-dessus, jamais en dessous
+    kp2 = CleValidateur(sha256(b"validateur/persistant"), 4)
+    kp2.attacher(CompteurMSS(chemin, 0, kp2.racine))
+    assert kp2.indice == 2 and kp2.signer(m)[0] == 2
+    try:
+        CompteurMSS(chemin, 1, kp2.racine); raise AssertionError("fichier d'une autre cle accepte")
+    except ValueError:
+        pass
+    # deux objets sur le meme fichier : le disque fait foi, pas la memoire
+    ka = CleValidateur(sha256(b"validateur/persistant"), 4)
+    kb = CleValidateur(sha256(b"validateur/persistant"), 4)
+    ka.attacher(CompteurMSS(chemin, 0, ka.racine)); kb.attacher(CompteurMSS(chemin, 0, kb.racine))
+    ia = ka.signer(m)[0]
+    try:                                       # kb croit l'indice libre : le disque dit non
+        kb.signer(m); raise AssertionError("second objet a signe l'indice du premier")
+    except U.Rejet as e:
+        assert "recule" in str(e)
+    kb.indice = kb.compteur.prochain           # relu sous verrou par le refus
+    ib = kb.signer(m)[0]
+    assert ib == ia + 1, f"deux objets, meme indice {ia} / {ib}"
+    # verrou tenu par un autre : signature refusee, jamais de double
+    fd = kb.compteur._verrou()
+    try:
+        ka.signer(m); raise AssertionError("signe malgre le verrou")
+    except U.Rejet as e:
+        assert "autre processus" in str(e)
+    finally:
+        kb.compteur._liberer(fd)
+    ka.compteur.prochain = ka.compteur._charger(); ka.indice = ka.compteur.prochain
+    assert ka.signer(m)[0] == ib + 1
+    # fichier corrompu : jamais un retour a zero, toujours une erreur
+    for contenu in ("", "[]", "null", '{"spec":"eidos-indice/1","validateur":0,"racine":"%s","prochain":true}' % ka.racine.hex(),
+                    '{"spec":"eidos-indice/1","validateur":0,"racine":"%s","prochain":99999999999}' % ka.racine.hex()):
+        open(chemin, "w", encoding="utf-8").write(contenu)
+        try:
+            CompteurMSS(chemin, 0, ka.racine); raise AssertionError(f"fichier corrompu accepte : {contenu[:20]!r}")
+        except ValueError:
+            pass
+    open(chemin, "w", encoding="utf-8").write('{"spec":"eidos-indice/1","validateur":0,"racine":"%s","prochain":20}' % ka.racine.hex())
+    try:
+        CleValidateur(sha256(b"validateur/persistant"), 4).attacher(CompteurMSS(chemin, 0, ka.racine))
+        raise AssertionError("prochain > 2^h accepte")
+    except ValueError:
+        pass
+    print("compteur persistant : monotone, recul refuse, deux objets, verrou, fichiers corrompus : OK"); ok += 1
+
+    # -- fourche : meme indice sur deux branches, refuse cote signataire ---------
+    cles_f = cles_de_test(7, hauteur=4)
+    dossier_f = tempfile.mkdtemp()
+    for i, c in enumerate(cles_f):
+        c.attacher(CompteurMSS(os.path.join(dossier_f, f"indice-{i}.json"), i, c.racine))
+    fed_f = Federation.depuis_cles(cles_f, t0, hauteur=4)
+    A = ChaineFederee(fed_f)
+    pf = U.Portefeuille("fourche")
+    prefixe = []
+    for h in range(3):
+        blk = forger(A, cles_f, [U.coinbase(h, pf.nouvelle_adresse())], t0 + h * CRENEAU)
+        A.valider(blk, maintenant=t0 + h * CRENEAU)
+        prefixe.append(blk)
+    for h in range(3, 8):                        # chaque validateur a signe au moins une fois
+        blk = forger(A, cles_f, [U.coinbase(h, pf.nouvelle_adresse())], t0 + h * CRENEAU)
+        A.valider(blk, maintenant=t0 + h * CRENEAU)
+        prefixe.append(blk)
+    B = ChaineFederee(fed_f)
+    for blk in prefixe:
+        B.valider(blk, maintenant=t0 + 7 * CRENEAU)
+    # creneau 8 : le proposant (qui a deja signe au creneau 1) signe sur A
+    v8 = fed_f.proposant(8)
+    assert B.indices.get(v8), "le proposant du creneau 8 doit avoir deja signe"
+    blkA = forger(A, cles_f, [U.coinbase(8, pf.nouvelle_adresse())], t0 + 8 * CRENEAU)
+    A.valider(blkA, maintenant=t0 + 8 * CRENEAU)
+    i_signe = blkA["sig"][0]
+    assert i_signe >= 1
+    # sur B : un noeud NEUF (objets reconstruits depuis la graine et le fichier),
+    # dont la chaine dit « indice libre » et qui rembobinerait le compteur
+    neuf = CleValidateur(cles_f[v8].seed, 4)
+    neuf.attacher(CompteurMSS(os.path.join(dossier_f, f"indice-{v8}.json"), v8, neuf.racine))
+    neuf.indice = max(B.indices[v8]) + 1
+    assert neuf.indice == i_signe, "la branche B croit l'indice libre"
+    cles_B = list(cles_f); cles_B[v8] = neuf
+    try:
+        forger(B, cles_B, [U.coinbase(8, pf.nouvelle_adresse())], t0 + 8 * CRENEAU)
+        raise AssertionError("meme indice signe sur deux branches")
+    except U.Rejet as e:
+        assert "recule" in str(e)
+    # et B accepterait pourtant un bloc a cet indice : c'est bien le signataire qui protege
+    assert i_signe not in B.indices.get(v8, set())
+    print(f"fourche : indice {i_signe} du validateur {v8} deja signe sur A, refuse sur B par un noeud neuf : OK"); ok += 1
 
     # -- cout par bloc ------------------------------------------------------
     t = time.time()

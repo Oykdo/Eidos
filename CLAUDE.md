@@ -91,8 +91,15 @@ empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 - **Aucun hachage nu dans WOTS+.** Chaque maillon est tweaké par (graine
   publique, ADRS) selon la RFC 8391 ; `wots.py` et `wots.ts` doivent rester
   identiques à l'octet, ce que `vecteurs.json` contrôle.
-- **Un indice MSS ne sert qu'une fois** par validateur (`ChaineFederee.indices`).
+- **Un indice MSS ne sert qu'une fois** par validateur (`ChaineFederee.indices`),
+  et le signataire s'en souvient hors chaîne : `CompteurMSS` (`indice-<v>.json`,
+  monotone, écrit avant de rendre la signature) refuse tout recul, donc le même
+  indice sur deux branches. Départ = max(chaîne, fichier). Jamais versionné ;
+  le nœud CI le fait passer par `actions/cache`, meilleur effort.
 - **Vivacité** : créneau `s > créneau(now)+1` refusé ; au plus 6 blocs par exécution.
+- **Jamais écrire `chaine-eidos.dat` ni forger depuis un poste local pendant que
+  le cron tourne** : le verrou protège la double signature sur une même machine,
+  pas entre votre poste et le runner GitHub (deux fichiers d'état distincts).
 - **Coinbase exacte** : `reward_at(h) + frais`, ni plus ni moins.
 - **Sérialisation canonique** : `Tx.core()` retrouvé à l'octet près après
   désérialisation, sinon `ValueError`.
@@ -128,11 +135,12 @@ python3 robinet.py --test      # 11
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_depuis()"      # 4
+python3 -c "import noeud as N; N._test_indice()"      # 2
 python3 -c "import noeud as N; N._test_reliques()"    # 4
 python3 qr.py --test           # 5
 python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
-python3 federation.py          # 16
+python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
 cd atelier && npm test         # node --test, tous les .test.ts (liste dans package.json)
 ```
@@ -365,11 +373,30 @@ signée, relique, **glyphes** : adresse 27 + 4, condensat 43, bourrage refusé),
 `python vecteurs.py`, puis `npm ci`, `npm run typecheck`, `npm test`.
 Toute évolution d'un format : `vecteurs.py --generer`, puis les deux côtés.
 
-### P5 — État MSS persistant
-`k.indice = max(employes)+1` dérivé de la chaîne est sûr pour un seul écrivain
-seulement. Avant toute fédération multi-écrivains : fichier `indice-<v>.json`
-local, monotone, refus de signer en dessous, et test « fourche : même indice
-sur deux branches » qui doit être refusé côté signataire.
+### P5 — État MSS persistant — FAIT (septembre 2026)
+`federation.CompteurMSS` (`indice-<v>.json`, spec `eidos-indice/1`, `prochain`
+monotone) : `reserver(i)` prend un **verrou exclusif** non bloquant sur
+`indice-<v>.json.lock` (fcntl / msvcrt, rendu à la mort du processus), **relit
+le fichier sous le verrou** (le disque fait foi : deux objets ou deux processus
+ne signent jamais le même indice), refuse i < prochain, écrit tmp + fsync +
+`os.replace` + fsync du répertoire, AVANT la signature. Fichier strictement
+validé (objet, spec, validateur, racine, entier borné, jamais un booléen) ;
+`attacher` refuse prochain > 2^h. `noeud.indice_de_depart` = max(chaîne,
+fichier) mais **refuse de repartir de la chaîne sans fichier** quand elle
+connaît déjà des indices (vecteur de réemploi) sauf `--forger --amorcer-indice`
+explicite ; clé épuisée = créneau sauté, pas boucle gelée. Relecture
+adversariale (3 lentilles, 2 sceptiques par constat) : tous les constats
+confirmés sont traités.
+Contrôles : `federation.py` +2 (monotone / recul / fichier d'autrui ; fourche
+même indice sur deux branches refusée côté signataire), `noeud._test_indice` 2
+(fichier perdu → la chaîne fait foi ; blocs perdus → le fichier fait foi).
+`chaine.yml` : forge seulement sur `main` ; cache `indice-<sha(federation.json)>-<run>-<tentative>`
+avec restauration par préfixe de génération (une réinitialisation §6 change
+`federation.json`, donc l'ancien état ne revient jamais) ; sans état, amorçage
+explicite tracé par un avertissement du run. Meilleur effort : perdu, le nœud
+CI repart de la chaîne en le disant. Pour une fédération réelle, chaque
+validateur garde son fichier chez lui, le sauvegarde, et ne l'amorce jamais
+à l'aveugle.
 
 ### P6 — Hygiène
 - `getcontext().prec = 60` global → `with localcontext()` dans `dcos` et

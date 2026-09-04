@@ -9,6 +9,9 @@ par le même code qu'à la forge.
 
   python3 noeud.py --init     crée une chaîne vide
   python3 noeud.py --forger   forge les blocs des créneaux échus
+  python3 noeud.py --forger --amorcer-indice
+                              idem, en acceptant de repartir de la chaîne si
+                              l'état MSS persistant (indice-<v>.json) manque
   python3 noeud.py --etat     réécrit etat.json sans rien forger
   python3 noeud.py --verifier rejeu seul, sans écriture
   python3 noeud.py --depuis <h> <racine_utxo_hex>
@@ -52,6 +55,7 @@ MEMPOOL = os.path.join(HERE, "mempool.json")
 CONFIG = os.path.join(HERE, "federation.json")
 ETAT = os.path.join(HERE, "etat.json")
 RELIQUES = os.path.join(HERE, "reliques.json")
+INDICE = os.path.join(HERE, "indice-{v}.json")   # état MSS persistant, jamais versionné
 MAGIC = b"EIDOS\x00\x00\x01"
 FORMAT = 3                     # 1 : Lamport ; 2 : WOTS+ / XMSS ; 3 : + racine UTXO
 GRAINE = "eidos-testnet-3"     # tag de dérivation des graines publiques du réseau
@@ -87,8 +91,29 @@ def cle(c, v):
         graine = hashlib.sha256(f"{GRAINE}/validateur/{v}".encode()).digest()
         k = F.CleValidateur(graine, c["hauteur_mss"])
         assert k.racine.hex() == c["racines"][v], f"racine du validateur {v} inattendue"
+        k.attacher(F.CompteurMSS(INDICE.format(v=v), v, k.racine))
         _CLES[v] = k
     return _CLES[v]
+
+
+def indice_de_depart(k, employes, amorcage=False):
+    """max(chaîne, fichier), jamais sous l'état persistant. Le fichier peut
+    être en avance (blocs signés absents de la chaîne : fourche ou perte — on
+    ne redescend pas). S'il est ABSENT alors que la chaîne connaît déjà des
+    indices du validateur, repartir de la chaîne est le vecteur de réemploi :
+    refusé, sauf amorçage explicite (--amorcer-indice), qui le dit."""
+    chaine = (max(employes) + 1) if employes else 0
+    fichier = k.compteur.prochain if k.compteur is not None else 0
+    if fichier > chaine:
+        print(f"  état persistant en avance ({fichier} > {chaine}) : "
+              f"blocs signés absents de la chaîne, on ne redescend pas")
+    if fichier == 0 and chaine > 0:
+        if not amorcage:
+            raise SystemExit(f"état persistant absent alors que la chaîne connaît {chaine} "
+                             f"indice(s) du validateur : reprise refusée. Restaurez indice-*.json, "
+                             f"ou amorcez explicitement : noeud.py --forger --amorcer-indice")
+        print(f"  amorçage explicite : état persistant absent, on repart de la chaîne ({chaine})")
+    return max(chaine, fichier)
 
 
 # ==========================================================================
@@ -603,7 +628,7 @@ def construire_envois(ch, hauteur_bloc, creneau, file, txs_avant):
     return txs, frais, modifie
 
 
-def forger(maintenant=None):
+def forger(maintenant=None, amorcage=False):
     c, fed = config()
     ch, n = charger(fed)
     maintenant = maintenant or int(time.time())
@@ -621,11 +646,10 @@ def forger(maintenant=None):
     for s in range(depart, creneau_courant + 1):
         v = fed.proposant(s)
         k = cle(c, v)
-        employes = ch.indices.get(v, set())
-        k.indice = (max(employes) + 1) if employes else 0
+        k.indice = indice_de_depart(k, ch.indices.get(v, set()), amorcage)
         if k.indice >= k.n:
-            print(f"validateur {v} : clé épuisée ({k.n} signatures)")
-            break
+            print(f"validateur {v} : clé épuisée ({k.n} signatures), créneau {s} sauté")
+            continue
         h = ch.carnet.hauteur + 1
         ts = fed.t0 + s * F.CRENEAU
         paiements, envois, frais, file, modifie = [], [], 0, None, False
@@ -877,6 +901,67 @@ def _test_reliques():
     print(f"ok : {ok} controles reliques")
 
 
+def _test_indice():
+    """État MSS persistant côté nœud : reprise après perte du fichier (la
+    chaîne fait foi), reprise après perte de blocs (le fichier fait foi)."""
+    import tempfile
+    t0 = 1756540680
+    cles = F.cles_de_test(7, hauteur=4)
+    d = tempfile.mkdtemp()
+    for i, c in enumerate(cles):
+        c.attacher(F.CompteurMSS(os.path.join(d, f"indice-{i}.json"), i, c.racine))
+    fed = F.Federation.depuis_cles(cles, t0, hauteur=4)
+    ch = F.ChaineFederee(fed)
+    p = U.Portefeuille("indice")
+    blocs = []
+    for s in range(8):                         # deux tours : chaque validateur signe
+        v = fed.proposant(s)
+        k = cles[v]
+        k.indice = indice_de_depart(k, ch.indices.get(v, set()))
+        blk = F.forger(ch, cles, [U.coinbase(s, p.nouvelle_adresse())], t0 + s * F.CRENEAU)
+        ch.valider(blk, maintenant=t0 + s * F.CRENEAU)
+        blocs.append(blk)
+    ok = 0
+
+    # 1. fichier perdu : refus sans amorçage ; avec amorçage explicite, la chaîne
+    #    fait foi et le fichier se réécrit au-dessus
+    v = fed.proposant(8)
+    os.remove(os.path.join(d, f"indice-{v}.json"))
+    k = F.CleValidateur(cles[v].seed, 4)
+    k.attacher(F.CompteurMSS(os.path.join(d, f"indice-{v}.json"), v, k.racine))
+    assert k.compteur.prochain == 0
+    try:
+        indice_de_depart(k, ch.indices.get(v, set()))
+        raise AssertionError("reprise sans etat acceptee")
+    except SystemExit as e:
+        assert "reprise refus" in str(e)
+    k.indice = indice_de_depart(k, ch.indices.get(v, set()), amorcage=True)
+    attendu = max(ch.indices[v]) + 1
+    assert k.indice == attendu
+    cles[v] = k
+    blk = F.forger(ch, cles, [U.coinbase(8, p.nouvelle_adresse())], t0 + 8 * F.CRENEAU)
+    ch.valider(blk, maintenant=t0 + 8 * F.CRENEAU)
+    assert blk["sig"][0] == attendu and k.compteur.prochain == attendu + 1
+    print(f"fichier perdu : refus, puis amorçage explicite à l'indice {attendu}, fichier réécrit : OK"); ok += 1
+
+    # 2. blocs perdus : une chaîne qui s'arrête au bloc 2 ; le proposant du
+    # créneau 3 y a signé (bloc 3), absent de la chaîne courte : le fichier dit plus
+    v = fed.proposant(3)
+    court = F.ChaineFederee(fed)
+    for b in blocs[:3]:
+        court.valider(b, maintenant=t0 + 2 * F.CRENEAU)
+    k = cles[v]
+    d_chaine = (max(court.indices.get(v, set())) + 1) if court.indices.get(v) else 0
+    k.indice = indice_de_depart(k, court.indices.get(v, set()))
+    assert k.indice == k.compteur.prochain and k.indice >= d_chaine
+    assert k.indice > d_chaine, "le fichier doit être en avance sur la chaîne courte"
+    blk = F.forger(court, cles, [U.coinbase(3, p.nouvelle_adresse())], t0 + 3 * F.CRENEAU)
+    court.valider(blk, maintenant=t0 + 3 * F.CRENEAU)
+    assert blk["sig"][0] == k.compteur.prochain - 1 and blk["sig"][0] > d_chaine - 1
+    print(f"blocs perdus : la chaîne dit {d_chaine}, le fichier {blk['sig'][0]} : on ne redescend pas : OK"); ok += 1
+    print(f"ok : {ok} controles indice persistant")
+
+
 def _test_artefact():
     ad = bytes([0x11]) * 20
     a = artefact_de_goutte(bytes(32), ad)
@@ -992,7 +1077,7 @@ if __name__ == "__main__":
         ch, n = charger(fed)
         ecrire_etat(ch, n)
     elif "--forger" in a:
-        ch, f = forger()
+        ch, f = forger(amorcage="--amorcer-indice" in a)
         ecrire_etat(ch, len(ch.creneaux))
         print(f"{f} bloc(s) forgé(s)")
     else:

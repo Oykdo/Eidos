@@ -20,6 +20,9 @@ concurrency:
 
 jobs:
   forger:
+    # La forge n'a de sens que sur la branche publiée : un workflow_dispatch sur
+    # une autre branche signerait avec les mêmes clés, hors de vue de main.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,8 +42,29 @@ jobs:
             echo "chaine-eidos.dat existe déjà"
           fi
 
+      # L'état MSS persistant (indice-<v>.json) ne vit pas dans le dépôt : il
+      # passe d'une exécution à l'autre par le cache. Meilleur effort : perdu,
+      # le nœud repart de la chaîne, ce qui est sûr pour un seul écrivain.
+      # Clé par génération de fédération (federation.json) : une réinitialisation
+      # (§6) change les racines, donc le préfixe, et l'ancien état ne revient pas.
+      - name: Restaurer l'etat MSS persistant
+        uses: actions/cache/restore@v4
+        with:
+          path: indice-*.json
+          key: indice-${{ hashFiles('federation.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            indice-${{ hashFiles('federation.json') }}-
+
+      # Sans état alors que la chaîne a des blocs, le nœud refuse : on amorce
+      # explicitement, et ça se lit dans le journal du run.
       - name: Forger
-        run: python3 noeud.py --forger
+        run: |
+          if ls indice-*.json >/dev/null 2>&1; then
+            python3 noeud.py --forger
+          else
+            echo "::warning::état MSS persistant absent — amorçage explicite depuis la chaîne"
+            python3 noeud.py --forger --amorcer-indice
+          fi
 
       - name: Rejeu de contrôle
         run: python3 noeud.py --verifier
@@ -58,3 +82,10 @@ jobs:
           fi
           git commit -m "noeud : forge du $(date -u +%FT%TZ)"
           git push || { git pull --rebase --autostash && git push; }
+
+      - name: Sauver l'etat MSS persistant
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: indice-*.json
+          key: indice-${{ hashFiles('federation.json') }}-${{ github.run_id }}-${{ github.run_attempt }}

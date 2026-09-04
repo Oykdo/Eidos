@@ -51,6 +51,9 @@ jobs:
       - name: Reprise --depuis (point de controle explicite, 4 controles)
         run: python -c "import noeud as N; N._test_depuis()"
 
+      - name: Etat MSS persistant cote noeud (fichier perdu refuse puis amorce, blocs perdus, 2 controles)
+        run: python -c "import noeud as N; N._test_indice()"
+
       - name: Reliques (attente, intacte, recuperee, 4 controles)
         run: python -c "import noeud as N; N._test_reliques()"
 
@@ -63,7 +66,7 @@ jobs:
       - name: Difficulte et travail cumule (6 controles)
         run: python consensus.py
 
-      - name: Consensus federe XMSS (vivacite, tete signee, 16 controles)
+      - name: Consensus federe XMSS (vivacite, tete signee, compteur persistant, fourche, 18 controles)
         run: python federation.py
 
       - name: Persistance, aller-retour complet
@@ -193,7 +196,7 @@ jobs:
       - name: Aucun etat local versionne
         shell: bash
         run: |
-          for f in chaine.dat portefeuille.json; do
+          for f in chaine.dat portefeuille.json indice-*.json indice-*.json.tmp indice-*.json.lock; do
             if [ -e "$f" ]; then
               echo "ECHEC : $f ne doit pas etre versionne."
               exit 1

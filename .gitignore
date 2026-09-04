@@ -1,6 +1,9 @@
 # état local, jamais versionné
 chaine.dat
 portefeuille.json
+indice-*.json
+indice-*.json.tmp
+indice-*.json.lock
 portefeuille-*.json
 *.psnx
 *.blend_data

@@ -111,9 +111,9 @@ Le coffre de l'atelier s'écrit dans **un seul fichier**.
 | `utxo.py` | 507 | carnet, témoins WOTS+, racine UTXO, validation — 15 contrôles |
 | `store.py` | 278 | persistance et rejeu intégral (PoW, historique) |
 | `consensus.py` | 204 | difficulté et travail cumulé — 6 contrôles |
-| `federation.py` | 470 | XMSS, rotation, vivacité, tête signée — 16 contrôles |
+| `federation.py` | 688 | XMSS, rotation, vivacité, tête signée, compteur persistant verrouillé — 18 contrôles |
 | `robinet.py` | 356 | robinet, budget, file des envois, frein par auteur — 11 contrôles |
-| `noeud.py` | 964 | nœud, envois, `--depuis`, reliques, état publié — 5 + 4 + 4 contrôles |
+| `noeud.py` | 1084 | nœud, envois, `--depuis`, reliques, indice persistant, état publié — 5 + 4 + 5 + 2 contrôles |
 | `vecteurs.py` | 155 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 7 familles) |
 | `qr.py` | 428 | encodeur QR (octets, niveau H, v1–10) — 5 contrôles |
 | `relique.py` | 231 | gardien des reliques : sceller, animer — 3 contrôles |
@@ -144,7 +144,8 @@ python3 vecteurs.py           # parité avec l'atelier
 python3 robinet.py --test     # 11 contrôles
 python3 -c "import noeud as N; N._test_envois()"   # 5 contrôles envoi
 python3 -c "import noeud as N; N._test_depuis()"   # 4 contrôles reprise
-python3 -c "import noeud as N; N._test_reliques()" # 4 contrôles reliques
+python3 -c "import noeud as N; N._test_reliques()" # 5 contrôles reliques
+python3 -c "import noeud as N; N._test_indice()"   # 2 contrôles indice persistant
 python3 qr.py --test          # 5 contrôles
 python3 relique.py --test     # 3 contrôles
 python3 federation.py --demo  # vivacité, rotation
