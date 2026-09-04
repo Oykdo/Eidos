@@ -417,6 +417,13 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   `motDeQ` → `qDeMot` (nombre gelé dans `fiche.test.ts`). Correction = décision
   d'auteur (convention « composante omise ≥ 0 », touche `canoniserMot` donc les
   feuilles) : ne pas corriger à la volée.
+- Transposition du dossier Eidolon (2026-09-04, `docs/TRANSPOSITION_EIDOLON.md`,
+  `docs/LORE_CHAMBRE.md`) : refondre est refusé, transposer est fait pour les
+  œufs — `oeufs.ts` + `oeufs-data.ts` (64 œufs = 64 empilements, œuf i =
+  glyphe de code i, cycle i >> 3 = bande de la Tour de Thalie à Polymnie,
+  L'Inconnu = Uranie ; noms d'ère traduits, huit récits FR/EN ; aucune
+  puissance), page Glyphes (œuf de l'empilement choisi), 4 contrôles. Les
+  dix catégories alchimiques et l'avatar : décisions T1–T4 dans la spec.
 - Forum du royaume : `docs/SPEC_FORUM.md` (spec proposée, 2026-09-04) —
   objets ancrés = pièces colorées nées de chaque témoin d'une dépense réelle
   (`tirerObjet(sig, hash_bloc)`), portées rang à rang ; échange = une

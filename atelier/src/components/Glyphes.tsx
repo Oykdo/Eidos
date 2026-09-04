@@ -3,22 +3,18 @@ import { Shell } from "@/components/Shell";
 import { GlypheSvg } from "@/components/Mark";
 import { Button } from "@/components/ui/button";
 import { FIGURE_NOMS } from "@/lib/eidos/constantes.ts";
-import {
-  codeDuGroupe,
-  encoderAdresse,
-  groupeDuCode,
-  verifierAdresse,
-} from "@/lib/eidos/glyphs.ts";
+import { codeDuGroupe, encoderAdresse, groupeDuCode, verifierAdresse } from "@/lib/eidos/glyphs.ts";
 import { asciiGlyphe } from "@/lib/eidos/trouvaille.ts";
 import { fromHex } from "@/lib/eidos/hash.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { cn } from "@/lib/utils";
+import { lectureOeuf, oeufDuCode } from "@/lib/eidos/oeufs.ts";
 import { useI18n } from "@/lib/i18n.ts";
 
 const BITS = ["00", "01", "10", "11"] as const;
 
 export function Glyphes() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
   const [etages, setEtages] = useState<[number, number, number]>([1, 2, 3]);
   const [alterer, setAlterer] = useState(false);
@@ -61,15 +57,10 @@ export function Glyphes() {
         <p className="mt-2 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
           {t("glyphes.lede")}
         </p>
-        <pre className="mt-3 font-mono text-sm leading-tight text-etain">
-          {asciiGlyphe(etages)}
-        </pre>
+        <pre className="mt-3 font-mono text-sm leading-tight text-etain">{asciiGlyphe(etages)}</pre>
         <ul className="mt-4 grid grid-cols-4 gap-2">
           {([0, 1, 2, 3] as const).map((k) => (
-            <li
-              key={k}
-              className="flex flex-col items-center gap-1 rounded-md bg-creux px-2 py-3"
-            >
+            <li key={k} className="flex flex-col items-center gap-1 rounded-md bg-creux px-2 py-3">
               <GlypheSvg etages={[k, k, k]} className="h-16 w-8" />
               <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-encre">
                 {FIGURE_NOMS[k]}
@@ -103,9 +94,7 @@ export function Glyphes() {
                     }
                     className={cn(
                       "flex h-10 flex-1 items-center justify-center rounded-sm",
-                      etages[etage] === k
-                        ? "bg-or text-or-fg"
-                        : "bg-creux text-encre",
+                      etages[etage] === k ? "bg-or text-or-fg" : "bg-creux text-encre",
                     )}
                     aria-label={`${FIGURE_NOMS[k]} à l'étage ${etage}`}
                   >
@@ -120,6 +109,12 @@ export function Glyphes() {
           {BITS[etages[0]]} {BITS[etages[1]]} {BITS[etages[2]]}
           <span className="text-sourd"> · </span>
           {code} / 63
+        </p>
+        <p className="mt-2 font-mono text-[12px] leading-relaxed text-encre text-pretty">
+          {t("glyphes.oeuf")} : {lectureOeuf(oeufDuCode(code), locale)}
+        </p>
+        <p className="mt-1 font-mono text-[11px] leading-relaxed text-sourd text-pretty">
+          {t("glyphes.oeuf.lede")}
         </p>
       </section>
 
@@ -141,6 +136,7 @@ export function Glyphes() {
                   code === c && "ring-1 ring-or",
                 )}
                 aria-label={`glyphe ${c}`}
+                title={oeufDuCode(c).nomEre[locale]}
               >
                 <GlypheSvg etages={e} className="h-8 w-3.5" />
               </button>
@@ -171,15 +167,8 @@ export function Glyphes() {
               </Button>
             </div>
             {verdict ? (
-              <p
-                className={cn(
-                  "mt-3 font-mono text-sm",
-                  verdict.ok ? "text-cuivre" : "text-fer",
-                )}
-              >
-                {verdict.ok
-                  ? `Somme intacte · ${verdict.hexa.slice(0, 16)}…`
-                  : verdict.message}
+              <p className={cn("mt-3 font-mono text-sm", verdict.ok ? "text-cuivre" : "text-fer")}>
+                {verdict.ok ? `Somme intacte · ${verdict.hexa.slice(0, 16)}…` : verdict.message}
               </p>
             ) : null}
           </>
