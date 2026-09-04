@@ -303,7 +303,11 @@ Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
 - Le pendule-9 : `docs/SPEC_PENDULE.md` — décisions fondatrices O1–O5 à
   valider (le pendule choisit le **parcours** et la case de spawn, jamais le
   contenu d'un étage, qui reste public et fixe), esquisse de la transition en
-  pseudo-code, phase 0 = bot de 10 000 runs et trois seuils d'abandon.
+  pseudo-code. **Phase 0 FAITE** : `atelier/src/lib/eidos/pendule.ts`
+  (transition, `etageDe` étalé sur la bande, spawn, genre du don),
+  `pendule-phase0.ts` (bot xorshift, trois mesures, `npm run phase0 [runs]`),
+  `pendule.test.ts` (6 tests, table de vérité gelée). Toute retouche de la
+  transition régénère la table sciemment.
 
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 8 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
