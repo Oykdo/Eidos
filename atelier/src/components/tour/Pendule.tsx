@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { cn } from "@/lib/utils";
-import { ascensionDe, destinationsDeSalle, enCours } from "@/lib/eidos/ascension.ts";
+import { ascensionDe, choixDeSalle, destinationsDeSalle, enCours } from "@/lib/eidos/ascension.ts";
 import { tourDe } from "@/lib/eidos/jauge.ts";
 import { ETAPES } from "@/lib/eidos/pendule.ts";
 import { SIGNATURES } from "@/lib/eidos/signatures.ts";
@@ -35,8 +35,13 @@ export function Pendule() {
   const miennes = new Set(coffre.sorties.map((s) => s.adresse));
   const ancrables = reseau?.verdict.ok ? reseau.sorties.filter((s) => miennes.has(s.adresse)) : [];
   // Les trois destinations possibles : l'étage de chaque choix, jamais la case.
-  const dests = active ? destinationsDeSalle(coffre, monde) : null;
-  const lu = dests?.find((d) => d.lu) ?? null;
+  // Null à la dernière salle : rien n'est proposé, le sommet.
+  const dests = useMemo(
+    () => (active ? destinationsDeSalle(coffre, monde) : null),
+    [active, coffre, monde],
+  );
+  // L'acte de la salle, tel que le pendule le lit : la proposition.
+  const lu = active ? choixDeSalle(tour, tour.etage) : null;
 
   return (
     <div className="mt-4 rounded-md bg-fond p-3">
@@ -96,10 +101,14 @@ export function Pendule() {
                 <p className="mt-1 text-cuivre">{t(`tour.pendule.fin.${a.fin}` as Msg)}</p>
               ) : (
                 <p className="mt-1 text-sourd">
-                  {t("tour.pendule.lu")} :{" "}
-                  <span className="text-encre">
-                    {t(`tour.pendule.choix.${lu?.choix ?? "monter"}` as Msg)}
-                  </span>
+                  {dests && lu ? (
+                    <>
+                      {t("tour.pendule.lu")} :{" "}
+                      <span className="text-encre">{t(`tour.pendule.choix.${lu}` as Msg)}</span>
+                    </>
+                  ) : (
+                    t("tour.pendule.sommet")
+                  )}
                   {tour.porte !== null
                     ? ` · ${t("tour.pendule.porte")}`
                     : ` · ${t("tour.pendule.sansPorte")}`}

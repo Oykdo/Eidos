@@ -3,10 +3,12 @@
  *
  * Chaque étage cache des trouvailles à des cases fixes et publiques de sa dalle
  * (la Tour est fixe) : une case pleine (x, y) en porte une si
- * `sha256d("eidos-fouille/1" ‖ étage ‖ x ‖ y)[0] < 32` — une case sur huit, soit
- * quatre à six par étage. Trois coups de bêche par étage et par coffre
- * (`tour.fouilles`, jauge). Pendant une ascension, la case d'arrivée du pendule
- * porte toujours une trouvaille : « le loot dépend du spawn ».
+ * `sha256d("eidos-fouille/1" ‖ étage ‖ x ‖ y)[0] < 32` — une case pleine sur huit :
+ * d'une à douze par étage, cinq en moyenne, aucun étage sans. Trois coups de
+ * bêche par étage et par coffre (`tour.fouilles`, jauge). Pendant une ascension,
+ * la case d'arrivée du pendule donne, même sur un trou (le pendule ne regarde
+ * pas la dalle), tant qu'il reste une bêche et qu'elle n'est pas déjà creusée :
+ * « le loot dépend du spawn ». Le coup s'y compte comme les autres.
  *
  * La trouvaille est un objet du genre le plus humble, « trouve », ou une pierre
  * (une fois sur quatre), dérivé de (étage, case, coffre) : **les cases sont à
@@ -19,14 +21,14 @@
 
 import { affixeDe, habille } from "./equipement.ts";
 import { concat, sha256d, u32, utf8 } from "./hash.ts";
-import { tourDe } from "./jauge.ts";
+import { BECHES_PAR_ETAGE, tourDe } from "./jauge.ts";
 import { objetDepuisGraine } from "./objets.ts";
 import { quartierDe } from "./sceaux.ts";
 import { DALLE_N, biomeDe, dalleDe, etageDe } from "./tour.ts";
 import type { Coffre, ObjetPorte, Tour } from "./types.ts";
 
+export { BECHES_PAR_ETAGE };
 export const TAG_FOUILLE = utf8("eidos-fouille/1");
-export const BECHES_PAR_ETAGE = 3;
 /** Seuil sur le premier octet : 32/256 = une case pleine sur huit. */
 export const SEUIL_TROUVAILLE = 32;
 
@@ -132,7 +134,10 @@ export type FouilleOk = {
   restantes: number;
 };
 
-/** Un coup de bêche sur (x, y) : la case se note, la trouvaille entre au coffre si elle existe. */
+/**
+ * Un coup de bêche sur (x, y) : la case se note, la trouvaille entre au coffre si elle
+ * existe. La case d'arrivée du pendule se creuse même sur un trou, et donne.
+ */
 export function fouillerCaseDansCoffre(
   c: Coffre,
   etage: number,
@@ -140,13 +145,14 @@ export function fouillerCaseDansCoffre(
   y: number,
 ): FouilleOk | FouilleKo {
   const e = etageDe(etage);
-  if (!dansLaDalle(x, y) || !dalleDe(e)[y]![x]) return { ok: false, code: "hors" };
+  const spawn = spawnIci(c, e);
+  const arrivee = spawn !== null && spawn.x === x && spawn.y === y;
+  if (!dansLaDalle(x, y) || (!arrivee && !dalleDe(e)[y]![x])) return { ok: false, code: "hors" };
   const t = tourDe(c);
   if (fouillesFaites(t, e).some((f) => f.x === x && f.y === y))
     return { ok: false, code: "dejaCase" };
   if (bechesRestantes(t, e) <= 0) return { ok: false, code: "epuise" };
-  const spawn = spawnIci(c, e);
-  const trouve = aUneTrouvaille(e, x, y) || (spawn !== null && spawn.x === x && spawn.y === y);
+  const trouve = arrivee || aUneTrouvaille(e, x, y);
   const trouvaille = trouve ? trouvailleDe(e, x, y, c) : null;
   const tour: Tour = { ...t, fouilles: [...t.fouilles, [e, x, y]] };
   return {

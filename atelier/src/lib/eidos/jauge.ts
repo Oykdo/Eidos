@@ -142,7 +142,10 @@ function elixirsBus(xs: unknown): ElixirBu[] {
   return out;
 }
 
-/** (étage, x, y) : étage borné, case dans la dalle, sans doublon. */
+/** Coups de bêche par étage et par coffre (fouilles.ts) ; déclaré ici pour que la relecture le tienne. */
+export const BECHES_PAR_ETAGE = 3;
+
+/** (étage, x, y) : étage borné, case dans la dalle, sans doublon, au plus BECHES_PAR_ETAGE par étage. */
 function triplets(x: unknown): [number, number, number][] {
   const out: [number, number, number][] = [];
   if (!Array.isArray(x)) return out;
@@ -153,6 +156,7 @@ function triplets(x: unknown): [number, number, number][] {
     const b = entier(v[2], 0, DALLE_N - 1);
     if (e === null || a === null || b === null) continue;
     if (out.some((w) => w[0] === e && w[1] === a && w[2] === b)) continue;
+    if (out.filter((w) => w[0] === e).length >= BECHES_PAR_ETAGE) continue;
     out.push([e, a, b]);
   }
   return out;

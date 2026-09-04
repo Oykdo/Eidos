@@ -249,6 +249,10 @@ export function TourView() {
                   const k = caseOccupant(o.k);
                   return k.x === x && k.y === y;
                 });
+                // La case d'arrivée se creuse même sur un trou (fouilles.ts) ; un occupant
+                // se désigne d'un premier clic, sa case se creuse au second.
+                const creusable = (b || ici) && !creusee && beches > 0;
+                const selectionnable = occupant !== undefined && occ?.k !== occupant.k;
                 const signe = ici
                   ? "◆"
                   : occupant
@@ -262,9 +266,13 @@ export function TourView() {
                   <button
                     key={`${x}-${y}`}
                     type="button"
-                    disabled={!b || (creusee && !occupant)}
-                    onClick={() => (occupant ? setK(occupant.k) : fouillerCase(x, y))}
-                    title={`(${x}, ${y})`}
+                    disabled={!creusable && !selectionnable}
+                    onClick={() => (selectionnable ? setK(occupant.k) : fouillerCase(x, y))}
+                    title={
+                      occupant
+                        ? `(${x}, ${y}) · ${t("tour.occupant", { k: occupant.k })}`
+                        : `(${x}, ${y})`
+                    }
                     className="flex aspect-square items-center justify-center rounded-[1px] font-mono text-[9px] leading-none text-encre disabled:cursor-default"
                     style={{
                       background: b ? TEINTE_BIOME[biome.id] : "#0e1116",

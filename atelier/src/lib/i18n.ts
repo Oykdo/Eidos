@@ -239,7 +239,7 @@ export const FR = {
     "Terre au sol, Uranie au faîte. Même norme à chaque palier. Les occupants d'un étage s'interfèrent.",
   "tour.pendule": "Pendule",
   "tour.pendule.lede":
-    "Explorez la salle. En fin de salle, le pendule lit ce que vous y avez fait — honoré : offrir ; fouillé, pris, franchi : lire ; rien : monter — et vous le propose ; vous décidez parmi les trois, l'étage de chaque choix en clair, puis il vous dépose à la case qu'il calcule avec l'objet porté. Libre : une lecture. Ancrée sur une pièce et le bloc courant : ce qui compte.",
+    "Explorez la salle. En fin de salle, le pendule lit ce que vous y avez fait — honoré : offrir ; alcôve ouverte, pris, franchi : lire ; rien : monter — et vous le propose ; vous décidez parmi les trois, l'étage de chaque choix en clair, puis il vous dépose à la case qu'il calcule avec l'objet porté. Libre : une lecture. Ancrée sur une pièce et le bloc courant : ce qui compte.",
   "tour.pendule.cadran": "cadran à neuf crans",
   "tour.pendule.salle": "salle {i} / {n}",
   "tour.pendule.libre": "libre",
@@ -254,11 +254,10 @@ export const FR = {
   "tour.pendule.sansPorte": "sans objet porté (mot 0)",
   "tour.pendule.aucune":
     "Aucune ascension. La Tour se lit librement ; le pendule commence à la porte de la ville.",
-  "tour.pendule.finDeSalle": "Fin de salle",
   "tour.pendule.decider":
-    "Décidez la fin de salle : le pendule dit l'étage de chaque choix, jamais la case.",
+    "Décidez la fin de salle : le pendule dit l'étage de chaque choix, jamais la case. Une porte fermée arrête l'ascension.",
   "tour.pendule.vers": "étage {n} · {muse}",
-  "tour.pendule.porteFermee": "porte fermée",
+  "tour.pendule.porteFermee": "porte fermée : l'ascension s'y arrête",
   "tour.pendule.sommet": "Dernière salle : le sommet",
   "tour.pendule.abandonner": "Abandonner",
   "tour.pendule.commencerLibre": "Ascension libre",
@@ -403,7 +402,7 @@ export const FR = {
   "tour.fouille.trouve": "Sous la dalle : {nom}. {n} coup(s) de bêche restant(s).",
   "tour.fouille.rien": "Rien sous cette case. {n} coup(s) de bêche restant(s).",
   "tour.dalle.lede":
-    "Creusez une case pleine : trois coups de bêche par étage, la case d'arrivée du pendule donne toujours. ◆ arrivée, ○ occupant, ✓ creusée avec trouvaille, · creusée à vide.",
+    "Creusez une case pleine : trois coups de bêche par étage. Pendant une ascension, la case d'arrivée du pendule donne, même sur un trou, tant qu'il reste une bêche. ◆ arrivée, ○ occupant (un clic le désigne, un second creuse), ✓ trouvaille fixe creusée, · creusée sans trouvaille fixe.",
   "tour.dalle.beches": "{n} coup(s) de bêche",
   "tour.flash.alcove": "Une alcôve — {don}.",
   "tour.observatoire": "Observatoire",
@@ -880,7 +879,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
     "Earth at the ground, Urania at the peak. Same norm on every floor. Occupants of a floor interfere.",
   "tour.pendule": "Pendulum",
   "tour.pendule.lede":
-    "Explore the room. At the end of the room the pendulum reads what you did there — honoured: offer; searched, taken, crossed: read; nothing: climb — and proposes it; you decide among the three, the floor of each choice in the open, then it sets you down on the cell it computes with the object you carry. Free: a reading. Anchored on a coin and the current block: what counts.",
+    "Explore the room. At the end of the room the pendulum reads what you did there — honoured: offer; alcove opened, taken, crossed: read; nothing: climb — and proposes it; you decide among the three, the floor of each choice in the open, then it sets you down on the cell it computes with the object you carry. Free: a reading. Anchored on a coin and the current block: what counts.",
   "tour.pendule.cadran": "nine-notch dial",
   "tour.pendule.salle": "room {i} / {n}",
   "tour.pendule.libre": "free",
@@ -894,11 +893,10 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.pendule.porte": "carried object",
   "tour.pendule.sansPorte": "no carried object (word 0)",
   "tour.pendule.aucune": "No ascent. The Tower reads freely; the pendulum starts at the city gate.",
-  "tour.pendule.finDeSalle": "End of room",
   "tour.pendule.decider":
-    "Decide the end of the room: the pendulum names the floor of each choice, never the cell.",
+    "Decide the end of the room: the pendulum names the floor of each choice, never the cell. A closed door stops the ascent.",
   "tour.pendule.vers": "floor {n} · {muse}",
-  "tour.pendule.porteFermee": "closed door",
+  "tour.pendule.porteFermee": "closed door: the ascent stops there",
   "tour.pendule.sommet": "Last room: the summit",
   "tour.pendule.abandonner": "Abandon",
   "tour.pendule.commencerLibre": "Free ascent",
@@ -1043,7 +1041,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.fouille.trouve": "Under the slab: {nom}. {n} stroke(s) left.",
   "tour.fouille.rien": "Nothing under this cell. {n} stroke(s) left.",
   "tour.dalle.lede":
-    "Dig a full cell: three spade strokes per floor, the pendulum's arrival cell always gives. ◆ arrival, ○ occupant, ✓ dug with a find, · dug empty.",
+    "Dig a full cell: three spade strokes per floor. During an ascent, the pendulum's arrival cell gives, even on a hole, while a stroke remains. ◆ arrival, ○ occupant (one click selects it, a second digs), ✓ fixed find dug, · dug without a fixed find.",
   "tour.dalle.beches": "{n} spade stroke(s)",
   "tour.flash.alcove": "An alcove — {don}.",
   "tour.observatoire": "Observatory",
