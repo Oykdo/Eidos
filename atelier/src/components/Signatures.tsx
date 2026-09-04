@@ -10,7 +10,7 @@ import {
   verifierPreuveArtefact,
   type Signature,
 } from "@/lib/eidos/signatures.ts";
-import { chargerEtat } from "@/lib/arbre/etat.ts";
+import { chargerEtat } from "@/lib/eidos/etat-reseau.ts";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n, type Msg } from "@/lib/i18n.ts";

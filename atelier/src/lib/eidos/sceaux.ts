@@ -52,6 +52,10 @@ export type EntreeMonde = {
   vers?: string;
   montant?: number;
   scellee?: boolean;
+  txid?: string;
+  bloc?: number;
+  indice?: string;
+  mise_attendue?: number;
 };
 
 export type Sceau = { id: string; age: NomAge; adresse: string; vers: string };

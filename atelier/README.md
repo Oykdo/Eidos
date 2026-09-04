@@ -23,7 +23,7 @@ L’unité est l’**eidôlon** (10⁸ atomes). La forme est la règle ; l’ima
 | **Coffre** | Solde, créer, envoyer, sauver `eidos.carnet`. |
 | **Journal** | Genèse, clés, chaîne, **miner** (`R(h)`), preuve Merkle. |
 | **Témoin** | Seconde mémoire. Une tête, pas les clés. Juge une preuve. |
-| **Arbre** | 20 premiers, 10 paliers, 33 secteurs. Carte, pas Merkle. |
+| **Carte** | Reliques du monde, par âge et par muse. Trophée d'un sceau : preuve + tête signée, jugé sans rejeu. |
 | **Reliques** | Lumen d’époque. Kali 2,10 · Satya 33,55. Sauvegarde `eidos.carnet`. |
 | **Glyphes** | 4 figures, 64 empilements. 31 groupes. Bourrage refusé. |
 | **Signes** | Lectures des mêmes 64. Pas un 5ᵉ glyphe. |
@@ -47,15 +47,11 @@ Il croit la tête reçue tant qu’il ne rejoue pas le journal. Suivre n’est p
 
 Ce n’est pas un nœud P2P.
 
-### Coffre ↔ arbre
+### Coffre ↔ carte
 
-Deux arbres, pas un.
-
-1. **Merkle du carnet.** Chaque sortie est une feuille `SHA-256d(txid ‖ rang ‖ adresse ‖ montant)`. Paires SHA-256d, dernière feuille recopiée si impair — même règle que `utxo.py`. Un chemin de frères **prouve** qu’une pièce est dans le coffre.
+1. **Merkle du carnet.** Chaque sortie est une feuille `SHA-256d(txid ‖ rang ‖ adresse ‖ montant)`. Paires SHA-256d, dernière feuille recopiée si impair — même règle que `utxo.py`. Un chemin de frères **prouve** qu’une pièce est dans le coffre, ou dans le carnet du réseau (racine UTXO de la tête signée).
 2. **Chaîne locale.** Bloc 0 = genèse gelée (Merkle du *message*, 18 bits de PoW). Les suivants : merkle du carnet, bits 0 — un proposant, ce navigateur. Altérer `prev` rompt le chainage.
-3. **Arbre des premiers** (D0–D9). Une punaise FNV pose la même adresse sur un nœud. Ce n’est pas une preuve.
-
-Les coller en un seul objet serait un mensonge : l’un engage le carnet, l’autre cartographie des régimes.
+3. **Carte des reliques.** Les reliques déclarées (`reliques.json`), rangées par âge et par muse depuis l’état publié. Une lecture. Le **trophée** d’un sceau (`eidos-sceau/1`) est la seule figure adossée à une preuve : sortie + chemin + tête signée.
 
 ### Les deux trous (portefeuille, pas validateur)
 
@@ -69,7 +65,7 @@ Les coller en un seul objet serait un mensonge : l’un engage le carnet, l’au
 2. **Journal** — lancer la genèse. **Miner** : nonce, `R(h)` sur une adresse neuve.
 3. **Témoin** — adopter la tête, juger.
 4. **Clés** — rejouer l’attaque de réemploi. Graine d’atelier **publique**.
-5. **Arbre** — bandeau ∇ / puits / axiale.
+5. **Carte** — les reliques du monde ; exporter, puis juger un trophée.
 6. **Reliques** — ellipse `a × a/2`. Kali 2,10 · Satya 33,55. Creuser, acheter, sauver `eidos.carnet`.
 7. **Glyphes** — 4 figures × 3 étages = 64. **Interdit** d’en tirer une graine.
 8. **Signes** — neuf lectures des mêmes 64.

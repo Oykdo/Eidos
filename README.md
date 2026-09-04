@@ -128,7 +128,7 @@ Le répertoire `atelier/` est l'interface (réseau d'essai, sans valeur monétai
 | **Coffre** | Solde, envoyer, sauver `eidos.carnet` |
 | **Journal** | Genèse, chaîne, preuve Merkle |
 | **Témoin** | Seconde mémoire : une tête, pas les clés |
-| **Arbre** | Carte des régimes, pas une preuve |
+| **Carte** | Reliques du monde par âge et par muse ; trophée d'un sceau, jugé sans rejeu |
 | **Reliques** | Kali 2,10 · Satya 33,55. Creuser, acheter, sauver |
 | **Glyphes** | 64 empilements, bourrage refusé |
 | **Signes** | Lectures des mêmes 64 |

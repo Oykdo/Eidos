@@ -269,9 +269,13 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
 ### Refonte du hub — EN COURS
 - H1 FAIT : navigation en trois registres (Vérifier / Lire / Jouer) + Guide,
   routes inchangées (`Nav.tsx`).
-- H2 : l'Arbre d'origine (régimes abstraits) disparaît ; `/arbre` devient la
-  **carte des reliques du monde** (ancrage par adresse, paliers = âges,
-  familles = muses, reliques du coffre mises en avant). Lecture, pas preuve.
+- H2 FAIT : l'Arbre d'origine (régimes, champ, lumen, ancre FNV : `lib/arbre/`,
+  `components/arbre/`) est retiré. `/arbre` (chemin conservé, libellé « Carte »)
+  affiche `CarteReliques` : grille 4 âges × 9 muses depuis `etat.json.reliques`
+  (muse = œuf de la goutte), reliques du coffre cerclées, détail, **trophée**
+  `eidos-sceau/1` (`trophee.ts` : sortie + preuve + tête signée, `jugerTrophee`
+  contre federation.json, lien à la relique publiée en lecture ; 2 tests).
+  `lib/eidos/etat-reseau.ts` remplace `lib/arbre/etat.ts` (2 tests).
 - H3 FAIT : **sceaux d'âge**. `noeud.mise_sceau(age)` (émission de l'âge / 10⁶ :
   Kali 2,10 … Satya 33,55) ; `etat.json.reliques[]` porte `mise_attendue` et
   `scellee` (5ᵉ contrôle) ; la planche de `relique.py --sceller` annonce la mise.

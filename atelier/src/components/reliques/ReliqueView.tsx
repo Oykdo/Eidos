@@ -20,7 +20,7 @@ import {
   artefactDeGoutte,
   type Artefact,
 } from "@/lib/eidos/signatures.ts";
-import { chargerEtat } from "@/lib/arbre/etat.ts";
+import { chargerEtat } from "@/lib/eidos/etat-reseau.ts";
 import { ARTEFACTS_CHAINES, fusionnerArtefacts } from "@/lib/reliques/catalogue.ts";
 import { genomeAvecAge, genomeDeAge, genomeDeArtefact } from "@/lib/reliques/genome.ts";
 import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";

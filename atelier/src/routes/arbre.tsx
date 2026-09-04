@@ -1,21 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArbreView } from "@/components/arbre/ArbreView";
+import { Shell } from "@/components/Shell";
+import { CarteReliques } from "@/components/carte/CarteReliques";
 
-export type ArbreSearch = {
-  noeud?: number;
-};
-
+/** /arbre garde son chemin (liens existants) ; la page est la carte des reliques du monde. */
 export const Route = createFileRoute("/arbre")({
-  validateSearch: (raw: Record<string, unknown>): ArbreSearch => {
-    const n = Number(raw.noeud);
-    return {
-      noeud: Number.isInteger(n) && n >= 0 ? n : undefined,
-    };
-  },
-  component: ArbrePage,
+  component: CartePage,
 });
 
-function ArbrePage() {
-  const { noeud } = Route.useSearch();
-  return <ArbreView noeudCible={noeud} />;
+function CartePage() {
+  return (
+    <Shell actuel="arbre">
+      <CarteReliques />
+    </Shell>
+  );
 }
