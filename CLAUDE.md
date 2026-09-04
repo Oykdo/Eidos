@@ -413,6 +413,13 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   `motDeQ` → `qDeMot` (nombre gelé dans `fiche.test.ts`). Correction = décision
   d'auteur (convention « composante omise ≥ 0 », touche `canoniserMot` donc les
   feuilles) : ne pas corriger à la volée.
+- Forum du royaume : `docs/SPEC_FORUM.md` (spec proposée, 2026-09-04) —
+  objets ancrés = pièces colorées nées de chaque témoin d'une dépense réelle
+  (`tirerObjet(sig, hash_bloc)`), portées rang à rang ; échange = une
+  transaction à deux témoins (offre partielle `flag = 0`, acceptation sur le
+  même `txid`) ; identité Eidolon, négociation Cipher, dépôt par issue ;
+  échelle CardSwap (intégrité, possession, identité ; « certifié » n'existe
+  pas) ; décisions F1–F7, dont corriger le signe de `paqueter` avant tout port.
 - Brume des antres : `docs/SPEC_BROUILLARD.md` (spec proposée, 2026-09-04) —
   Earnshaw comme loi de la brume (neuf cases centrales jamais éclairées depuis
   le bord), coïncidence de deux faisceaux de couleurs différentes comme seule
