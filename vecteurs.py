@@ -113,12 +113,20 @@ def calculer():
         "sorties": [{"txid": tx.hex(), "rang": r, "adresse": a.hex(), "montant": m}
                     for (tx, r), (a, m) in sorted(ch.carnet.utxo.items())],
     }
+    # relique : graine connue -> adresse, id, charge utile du QR (relique.py)
+    import relique as RQ
+    g = sha256(b"relique/test")
+    ar = W.adresse_de(g)
+    v["relique"] = {
+        "graine": g.hex(), "adresse": ar.hex(), "id": RQ.id_relique(ar),
+        "base64url": RQ.b64url(g), "charge_utile": RQ.charge_utile(g),
+    }
     return v
 
 
 def verifier(v):
     attendu = calculer()
-    ecarts = [c for c in ("parametres", "wots", "tx", "xmss", "carnet", "tete")
+    ecarts = [c for c in ("parametres", "wots", "tx", "xmss", "carnet", "tete", "relique")
               if v.get(c) != attendu[c]]
     if ecarts:
         raise SystemExit(f"ECHEC : vecteurs divergents pour {', '.join(ecarts)}")

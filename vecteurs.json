@@ -146,5 +146,12 @@
     "montant": 2006562778
    }
   ]
+ },
+ "relique": {
+  "graine": "0d42ab1cd30daa64d9acdcff136101802555f595e668788a87113c1f6faf54d6",
+  "adresse": "82acd1a83c6fc9a0636d5990f58f99381cd715a2",
+  "id": "7543be08726bf1be",
+  "base64url": "DUKrHNMNqmTZrNz_E2EBgCVV9ZXmaHiKhxE8H2-vVNY",
+  "charge_utile": "https://oykdo.github.io/Eidos/reliques#r=1.DUKrHNMNqmTZrNz_E2EBgCVV9ZXmaHiKhxE8H2-vVNY"
  }
 }

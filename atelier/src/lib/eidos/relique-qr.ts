@@ -12,7 +12,7 @@
  * LIMITE. Secret au porteur : une photo du QR suffit. Premier arrivé.
  */
 
-import { concat, fromHex, hexOf, sha256, u32, utf8 } from "./hash.ts";
+import { concat, fromHex, hexOf, sha256, utf8 } from "./hash.ts";
 import { coreTx, sighash, txidCore } from "./lamport.ts";
 import { encapsuler, serTx, transmissibilite, urlIssueEnvoi, type Transmissibilite } from "./envoi.ts";
 import { adresse as adresseWots, adresseDeGraine, racineDepuisTemoin, signer } from "./wots.ts";
@@ -45,7 +45,7 @@ export function versBase64url(b: Uint8Array): string {
 
 export function depuisBase64url(s: string): Uint8Array {
   const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-  if (!/^[A-Za-z0-9_-]+$/.test(s) || s.length % 4 === 1) throw new Error("base64url invalide");
+  if (!/^[A-Za-z0-9_-]*$/.test(s) || s.length % 4 === 1) throw new Error("base64url invalide");
   const out: number[] = [];
   let acc = 0;
   let bits = 0;
@@ -184,9 +184,7 @@ export function preparerRecuperation(
   };
 }
 
-/** Octets d'une référence « txid:rang » — utilitaire d'affichage. */
+/** Référence « txid:rang » d'une pièce. */
 export function refDe(s: SortieRelique): string {
   return `${s.txid}:${s.rang}`;
 }
-
-export { u32 };

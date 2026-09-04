@@ -51,6 +51,15 @@ jobs:
       - name: Reprise --depuis (point de controle explicite, 4 controles)
         run: python -c "import noeud as N; N._test_depuis()"
 
+      - name: Reliques (attente, intacte, recuperee, 4 controles)
+        run: python -c "import noeud as N; N._test_reliques()"
+
+      - name: Encodeur QR (5 controles)
+        run: python qr.py --test
+
+      - name: Gardien des reliques (3 controles)
+        run: python relique.py --test
+
       - name: Difficulte et travail cumule (6 controles)
         run: python consensus.py
 

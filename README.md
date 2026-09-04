@@ -87,6 +87,10 @@ Tout repose sur SHA-256, **sans aucune courbe elliptique**. La résistance quant
 
 **Vivacité** : un créneau `s > créneau(now) + 1` est refusé. Sans cette borne, un seul bloc daté trop loin gèle la chaîne. Sauter un créneau (silence) reste permis. Les trous sont publiés (`creneaux_sautes`). Au plus six créneaux rattrapés par exécution.
 
+### Reliques cachées dans le monde
+
+Une relique est une **pièce scellée sur une adresse WOTS+ dont la graine est imprimée dans un code QR** caché quelque part. La récupérer, c'est la dépenser vers son coffre (page Reliques → « Relique trouvée », puis issue « envoi »). Une clé ne signant qu'une fois, la relique ne se récupère qu'une fois, **par construction** : pas de serveur, pas de registre, la chaîne fait foi. Le gardien scelle avec `python3 relique.py --sceller --age Kali --indice "…"` (QR en SVG, planche imprimable, entrée dans `reliques.json`) et crédite l'adresse par le robinet. Le nœud publie le statut de chaque relique déclarée dans `etat.json` (`attente` / `intacte` / `recuperee`) : une lecture, pas une preuve. `python3 relique.py --animer <txid>` dessine la relique en figures · ○ ☽ ✚ sur l'ellipse de son âge. Le QR est un **secret au porteur** : une photo suffit, premier arrivé. Détail : [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
+
 ### Fichier unique — `eidos.carnet`
 
 Le coffre de l'atelier s'écrit dans **un seul fichier**.
@@ -109,8 +113,11 @@ Le coffre de l'atelier s'écrit dans **un seul fichier**.
 | `consensus.py` | 204 | difficulté et travail cumulé — 6 contrôles |
 | `federation.py` | 470 | XMSS, rotation, vivacité, tête signée — 16 contrôles |
 | `robinet.py` | 313 | robinet, budget, file des envois — 10 contrôles |
-| `noeud.py` | 831 | nœud, envois, `--depuis`, état publié — 5 + 4 contrôles |
-| `vecteurs.py` | 147 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 6 familles) |
+| `noeud.py` | 964 | nœud, envois, `--depuis`, reliques, état publié — 5 + 4 + 4 contrôles |
+| `vecteurs.py` | 155 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 7 familles) |
+| `qr.py` | 428 | encodeur QR (octets, niveau H, v1–10) — 5 contrôles |
+| `relique.py` | 231 | gardien des reliques : sceller, animer — 3 contrôles |
+| `reliques.json` | — | reliques déclarées (adresses publiques, jamais de graine) |
 
 ### Atelier web
 
@@ -137,6 +144,9 @@ python3 vecteurs.py           # parité avec l'atelier
 python3 robinet.py --test     # 10 contrôles
 python3 -c "import noeud as N; N._test_envois()"   # 5 contrôles envoi
 python3 -c "import noeud as N; N._test_depuis()"   # 4 contrôles reprise
+python3 -c "import noeud as N; N._test_reliques()" # 4 contrôles reliques
+python3 qr.py --test          # 5 contrôles
+python3 relique.py --test     # 3 contrôles
 python3 federation.py --demo  # vivacité, rotation
 cd atelier && npm test && npm run dev
 ```

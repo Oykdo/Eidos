@@ -38,7 +38,10 @@ wots.py             WOTS+ w=16 (RFC 8391), arbre L, adresses, empreintes (5 cont
 utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (15 contrôles)
 federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
 vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (6 familles)
-noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, etat.json (5 + 4 contrôles)
+noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, reliques, etat.json (5 + 4 + 4 contrôles)
+qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
+relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
+reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
 robinet.py          file mempool.json alimentée par issues GitHub (10 contrôles)
 consensus.py        difficulté PoW et travail cumulé — chemin HISTORIQUE
 store.py            chaîne PoW sur disque (chaine.dat) — chemin HISTORIQUE
@@ -57,8 +60,8 @@ pas étendre le chemin PoW.
 
 Dans `atelier/src/lib/eidos/` : `eonis.ts`, `lamport.ts`, `merkle.ts`, `carnet.ts`,
 `chaine.ts`, `temoin.ts`, `wallet.ts`, `coinselect.ts`, `glyphs.ts`, `portable.ts`,
-`envoi.ts`, `wots.ts`, `xmss.ts` — chacun avec son `.test.ts` ; `vecteurs.test.ts`
-relit `vecteurs.json`. `lamport.ts` garde Lamport en démonstration mais dérive adresses,
+`envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts` — chacun avec son `.test.ts` ;
+`vecteurs.test.ts` relit `vecteurs.json`. `lamport.ts` garde Lamport en démonstration mais dérive adresses,
 empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 
 ## 3. Invariants — ne jamais casser
@@ -101,6 +104,9 @@ empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 - **Figures ≠ preuves.** L'Arbre, les Signes, les reliques, les artefacts sont
   des lectures ; seuls le carnet, la chaîne et les signatures engagent. Ne jamais
   présenter une figure comme une garantie dans le code, les tests ou les textes.
+- **Une graine de relique n'existe que dans son QR.** Ni `reliques.json`, ni la
+  planche, ni un commit, ni un log ne la contiennent ; `relique.py --sceller` ne
+  l'affiche pas. Le statut publié (`etat.json.reliques`) est une lecture.
 
 ## 4. Comment on vérifie
 
@@ -114,6 +120,9 @@ python3 robinet.py --test      # 10
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_depuis()"      # 4
+python3 -c "import noeud as N; N._test_reliques()"    # 4
+python3 qr.py --test           # 5
+python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 16
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
@@ -233,6 +242,23 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
   publiée (`jugerSortieReseau`) ; store `reseau`, section « Réseau d'essai ».
 - `--depuis` note les adresses dépensées des blocs sautés : un réemploi de clé
   brûlée avant le point de contrôle est refusé (4ᵉ contrôle).
+
+### Reliques QR — FAIT (septembre 2026), voir docs/HANDOVER_RELIQUES_QR.md
+- R1 `noeud.py` : `charger_reliques`, `noter_reliques` (sorties créées / dépensées
+  sur les adresses déclarées), `etat_reliques` → `etat.json.reliques`
+  (attente / intacte / recuperee avec bloc, txid, vers, artefact) ; 4 contrôles.
+- R2 atelier : `relique-qr.ts` (`parserRelique` : URL `#r=1.<b64url>`, `eidos:relique/1/…`,
+  fragment nu ; `statutRelique` ; `preparerRecuperation` = dépense signée WOTS+
+  au format du nœud + URL d'issue) ; composant `ReliqueTrouvee` (fragment d'URL,
+  collage, caméra via `BarcodeDetector` quand disponible) ; 4 tests, vecteur `relique`.
+- R3 `relique.py --sceller` + `qr.py` (encodeur stdlib, niveau H, v1–10, masque par
+  pénalité) : SVG du QR, planche sans graine, entrée dans `reliques.json`.
+- R4 `relique.py --animer <txid>` : animation ASCII/unicode (figures · ○ ☽ ✚, ellipse
+  de l'âge, R(θ) = a + b·cos θ, satellites et glyphe central tirés du txid).
+- Choix par défaut : 1 eidôlon par relique via le robinet (aucun type `sceau`),
+  gardien manuel (`reliques.json` committé), indices publics dès le scellement.
+- Reste : `qr.py` n'a pas de décodeur (scanner l'écran avant d'imprimer) ; le
+  rendu 3D d'une relique trouvée dans la scène des coffres.
 
 ### P4 — Vecteurs de test partagés Python ↔ TS
 Amorcé en P2/P3 : `vecteurs.json` (6 familles : paramètres, clé WOTS+, tx,

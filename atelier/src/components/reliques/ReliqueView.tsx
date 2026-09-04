@@ -3,6 +3,7 @@ import { Nav } from "@/components/Nav";
 import { Langue } from "@/components/Langue";
 import { Bandeau, GlypheSvg } from "@/components/Mark";
 import { Sauvegarde } from "@/components/Sauvegarde";
+import { ReliqueTrouvee } from "@/components/reliques/ReliqueTrouvee";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n.ts";
@@ -289,6 +290,8 @@ export function ReliqueView() {
             ) : null}
           </p>
         </section>
+
+        <ReliqueTrouvee />
 
         <Sauvegarde />
       </main>

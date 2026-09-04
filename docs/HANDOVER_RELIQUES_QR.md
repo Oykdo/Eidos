@@ -1,7 +1,7 @@
 # Handover — Reliques dissimulées, récupérables par code QR
 
 **Dépôt :** Oykdo/Eidos
-**Statut :** proposition de conception, rien n'est codé
+**Statut :** R1 à R4 implémentés le 2026-09-04 (voir CLAUDE.md §7 « Reliques QR ») ; ce document reste la référence de conception
 **Rédigé le :** 2026-09-04, après P1 (envois) et P2 (WOTS+ / XMSS, testnet-2)
 **Entrées :** `prototype relique/` (4 captures, `prototype_ASCII_HC.docx`, `README.md`)
 

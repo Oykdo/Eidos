@@ -187,7 +187,7 @@ def tests():
 
     svg = open(r["svg"], encoding="utf-8").read()
     assert svg.startswith("<svg") and r["version_qr"] == 9 and r["modules"] == 53
-    assert len(charge_utile(graine)) == len(BASE_URL) + 3 + 3 + 43
+    assert len(charge_utile(graine)) == len(BASE_URL) + len('#r=') + len('1.') + 43
     try:
         sceller("Kali", "bis", dossier=d, fichier=fichier, graine=graine)
         raise AssertionError("doublon accepte")
