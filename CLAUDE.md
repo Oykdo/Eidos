@@ -299,7 +299,11 @@ Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
   `guide.verifier`, `guide.lire`, `guide.jouer`, `guide.mot.*`. La refonte du
   hub est close ; reste la Tour (`docs/SPEC_TOUR.md`).
 - La Tour : `docs/SPEC_TOUR.md` (hôtes = les neuf muses, secrets, élixirs
-  de la tria prima, antres, portes par sceaux) — spec, à coder après H2/H3.
+  de la tria prima, antres, portes par sceaux, capsules et bestiaire) — spec.
+- Le pendule-9 : `docs/SPEC_PENDULE.md` — décisions fondatrices O1–O5 à
+  valider (le pendule choisit le **parcours** et la case de spawn, jamais le
+  contenu d'un étage, qui reste public et fixe), esquisse de la transition en
+  pseudo-code, phase 0 = bot de 10 000 runs et trois seuils d'abandon.
 
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 8 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
