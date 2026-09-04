@@ -30,6 +30,8 @@ import { alignementCentiemes, figureOrbite } from "@/lib/eidos/lecture.ts";
 import { FIGURES } from "@/lib/eidos/constantes.ts";
 import { signatureDe } from "@/lib/eidos/inventaire.ts";
 import { PORTES } from "@/lib/eidos/sceaux.ts";
+import { enCours } from "@/lib/eidos/ascension.ts";
+import { Pendule } from "@/components/tour/Pendule";
 import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";
 import type { ObjetPorte } from "@/lib/eidos/types.ts";
 
@@ -127,6 +129,7 @@ export function TourView() {
 
   const ages = useMemo(() => agesScelles(sceauxDuCoffre(monde, coffre), coffre), [monde, coffre]);
   const porteSuivante = porteDe(etage + 1, ages, coffre);
+  const ascensionActive = enCours(coffre);
   const biome = biomeDe(etage);
   const coupe = useMemo(() => coupeDe(etage), [etage]);
   const dalle = useMemo(() => dalleDe(etage), [etage]);
@@ -238,11 +241,13 @@ export function TourView() {
           <p className="font-mono text-[11px] text-sourd">{t("tour.dalle")}</p>
         </div>
 
+        <Pendule />
+
         <div className="mt-4 flex flex-wrap gap-2">
           <Button
             type="button"
             variant="discret"
-            disabled={etage <= 0}
+            disabled={etage <= 0 || ascensionActive}
             onClick={() => allerEtage(etage - 1)}
           >
             {t("tour.descendre")}
@@ -250,7 +255,7 @@ export function TourView() {
           <Button
             type="button"
             variant="or"
-            disabled={etage >= ETAGES - 1 || !porteSuivante.ouverte}
+            disabled={etage >= ETAGES - 1 || !porteSuivante.ouverte || ascensionActive}
             onClick={() => allerEtage(etage + 1)}
           >
             {t("tour.monter")}

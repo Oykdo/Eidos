@@ -269,8 +269,16 @@ export function demandeSatisfaite(
 // Dons
 // ---------------------------------------------------------------------------
 
-export function graineDon(etage: number, c: Pick<Coffre, "maitre" | "n">): Uint8Array {
-  return sha256d(concat(TAG_DON, u32(etageDe(etage)), utf8(`${c.maitre}:${c.n}`)));
+/** En ascension, le don dépend de la case d'arrivée : « le loot dépend du spawn ».
+ *  Hors ascension, de l'étage et du coffre seulement. */
+export function graineDon(etage: number, c: Pick<Coffre, "maitre" | "n"> & Partial<Pick<Coffre, "tour">>): Uint8Array {
+  const a = c.tour?.ascension;
+  const e = etageDe(etage);
+  const base = concat(TAG_DON, u32(e), utf8(`${c.maitre}:${c.n}`));
+  if (a && a.fin === null && c.tour && c.tour.etage === e) {
+    return sha256d(concat(base, utf8(`/${a.spawn.x}:${a.spawn.y}`)));
+  }
+  return sha256d(base);
 }
 
 export function donHonore(c: Pick<Coffre, "tour">, etage: number): boolean {

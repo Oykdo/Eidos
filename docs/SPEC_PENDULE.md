@@ -117,6 +117,31 @@ Construire : `pendule.ts` (transition ci-dessus), un bot qui joue 10 000 runs de
 
 Rien d'autre en phase 0 : ni hôte, ni texte, ni rendu. Si l'un des seuils tombe, on revoit la transition, pas le lore.
 
+## 4bis. Branchement dans la Tour — FAIT (2026-09-04)
+
+Décision d'auteur [FIXE] : **exploration libre, décision en fin de salle.** Le joueur explore
+chaque salle avec tout ce que la Tour offre (hôte, fouille, prise, élixirs, antre) ; en fin de
+salle, le pendule lit **l'acte du coffre dans la salle** comme choix — honoré : *offrir* ;
+alcôve, antre ou prise : *lire* ; rien : *monter* — et l'objet porté (`tour.porte`), puis dépose
+à l'étage et à la case qu'il calcule. Le joueur ne choisit jamais un jeton abstrait : son acte
+est son choix (`ascension.choixDeSalle`).
+
+- **Libre** : graine `sha256d("eidos-run/1" ‖ maître/n ‖ tête de la chaîne locale)`. Une lecture.
+- **Ancrée** : tête signée et pièce du coffre gelées au départ (`ancrage.graineAncree`), exportée
+  au sommet en `eidos-ascension/1`, jugée sans rejeu. Ce qui compte.
+- Une **porte fermée arrête** l'ascension devant elle (`fin: "porte"`) : le pendule ne force
+  pas un sceau. Le coffre d'atelier passe (démonstration).
+- **Le don d'un hôte dépend de la case d'arrivée** pendant une ascension (`hotes.graineDon`
+  inclut `spawn`) : « le loot dépend du spawn », sans rien changer hors ascension.
+- Monter / descendre librement est suspendu pendant une ascension ; abandonner la clôt.
+- Mesuré : le cran n'a que neuf états et le hachage ne se propage pas d'une salle à l'autre.
+  Un acte différent change la **case d'arrivée** huit fois sur neuf, le **cran** (donc le
+  chemin) deux fois sur trois. Comme le don dépend de la case, l'acte a toujours un effet ;
+  il n'a pas toujours un effet sur le chemin. [OUVERT] O7 : faut-il propager un octet du
+  hachage dans l'état (pendule à 9 × 256 états) pour qu'un acte change toujours le chemin ?
+- Module `ascension.ts` (6 tests), composant `Pendule` dans la page Tour, jauge `tour.ascension`
+  hors feuille, relue avec tolérance.
+
 ## 5. Ce qui reste à trancher avant le GDD
 
 1. O6 (graine de run liée au bloc du réseau ou non) — impact fort : reproductibilité hors ligne.

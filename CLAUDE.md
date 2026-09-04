@@ -314,7 +314,11 @@ Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
   (transition, `etageDe` étalé sur la bande, spawn, genre du don),
   `pendule-phase0.ts` (bot xorshift, trois mesures, `npm run phase0 [runs]`),
   `pendule.test.ts` (6 tests, table de vérité gelée). Toute retouche de la
-  transition régénère la table sciemment.
+  transition régénère la table sciemment. **Branché dans la Tour** (§4bis de la
+  spec) : exploration libre, décision en fin de salle lue dans l'acte du coffre
+  (`ascension.ts`, 6 tests ; composant `Pendule` ; jauge `tour.ascension`) ;
+  libre = lecture, ancrée sur bloc + pièce = ce qui compte, exportée au sommet ;
+  une porte fermée arrête ; le don d'un hôte dépend de la case d'arrivée.
 
 ### La Tour — hôtes, secrets, élixirs, capsules, bestiaire (FAIT 2026-09, fourni par une session parallèle, fusionné le 2026-09-04)
 Spec : `docs/SPEC_TOUR.md` (§11 décisions, §12 écarts mesurés). Tout dans

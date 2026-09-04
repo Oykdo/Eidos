@@ -141,6 +141,8 @@ export type Tour = {
   portes: NomAge[];
   /** (étage, k) des occupants pris par ce coffre */
   captures: [number, number][];
+  /** l'ascension en cours ou finie (pendule) ; null hors ascension. Forme : ascension.ts */
+  ascension: import("./ascension.ts").AscensionEnCours | null;
   /** mot de la capture libérée pour l'étage courant, au plus une */
   liberee: number | null;
   /** mot de l'objet porté dans la Tour ; null = le dernier du coffre */

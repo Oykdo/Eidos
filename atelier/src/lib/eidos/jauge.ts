@@ -31,7 +31,31 @@ export function tourVide(): Tour {
     liberee: null,
     porte: null,
     capsules: [],
+    ascension: null,
   };
+}
+
+/** L'ascension se relit avec tolérance ; une forme absurde revient à null. */
+function ascension(x: unknown): Tour["ascension"] {
+  if (!x || typeof x !== "object") return null;
+  const a = x as Record<string, unknown>;
+  if (typeof a.graine !== "string" || !/^[0-9a-f]{64}$/.test(a.graine)) return null;
+  const etape = entier(a.etape, 0, 26);
+  const p = entier(a.p, 0, 8);
+  const s = a.spawn as { x?: unknown; y?: unknown } | undefined;
+  const x0 = entier(s?.x, 0, 8);
+  const y0 = entier(s?.y, 0, 8);
+  if (etape === null || p === null || x0 === null || y0 === null) return null;
+  const choix = Array.isArray(a.choix) ? a.choix.filter((c) => c === "monter" || c === "lire" || c === "offrir") : [];
+  const mots = Array.isArray(a.mots) ? a.mots.map((m) => entier(m, 0, 0xffffffff)).filter((m): m is number => m !== null) : [];
+  if (choix.length !== mots.length) return null;
+  const fin = a.fin === "sommet" || a.fin === "porte" || a.fin === "abandon" ? a.fin : null;
+  const an = a.ancre as Record<string, unknown> | null | undefined;
+  let ancre: Tour["ascension"] extends infer T ? (T extends { ancre: infer U } ? U : never) : never = null;
+  if (an && typeof an === "object" && an.tete && an.piece && an.preuve) {
+    ancre = an as unknown as NonNullable<typeof ancre>;
+  }
+  return { graine: a.graine, ancre, etape, p, spawn: { x: x0, y: y0 }, choix: choix as ("monter" | "lire" | "offrir")[], mots, fin };
 }
 
 function entier(x: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): number | null {
@@ -128,6 +152,7 @@ export function normaliserTour(x: unknown): Tour {
     liberee: entier(t.liberee, 0, 0xffffffff),
     porte: entier(t.porte, 0, 0xffffffff),
     capsules: jours(t.capsules),
+    ascension: ascension(t.ascension),
   };
 }
 

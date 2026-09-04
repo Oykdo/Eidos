@@ -48,6 +48,29 @@ export type Ascension = {
   trace: string;
 };
 
+/** Assemble une ascension depuis une tête, une pièce et sa preuve déjà gelées. */
+export function assemblerAscension(
+  tete: TeteReseau,
+  piece: SortieMin,
+  preuve: PreuvePortable,
+  choix: readonly Choix[],
+  mots: readonly number[],
+): Ascension | { erreur: string } {
+  if (choix.length !== ETAPES - 1 || mots.length !== ETAPES - 1) return { erreur: `${ETAPES - 1} choix et ${ETAPES - 1} objets portés attendus` };
+  if (preuve.racine !== tete.utxoRoot) return { erreur: "preuve étrangère à la tête" };
+  const etapes = run(graineAncree(tete.idBloc, piece), (i) => choix[i]!, (i) => mots[i]!);
+  return {
+    v: 1,
+    spec: SPEC_ASCENSION,
+    tete,
+    piece: { txid: piece.txid, rang: piece.rang, adresse: piece.adresse, montant: piece.montant },
+    preuve,
+    choix: [...choix],
+    mots: [...mots],
+    trace: traceDe(etapes),
+  };
+}
+
 /** Fabrique une ascension ancrée sur la tête suivie et une pièce publiée. */
 export function fabriquerAscension(
   reseau: TemoinReseau,

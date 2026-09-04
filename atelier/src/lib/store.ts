@@ -26,6 +26,9 @@ import type { PreuvePortable } from "./eidos/merkle.ts";
 import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
 import { ETAT_URL } from "./eidos/envoi.ts";
 import { agesScelles, sceauxDuCoffre, type EntreeMonde, type Sceau } from "./eidos/sceaux.ts";
+import { abandonnerDansCoffre, commencerDansCoffre, exporterAscension, finDeSalleDansCoffre } from "./eidos/ascension.ts";
+import { serialiserAscension } from "./eidos/ancrage.ts";
+import { preuveReseau, serialiser as serialiserPreuve } from "./eidos/merkle.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { t, type Msg } from "./i18n.ts";
 import { estPsnxEtranger } from "./eidos/portable.ts";
@@ -110,6 +113,11 @@ type Etat = {
   tournerTour: (i: number, j: number) => void;
   accorder: (i: number) => void;
   offrir: (i: number) => void;
+  /** Le pendule : ascension libre (lecture) ou ancrée (ce qui compte) */
+  commencerAscension: (ref: string | null) => void;
+  finDeSalle: () => void;
+  abandonnerAscension: () => void;
+  derniereAscension: string | null;
 };
 
 function persister(c: Coffre) {
@@ -149,6 +157,7 @@ export const useCoffre = create<Etat>((set, get) => ({
   reseau: null,
   reseauOccupe: false,
   monde: null,
+  derniereAscension: null,
   demandeReseau: null,
   psnx: null,
 
@@ -470,6 +479,56 @@ export const useCoffre = create<Etat>((set, get) => ({
   },
 
   exporterFichier: () => exporterCarnet(get().coffre),
+
+  commencerAscension: (ref) => {
+    const { coffre, reseau } = get();
+    let ancre = null;
+    if (ref) {
+      if (!reseau || !reseau.verdict.ok) {
+        set({ erreur: t("tour.pendule.err.tete"), flash: null });
+        return;
+      }
+      const piece = reseau.sorties.find((s) => `${s.txid}:${s.rang}` === ref);
+      const p = piece ? preuveReseau(reseau.sorties, ref) : null;
+      if (!piece || !p || !coffre.sorties.some((s) => s.adresse === piece.adresse)) {
+        set({ erreur: t("tour.pendule.err.piece"), flash: null });
+        return;
+      }
+      ancre = { tete: reseau.tete, piece: { txid: piece.txid, rang: piece.rang, adresse: piece.adresse, montant: piece.montant }, preuve: serialiserPreuve(p) };
+    }
+    const next = commencerDansCoffre(coffre, ancre);
+    persister(next);
+    set({ coffre: next, erreur: null, derniereAscension: null, flash: t(ancre ? "tour.pendule.flash.ancree" : "tour.pendule.flash.libre") });
+  },
+
+  finDeSalle: () => {
+    const { coffre, monde } = get();
+    const r = finDeSalleDansCoffre(coffre, monde);
+    if (!r.ok) {
+      set({ erreur: t(`tour.pendule.err.${r.code}` as Msg), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    let derniereAscension: string | null = null;
+    if (r.fin === "sommet") {
+      const ex = exporterAscension(r.coffre);
+      if (!("erreur" in ex)) derniereAscension = serialiserAscension(ex);
+    }
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      derniereAscension,
+      flash: r.fin
+        ? t(`tour.pendule.fin.${r.fin}` as Msg)
+        : t("tour.pendule.flash.salle", { choix: t(`tour.pendule.choix.${r.choix}` as Msg), n: r.etage, x: r.spawn.x, y: r.spawn.y }),
+    });
+  },
+
+  abandonnerAscension: () => {
+    const next = abandonnerDansCoffre(get().coffre);
+    persister(next);
+    set({ coffre: next, flash: t("tour.pendule.fin.abandon"), derniereAscension: null });
+  },
 
   allerEtage: (etage) => {
     const e = Math.max(0, Math.min(ETAGES - 1, etage | 0));
