@@ -112,7 +112,7 @@ Le coffre de l'atelier s'écrit dans **un seul fichier**.
 | `store.py` | 278 | persistance et rejeu intégral (PoW, historique) |
 | `consensus.py` | 204 | difficulté et travail cumulé — 6 contrôles |
 | `federation.py` | 470 | XMSS, rotation, vivacité, tête signée — 16 contrôles |
-| `robinet.py` | 313 | robinet, budget, file des envois — 10 contrôles |
+| `robinet.py` | 356 | robinet, budget, file des envois, frein par auteur — 11 contrôles |
 | `noeud.py` | 964 | nœud, envois, `--depuis`, reliques, état publié — 5 + 4 + 4 contrôles |
 | `vecteurs.py` | 155 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 7 familles) |
 | `qr.py` | 428 | encodeur QR (octets, niveau H, v1–10) — 5 contrôles |
@@ -141,7 +141,7 @@ python3 verify_genesis.py     # 32 contrôles
 python3 wots.py               # 5 contrôles
 python3 utxo.py               # 15 contrôles
 python3 vecteurs.py           # parité avec l'atelier
-python3 robinet.py --test     # 10 contrôles
+python3 robinet.py --test     # 11 contrôles
 python3 -c "import noeud as N; N._test_envois()"   # 5 contrôles envoi
 python3 -c "import noeud as N; N._test_depuis()"   # 4 contrôles reprise
 python3 -c "import noeud as N; N._test_reliques()" # 4 contrôles reliques

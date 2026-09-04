@@ -39,7 +39,7 @@ jobs:
       - name: Vecteurs partages Python <-> TS
         run: python vecteurs.py
 
-      - name: Robinet (file, carnet, budget)
+      - name: Robinet (file, carnet, budget, frein par auteur, 11 controles)
         run: python robinet.py --test
 
       - name: Artefacts robinet (œufs Paracelse)

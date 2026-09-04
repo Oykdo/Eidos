@@ -15,6 +15,10 @@ Le carnet tranche, pas la file :
   1. une sortie non depensee a cette adresse → refus (depenser d'abord)
   2. budget d'epoque a·T/8 deja servi + file → refus
   3. deja en_attente pour cette adresse → ignore
+  4. un meme auteur GitHub (EIDOS_ISSUE_AUTHOR) : une demande servie par
+     epoque, une seule en attente → refus au-dela. C'est le seul point
+     d'entree des eidola, donc le seul frein qui coute a une armee de
+     comptes : un compte GitHub par eidolon, une epoque d'attente ensuite.
 
 SECURITE. Le texte de l'issue est ecrit par n'importe qui. Il n'est jamais
 interpole dans une commande : il arrive par la variable d'environnement
@@ -44,6 +48,7 @@ MONTANT_ATOMES = 100_000_000                  # 1 eidolon par demande
 MAX_FILE = 200                                # garde-fou
 T_EPOQUE = 1008
 BUDGET_RATIO = 8
+SERVIES_PAR_AUTEUR_PAR_EPOQUE = 1             # frein par compte GitHub
 
 
 def sha(b): return hashlib.sha256(b).digest()
@@ -149,6 +154,27 @@ def refus(motif):
     raise SystemExit(2)
 
 
+def epoque_de(bloc):
+    return bloc // T_EPOQUE
+
+
+def auteur_autorise(file, auteur, hauteur):
+    """Vrai si cet auteur n'a ni demande en attente, ni demande servie dans
+    l'epoque courante (hauteur du dernier bloc connu). Sans auteur : vrai,
+    le noeud tranche encore par adresse et par budget."""
+    if not auteur:
+        return True
+    epoque = epoque_de(hauteur)
+    for d in file["demandes"]:
+        if d.get("auteur") != auteur:
+            continue
+        if d.get("etat") == "en_attente":
+            return False
+        if d.get("etat") == "servie" and epoque_de(d.get("bloc", 0)) == epoque:
+            return False
+    return True
+
+
 DEBUT = "-----EIDOS-----"
 FIN = "-----FIN-----"
 B64 = re.compile(r"^[A-Za-z0-9+/=]{200,}$")          # hors marqueurs : longues lignes
@@ -216,6 +242,7 @@ def ajouter():
     corps = os.environ.get("EIDOS_ISSUE_BODY", "")
     numero = os.environ.get("EIDOS_ISSUE_NUMBER", "0")
     numero = int(numero) if numero.isdigit() else 0
+    auteur = os.environ.get("EIDOS_ISSUE_AUTHOR", "").strip()[:64] or None
 
     a20 = extraire(corps)                     # leve ValueError si invalide
     adresse = a20.hex()
@@ -232,13 +259,18 @@ def ajouter():
         refus("sortie non depensee — depensez d'abord")
     if not budget_ok(etat, f, extra=1):
         refus("budget d'epoque atteint")
-    f["demandes"].append({
+    if not auteur_autorise(f, auteur, (etat or {}).get("hauteur", 0)):
+        refus("deja servi cette epoque, ou demande en attente, pour cet auteur")
+    d = {
         "type": "robinet",
         "adresse": adresse,
         "issue": numero,
         "montant_atomes": MONTANT_ATOMES,
         "etat": "en_attente",
-    })
+    }
+    if auteur:
+        d["auteur"] = auteur
+    f["demandes"].append(d)
     ecrire_file(f)
     print(f"ajoutee : {adresse}  (issue #{numero})")
 
@@ -287,7 +319,18 @@ def _tests():
         extraire_transaction("rien ici"); raise AssertionError("aurait du echouer")
     except ValueError:
         pass
-    print("ok : 10 controles robinet")
+    # frein par auteur : une servie par epoque, une en attente
+    file = {"demandes": [
+        {"type": "robinet", "etat": "servie", "bloc": 100, "auteur": "alice"},
+        {"type": "robinet", "etat": "en_attente", "auteur": "bob"},
+        {"type": "robinet", "etat": "servie", "bloc": 3, "auteur": "carol"},
+    ]}
+    assert not auteur_autorise(file, "alice", 900)      # servie dans l'epoque 0 (0..1007)
+    assert auteur_autorise(file, "alice", 1008)         # epoque suivante : de nouveau
+    assert not auteur_autorise(file, "bob", 900)        # en attente
+    assert not auteur_autorise(file, "carol", 900)      # servie bloc 3, meme epoque 0
+    assert auteur_autorise(file, "dave", 900) and auteur_autorise(file, None, 900)
+    print("ok : 11 controles robinet")
 
 
 if __name__ == "__main__":

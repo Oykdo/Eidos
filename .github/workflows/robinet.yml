@@ -34,6 +34,7 @@ jobs:
           EIDOS_ISSUE_BODY: ${{ github.event.issue.body }}
           EIDOS_ISSUE_NUMBER: ${{ github.event.issue.number }}
           EIDOS_ISSUE_TITLE: ${{ github.event.issue.title }}
+          EIDOS_ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
         run: |
           set +e
           case "$EIDOS_ISSUE_TITLE" in
@@ -64,7 +65,7 @@ jobs:
         run: |
           case "$CODE" in
             0) MSG="Demande enregistree. Le noeud la servira au prochain bloc (une heure au plus). Verifiez ensuite votre solde sur https://oykdo.github.io/Eidos/" ;;
-            2) MSG="Refus : une sortie n'est pas depensee a cette adresse, ou le budget d'epoque (a·T/8) est atteint. Depensez d'abord, puis rouvrez une issue." ;;
+            2) MSG="Refus : une sortie n'est pas depensee a cette adresse, le budget d'epoque (a·T/8) est atteint, ou ce compte a deja ete servi cette epoque (une demande par compte et par epoque). Depensez d'abord, puis rouvrez une issue." ;;
             *) MSG="Aucune adresse Eidos valide trouvee dans ce message. Collez les 31 symboles, somme de controle comprise, telle que la page les affiche." ;;
           esac
           gh issue comment "$NUM" --body "$MSG"

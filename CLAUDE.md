@@ -42,7 +42,7 @@ noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, 
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
 reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
-robinet.py          file mempool.json alimentée par issues GitHub (10 contrôles)
+robinet.py          file mempool.json alimentée par issues GitHub, frein par auteur (11 contrôles)
 consensus.py        difficulté PoW et travail cumulé — chemin HISTORIQUE
 store.py            chaîne PoW sur disque (chaine.dat) — chemin HISTORIQUE
 federation.json     racines + graines publiques des 7 validateurs, t0, créneau 3600 s
@@ -60,7 +60,7 @@ pas étendre le chemin PoW.
 
 Dans `atelier/src/lib/eidos/` : `eonis.ts`, `lamport.ts`, `merkle.ts`, `carnet.ts`,
 `chaine.ts`, `temoin.ts`, `wallet.ts`, `coinselect.ts`, `glyphs.ts`, `portable.ts`,
-`envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts` — chacun avec son `.test.ts` ;
+`envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts` — chacun avec son `.test.ts` ;
 `vecteurs.test.ts` relit `vecteurs.json`. `lamport.ts` garde Lamport en démonstration mais dérive adresses,
 empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 
@@ -104,6 +104,14 @@ empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 - **Figures ≠ preuves.** L'Arbre, les Signes, les reliques, les artefacts sont
   des lectures ; seuls le carnet, la chaîne et les signatures engagent. Ne jamais
   présenter une figure comme une garantie dans le code, les tests ou les textes.
+- **Ce qui compte est ancré, ce qui est libre ne vaut rien.** Un run de la
+  jauge est gratuit et intransférable. Un run qui compte (sceau, porte,
+  trophée) a pour graine `sha256d("eidos-ascension/1" ‖ id_bloc ‖ txid ‖ rang)` :
+  une tête signée et une pièce prouvée, jamais le coffre ni la machine
+  (`ancrage.ts`). Pas d'empreinte de navigateur, pas de verrou de machine,
+  pas de preuve de travail client : voir `docs/SPEC_SYBIL.md`.
+- **Le robinet freine par auteur.** `EIDOS_ISSUE_AUTHOR` : une demande servie
+  par compte GitHub et par époque, une seule en attente (`robinet.py`, règle 4).
 - **Une graine de relique n'existe que dans son QR.** Ni `reliques.json`, ni la
   planche, ni un commit, ni un log ne la contiennent ; `relique.py --sceller` ne
   l'affiche pas. Le statut publié (`etat.json.reliques`) est une lecture.
@@ -116,7 +124,7 @@ python3 eonis.py               # 6
 python3 wots.py                # 5
 python3 utxo.py                # 15
 python3 vecteurs.py            # parité Python ↔ TS (vecteurs.json)
-python3 robinet.py --test      # 10
+python3 robinet.py --test      # 11
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_depuis()"      # 4
