@@ -42,6 +42,8 @@ La spec ne crée aucune mythologie neuve : elle donne des visages, des voix et d
 | **élixir** | un consommable de la tria prima : sel, mercure, soufre ; effet sur *un* étage, puis jeté |
 | **antre** | un étage clos, ouvert par un ticket, gardé par un occupant d'élite |
 | **sceau** | une relique du monde (QR) détenue dans le coffre ; son âge ouvre un quartier |
+| **capsule** | un glyphe creux (`···`) : objet de genre `capsule`, vide tant qu'il n'a pas pris un occupant |
+| **occupant capturé** | un occupant d'étage devenu objet du coffre ; le **bestiaire** est leur collection, rangée par cellule de la doxa |
 
 ## 3. Les hôtes
 
@@ -108,6 +110,48 @@ Récompense : un don d'antre (`"eidos-antre/1"`), toujours une gemme ou une pier
 
 L'étage 254 est l'observatoire d'Uranie. Il ne donne rien : il **lit**. La tête signée du réseau (Témoin), les reliques du monde et leur statut, le nombre d'étages honorés du coffre. C'est la seule fenêtre de la Tour sur la chaîne, et elle reste une lecture.
 
+## 4bis. Monstres capturables : occupants et capsules
+
+Les monstres de la Tour existent déjà : ce sont les **occupants** d'étage, un à trois par coupe, quaternions de norme `ATOMES` de la classe du biome. On ne les tue pas (aucun point de vie) : on les **lit**, et on peut les **prendre**.
+
+### 4bis.1 La capsule
+
+Une capsule est un objet de genre `capsule`, un **glyphe creux** : trois figures vides `···`, un mot comme les autres. Vide, elle ne fait rien. Elle s'obtient :
+- de **Thalie**, au sol : une capsule vide par poste du jour honoré (trois blocs créés) ;
+- d'une **alcôve** (§4.1), à la place d'une gemme ;
+- de la **forgeronne Érato** : une gemme + un élixir de sel → une capsule (craft ; la gemme est consommée, le mot de la capsule est celui de la gemme).
+
+### 4bis.2 La prise
+
+À un étage, face à un occupant `q`, avec une capsule de mot `c` : une lecture en trois temps, sans hasard, la même grammaire que l'antre.
+
+1. **Orbite** — `memeOrbite(c, q)` : la capsule est de la même classe de conjugaison que l'occupant. **Prise nette.**
+2. **Parade** — la capsule, conjuguée par l'objet porté (`conjuguerPar(g, c)`), rejoint l'orbite de `q`. **Prise fragile** : elle tient si un élixir de **sel** est bu à cet étage ; sinon l'occupant s'échappe et la capsule reste vide.
+3. Sinon **capsule brisée** : l'objet est retiré de la jauge. Rien d'autre n'est perdu.
+
+Une capsule qui tourne (pierres T/S, `tourner`) change d'orbite : c'est ainsi qu'on **accorde** une capsule à un occupant visé. Chercher la bonne pierre est le jeu.
+
+### 4bis.3 L'occupant capturé
+
+La prise **remplit** la capsule : un nouvel objet `{ mot: paqueter(q), archetype: classe de l'occupant, age: âge du quartier, genre: "capture" }`. L'occupant garde son mot : « un objet ne mute pas ». La capsule vide disparaît de la jauge, la capture y entre ; l'étage note `tour.captures: [etage, k][]` et, pour ce coffre, l'occupant `k` n'y est plus : la **résonance de l'étage change**. Capturer l'un des deux occupants d'une paire destructive rend l'étage neutre : un secret de plus, qui se découvre en lisant.
+
+Chaque capture reçoit un **nom** dérivé de son mot (lexique de 9 × 12 noms, un par muse, dans `hotes-lexique.ts`) : une jauge, pas une identité ; l'identité est le mot.
+
+### 4bis.4 Le bestiaire
+
+Le bestiaire du coffre est la collection des captures, rangée par **cellule de la doxa** : 3 classes × 7 régimes (`CELLULES_DOXA` = 21), chaque capture tombant dans la cellule de son mot (`celluleDoxa(classe, regime)`). Il vit dans le Coffre, à côté de l'inventaire : *le Coffre montre ce que j'ai, la carte montre le monde.*
+
+- Une cellule remplie, Polymnie l'inscrit dans ses hymnes : une réplique nouvelle par cellule.
+- **Vingt et une cellules remplies** : Uranie ouvre, à l'observatoire, la lecture des 101 formes du catalogue (`cosmos-empreintes.ts`) avec celles que le coffre a rencontrées. Rien d'autre : la Tour ne donne pas de puissance.
+
+### 4bis.5 Ce qu'une capture fait
+
+- **Compagne d'antre** : dans le duel (§4.3), au temps 3, la résonance d'ensemble du coffre inclut la capture **libérée** pour l'étage (au plus une) ; une capture de même classe que le gardien est destructive pour vous : il faut choisir.
+- **Accord** : un élixir de mercure conjugue une capture par l'objet porté → nouvelle capture (nouvel objet, ancien mot noté dans `bus`), même règle que la pierre qui tourne. Aucune fusion, aucun « niveau ».
+- **Offrande** : Terpsichore accepte une capture en résonance constructive avec votre objet porté et rend une gemme. La capture est retirée de la jauge (« rien n'est gravé »).
+
+Interdits : élever, fusionner, faire combattre deux captures entre elles pour en « gagner » une, vendre. Le mot ne mute pas, la norme ne grandit pas, rien ne se tire au sort.
+
 ## 5. Les sceaux et les portes
 
 Un **sceau** est une relique du monde (`docs/HANDOVER_RELIQUES_QR.md`) détenue dans le coffre : une pièce à une adresse dont le coffre a la graine, déclarée dans `reliques.json` avec un âge. Trois usages, tous déjà outillés :
@@ -138,12 +182,14 @@ type Tour = {
   dons: number[];             // étages dont l'hôte a été honoré
   echos: [number, number][];  // échos parcourus
   antres: number[];           // antres franchis
-  bus: number[];              // mots des élixirs bus
+  bus: number[];              // mots des élixirs bus, et des captures accordées
   portes: NomAge[];           // portes ouvertes (lecture des sceaux au moment du passage)
+  captures: [number, number][]; // (étage, k) des occupants pris par ce coffre
+  liberee: number | null;     // mot de la capture libérée pour l'étage courant
 };
 ```
 
-`coffre.tour` est **hors feuille** : `empreinteCarnet` ne le couvre pas, comme `objets` aujourd'hui. Tout s'y recalcule depuis les graines et l'historique ; perdre `tour` ne perd rien de vérifiable. Les élixirs sont dans `coffre.objets` avec `genre: "elixir"` ; `GENRES` gagne `"elixir"`, `estObjetPorte` l'accepte.
+`coffre.tour` est **hors feuille** : `empreinteCarnet` ne le couvre pas, comme `objets` aujourd'hui. Tout s'y recalcule depuis les graines et l'historique ; perdre `tour` ne perd rien de vérifiable. Les élixirs, capsules et captures sont dans `coffre.objets` avec `genre: "elixir" | "capsule" | "capture"` ; `GENRES` gagne ces trois genres, `estObjetPorte` les accepte. Le bestiaire est une vue de `coffre.objets` filtrée sur `capture`, groupée par cellule de la doxa.
 
 ## 8. Rendu
 
@@ -158,6 +204,8 @@ type Tour = {
 - `hotes.test.ts` (5) : présence déterministe (1 sur 7, 0 et 254 toujours, portes toujours) ; une muse par bande à l'étage médian ; répliques dans le lexique ; don unique par (coffre, étage) ; jamais d'arme ni de philosophale en don.
 - `secrets.test.ts` (4) : alcôve = dalle symétrique à centre vrai ; échos = même orbite, ordre exigé ; antre : les trois temps du duel sur des mots figés ; observatoire sans don.
 - `elixirs.test.ts` (4) : espèce = étage dominant ; effet borné à un étage ; élixir bu retiré et noté ; mot jamais réécrit.
+- `capsules.test.ts` (5) : capsule vide = glyphe creux ; prise nette par même orbite ; prise fragile tenue par le sel, échappée sans ; capsule brisée retirée ; capture = mot de l'occupant, l'étage perd son occupant et sa résonance change.
+- `bestiaire.test.ts` (3) : cellule de la doxa d'une capture ; 21 cellules → lecture d'Uranie ; accord par mercure = nouvel objet, ancien mot noté.
 - `sceaux.test.ts` (3) : porte fermée sans sceau, ouverte avec ; coffre d'atelier toujours ouvert ; trophée = preuve jugée contre `utxo_root`.
 - `integrite.test.ts` : les six lois passent inchangées ; `INTEGRITE` ne gagne aucune constante flottante.
 
@@ -170,7 +218,8 @@ type Tour = {
 | T3 | secrets : alcôves, échos, observatoire | T1 | ½ j |
 | T4 | antres : duel en trois temps, gardien, ticket consommé | T1, T2 | 1 j |
 | T5 | portes et sceaux : lecture des reliques du coffre, trophée exportable | H3 (hub), P3 | 1 j |
-| T6 | rendu : glyphes d'hôtes, fioles, portes, observatoire | T2–T5 | 1 j |
+| T6 | capsules, prise en trois temps, captures, bestiaire dans le Coffre | T1, T2 | 1 j |
+| T7 | rendu : glyphes d'hôtes, fioles, capsules, portes, observatoire | T2–T6 | 1 j |
 
 H2 (carte des reliques) et H3 (sceaux) du hub précèdent T5.
 
@@ -180,3 +229,5 @@ H2 (carte des reliques) et H3 (sceaux) du hub précèdent T5.
 2. Les portes : un sceau **de l'âge exact**, ou tout sceau d'âge supérieur ouvre aussi ?
 3. Le coffre d'atelier : portes ouvertes (démonstration) ou fermées (même règle pour tous) ?
 4. Faut-il une **carte de la Tour** (255 cases, honorées / secrètes / fermées) dans la page, ou la Tour reste-t-elle à découvrir étage par étage ?
+5. Les captures : au plus **une libérée par étage** (proposé), ou tout le bestiaire compte dans la résonance d'ensemble ?
+6. Les **noms** des captures (9 × 12) : je les écris avec les répliques, ou vous ?
