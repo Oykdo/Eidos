@@ -10,12 +10,13 @@ par construction, et mesuree a la fin des tests.
 
 Trois pieces :
 
-  1. Signatures Merkle (MSS). Lamport ne signe qu'une fois ; un validateur
-     doit signer des milliers de blocs. On genere 2^k cles Lamport, on en
-     range les haches dans un arbre de Merkle, et la cle publique du
-     validateur est la racine — 32 octets, immuable. Chaque signature
-     revele une feuille et son chemin d'authentification. C'est le schema
-     XMSS reduit a l'essentiel, entierement fonde sur le hachage, donc
+  1. Signatures XMSS (RFC 8391). WOTS+ ne signe qu'une fois ; un validateur
+     doit signer des milliers de blocs. On genere 2^k cles WOTS+ (wots.py),
+     on compresse chacune par un arbre L, on range les feuilles dans un
+     arbre de Merkle tweake, et la cle publique du validateur est la racine
+     (32 octets) plus une graine publique (32 octets), immuables. Chaque
+     signature revele une feuille et son chemin d'authentification :
+     4 + 2 144 + 32·k octets. Entierement fonde sur le hachage, donc
      post-quantique. Il est ETATIQUE : un indice ne sert qu'une fois, et le
      compteur doit survivre aux redemarrages.
 
@@ -49,6 +50,7 @@ import hashlib, os, sys, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import eonis as E
 import utxo as U
+import wots as W
 
 sha256 = U.sha256
 sha256d = U.sha256d
@@ -59,31 +61,42 @@ HAUTEUR_MSS = 10       # 2^10 = 1024 signatures par cle de validateur
 
 
 # ==========================================================================
-# 1. Signatures Merkle multi-usages
+# 1. Signatures XMSS : WOTS+ + arbre L + arbre de Merkle tweake
 # ==========================================================================
 def _graine_ots(seed, i):
     return sha256(seed + b"ots" + i.to_bytes(4, "big"))
 
 
-def _feuille(seed, i):
-    return sha256(U.lamport_public(U.lamport_secret(_graine_ots(seed, i))))
+def _ad_ots(i): return W.adrs(W.TYPE_OTS, a=i)
+def _ad_l(i):   return W.adrs(W.TYPE_LTREE, a=i)
+def _ad_arbre(hauteur, indice): return W.adrs(W.TYPE_ARBRE, b=hauteur, c=indice)
 
 
 class CleValidateur:
-    """Cle a 2^hauteur usages. Racine de Merkle publique, compteur prive."""
+    """Cle a 2^hauteur usages. Cle publique = (racine, graine publique),
+    compteur prive. Feuille i = arbre L de la cle WOTS+ i, adresses de
+    hachage indexees par i (RFC 8391)."""
 
     def __init__(self, seed: bytes, hauteur: int = HAUTEUR_MSS):
         self.seed = seed
         self.hauteur = hauteur
         self.n = 1 << hauteur
-        self.feuilles = [_feuille(seed, i) for i in range(self.n)]
+        self.graine_pub = W.graine_publique(seed)
+        self.feuilles = [self._feuille(i) for i in range(self.n)]
         self.niveaux = [self.feuilles]
+        k = 0
         while len(self.niveaux[-1]) > 1:
             bas = self.niveaux[-1]
-            self.niveaux.append([sha256d(bas[i] + bas[i + 1])
-                                 for i in range(0, len(bas), 2)])
+            self.niveaux.append([
+                W.rand_hash(bas[2 * i], bas[2 * i + 1], self.graine_pub, _ad_arbre(k, i))
+                for i in range(len(bas) // 2)])
+            k += 1
         self.racine = self.niveaux[-1][0]
         self.indice = 0
+
+    def _feuille(self, i):
+        pk = W.cle_publique(_graine_ots(self.seed, i), self.graine_pub, _ad_ots(i))
+        return W.arbre_l(pk, self.graine_pub, _ad_l(i))
 
     def chemin(self, i):
         c, idx = [], i
@@ -97,21 +110,28 @@ class CleValidateur:
             raise RuntimeError("cle epuisee — 2^%d signatures atteintes" % self.hauteur)
         i = self.indice
         self.indice += 1
-        sk = U.lamport_secret(_graine_ots(self.seed, i))
-        return (i, U.lamport_public(sk), U.lamport_sign(sk, msg32), self.chemin(i))
+        sig = W.signer_wots(_graine_ots(self.seed, i), self.graine_pub, _ad_ots(i), msg32)
+        return (i, sig, self.chemin(i))
 
 
-def verifier_mss(racine: bytes, hauteur: int, msg32: bytes, sig) -> bool:
-    i, pk, ots, chemin = sig
+def verifier_mss(racine: bytes, graine_pub: bytes, hauteur: int, msg32: bytes, sig) -> bool:
+    """sig = (indice, signature WOTS+, chemin). La feuille est reconstruite
+    depuis la signature, puis remontee jusqu'a la racine."""
+    i, ots, chemin = sig
     if not (0 <= i < (1 << hauteur)) or len(chemin) != hauteur:
         return False
-    if not U.lamport_verify(pk, msg32, ots):
+    pk = W.cle_depuis_signature(ots, graine_pub, _ad_ots(i), msg32)
+    if pk is None:
         return False
-    n = sha256(pk)
+    n = W.arbre_l(pk, graine_pub, _ad_l(i))
     idx = i
-    for frere in chemin:
-        n = sha256d(n + frere) if idx % 2 == 0 else sha256d(frere + n)
-        idx >>= 1
+    for k, frere in enumerate(chemin):
+        parent = idx >> 1
+        if idx % 2 == 0:
+            n = W.rand_hash(n, frere, graine_pub, _ad_arbre(k, parent))
+        else:
+            n = W.rand_hash(frere, n, graine_pub, _ad_arbre(k, parent))
+        idx = parent
     return n == racine
 
 
@@ -119,15 +139,24 @@ def verifier_mss(racine: bytes, hauteur: int, msg32: bytes, sig) -> bool:
 # 2. La federation
 # ==========================================================================
 class Federation:
-    def __init__(self, racines, t0: int, hauteur=HAUTEUR_MSS):
+    """racines et graines_pub : la cle publique XMSS de chaque validateur."""
+
+    def __init__(self, racines, t0: int, hauteur=HAUTEUR_MSS, graines_pub=None):
         if len(racines) % PAS == 0:
             raise ValueError(
                 f"n = {len(racines)} est divisible par {PAS} : la rotation "
                 f"ne parcourrait pas tous les validateurs")
+        if graines_pub is not None and len(graines_pub) != len(racines):
+            raise ValueError("une graine publique par racine")
         self.racines = list(racines)
+        self.graines_pub = list(graines_pub) if graines_pub is not None else None
         self.n = len(racines)
         self.t0 = t0
         self.hauteur = hauteur
+
+    @classmethod
+    def depuis_cles(cls, cles, t0: int, hauteur=HAUTEUR_MSS):
+        return cls([c.racine for c in cles], t0, hauteur, [c.graine_pub for c in cles])
 
     def creneau(self, ts: int) -> int:
         return (ts - self.t0) // CRENEAU
@@ -154,9 +183,34 @@ class ChaineFederee:
 
     # ------------------------------------------------------------------
     def id_bloc(self, blk) -> bytes:
+        """sha256d(E.header ‖ racine UTXO) : la racine est signee avec le bloc."""
+        if "utxo_root" not in blk:
+            raise U.Rejet("bloc sans racine UTXO")
         mr = U.merkle_root([t.txid() for t in blk["txs"]])
-        return sha256d(E.header(blk["height"], blk["prev"], mr,
-                                blk["ts"], blk["nonce"]))
+        return sha256d(U.entete_federe(blk, mr, blk["utxo_root"]))
+
+    def appliquer_sans_verifier(self, blk):
+        """Assume-valid : ni signature de validateur, ni temoins, ni creneau.
+        La racine UTXO declaree est tout de meme comparee. Reserve a
+        noeud.py --depuis, jamais par defaut."""
+        if "utxo_root" not in blk:
+            raise U.Rejet("bloc sans racine UTXO")
+        h = self.carnet.valider_bloc(blk, verifier_temoins=False)
+        self.creneaux.append(self.fed.creneau(blk["ts"]))
+        self.proposants.append(blk["validateur"])
+        self.indices.setdefault(blk["validateur"], set()).add(blk["sig"][0])
+        self._noter_tete(blk, h)
+        return h
+
+    def _noter_tete(self, blk, h):
+        """Ce qu'un temoin doit recevoir pour juger sans rejouer : l'en-tete
+        etendu (il recompose id_bloc) et la signature XMSS du proposant."""
+        self.tete_signee = {
+            "hauteur": blk["height"], "prev": blk["prev"],
+            "merkle": U.merkle_root([t.txid() for t in blk["txs"]]),
+            "ts": blk["ts"], "utxo_root": blk["utxo_root"], "id_bloc": h,
+            "validateur": blk["validateur"], "sig": blk["sig"],
+        }
 
     def valider(self, blk, maintenant=None):
         f = self.fed
@@ -182,16 +236,20 @@ class ChaineFederee:
         sig = blk.get("sig")
         if sig is None:
             raise U.Rejet("bloc non signe")
-        if not verifier_mss(f.racines[v], f.hauteur, self.id_bloc(blk), sig):
+        if f.graines_pub is None:
+            raise U.Rejet("federation sans graines publiques : verification impossible")
+        if not verifier_mss(f.racines[v], f.graines_pub[v], f.hauteur,
+                            self.id_bloc(blk), sig):
             raise U.Rejet("signature de validateur invalide")
         i = sig[0]
         if i in self.indices.get(v, set()):
             raise U.Rejet(f"indice MSS {i} deja employe par le validateur {v}")
 
-        h = self.carnet.valider_bloc(blk)      # transactions, emission, UTXO
+        h = self.carnet.valider_bloc(blk)      # transactions, emission, UTXO, racine
         self.creneaux.append(s)
         self.proposants.append(v)
         self.indices.setdefault(v, set()).add(i)
+        self._noter_tete(blk, h)
         return h
 
     def creneaux_sautes(self):
@@ -223,6 +281,7 @@ def forger(chaine, cles, txs, ts):
     v = f.proposant(f.creneau(ts))
     blk = {"height": chaine.carnet.hauteur + 1, "prev": chaine.carnet.tete,
            "ts": ts, "nonce": 0, "bits": 0, "txs": txs, "validateur": v}
+    blk["utxo_root"] = U.racine_apres(chaine.carnet, blk)
     blk["sig"] = cles[v].signer(chaine.id_bloc(blk))
     return blk
 
@@ -246,17 +305,24 @@ def tests():
     # -- MSS ----------------------------------------------------------------
     m = sha256(b"bloc")
     s0 = cles[0].signer(m)
-    assert verifier_mss(cles[0].racine, 6, m, s0)
-    assert not verifier_mss(cles[1].racine, 6, m, s0)
-    assert not verifier_mss(cles[0].racine, 6, sha256(b"autre"), s0)
-    faux = (s0[0], s0[1], s0[2], [bytes(32)] + s0[3][1:])
-    assert not verifier_mss(cles[0].racine, 6, m, faux)
-    taille = 4 + len(s0[1]) + len(s0[2]) + 32 * len(s0[3])
-    print(f"MSS signe / verifie / rejette     : OK  ({taille:,} o par signature)"
+    g0, g1 = cles[0].graine_pub, cles[1].graine_pub
+    assert verifier_mss(cles[0].racine, g0, 6, m, s0)
+    assert not verifier_mss(cles[1].racine, g1, 6, m, s0)
+    assert not verifier_mss(cles[0].racine, g1, 6, m, s0)
+    assert not verifier_mss(cles[0].racine, g0, 6, sha256(b"autre"), s0)
+    faux = (s0[0], s0[1], [bytes(32)] + s0[2][1:])
+    assert not verifier_mss(cles[0].racine, g0, 6, m, faux)
+    taille = 4 + len(s0[1]) + 32 * len(s0[2])
+    print(f"XMSS signe / verifie / rejette    : OK  ({taille:,} o par signature)"
           .replace(",", " ")); ok += 1
 
+    altere = bytearray(s0[1]); altere[777] ^= 1
+    assert not verifier_mss(cles[0].racine, g0, 6, m, (s0[0], bytes(altere), s0[2]))
+    assert not verifier_mss(cles[0].racine, g0, 6, m, (s0[0] ^ 1, s0[1], s0[2]))
+    print("signature alteree, ou indice change : refus"); ok += 1
+
     # -- rotation -----------------------------------------------------------
-    fed = Federation([c.racine for c in cles], t0, hauteur=6)
+    fed = Federation.depuis_cles(cles, t0, hauteur=6)
     assert fed.tour_complet()
     ordre = [fed.proposant(s) for s in range(7)]
     print(f"rotation chaldeenne, pas de {PAS}    : {ordre}"); ok += 1
@@ -321,6 +387,12 @@ def tests():
         ch.valider(blk)
     doit_echouer("difficulte non nulle", avec_preuve_de_travail)
 
+    def sans_racine():
+        blk = forger(ch, cles, [U.coinbase(7, p.nouvelle_adresse())], ts8)
+        del blk["utxo_root"]
+        ch.valider(blk)
+    doit_echouer("bloc sans racine UTXO", sans_racine)
+
     def creneau_futur():
         # gel temporel : un bloc signe en l'an 2100 rend tout creneau reel « passe »
         ts = int(time.time()) + 100 * 365 * 24 * 3600
@@ -329,7 +401,7 @@ def tests():
 
     # -- vivacite : silence permis, quorum independant du pas --------------
     cles_v = cles_de_test()
-    fed_v = Federation([c.racine for c in cles_v], t0, hauteur=6)
+    fed_v = Federation.depuis_cles(cles_v, t0, hauteur=6)
     ch_v = ChaineFederee(fed_v)
     p_v = U.Portefeuille("vivacite")
     ch_v.valider(forger(ch_v, cles_v, [U.coinbase(0, p_v.nouvelle_adresse())], t0))
@@ -339,7 +411,7 @@ def tests():
     print("saut de creneau (silence)         : OK"); ok += 1
 
     cles_q = cles_de_test()
-    fed_q = Federation([c.racine for c in cles_q], t0, hauteur=6)
+    fed_q = Federation.depuis_cles(cles_q, t0, hauteur=6)
     ch_q = ChaineFederee(fed_q)
     p_q = U.Portefeuille("quorum")
     for h in range(4):
@@ -363,7 +435,7 @@ def tests():
     t = time.time()
     for _ in range(10):
         sg = cles[0].signer(m)
-        verifier_mss(cles[0].racine, 6, m, sg)
+        verifier_mss(cles[0].racine, g0, 6, m, sg)
     dt = (time.time() - t) * 100
     print(f"\ncout d'un bloc : {dt:.2f} ms (signature + verification)")
     print(f"contre ~{2 ** 18:,} haches en preuve de travail a 18 bits"
@@ -375,7 +447,7 @@ def tests():
 def demo():
     t0 = 1756540680
     cles = cles_de_test(hauteur=6)
-    fed = Federation([c.racine for c in cles], t0, hauteur=6)
+    fed = Federation.depuis_cles(cles, t0, hauteur=6)
     ch = ChaineFederee(fed)
     p = U.Portefeuille("tresor")
     print(f"{fed.n} validateurs, creneau de {CRENEAU} s, rotation de pas {PAS}\n")

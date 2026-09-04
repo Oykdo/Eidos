@@ -4,15 +4,23 @@
 utxo.py — carnet UTXO, transactions et validation de chaine.
 Bibliotheque standard uniquement. Complement de eonis.py.
 
-Signatures : Lamport-SHA256. Schema a usage unique, fonde uniquement sur
-une fonction de hachage, donc resistant au quantique par construction —
-c'est l'ancetre direct de SPHINCS+. Verifiable publiquement, contrairement
-a un HMAC : le validateur n'a besoin d'aucun secret.
+Signatures : WOTS+ (wots.py), schema a usage unique fonde uniquement sur
+SHA-256, donc resistant au quantique par construction — la brique de XMSS
+et de SPHINCS+. Verifiable publiquement : le validateur reconstruit la cle
+publique depuis la signature et la compare a l'adresse, il n'a besoin
+d'aucun secret. Temoin de 2 176 octets (graine publique 32 + signature
+2 144) ; Lamport en demandait 24 576.
 
-Contrainte a assumer : une cle Lamport ne signe QU'UNE FOIS. Signer deux
-fois avec la meme cle revele assez de moitiees du secret pour forger. La
-regle est donc inscrite dans la validation : une cle publique ne peut
-apparaitre qu'une seule fois dans toute la chaine.
+Racine UTXO : chaque bloc federe declare la racine de Merkle du carnet
+entier apres lui (feuille = sha256d(txid ‖ rang ‖ adresse ‖ montant), ordre
+(txid, rang), meme regle que merkle.ts). L'identifiant du bloc federe est
+sha256d(E.header ‖ racine) : E.header reste gele, la racine s'y ajoute.
+Un temoin qui connait une tete signee juge une preuve sans rejouer.
+
+Contrainte a assumer : une cle WOTS+ ne signe QU'UNE FOIS. Signer deux
+fois avec la meme cle revele des maillons intermediaires et permet de
+forger. La regle est donc inscrite dans la validation : une empreinte de
+cle ne peut apparaitre qu'une seule fois dans toute la chaine.
 
 Usage :  python3 utxo.py           auto-tests
          python3 utxo.py --demo    construit et valide une chaine de 4 blocs
@@ -21,12 +29,13 @@ AVERTISSEMENT. Prototype de specification. Pas de reseau, pas de gestion de
 portefeuille, pas de protection des secrets en memoire.
 """
 
-import hashlib, hmac, os, sys
+import copy, hashlib, hmac, os, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import eonis as E
+import wots as W
 
-VERSION = 1
+VERSION = 2                # 1 : temoins Lamport ; 2 : temoins WOTS+
 COINBASE_TXID = bytes(32)
 
 
@@ -35,42 +44,21 @@ def sha256d(b): return sha256(sha256(b))
 
 
 # ==========================================================================
-# 1. Signatures Lamport-SHA256
+# 1. Signatures WOTS+ — voir wots.py
 # ==========================================================================
-def lamport_secret(seed: bytes):
-    """256 paires de 32 octets, derivees d'une graine. Seule la graine est
-    a conserver."""
-    return [(sha256(seed + b"sk0" + i.to_bytes(2, "big")),
-             sha256(seed + b"sk1" + i.to_bytes(2, "big"))) for i in range(256)]
+def adresse_de(graine: bytes) -> bytes:
+    """20 octets : SHA-256(graine publique ‖ racine de l'arbre L)[:20]."""
+    return W.adresse_de(graine)
 
 
-def lamport_public(sk) -> bytes:
-    """16 384 octets : le hache de chaque moitie du secret."""
-    return b"".join(sha256(a) + sha256(b) for a, b in sk)
-
-
-def lamport_sign(sk, msg32: bytes) -> bytes:
-    """8 192 octets : pour chaque bit du message, la moitie correspondante."""
-    n = int.from_bytes(msg32, "big")
-    return b"".join(sk[i][(n >> (255 - i)) & 1] for i in range(256))
-
-
-def lamport_verify(pk: bytes, msg32: bytes, sig: bytes) -> bool:
-    if len(pk) != 256 * 64 or len(sig) != 256 * 32:
-        return False
-    n = int.from_bytes(msg32, "big")
-    for i in range(256):
-        bit = (n >> (255 - i)) & 1
-        if sha256(sig[i * 32:(i + 1) * 32]) != pk[i * 64 + bit * 32: i * 64 + bit * 32 + 32]:
-            return False
-    return True
+def signer_temoin(graine: bytes, msg32: bytes):
+    """(graine publique, signature WOTS+) — 2 176 octets."""
+    return W.signer(graine, msg32)
 
 
 # ==========================================================================
 # 2. Adresses — 20 octets, somme de controle en glyphes a trois figures
 # ==========================================================================
-def address_of(pk: bytes) -> bytes:
-    return sha256(pk)[:20]
 
 
 def addr_encode(a20: bytes) -> str:
@@ -96,7 +84,7 @@ def addr_decode(s: str) -> bytes:
 # ==========================================================================
 class Tx:
     """inputs : liste de (txid, vout). outputs : liste de (adresse20, atomes).
-    witness : liste de (pubkey, signature), hors txid."""
+    witness : liste de (graine publique, signature WOTS+), hors txid."""
 
     def __init__(self, inputs, outputs):
         self.inputs = list(inputs)
@@ -121,8 +109,7 @@ class Tx:
         return sha256(self.txid() + index.to_bytes(4, "big"))
 
     def sign(self, index: int, seed: bytes):
-        sk = lamport_secret(seed)
-        self.witness[index] = (lamport_public(sk), lamport_sign(sk, self.sighash(index)))
+        self.witness[index] = W.signer(seed, self.sighash(index))
 
     def is_coinbase(self) -> bool:
         return len(self.inputs) == 1 and self.inputs[0][0] == COINBASE_TXID
@@ -152,6 +139,38 @@ def merkle_root(txids):
 
 
 # ==========================================================================
+# 4b. Racine UTXO — engagement sur le carnet entier, dans l'en-tete federe
+# ==========================================================================
+def feuille_sortie(txid, rang, adresse, montant):
+    """sha256d(txid ‖ rang(4) ‖ adresse(20) ‖ montant(8)) — meme regle que merkle.ts."""
+    return sha256d(txid + rang.to_bytes(4, "big") + adresse + montant.to_bytes(8, "big"))
+
+
+def utxo_root(utxo):
+    """Merkle SHA-256d des feuilles en ordre canonique (txid, rang).
+    Carnet vide : 32 octets nuls."""
+    return merkle_root([feuille_sortie(t, r, a, m)
+                        for (t, r), (a, m) in sorted(utxo.items())])
+
+
+def entete_federe(blk, merkle, racine):
+    """E.header (gele, 88 o) suivi de la racine UTXO apres le bloc : 120 o.
+    id_bloc federe = sha256d(entete_federe)."""
+    return E.header(blk["height"], blk["prev"], merkle, blk["ts"], blk["nonce"]) + racine
+
+
+def racine_apres(carnet, blk):
+    """Racine UTXO qu'aurait le carnet apres ce bloc, sans le modifier : le
+    forgeron l'inscrit dans le bloc avant de signer. Meme code qu'a la
+    validation ; leve Rejet si le bloc est fautif."""
+    c = copy.deepcopy(carnet)
+    b = dict(blk)
+    b.pop("utxo_root", None)
+    c.valider_bloc(b)
+    return c.racine_utxo
+
+
+# ==========================================================================
 # 5. Carnet UTXO et validation
 # ==========================================================================
 class Rejet(Exception):
@@ -161,9 +180,10 @@ class Rejet(Exception):
 class Carnet:
     def __init__(self):
         self.utxo = {}            # (txid, vout) -> (adresse20, atomes)
-        self.cles_usees = set()   # empreintes de cles Lamport deja employees
+        self.cles_usees = set()   # empreintes de cles WOTS+ deja employees
         self.hauteur = -1
         self.tete = bytes(32)
+        self.racine_utxo = bytes(32)
 
     def solde(self, addr: bytes) -> int:
         return sum(a for ad, a in self.utxo.values() if ad == addr)
@@ -172,8 +192,12 @@ class Carnet:
         return sum(E.reward_at(h) for h in range(self.hauteur + 1))
 
     # ----------------------------------------------------------------------
-    def valider_bloc(self, blk):
-        """blk : dict {height, prev, ts, nonce, bits, txs}. Leve Rejet."""
+    def valider_bloc(self, blk, verifier_temoins=True):
+        """blk : dict {height, prev, ts, nonce, bits, txs, [utxo_root]}. Leve Rejet.
+        Avec utxo_root, la racine declaree doit etre celle du carnet apres le
+        bloc, et la tete devient sha256d(entete_federe). verifier_temoins=False
+        saute la reconstruction des cles WOTS+ (assume-valid EXPLICITE de
+        noeud.py --depuis) : les cles de ces blocs ne sont pas notees."""
         txs = blk["txs"]
         if not txs or not txs[0].is_coinbase():
             raise Rejet("premiere transaction non coinbase")
@@ -194,6 +218,10 @@ class Carnet:
         depenses, ajouts, frais = set(), {}, 0
         cles_bloc = set()
         for tx in txs[1:]:
+            if not tx.inputs:
+                raise Rejet("transaction sans entree")
+            if not tx.outputs:
+                raise Rejet("transaction sans sortie")
             entree = 0
             for i, (ptxid, vout) in enumerate(tx.inputs):
                 cle = (ptxid, vout)
@@ -205,15 +233,17 @@ class Carnet:
                 w = tx.witness[i]
                 if w is None:
                     raise Rejet("temoin absent")
-                pk, sig = w
-                if address_of(pk) != addr:
-                    raise Rejet("la cle ne correspond pas a l'adresse")
-                emp = sha256(pk)
-                if emp in self.cles_usees or emp in cles_bloc:
-                    raise Rejet("cle Lamport reutilisee — usage unique")
-                if not lamport_verify(pk, tx.sighash(i), sig):
-                    raise Rejet("signature invalide")
-                cles_bloc.add(emp)
+                if verifier_temoins:
+                    racine = W.racine_depuis_temoin(w, tx.sighash(i))
+                    if racine is None:
+                        raise Rejet("temoin malforme")
+                    if W.adresse(w[0], racine) != addr:
+                        raise Rejet("signature invalide : la cle reconstruite "
+                                    "ne donne pas l'adresse")
+                    emp = W.empreinte(w[0], racine)
+                    if emp in self.cles_usees or emp in cles_bloc:
+                        raise Rejet("cle WOTS+ reutilisee — usage unique")
+                    cles_bloc.add(emp)
                 depenses.add(cle)
                 entree += montant
             sortie = tx.total_out()
@@ -230,15 +260,26 @@ class Carnet:
         if txs[0].total_out() != attendu:
             raise Rejet(f"coinbase {txs[0].total_out()} au lieu de {attendu}")
 
-        # application
+        # racine UTXO apres le bloc, calculee avant d'appliquer
+        nouveau = dict(self.utxo)
         for cle in depenses:
-            del self.utxo[cle]
+            del nouveau[cle]
         for v, (addr, montant) in enumerate(txs[0].outputs):
-            self.utxo[(txs[0].txid(), v)] = (addr, montant)
-        self.utxo.update(ajouts)
+            nouveau[(txs[0].txid(), v)] = (addr, montant)
+        nouveau.update(ajouts)
+        racine = utxo_root(nouveau)
+        if "utxo_root" in blk:
+            if blk["utxo_root"] != racine:
+                raise Rejet(f"racine UTXO {blk['utxo_root'].hex()[:8]} "
+                            f"au lieu de {racine.hex()[:8]}")
+            h = sha256d(entete_federe(blk, mr, racine))
+
+        # application
+        self.utxo = nouveau
         self.cles_usees |= cles_bloc
         self.hauteur = blk["height"]
         self.tete = h
+        self.racine_utxo = racine
         return h
 
 
@@ -259,7 +300,7 @@ def miner_bloc(carnet, txs, bits=12, ts=1756540680):
 # 6. Auto-tests
 # ==========================================================================
 class Portefeuille:
-    """Une cle Lamport ne signant qu'une fois, chaque adresse est a usage
+    """Une cle WOTS+ ne signant qu'une fois, chaque adresse est a usage
     unique. Le portefeuille en produit une nouvelle a chaque besoin et retient
     la graine correspondante."""
 
@@ -269,7 +310,7 @@ class Portefeuille:
     def nouvelle_adresse(self) -> bytes:
         s = sha256(f"{self.nom}/{self.n}".encode())
         self.n += 1
-        a = address_of(lamport_public(lamport_secret(s)))
+        a = W.adresse_de(s)
         self.graines[a] = s
         return a
 
@@ -286,20 +327,18 @@ class Portefeuille:
 def tests():
     ok = 0
 
-    # -- Lamport ------------------------------------------------------------
+    # -- WOTS+ --------------------------------------------------------------
     s = sha256(b"alice/0")
-    sk = lamport_secret(s)
-    pk = lamport_public(sk)
     m = sha256(b"message")
-    sig = lamport_sign(sk, m)
-    assert lamport_verify(pk, m, sig)
-    assert not lamport_verify(pk, sha256(b"autre"), sig)
-    faux = bytearray(sig); faux[0] ^= 1
-    assert not lamport_verify(pk, m, bytes(faux))
-    print(f"Lamport signe/verifie         : OK  (pk {len(pk)} o, sig {len(sig)} o)"); ok += 1
+    a = adresse_de(s)
+    temoin = signer_temoin(s, m)
+    assert W.verifier(a, m, temoin)
+    assert not W.verifier(a, sha256(b"autre"), temoin)
+    faux = bytearray(temoin[1]); faux[0] ^= 1
+    assert not W.verifier(a, m, (temoin[0], bytes(faux)))
+    print(f"WOTS+ signe/verifie           : OK  (temoin {len(temoin[0]) + len(temoin[1])} o)"); ok += 1
 
     # -- adresses -----------------------------------------------------------
-    a = address_of(pk)
     enc = addr_encode(a)
     assert addr_decode(enc) == a
     corrompu = enc.replace("\u25cb", "\u271a", 1)
@@ -308,6 +347,13 @@ def tests():
     except ValueError:
         pass
     print(f"adresse : controle a 24 bits  : OK  ({len(enc.split()) - 1} glyphes)"); ok += 1
+
+    # -- racine UTXO --------------------------------------------------------
+    u = {(sha256(b"b"), 1): (a, 5), (sha256(b"a"), 0): (a, 7), (sha256(b"b"), 0): (a, 9)}
+    feuilles = [feuille_sortie(t, r, ad, m) for (t, r), (ad, m) in sorted(u.items())]
+    assert utxo_root(u) == utxo_root(dict(reversed(list(u.items())))) == merkle_root(feuilles)
+    assert utxo_root({}) == bytes(32)
+    print("racine UTXO canonique         : OK  (ordre (txid, rang), 3 sorties)"); ok += 1
 
     # -- chaine -------------------------------------------------------------
     c = Carnet()
@@ -332,6 +378,7 @@ def tests():
 
     total = sum(m for _, m in c.utxo.values())
     assert total == c.emission_cumulee()
+    assert c.racine_utxo == utxo_root(c.utxo)
     print(f"conservation de la valeur     : {total / E.ATOMES:.6f} = emission cumulee"); ok += 1
 
     # -- refus attendus -----------------------------------------------------
@@ -371,7 +418,28 @@ def tests():
         c.valider_bloc(blk)
     doit_echouer("chainage rompu", chainage_rompu)
 
-    # -- la faute propre a Lamport : reemploi d'adresse ---------------------
+    def racine_fausse():
+        blk = miner_bloc(c, [coinbase(h, alice.nouvelle_adresse())])
+        blk["utxo_root"] = bytes(32)
+        c.valider_bloc(blk)
+    doit_echouer("racine UTXO fausse", racine_fausse)
+    # la bonne racine, calculee sans toucher le carnet, est acceptee et
+    # change la tete (en-tete etendu)
+    blk = miner_bloc(c, [coinbase(h, alice.nouvelle_adresse())])
+    blk["utxo_root"] = racine_apres(c, blk)
+    etat = dict(c.utxo), set(c.cles_usees), c.hauteur, c.tete
+    tete = c.valider_bloc(blk)
+    assert tete == sha256d(entete_federe(blk, merkle_root([t.txid() for t in blk["txs"]]),
+                                         blk["utxo_root"]))
+    c.utxo, c.cles_usees, c.hauteur, c.tete = etat
+    print("racine UTXO declaree, en-tete etendu : OK"); ok += 1
+
+    def sans_entree():
+        t = Tx([], [(b0, 1)])
+        c.valider_bloc(miner_bloc(c, [coinbase(h, alice.nouvelle_adresse()), t]))
+    doit_echouer("transaction sans entree", sans_entree)
+
+    # -- la faute propre a l'usage unique : reemploi d'adresse --------------
     (k, (ad, montant)) = alice.sorties(c)[0]
     br = bob.nouvelle_adresse()
     t = Tx([k], [(br, montant // 2), (br, montant - montant // 2)])  # deux fois la meme
@@ -389,7 +457,7 @@ def tests():
 
     def reemploi():
         t2 = Tx([deux[1]], [(alice.nouvelle_adresse(), c.utxo[deux[1]][1] - 100)])
-        bob.signer(t2, 0, br)   # MEME cle Lamport que t1
+        bob.signer(t2, 0, br)   # MEME cle WOTS+ que t1
         c.valider_bloc(miner_bloc(c, [coinbase(h, alice.nouvelle_adresse(), fees=100), t2]))
     doit_echouer("2e depense, meme cle", reemploi)
 
@@ -432,7 +500,7 @@ def demo():
     print(f"\nAlice {alice.solde(c) / E.ATOMES:.6f} + Bob {bob.solde(c) / E.ATOMES:.6f}"
           f" = {(alice.solde(c) + bob.solde(c)) / E.ATOMES:.6f} EIDOLON")
     print(f"emission cumulee : {c.emission_cumulee() / E.ATOMES:.6f} EIDOLON")
-    print(f"cles Lamport consommees : {len(c.cles_usees)}")
+    print(f"cles WOTS+ consommees : {len(c.cles_usees)}")
 
 
 if __name__ == "__main__":

@@ -1,32 +1,4 @@
 {
  "spec": "eidos-mempool/1",
- "demandes": [
-  {
-   "type": "robinet",
-   "adresse": "1a56415346085a7afc028ccc90426f67762e6d10",
-   "issue": 1,
-   "montant_atomes": 100000000,
-   "etat": "servie",
-   "bloc": 61,
-   "txid": "d3c35c9f30dfbe85cf61981a3272aec1586fea406e793c799ce480866150aa0e"
-  },
-  {
-   "type": "robinet",
-   "adresse": "eeee1e159d8996c6858701af53bc7a446ce01dab",
-   "issue": 3,
-   "montant_atomes": 100000000,
-   "etat": "servie",
-   "bloc": 76,
-   "txid": "7331a777f3d5ac3f81d5778dfe65c806cf4d7ec566414c0f00d486111a01992a"
-  },
-  {
-   "type": "robinet",
-   "adresse": "a0267a406254a375b4e9ca8e9bed6e7496620d3e",
-   "issue": 4,
-   "montant_atomes": 100000000,
-   "etat": "servie",
-   "bloc": 76,
-   "txid": "9b0f8ca45c6050da981c89de5d5ac8f8fb5c6ac0d19177b96bb2246cb44b298f"
-  }
- ]
+ "demandes": []
 }

@@ -1,5 +1,24 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { preuveReseau as preuveReseauV, serialiser as serialiserV } from "./merkle.ts";
+import {
+  idBlocDe,
+  jugerReseau,
+  parserFederation,
+  parserTeteReseau,
+  verifierTeteReseau,
+} from "./temoin.ts";
+
+const VEC = JSON.parse(
+  readFileSync(new URL("../../../../vecteurs.json", import.meta.url), "utf8"),
+) as {
+  tete: {
+    federation: { hauteur_mss: number; racines: string[]; graines_publiques: string[] };
+    tete_signee: Record<string, unknown> & { id_bloc: string; utxo_root: string; hauteur: number };
+    sorties: { txid: string; rang: number; adresse: string; montant: number }[];
+  };
+};
 import {
   adopterTete,
   avancer,
@@ -88,5 +107,46 @@ describe("témoin — second carnet", () => {
     const p = serialiser(preuvePourSortie(c.sorties, c.sorties[0]!.ref)!);
     const { vue } = juger(temoin, p);
     assert.equal(vue.code, "incluse");
+  });
+});
+
+describe("témoin du réseau — tête signée, sans rejeu", () => {
+  it("recompose id_bloc, vérifie la signature XMSS, juge une preuve contre utxo_root", () => {
+    const tete = parserTeteReseau({ tete_signee: VEC.tete.tete_signee });
+    assert.ok(!("erreur" in tete), "erreur" in tete ? tete.erreur : "");
+    const fed = parserFederation(VEC.tete.federation);
+    assert.ok(!("erreur" in fed), "erreur" in fed ? fed.erreur : "");
+    assert.equal(idBlocDe(tete), VEC.tete.tete_signee.id_bloc);
+    const v = verifierTeteReseau(tete, fed);
+    assert.deepEqual(v, { ok: true, validateur: tete.validateur });
+
+    const s = VEC.tete.sorties;
+    const ref = `${s[0]!.txid}:${s[0]!.rang}`;
+    const p = preuveReseauV(s, ref);
+    assert.ok(p);
+    assert.equal(p.racine, tete.utxoRoot);
+    assert.equal(jugerReseau(tete, serialiserV(p)).code, "incluse");
+  });
+
+  it("racine UTXO substituée : id_bloc ne se recompose plus ; signature d'un autre : refus ; preuve étrangère", () => {
+    const tete = parserTeteReseau(VEC.tete.tete_signee);
+    const fed = parserFederation(VEC.tete.federation);
+    assert.ok(!("erreur" in tete) && !("erreur" in fed));
+    const substituee = { ...tete, utxoRoot: "00".repeat(32) };
+    assert.equal(verifierTeteReseau(substituee, fed).ok, false);
+    assert.deepEqual(verifierTeteReseau(substituee, fed), { ok: false, motif: "id_bloc" });
+    const autre = { ...tete, validateur: (tete.validateur + 1) % fed.racines.length };
+    assert.deepEqual(verifierTeteReseau(autre, fed), { ok: false, motif: "signature" });
+    const horsBorne = { ...tete, validateur: 99 };
+    assert.deepEqual(verifierTeteReseau(horsBorne, fed), { ok: false, motif: "validateur" });
+
+    const s = VEC.tete.sorties.map((x) => ({ ...x }));
+    s[0]!.montant += 1;
+    const p = preuveReseauV(s, `${s[0]!.txid}:${s[0]!.rang}`);
+    assert.ok(p);
+    assert.equal(jugerReseau(tete, serialiserV(p)).code, "etrangere");
+    assert.equal(jugerReseau(tete, { ...serialiserV(p), racine: tete.utxoRoot }).code, "rompue");
+    assert.ok("erreur" in parserTeteReseau({ ...VEC.tete.tete_signee, signature: "00" }));
+    assert.ok("erreur" in parserFederation({ hauteur_mss: 4, racines: ["00"] }));
   });
 });

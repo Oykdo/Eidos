@@ -11,6 +11,14 @@ import {
 import type { Coffre, HistoriqueTx, NomAge, ScenarioId, Sortie } from "./types.ts";
 import { choisirRegroupement, selectionner } from "./coinselect.ts";
 import { adresseRelique, prixReliqueAtomes, AGES_RELIQUE } from "./relique.ts";
+import {
+  encapsuler,
+  serTx,
+  sortiesDuCoffre,
+  transmissibilite,
+  type EtatTestnet,
+  type Transmissibilite,
+} from "./envoi.ts";
 
 function aleaHex(n = 32): string {
   const b = new Uint8Array(n);
@@ -217,13 +225,25 @@ export function minerCoffre(coffre: Coffre, bits = BITS_MINE, tsFixe?: number): 
   };
 }
 
+/** Dépense signée au format du nœud, encapsulée pour une issue « envoi ».
+ *  Nul quand la sélection ou la signature a échoué. */
+export type EnvoiExporte = {
+  texte: string;
+  txid: string;
+  transmissible: Transmissibilite;
+};
+
 export function appliquerEnvoi(
   coffre: Coffre,
   montant: number,
   destHex: string,
-): { coffre: Coffre; selection: ReturnType<typeof selectionner> } {
+): {
+  coffre: Coffre;
+  selection: ReturnType<typeof selectionner>;
+  envoi: EnvoiExporte | null;
+} {
   const sel = selectionner(coffre.sorties, montant);
-  if (!sel.ok) return { coffre, selection: sel };
+  if (!sel.ok) return { coffre, selection: sel, envoi: null };
 
   const dest = fromHex(destHex);
   if (dest.length !== 20) {
@@ -236,6 +256,7 @@ export function appliquerEnvoi(
         solde: coffre.sorties.reduce((s, o) => s + o.montant, 0),
         couvertureMax: 0,
       },
+      envoi: null,
     };
   }
 
@@ -264,6 +285,7 @@ export function appliquerEnvoi(
         solde: coffre.sorties.reduce((s, o) => s + o.montant, 0),
         couvertureMax: 0,
       },
+      envoi: null,
     };
   }
 
@@ -278,9 +300,17 @@ export function appliquerEnvoi(
           solde: coffre.sorties.reduce((s, o) => s + o.montant, 0),
           couvertureMax: 0,
         },
+        envoi: null,
       };
     }
   }
+
+  const texte = encapsuler(serTx({ core: sig.core, temoins: sig.temoins }));
+  const envoi: EnvoiExporte = {
+    texte,
+    txid: sig.txid,
+    transmissible: transmissibilite(texte, sel.entrees.length),
+  };
 
   const nôtres: Sortie[] = [...restant];
   if (sel.rendu > 0 && indiceRendu != null && sig.adresseRendu) {
@@ -326,7 +356,18 @@ export function appliquerEnvoi(
       "envoi",
     ),
     selection: sel,
+    envoi,
   };
+}
+
+/** Remplace les sorties locales par les pièces du réseau d'essai qui
+ *  appartiennent à ce coffre (adresses dérivées de sa graine). L'indice
+ *  suivant avance au-delà de la plus haute pièce trouvée. Le carnet du nœud
+ *  reste seul juge : etat.json est une lecture, pas une preuve. */
+export function chargerTestnet(coffre: Coffre, etat: EtatTestnet): Coffre {
+  const sorties = sortiesDuCoffre(etat, coffre.maitre, coffre.n);
+  const n = sorties.reduce((m, s) => Math.max(m, s.indice + 1), coffre.n);
+  return sceller({ ...coffre, n, sorties }, "robinet");
 }
 
 export function appliquerRegroupement(coffre: Coffre): Coffre {

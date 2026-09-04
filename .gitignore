@@ -36,3 +36,20 @@ atelier/*.local
 atelier/.env
 atelier/.env.*
 atelier/public/__grok/
+
+# travaux privés, jamais versionnés (captures, brouillons, autres projets)
+prototype relique/
+prototype*/
+*.docx
+*.doc
+*.pptx
+*.xlsx
+IMG_*.PNG
+IMG_*.png
+IMG_*.jpg
+*.heic
+*.HEIC
+docs/prive/
+
+# réglages locaux de l'assistant
+.claude/

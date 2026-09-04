@@ -33,7 +33,7 @@ Auth et base distante : **off**. Le carnet vit dans ce navigateur (`localStorage
 
 ### Fichier unique — `eidos.carnet`
 
-Lamport signe une **dépense**, une seule fois — pas le fichier. Une sauvegarde signée brûlerait une clé. La trace est SHA-256d, liée à l’adresse courante. Aucune courbe : ce n’est pas le vault holographique d’Eidolon. Un ancien `.psnx` JSON d’Eidos s’ouvre encore.
+WOTS+ signe une **dépense**, une seule fois — pas le fichier. Une sauvegarde signée brûlerait une clé. La trace est SHA-256d, liée à l’adresse courante. Aucune courbe : ce n’est pas le vault holographique d’Eidolon. Un ancien `.psnx` JSON d’Eidos s’ouvre encore.
 
 ### Témoin — autre mémoire
 
@@ -59,7 +59,7 @@ Les coller en un seul objet serait un mensonge : l’un engage le carnet, l’au
 
 ### Les deux trous (portefeuille, pas validateur)
 
-1. **Plusieurs entrées.** Glouton : les plus petites sorties qui atteignent `m`, au plus trois. Une signature Lamport par entrée.
+1. **Plusieurs entrées.** Glouton : les plus petites sorties qui atteignent `m`, au plus trois. Une signature WOTS+ par entrée (2 177 octets de témoin).
 2. **Poussière.** Si le rendu < 10 000 atomes, pas de sortie de rendu : l’écart devient frais.
 3. Si le solde suffit mais trois pièces ne couvrent pas : **« solde suffisant mais fragmenté — regrouper d’abord »**.
 
@@ -76,8 +76,9 @@ Les coller en un seul objet serait un mensonge : l’un engage le carnet, l’au
 
 ### Cryptographie
 
-- **Lamport** pour les transactions. 16 384 octets de clé publique, 8 192 de signature. Une clé ne signe qu’une fois.
-- **Merkle / XMSS réduit** pour les validateurs — spécifié, **pas branché** dans cet atelier.
+- **WOTS+** pour les transactions (`wots.ts`, port de `wots.py` à l’octet près, vérifié par `vecteurs.json`). Témoin de 2 176 octets. Une clé ne signe qu’une fois.
+- **Lamport** conservé en démonstration (réemploi, audit des clés), hors consensus.
+- **XMSS** pour les validateurs — vérifié ici (`xmss.ts`) : le témoin lit la tête signée du réseau (`etat.json.tete_signee`), recompose `id_bloc`, contrôle la signature contre `federation.json` et juge une preuve contre la racine UTXO, sans rejouer.
 - Cosinus d’émission en `Decimal`, π à 68 décimales.
 
 L’atelier `eidos-atelier-reseau-essai-v1` est reproductible **parce que** la graine est connue. Ne pas y laisser de valeur.
@@ -110,15 +111,15 @@ Auth is **off**. The ledger lives in `localStorage`. No accounts, no live federa
 
 ### Unique file — `eidos.carnet`
 
-Lamport signs a **spend**, once — not the file. A signed backup would burn a one-time key. The trace is SHA-256d, bound to the current address. No curve: this is not Eidolon’s holographic vault. A legacy Eidos JSON `.psnx` still opens.
+WOTS+ signs a **spend**, once — not the file. A signed backup would burn a one-time key. The trace is SHA-256d, bound to the current address. No curve: this is not Eidolon’s holographic vault. A legacy Eidos JSON `.psnx` still opens.
 
 ### Wallet rules (not the validator)
 
-Greedy coin-select, at most three inputs (one Lamport signature each). Dust under 10 000 atoms becomes a fee. If the balance is enough but three coins do not cover: regroup first.
+Greedy coin-select, at most three inputs (one WOTS+ signature each). Dust under 10 000 atoms becomes a fee. If the balance is enough but three coins do not cover: regroup first.
 
 ### Crypto
 
-Lamport for spends (16 384-byte public key, 8 192-byte signature, one use). Merkle/XMSS for validators is specified, **not wired** here. Emission cosine is `Decimal`, not `math.cos`.
+WOTS+ for spends (`wots.ts`, byte-for-byte port of `wots.py`, checked against `vecteurs.json`; 2 176-byte witness, one use). Lamport is kept as a demonstration. XMSS for validators is verified here (`xmss.ts`): the witness reads the network's signed head, recomputes `id_bloc`, checks the signature against `federation.json` and judges a proof against the UTXO root, without replaying. Emission cosine is `Decimal`, not `math.cos`.
 
 The atelier seed `eidos-atelier-reseau-essai-v1` is public on purpose. Do not leave value in it.
 

@@ -15,6 +15,12 @@ import {
   addressOf,
 } from "./lamport.ts";
 import { coffreAtelier, coffreNeuf, appliquerEnvoi } from "./wallet.ts";
+import { readFileSync } from "node:fs";
+
+// vecteurs.json, à la racine du dépôt : écrit par vecteurs.py, lu ici
+const VECTEURS = JSON.parse(
+  readFileSync(new URL("../../../../vecteurs.json", import.meta.url), "utf8"),
+) as { wots: { adresse: string } };
 
 describe("SHA-256", () => {
   it("vecteurs NIST", () => {
@@ -61,7 +67,8 @@ describe("Lamport = utxo.py", () => {
       "5a9c197589db292b6675d3218bccf94dae3cc313e74f5cd3c932c85d3cbadd40",
     );
     assert.equal(hexOf(addressOf(pk)), "5a9c197589db292b6675d3218bccf94dae3cc313");
-    assert.equal(adresseDe("eidos-atelier-reseau-essai-v1", 0), hexOf(addressOf(pk)));
+    // l'adresse du coffre, elle, est WOTS+ : même graine, dérivation du nœud
+    assert.equal(adresseDe("eidos-atelier-reseau-essai-v1", 0), VECTEURS.wots.adresse);
   });
 
   it("signe et vérifie, refuse un autre message", () => {
@@ -98,7 +105,7 @@ describe("sécurité des clés", () => {
   it("l'atelier est reproductible et marqué public", () => {
     const c = coffreAtelier("une-piece");
     assert.equal(c.nature, "atelier");
-    assert.equal(c.sorties[0]?.adresse, "5a9c197589db292b6675d3218bccf94dae3cc313");
+    assert.equal(c.sorties[0]?.adresse, VECTEURS.wots.adresse);
     const a = auditerCoffre(c);
     const entropie = a.find((x) => x.id === "entropie");
     assert.equal(entropie?.etat, "attention");

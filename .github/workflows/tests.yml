@@ -30,8 +30,14 @@ jobs:
       - name: Emission et codec (6 controles)
         run: python eonis.py
 
-      - name: Carnet UTXO et signatures Lamport (11 controles)
+      - name: Signatures WOTS+ et arbre L (5 controles)
+        run: python wots.py
+
+      - name: Carnet UTXO, temoins WOTS+, racine UTXO (15 controles)
         run: python utxo.py
+
+      - name: Vecteurs partages Python <-> TS
+        run: python vecteurs.py
 
       - name: Robinet (file, carnet, budget)
         run: python robinet.py --test
@@ -39,10 +45,16 @@ jobs:
       - name: Artefacts robinet (œufs Paracelse)
         run: python -c "import noeud as N; N._test_artefact()"
 
+      - name: Envois (inclusion, double depense, malforme, expiration, 5 controles)
+        run: python -c "import noeud as N; N._test_envois()"
+
+      - name: Reprise --depuis (point de controle explicite, 3 controles)
+        run: python -c "import noeud as N; N._test_depuis()"
+
       - name: Difficulte et travail cumule (6 controles)
         run: python consensus.py
 
-      - name: Consensus federe (vivacite, 14 controles)
+      - name: Consensus federe XMSS (vivacite, tete signee, 16 controles)
         run: python federation.py
 
       - name: Persistance, aller-retour complet

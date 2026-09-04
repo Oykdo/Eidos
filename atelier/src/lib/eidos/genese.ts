@@ -206,7 +206,7 @@ export function verifierPortefeuille(coffre: Coffre): Controle[] {
     C(
       "adresses",
       adrOk,
-      "adresses = SHA-256(PK Lamport)[:20]",
+      "adresses = SHA-256(graine pub ∥ racine L)[:20]",
       adrOk ? "rejouées depuis la graine" : "non reproductibles",
     ),
     C(

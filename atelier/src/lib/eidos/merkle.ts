@@ -18,8 +18,10 @@ export function merkleRoot(txids: Uint8Array[]): Uint8Array {
   return lvl[0]!;
 }
 
+export type SortieMin = Pick<Sortie, "txid" | "rang" | "adresse" | "montant">;
+
 /** Engagement d'une sortie : txid ‖ rang ‖ adresse ‖ montant. */
-export function feuilleSortie(s: Sortie): Uint8Array {
+export function feuilleSortie(s: SortieMin): Uint8Array {
   return sha256d(
     concat(fromHex(s.txid), u32(s.rang), fromHex(s.adresse), u64(s.montant)),
   );
@@ -186,4 +188,27 @@ export function merkleDuCarnet(sorties: Sortie[]): {
 } {
   const feuilles = sorties.map(feuilleSortie);
   return { feuilles, niveaux: niveauxDe(feuilles) };
+}
+
+// ---------------------------------------------------------------------------
+// Racine UTXO du réseau = utxo.utxo_root : ordre canonique (txid, rang)
+// ---------------------------------------------------------------------------
+export function ordreCanonique<T extends SortieMin>(sorties: T[]): T[] {
+  return sorties
+    .slice()
+    .sort((a, b) => (a.txid < b.txid ? -1 : a.txid > b.txid ? 1 : a.rang - b.rang));
+}
+
+/** Racine du carnet entier, telle que le nœud l'inscrit dans l'en-tête signé. */
+export function utxoRoot(sorties: SortieMin[]): Uint8Array {
+  return merkleRoot(ordreCanonique(sorties).map(feuilleSortie));
+}
+
+/** Preuve d'une sortie du réseau contre la racine UTXO, depuis la liste
+ *  publiée (etat.json). `ref` = "txid:rang". */
+export function preuveReseau(sorties: SortieMin[], ref: string): Preuve | null {
+  const ordre = ordreCanonique(sorties);
+  const i = ordre.findIndex((s) => `${s.txid}:${s.rang}` === ref);
+  if (i < 0) return null;
+  return preuveDe(ordre.map(feuilleSortie), i, ref);
 }

@@ -11,17 +11,28 @@ import {
   utf8,
 } from "./hash.ts";
 import type { Coffre, Sortie } from "./types.ts";
+import {
+  OCTETS_TEMOIN as OCTETS_TEMOIN_WOTS,
+  adresse as adresseWots,
+  adresseDeGraine,
+  empreinte as empreinteWots,
+  empreinteDeGraine,
+  racineDepuisTemoin,
+  signer as signerWots,
+} from "./wots.ts";
 
+/** Lamport reste ici comme démonstration (réemploi, audit) ; les adresses,
+ *  les empreintes et les dépenses passent par WOTS+ (wots.ts), comme le nœud. */
 export const OCTETS_PK = 16_384;
 export const OCTETS_SIG = 8_192;
-const VERSION_TX = 1;
+const VERSION_TX = 2; // 1 : témoins Lamport ; 2 : témoins WOTS+
 
 function bitDuMessage(msg32: Uint8Array, i: number): 0 | 1 {
   const octet = msg32[i >> 3]!;
   return ((octet >>> (7 - (i & 7))) & 1) as 0 | 1;
 }
 
-/** Graine d'une adresse : SHA-256(« maitre/indice »), comme utxo.py. */
+/** Graine d'une adresse : SHA-256(« maitre/indice »), comme utxo.Portefeuille. */
 export function graineDe(maitre: string, indice: number): Uint8Array {
   return sha256(utf8(`${maitre}/${indice}`));
 }
@@ -91,16 +102,14 @@ export function adresseDe(maitre: string, indice: number): string {
   const k = `${maitre}/${indice}`;
   const hit = cacheAdr.get(k);
   if (hit) return hit;
-  const pk = lamportPublic(lamportSecret(graineDe(maitre, indice)));
-  const a = hexOf(addressOf(pk));
+  const a = hexOf(adresseDeGraine(graineDe(maitre, indice)));
   if (cacheAdr.size > 256) cacheAdr.clear();
   cacheAdr.set(k, a);
   return a;
 }
 
 export function empreintePk(maitre: string, indice: number): string {
-  const pk = lamportPublic(lamportSecret(graineDe(maitre, indice)));
-  return hexOf(sha256(pk));
+  return hexOf(empreinteDeGraine(graineDe(maitre, indice)));
 }
 
 export function coreTx(
@@ -144,6 +153,10 @@ export function signerEntrees(
   octets: number;
   erreur: string | null;
   adresseRendu: string | null;
+  /** core canonique (txid = SHA-256d) et témoins WOTS+ (graine publique,
+   *  signature), dans l'ordre des entrées : ce qu'envoi.ts sérialise. */
+  core: Uint8Array;
+  temoins: { grainePub: Uint8Array; sig: Uint8Array }[];
 } {
   const inputs = entrees.map((e) => ({
     txid: fromHex(e.txid),
@@ -160,41 +173,39 @@ export function signerEntrees(
   const core = coreTx(inputs, outputs);
   const txid = txidCore(core);
   const empreintes: string[] = [];
+  const temoins: { grainePub: Uint8Array; sig: Uint8Array }[] = [];
+  const octets = entrees.length * (1 + OCTETS_TEMOIN_WOTS);
   for (let i = 0; i < entrees.length; i++) {
     const e = entrees[i]!;
-    const sk = lamportSecret(graineDe(maitre, e.indice));
-    const pk = lamportPublic(sk);
-    if (hexOf(addressOf(pk)) !== e.adresse) {
+    const h = sighash(txid, i);
+    const temoin = signerWots(graineDe(maitre, e.indice), h);
+    // même contrôle que le carnet : la clé reconstruite depuis la signature
+    // doit donner l'adresse dépensée
+    const r = racineDepuisTemoin(temoin, h);
+    if (r === null || hexOf(adresseWots(temoin.grainePub, r)) !== e.adresse) {
       return {
         txid: hexOf(txid),
         ok: false,
         empreintes,
-        octets: entrees.length * (1 + OCTETS_PK + OCTETS_SIG),
+        octets,
         erreur: "La clé ne correspond pas à l'adresse.",
         adresseRendu,
+        core,
+        temoins,
       };
     }
-    const emp = hexOf(sha256(pk));
-    empreintes.push(emp);
-    const sig = lamportSign(sk, sighash(txid, i));
-    if (!lamportVerify(pk, sighash(txid, i), sig)) {
-      return {
-        txid: hexOf(txid),
-        ok: false,
-        empreintes,
-        octets: entrees.length * (1 + OCTETS_PK + OCTETS_SIG),
-        erreur: "Signature invalide.",
-        adresseRendu,
-      };
-    }
+    empreintes.push(hexOf(empreinteWots(temoin.grainePub, r)));
+    temoins.push(temoin);
   }
   return {
     txid: hexOf(txid),
     ok: true,
     empreintes,
-    octets: entrees.length * (1 + OCTETS_PK + OCTETS_SIG),
+    octets,
     erreur: null,
     adresseRendu,
+    core,
+    temoins,
   };
 }
 
@@ -242,9 +253,9 @@ export function auditerCoffre(coffre: Coffre): Constat[] {
   constats.push({
     id: "derive",
     etat: "ok",
-    titre: "Dérivation SHA-256 / Lamport",
+    titre: "Dérivation SHA-256 / WOTS+",
     detail:
-      "skᵢ = SHA-256(graine ∥ sk0|sk1 ∥ i). L'alphabet à trois figures n'entre jamais dans la graine.",
+      "skᵢ = PRF(graine, ADRS(chaîne i)), 67 chaînes tweakées. L'alphabet à trois figures n'entre jamais dans la graine.",
   });
 
   if (coffre.sorties.length > 0) {
@@ -255,7 +266,7 @@ export function auditerCoffre(coffre: Coffre): Constat[] {
       etat: recalculee === s.adresse ? "ok" : "faute",
       titre:
         recalculee === s.adresse
-          ? "Adresse = SHA-256(clé publique)[:20]"
+          ? "Adresse = SHA-256(graine publique ∥ racine L)[:20]"
           : "Adresse non reproductible",
       detail:
         recalculee === s.adresse

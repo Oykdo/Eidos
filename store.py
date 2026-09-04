@@ -13,7 +13,7 @@ Format, tout en gros-boutiste :
   entete  MAGIC(6) VERSION(2)
   bloc    LONGUEUR(4) CORPS
   corps   height(8) prev(32) ts(8) nonce(8) bits(1) n_tx(2) [tx]*
-  tx      len_core(4) core n_temoins(2) [flag(1) (pk(16384) sig(8192))?]*
+  tx      len_core(4) core n_temoins(2) [flag(1) (graine_pub(32) sig(2144))?]*
 
 Usage :  python3 store.py --init          cree une chaine neuve
          python3 store.py --mine 3        mine 3 blocs (coinbase seule)
@@ -31,11 +31,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import eonis as E
 import utxo as U
+import wots as W
 
 CHAINE = os.path.join(HERE, "chaine.dat")
 PORTEF = os.path.join(HERE, "portefeuille.json")
 MAGIC = b"EONIS\x00"
-FORMAT = 1
+FORMAT = 2                     # 2 : temoins WOTS+
 
 
 # ==========================================================================
@@ -78,9 +79,9 @@ def deser_tx(buf, i):
         if flag == 0:
             tx.witness.append(None)
         else:
-            pk = buf[i:i + 16384]; i += 16384
-            sig = buf[i:i + 8192]; i += 8192
-            tx.witness.append((pk, sig))
+            gp = buf[i:i + W.OCTETS_GRAINE]; i += W.OCTETS_GRAINE
+            sig = buf[i:i + W.OCTETS_SIG]; i += W.OCTETS_SIG
+            tx.witness.append((gp, sig))
     return tx, i
 
 
@@ -208,8 +209,7 @@ def cmd_pay(frais=500, bits=14):
     ch = Chaine().charger()
     p = PortefeuillePersistant()
     dispo = [(k, v) for k, v in p.sorties(ch.carnet)
-             if U.sha256(U.lamport_public(U.lamport_secret(p.graines[v[0]])))
-             not in ch.carnet.cles_usees]
+             if W.empreinte_de(p.graines[v[0]]) not in ch.carnet.cles_usees]
     if not dispo:
         raise SystemExit("aucune sortie depensable — minez d'abord")
     (k, (addr, montant)) = dispo[0]

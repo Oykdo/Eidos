@@ -16,9 +16,9 @@ export const POUSSIERE_ATOMES = 10_000;
  */
 export const MAX_ENTREES = 3;
 
-export const OCTETS_PK = 16_384;
-export const OCTETS_SIG = 8_192;
-export const OCTETS_TEMOIN = 1 + OCTETS_PK + OCTETS_SIG; // 24 577
+export const OCTETS_GRAINE_PUB = 32;
+export const OCTETS_SIG = 2_144; // WOTS+ w=16, 67 chaînes de 32 octets
+export const OCTETS_TEMOIN = 1 + OCTETS_GRAINE_PUB + OCTETS_SIG; // 2 177
 
 /** Prototype de mine : 14 bits, comme le nœud Python. Le bloc 0 est à 18. */
 export const BITS_MINE = 14;

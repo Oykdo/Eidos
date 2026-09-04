@@ -74,8 +74,10 @@ Les 2 bits de bourrage du 27ᵉ glyphe doivent être nuls — sinon l'adresse es
 
 Tout repose sur SHA-256, **sans aucune courbe elliptique**. La résistance quantique est structurelle.
 
-- **Lamport** pour les transactions. 16 384 octets de clé publique, 8 192 de signature. Une clé ne signe **qu'une fois**. Le portefeuille produit une adresse fraîche à chaque usage.
-- **Merkle (XMSS réduit)** pour les validateurs. 2^k clés Lamport, clé publique = racine (32 octets). Schéma à état : restaurer une sauvegarde ancienne, c'est rejouer des indices déjà publiés.
+- **WOTS+** pour les transactions (`wots.py`, RFC 8391 : w = 16, 67 chaînes SHA-256 tweakées par graine publique et adresse de hachage, arbre L). Le vérificateur reconstruit la clé publique depuis la signature : témoin de **2 176 octets** (graine publique 32 + signature 2 144), contre 24 576 en Lamport. Adresse = SHA-256(graine publique ‖ racine L)[:20]. Une clé ne signe **qu'une fois** : son empreinte ne peut apparaître qu'une fois dans la chaîne. Le portefeuille produit une adresse fraîche à chaque usage.
+- **XMSS** pour les validateurs. 2^k clés WOTS+ dans un arbre de Merkle tweaké, clé publique = (racine, graine publique). Signature de bloc : 4 + 2 144 + 32·k octets. Schéma à état : restaurer une sauvegarde ancienne, c'est rejouer des indices déjà publiés.
+- **Racine UTXO dans l'en-tête signé.** Chaque bloc déclare la racine de Merkle du carnet entier après lui (feuille = SHA-256d(txid ‖ rang ‖ adresse ‖ montant), ordre (txid, rang)) ; `id_bloc = SHA-256d(E.header ‖ racine)`. Un témoin qui reçoit la tête signée (`etat.json.tete_signee`) recompose `id_bloc`, vérifie la signature XMSS et juge une preuve de sortie sans rejouer. `noeud.py --depuis <h> <racine>` reprend à un point de contrôle explicite.
+- **Lamport** reste dans l'atelier comme démonstration (réemploi, audit), hors consensus.
 
 ### Consensus fédéré
 
@@ -89,8 +91,8 @@ Tout repose sur SHA-256, **sans aucune courbe elliptique**. La résistance quant
 
 Le coffre de l'atelier s'écrit dans **un seul fichier**.
 
-- Lamport signe une **dépense**, pas le fichier. Une sauvegarde signée brûlerait une clé à usage unique.
-- La **trace** est SHA-256d, liée à l'adresse Lamport courante (graine + indice).
+- WOTS+ signe une **dépense**, pas le fichier. Une sauvegarde signée brûlerait une clé à usage unique.
+- La **trace** est SHA-256d, liée à l'adresse WOTS+ courante (graine + indice).
 - Aucune courbe. Ce n'est pas le vault holographique d'Eidolon.
 - Un ancien `.psnx` JSON d'Eidos s'ouvre encore, puis se réécrit en `.carnet`.
 
@@ -101,12 +103,14 @@ Le coffre de l'atelier s'écrit dans **un seul fichier**.
 | `eonis.py` | 267 | émission, codec à trois figures |
 | `genesis.json` | 105 | paramètres gelés et empreintes |
 | `verify_genesis.py` | 134 | vérification indépendante — 32 contrôles |
-| `utxo.py` | 439 | carnet, Lamport, validation — 11 contrôles |
-| `store.py` | 278 | persistance et rejeu intégral |
+| `wots.py` | 284 | WOTS+ w=16, arbre L, adresses — 5 contrôles |
+| `utxo.py` | 507 | carnet, témoins WOTS+, racine UTXO, validation — 15 contrôles |
+| `store.py` | 278 | persistance et rejeu intégral (PoW, historique) |
 | `consensus.py` | 204 | difficulté et travail cumulé — 6 contrôles |
-| `federation.py` | 398 | MSS, rotation, vivacité — 14 contrôles |
-| `robinet.py` | 272 | robinet, budget, artefacts |
-| `noeud.py` | 507 | nœud, créneaux sautés, état publié |
+| `federation.py` | 470 | XMSS, rotation, vivacité, tête signée — 16 contrôles |
+| `robinet.py` | 313 | robinet, budget, file des envois — 10 contrôles |
+| `noeud.py` | 805 | nœud, envois, `--depuis`, état publié — 5 + 3 contrôles |
+| `vecteurs.py` | 147 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 6 familles) |
 
 ### Atelier web
 
@@ -127,7 +131,12 @@ Détail : [`atelier/README.md`](atelier/README.md). Live : [oykdo.github.io/Eido
 
 ```bash
 python3 verify_genesis.py     # 32 contrôles
-python3 utxo.py               # 11 contrôles
+python3 wots.py               # 5 contrôles
+python3 utxo.py               # 15 contrôles
+python3 vecteurs.py           # parité avec l'atelier
+python3 robinet.py --test     # 10 contrôles
+python3 -c "import noeud as N; N._test_envois()"   # 5 contrôles envoi
+python3 -c "import noeud as N; N._test_depuis()"   # 3 contrôles reprise
 python3 federation.py --demo  # vivacité, rotation
 cd atelier && npm test && npm run dev
 ```
@@ -136,7 +145,7 @@ cd atelier && npm test && npm run dev
 
 - **Pas de réseau.** Ni pairs, ni résolution de fork réelle.
 - **Pas de stockage de clés sécurisé.** La graine est en clair dans le fichier.
-- **Pas d'audit externe.** Lamport et Merkle sont des implémentations maison.
+- **Pas d'audit externe.** WOTS+, XMSS et l'arbre de Merkle sont des implémentations maison, écrites d'après la RFC 8391 sans vecteurs officiels.
 - **Une fédération n'est pas sans confiance.** `n` signataires connus peuvent s'entendre.
 - **La question ouverte est la gouvernance**, pas la cryptographie.
 - **Cadre réglementaire.** Prototyper est libre ; émettre et distribuer relève de MiCA dans l'UE.
@@ -175,10 +184,12 @@ Three storeys, four states (empty, circle, crescent, cross). 6 bits per glyph. A
 
 SHA-256 only. **No elliptic curves.** Quantum resistance is structural.
 
-- **Lamport** for spends. 16 384-byte public key, 8 192-byte signature. A key signs **once**. The wallet emits a fresh address after every use.
-- **Merkle (reduced XMSS)** for validators. Stateful: restoring an old snapshot replays published indices.
+- **WOTS+** for spends (RFC 8391, w = 16, tweaked SHA-256 chains, L-tree). The verifier rebuilds the public key from the signature: a **2 176-byte** witness (32-byte public seed + 2 144-byte signature) instead of 24 576 with Lamport. Address = SHA-256(public seed ‖ L-tree root)[:20]. A key signs **once**. The wallet emits a fresh address after every use.
+- **XMSS** for validators: 2^k WOTS+ keys in a tweaked Merkle tree, public key = (root, public seed). Stateful: restoring an old snapshot replays published indices.
+- **UTXO root in the signed header.** Every block commits to the Merkle root of the whole ledger after it; `id_bloc = SHA-256d(E.header ‖ root)`. A witness holding the signed head (`etat.json.tete_signee`) recomputes `id_bloc`, checks the XMSS signature and judges an output proof without replaying. `noeud.py --depuis <h> <root>` resumes from an explicit checkpoint.
+- Lamport remains in the atelier as a demonstration (reuse, audit), outside consensus.
 
-Lamport signs a **spend**, not the snapshot. Signing `eidos.carnet` would burn a one-time key.
+WOTS+ signs a **spend**, not the snapshot. Signing `eidos.carnet` would burn a one-time key.
 
 ### Federated consensus
 
@@ -192,7 +203,7 @@ Lamport signs a **spend**, not the snapshot. Signing `eidos.carnet` would burn a
 
 One file holds the seed, coins, relics and chain.
 
-- Trace = SHA-256d, bound to the current Lamport address (seed + index).
+- Trace = SHA-256d, bound to the current WOTS+ address (seed + index).
 - No curve. This is not Eidolon’s holographic vault.
 - A legacy Eidos JSON `.psnx` still opens, then rewrites as `.carnet`.
 

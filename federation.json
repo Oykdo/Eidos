@@ -1,22 +1,34 @@
 {
- "spec": "eidos-federation/1",
+ "spec": "eidos-federation/2",
  "reseau": "essai",
  "n": 7,
- "hauteur_mss": 10,
- "signatures_par_cle": 1024,
+ "signatures": "XMSS — WOTS+ w=16, SHA-256, arbre L, RFC 8391 (wots.py, federation.py)",
+ "hauteur_mss": 12,
+ "signatures_par_cle": 4096,
  "creneau_s": 3600,
  "pas_rotation": 3,
- "t0_unix": 1756540680,
- "t0_iso": "2026-08-30T09:58:00+02:00",
- "derivation_graines": "sha256('eidos-testnet-1/validateur/<i>')",
+ "t0_unix": 1788519600,
+ "t0_iso": "2026-09-04T11:00:00Z",
+ "derivation_graines": "sha256('eidos-testnet-3/validateur/<i>')",
+ "graine_publique": "sha256(graine || 'pub')",
+ "format_chaine": 2,
  "avertissement": "Reseau d'essai : graines publiques, aucune valeur.",
  "racines": [
-  "ae5997eed7ca93d285bb92390effcd04aa0b6b55d8665f23504616eafe83b31d",
-  "04603752ab570acb7b85f7a2b278df367e95563d073c02f9e0981112bd494b69",
-  "29bb8930ef899aca30fe3b6005a8e8aebe76ecc673906e07311cb79f9a1be7d5",
-  "44272e8ceb41245824ce09d90e0ddf639fdd29557a02d3d58631f52a91fe3a56",
-  "a91fec501cfd12a2a57ed7c5d9e8996d290d71af6f64d98124515d15c2959d76",
-  "e6612d17054049eebcf045f441bef0f2461e48c56d198df3ca22f168223e3406",
-  "ba31d0a39f621e1cbf17b4c62e1d133a79f1dccd60af15e9149bebdb88d88190"
+  "8c46fbeef3597333a33b1ea6a76de0d31e96b5b601902593b35bc2979f85a67d",
+  "64a4935eb06c3a419ec91128acbeafa7f7a3872dbeb85a1965fab9944f0c6055",
+  "81b8bb1c68639ab6c9268ca78e860481c192d26e574389973db585537ecc4c06",
+  "20251032116dfd4bedf08d9e7a5a05b42ab824fd373b9e62f93b2d33cb730f31",
+  "ffd76836b9019297613dff96b7c14c76584caede411bd6b2c4045231ccae306d",
+  "3c23a2d2a20ef9b9eeea43833307df67c0b184632dc217cf4e4b1feeb68d5661",
+  "8ebf05b190de33b9f82b32573154491689dfbe33b3ea7a9985bee4baf44aeaf8"
+ ],
+ "graines_publiques": [
+  "68dc3e490a91aaa3c45435b68e50a5db8e1ee9e1718d2efee1da2874f371e4eb",
+  "159db0ea47db065b379217b1f418e31fffa24ff059cb366c0adc5e4ca0972dee",
+  "fcf9633be2440afd4f04db2c9a420751aa98ef84003c4fe239d7ed70ffea201d",
+  "ecdb55e4981bcec81e95894adf3d5e41e39190fad2c5eda89d67c1b74e48f2d1",
+  "98d02a39a25ffa1bdb22e4f44e37a42a1bfa22b5752a29a3f23992eac4508624",
+  "86cb211846592e0e590821843932457cabc281b13ee46cc40ea5c378ab18e9cd",
+  "f7e689321c8354753dfd54c950d02fa8c68357fec972ddf48fcffb2e43f527cf"
  ]
 }

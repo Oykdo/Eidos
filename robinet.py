@@ -6,6 +6,11 @@ robinet.py — file d'attente des demandes du reseau d'essai.
 Lit le corps d'une issue GitHub, y cherche une adresse Eidos valide, et
 l'inscrit dans mempool.json. Le noeud la servira au bloc suivant.
 
+Une issue « envoi » porte une transaction signee (ser_tx en base64, entre
+-----EIDOS----- et -----FIN-----) : elle est inscrite telle quelle avec le
+creneau courant ; le noeud la valide, l'inclut ou la refuse avec un motif,
+et la laisse expirer apres T creneaux (noeud.EXPIRATION_ENVOI).
+
 Le carnet tranche, pas la file :
   1. une sortie non depensee a cette adresse → refus (depenser d'abord)
   2. budget d'epoque a·T/8 deja servi + file → refus
@@ -19,15 +24,17 @@ groupes de trois, et la somme de controle doit concorder. Tout le reste du
 texte est ignore.
 
   python3 robinet.py --issue        lit l'environnement, ajoute a la file
+  python3 robinet.py --envoi        idem pour une transaction signee
   python3 robinet.py --file         affiche la file
   python3 robinet.py --test         controles
 """
 
-import base64, hashlib, json, os, re, sys
+import base64, hashlib, json, os, re, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MEMPOOL = os.path.join(HERE, "mempool.json")
 ETAT = os.path.join(HERE, "etat.json")
+FEDERATION = os.path.join(HERE, "federation.json")
 
 FIGURES = "\u00b7\u25cb\u263d\u271a"          # vide, cercle, croissant, croix
 INDEX = {c: i for i, c in enumerate(FIGURES)}
@@ -95,6 +102,18 @@ def charger_etat():
     return json.load(open(ETAT, encoding="utf-8"))
 
 
+def creneau_courant(maintenant=None, config=None):
+    """Creneau de la federation a l'instant donne, ou None sans
+    federation.json : le noeud fera alors partir l'horloge a sa premiere
+    lecture. Meme formule que federation.Federation.creneau."""
+    if config is None:
+        if not os.path.exists(FEDERATION):
+            return None
+        config = json.load(open(FEDERATION, encoding="utf-8"))
+    now = int(time.time()) if maintenant is None else maintenant
+    return (now - config["t0_unix"]) // config["creneau_s"]
+
+
 def budget_depuis_a(a):
     return a * T_EPOQUE * MONTANT_ATOMES // BUDGET_RATIO
 
@@ -132,7 +151,8 @@ def refus(motif):
 
 DEBUT = "-----EIDOS-----"
 FIN = "-----FIN-----"
-B64 = re.compile(r"^[A-Za-z0-9+/=]{200,}$")
+B64 = re.compile(r"^[A-Za-z0-9+/=]{200,}$")          # hors marqueurs : longues lignes
+B64_DELIMITE = re.compile(r"^[A-Za-z0-9+/=]{4,}$")    # entre marqueurs : toute ligne
 MAX_TX_CARACTERES = 80000
 
 
@@ -143,11 +163,13 @@ def extraire_transaction(texte: str) -> str:
     interprete ici — c'est le noeud qui le validera, et une transaction
     fautive est ecartee sans faire echouer le bloc."""
     lignes = texte.splitlines()
+    motif = B64
     if DEBUT in texte and FIN in texte:
         d = next(i for i, l in enumerate(lignes) if DEBUT in l)
         f = next(i for i, l in enumerate(lignes) if FIN in l and i > d)
         lignes = lignes[d + 1:f]
-    morceaux = [l.strip() for l in lignes if B64.match(l.strip())]
+        motif = B64_DELIMITE
+    morceaux = [l.strip() for l in lignes if motif.match(l.strip())]
     if not morceaux:
         raise ValueError("aucune transaction trouvee dans ce message")
     jeton = "".join(morceaux)
@@ -174,13 +196,17 @@ def ajouter_envoi():
     if any(d.get("donnees") == donnees for d in f["demandes"]):
         print("transaction deja en file")
         return
-    f["demandes"].append({
+    d = {
         "type": "envoi",
         "issue": numero,
         "octets": len(base64.b64decode(donnees)),
         "donnees": donnees,
         "etat": "en_attente",
-    })
+    }
+    creneau = creneau_courant()
+    if creneau is not None:
+        d["creneau"] = creneau
+    f["demandes"].append(d)
     ecrire_file(f)
     print(f"transaction inscrite : {len(base64.b64decode(donnees))} octets "
           f"(issue #{numero})")
@@ -246,7 +272,22 @@ def _tests():
     file = {"demandes": []}
     etat["robinet_epoque_atomes"] = 503_900_000_000
     assert budget_ok(etat, file, extra=1)
-    print("ok : 8 controles robinet")
+    # creneau d'inscription d'un envoi : meme formule que la federation
+    cfg = {"t0_unix": 1756540680, "creneau_s": 3600}
+    assert creneau_courant(1756540680 + 5 * 3600 + 10, cfg) == 5
+    assert creneau_courant(1756540680 - 1, cfg) == -1
+    # une transaction encapsulee est retrouvee entiere, les lignes etrangeres ignorees
+    brut = bytes(range(256)) * 2
+    b64 = base64.b64encode(brut).decode()
+    corps = ("bonjour\n" + DEBUT + "\n" +
+             "\n".join(b64[i:i + 76] for i in range(0, len(b64), 76)) +
+             "\npas du base64 ici\n" + FIN + "\nmerci\n")
+    assert base64.b64decode(extraire_transaction(corps)) == brut
+    try:
+        extraire_transaction("rien ici"); raise AssertionError("aurait du echouer")
+    except ValueError:
+        pass
+    print("ok : 10 controles robinet")
 
 
 if __name__ == "__main__":

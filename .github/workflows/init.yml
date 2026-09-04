@@ -27,27 +27,37 @@ jobs:
               sys.exit("REFUS : chaine-eidos.dat existe deja. Regenerer les "
                        "racines invaliderait tous les blocs deja signes.")
 
-          N, HAUTEUR, GRAINE = 7, 10, "eidos-testnet-1"
+          # GRAINE doit etre egal a noeud.GRAINE ; hauteur 12 = 4096 signatures
+          # par validateur, ~40 s de generation par cle.
+          N, HAUTEUR, GRAINE = 7, 12, "eidos-testnet-3"
           t = time.time()
-          racines = []
+          racines, graines_pub = [], []
           for i in range(N):
               s = hashlib.sha256(f"{GRAINE}/validateur/{i}".encode()).digest()
-              racines.append(F.CleValidateur(s, HAUTEUR).racine.hex())
-              print(f"validateur {i} : {racines[-1]}")
+              k = F.CleValidateur(s, HAUTEUR)
+              racines.append(k.racine.hex()); graines_pub.append(k.graine_pub.hex())
+              print(f"validateur {i} : {racines[-1]}  ({time.time() - t:.0f} s)")
 
+          import datetime
+          now = int(time.time()); t0 = now - now % 3600
           cfg = {
-           "spec": "eidos-federation/1",
+           "spec": "eidos-federation/2",
            "reseau": "essai",
            "n": N,
+           "signatures": "XMSS — WOTS+ w=16, SHA-256, arbre L, RFC 8391 (wots.py, federation.py)",
            "hauteur_mss": HAUTEUR,
            "signatures_par_cle": 1 << HAUTEUR,
            "creneau_s": 3600,
            "pas_rotation": 3,
-           "t0_unix": 1756540680,
-           "t0_iso": "2026-08-30T09:58:00+02:00",
+           "t0_unix": t0,
+           "t0_iso": datetime.datetime.fromtimestamp(t0, datetime.timezone.utc)
+                      .isoformat().replace("+00:00", "Z"),
            "derivation_graines": f"sha256('{GRAINE}/validateur/<i>')",
+           "graine_publique": "sha256(graine || 'pub')",
+           "format_chaine": 2,
            "avertissement": "Reseau d'essai : graines publiques, aucune valeur.",
            "racines": racines,
+           "graines_publiques": graines_pub,
           }
           json.dump(cfg, open("federation.json", "w"), indent=1, ensure_ascii=False)
           print(f"\nfederation.json ecrit en {time.time()-t:.1f} s")

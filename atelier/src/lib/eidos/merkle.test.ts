@@ -1,5 +1,18 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { hexOf as hexOfV } from "./hash.ts";
+import { preuveReseau, utxoRoot, verifierPreuve as verifierPreuveV } from "./merkle.ts";
+
+const VEC = JSON.parse(
+  readFileSync(new URL("../../../../vecteurs.json", import.meta.url), "utf8"),
+) as {
+  carnet: {
+    sorties: { txid: string; rang: number; adresse: string; montant: number }[];
+    feuilles: string[];
+    utxo_root: string;
+  };
+};
 import { hexOf } from "./hash.ts";
 import {
   etapesDe,
@@ -126,5 +139,21 @@ describe("preuve d'inclusion", () => {
     const a = feuilleSortie(s);
     const b = feuilleSortie({ ...s, montant: s.montant + 1 });
     assert.notEqual(hexOf(a), hexOf(b));
+  });
+});
+
+describe("racine UTXO = utxo.utxo_root", () => {
+  it("ordre canonique (txid, rang), même racine quel que soit l'ordre d'entrée", () => {
+    const s = VEC.carnet.sorties;
+    assert.equal(hexOfV(utxoRoot(s)), VEC.carnet.utxo_root);
+    assert.equal(hexOfV(utxoRoot(s.slice().reverse())), VEC.carnet.utxo_root);
+    assert.equal(hexOfV(utxoRoot([])), "00".repeat(32));
+    for (const ref of s.map((x) => `${x.txid}:${x.rang}`)) {
+      const p = preuveReseau(s.slice().reverse(), ref);
+      assert.ok(p);
+      assert.equal(p.racine, VEC.carnet.utxo_root);
+      assert.ok(verifierPreuveV(p));
+    }
+    assert.equal(preuveReseau(s, "ff".repeat(32) + ":0"), null);
   });
 });
