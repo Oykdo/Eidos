@@ -7,6 +7,7 @@ import {
   ascensionDe,
   choixDeSalle,
   commencerDansCoffre,
+  destinationsDeSalle,
   enCours,
   exporterAscension,
   finDeSalleDansCoffre,
@@ -16,7 +17,7 @@ import { hexOf } from "./hash.ts";
 import { graineDon } from "./hotes.ts";
 import { tourDe } from "./jauge.ts";
 import { preuveReseau, serialiser } from "./merkle.ts";
-import { ETAPES } from "./pendule.ts";
+import { ETAPES, etageDe } from "./pendule.ts";
 import { parserFederation, parserTeteReseau } from "./temoin.ts";
 import { coffreAtelier, coffreNeuf } from "./wallet.ts";
 
@@ -61,7 +62,10 @@ describe("ascension — exploration libre, le pendule en fin de salle", () => {
     assert.equal(ascensionDe(fin)!.choix.length, ETAPES - 1);
     assert.equal(etapes.length, ETAPES - 1);
     assert.ok(etapes.every((e, i) => i === 0 || e >= etapes[i - 1]! || true));
-    assert.ok(tourDe(fin).etage >= 226, `dernière salle dans la bande d'Uranie : ${tourDe(fin).etage}`);
+    assert.ok(
+      tourDe(fin).etage >= 226,
+      `dernière salle dans la bande d'Uranie : ${tourDe(fin).etage}`,
+    );
     assert.ok("erreur" in exporterAscension(fin), "libre : rien à exporter");
     assert.equal((finDeSalleDansCoffre(fin, []) as { code: string }).code, "finie");
   });
@@ -111,6 +115,51 @@ describe("ascension — exploration libre, le pendule en fin de salle", () => {
     const v = jugerAscension(ex, fed);
     assert.ok(v.ok, v.ok ? "" : v.motif);
     assert.ok("erreur" in exporterAscension(c), "en cours : pas d'export");
+  });
+
+  it("le joueur décide : trois destinations annoncées (l'étage, jamais la case), le choix pris change le parcours", () => {
+    const c = commencerDansCoffre(coffreAtelier("vide"), null);
+    const d = destinationsDeSalle(c, []);
+    assert.ok(d !== null && d.length === 3);
+    assert.equal(d!.filter((x) => x.lu).length, 1, "un seul choix proposé");
+    assert.equal(d!.find((x) => x.lu)!.choix, choixDeSalle(tourDe(c), 0));
+    for (const x of d!) assert.equal(x.etage, etageDe(1, x.p));
+    const autre = d!.find((x) => !x.lu)!;
+    const r = finDeSalleDansCoffre(c, [], autre.choix);
+    assert.ok(r.ok && r.fin === null);
+    assert.equal(r.etage, autre.etage);
+    assert.equal(ascensionDe(r.coffre)!.choix[0], autre.choix);
+    assert.equal(ascensionDe(r.coffre)!.p, autre.p);
+    const lu = finDeSalleDansCoffre(c, [], null);
+    assert.ok(
+      lu.ok && lu.choix === d!.find((x) => x.lu)!.choix,
+      "sans décision, le pendule lit l'acte",
+    );
+    assert.equal(
+      destinationsDeSalle(coffreAtelier("vide"), []),
+      null,
+      "hors ascension : rien à décider",
+    );
+  });
+
+  it("des décisions ancrées s'exportent et se jugent comme une lecture ; la dernière salle ne décide rien", () => {
+    let c = commencerDansCoffre(coffreAtelier("vide"), { tete, piece, preuve });
+    let salles = 0;
+    for (let k = 0; k < ETAPES; k++) {
+      const d = destinationsDeSalle(c, []);
+      if (k + 1 < ETAPES) assert.ok(d !== null && d.length === 3);
+      else assert.equal(d, null, "dernière salle : le sommet, pas de choix");
+      const r = finDeSalleDansCoffre(c, [], d ? d[k % 3]!.choix : null);
+      assert.ok(r.ok);
+      c = r.coffre;
+      salles += 1;
+      if (r.fin !== null) break;
+    }
+    assert.equal(salles, ETAPES);
+    assert.equal(ascensionDe(c)!.fin, "sommet");
+    const ex = exporterAscension(c);
+    assert.ok(!("erreur" in ex), "erreur" in ex ? ex.erreur : "");
+    assert.ok(jugerAscension(ex, fed).ok);
   });
 
   it("le don d'un hôte dépend de la case d'arrivée pendant une ascension", () => {

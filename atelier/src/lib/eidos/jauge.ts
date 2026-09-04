@@ -12,7 +12,7 @@
  */
 
 import { estNomAge } from "./relique.ts";
-import { ETAGES, etageDe } from "./tour.ts";
+import { DALLE_N, ETAGES, etageDe } from "./tour.ts";
 import type { Coffre, ElixirBu, Espece, NomAge, Tour } from "./types.ts";
 
 export function tourVide(): Tour {
@@ -28,6 +28,7 @@ export function tourVide(): Tour {
     elixirs: [],
     portes: [],
     captures: [],
+    fouilles: [],
     liberee: null,
     porte: null,
     capsules: [],
@@ -46,16 +47,33 @@ function ascension(x: unknown): Tour["ascension"] {
   const x0 = entier(s?.x, 0, 8);
   const y0 = entier(s?.y, 0, 8);
   if (etape === null || p === null || x0 === null || y0 === null) return null;
-  const choix = Array.isArray(a.choix) ? a.choix.filter((c) => c === "monter" || c === "lire" || c === "offrir") : [];
-  const mots = Array.isArray(a.mots) ? a.mots.map((m) => entier(m, 0, 0xffffffff)).filter((m): m is number => m !== null) : [];
+  const choix = Array.isArray(a.choix)
+    ? a.choix.filter((c) => c === "monter" || c === "lire" || c === "offrir")
+    : [];
+  const mots = Array.isArray(a.mots)
+    ? a.mots.map((m) => entier(m, 0, 0xffffffff)).filter((m): m is number => m !== null)
+    : [];
   if (choix.length !== mots.length) return null;
   const fin = a.fin === "sommet" || a.fin === "porte" || a.fin === "abandon" ? a.fin : null;
   const an = a.ancre as Record<string, unknown> | null | undefined;
-  let ancre: Tour["ascension"] extends infer T ? (T extends { ancre: infer U } ? U : never) : never = null;
+  let ancre: Tour["ascension"] extends infer T
+    ? T extends { ancre: infer U }
+      ? U
+      : never
+    : never = null;
   if (an && typeof an === "object" && an.tete && an.piece && an.preuve) {
     ancre = an as unknown as NonNullable<typeof ancre>;
   }
-  return { graine: a.graine, ancre, etape, p, spawn: { x: x0, y: y0 }, choix: choix as ("monter" | "lire" | "offrir")[], mots, fin };
+  return {
+    graine: a.graine,
+    ancre,
+    etape,
+    p,
+    spawn: { x: x0, y: y0 },
+    choix: choix as ("monter" | "lire" | "offrir")[],
+    mots,
+    fin,
+  };
 }
 
 function entier(x: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): number | null {
@@ -124,6 +142,22 @@ function elixirsBus(xs: unknown): ElixirBu[] {
   return out;
 }
 
+/** (étage, x, y) : étage borné, case dans la dalle, sans doublon. */
+function triplets(x: unknown): [number, number, number][] {
+  const out: [number, number, number][] = [];
+  if (!Array.isArray(x)) return out;
+  for (const v of x) {
+    if (!Array.isArray(v) || v.length !== 3) continue;
+    const e = entier(v[0], 0, ETAGES - 1);
+    const a = entier(v[1], 0, DALLE_N - 1);
+    const b = entier(v[2], 0, DALLE_N - 1);
+    if (e === null || a === null || b === null) continue;
+    if (out.some((w) => w[0] === e && w[1] === a && w[2] === b)) continue;
+    out.push([e, a, b]);
+  }
+  return out;
+}
+
 /** Relecture tolérante : tout champ absent ou absurde revient à sa valeur vide. */
 export function normaliserTour(x: unknown): Tour {
   const v = tourVide();
@@ -149,6 +183,7 @@ export function normaliserTour(x: unknown): Tour {
     elixirs: elixirsBus(t.elixirs),
     portes,
     captures: paires(t.captures, 2),
+    fouilles: triplets(t.fouilles),
     liberee: entier(t.liberee, 0, 0xffffffff),
     porte: entier(t.porte, 0, 0xffffffff),
     capsules: jours(t.capsules),

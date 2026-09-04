@@ -31,6 +31,14 @@ import { FIGURES } from "@/lib/eidos/constantes.ts";
 import { signatureDe } from "@/lib/eidos/inventaire.ts";
 import { PORTES } from "@/lib/eidos/sceaux.ts";
 import { enCours } from "@/lib/eidos/ascension.ts";
+import {
+  aUneTrouvaille,
+  bechesRestantes,
+  caseOccupant,
+  fouillesFaites,
+  spawnIci,
+} from "@/lib/eidos/fouilles.ts";
+import { tourDe } from "@/lib/eidos/jauge.ts";
 import { Pendule } from "@/components/tour/Pendule";
 import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";
 import type { ObjetPorte } from "@/lib/eidos/types.ts";
@@ -94,6 +102,7 @@ export function TourView() {
   const prendre = useCoffre((s) => s.prendre);
   const franchir = useCoffre((s) => s.franchir);
   const fouiller = useCoffre((s) => s.fouiller);
+  const fouillerCase = useCoffre((s) => s.fouillerCase);
   const capsuleThalie = useCoffre((s) => s.capsuleThalie);
   const forgerCapsule = useCoffre((s) => s.forgerCapsule);
   const tournerTour = useCoffre((s) => s.tournerTour);
@@ -134,6 +143,10 @@ export function TourView() {
   const coupe = useMemo(() => coupeDe(etage), [etage]);
   const dalle = useMemo(() => dalleDe(etage), [etage]);
   const occupants = useMemo(() => occupantsRestants(coffre, etage), [coffre, etage]);
+  const jauge = useMemo(() => tourDe(coffre), [coffre]);
+  const faites = useMemo(() => fouillesFaites(jauge, etage), [jauge, etage]);
+  const arrivee = spawnIci(coffre, etage);
+  const beches = bechesRestantes(jauge, etage);
   const lec = useMemo(() => resonanceEtageDuCoffre(coffre, etage), [coffre, etage]);
   const occ = occupants.find((o) => o.k === k) ?? occupants[0] ?? null;
   const porteur = porteurDe(coffre);
@@ -222,23 +235,54 @@ export function TourView() {
             </div>
           ) : null}
         </div>
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-2 flex items-start gap-3">
           <div
-            className="grid w-24 gap-[2px]"
+            className="grid w-44 shrink-0 gap-[2px]"
             style={{ gridTemplateColumns: "repeat(9, minmax(0, 1fr))" }}
             aria-label={t("tour.dalle")}
           >
             {dalle.flatMap((row, y) =>
-              row.map((b, x) => (
-                <div
-                  key={`${x}-${y}`}
-                  className="aspect-square rounded-[1px]"
-                  style={{ background: b ? TEINTE_BIOME[biome.id] : "#0e1116" }}
-                />
-              )),
+              row.map((b, x) => {
+                const creusee = faites.some((f) => f.x === x && f.y === y);
+                const ici = arrivee !== null && arrivee.x === x && arrivee.y === y;
+                const occupant = occupants.find((o) => {
+                  const k = caseOccupant(o.k);
+                  return k.x === x && k.y === y;
+                });
+                const signe = ici
+                  ? "◆"
+                  : occupant
+                    ? "○"
+                    : creusee
+                      ? aUneTrouvaille(etage, x, y)
+                        ? "✓"
+                        : "·"
+                      : "";
+                return (
+                  <button
+                    key={`${x}-${y}`}
+                    type="button"
+                    disabled={!b || (creusee && !occupant)}
+                    onClick={() => (occupant ? setK(occupant.k) : fouillerCase(x, y))}
+                    title={`(${x}, ${y})`}
+                    className="flex aspect-square items-center justify-center rounded-[1px] font-mono text-[9px] leading-none text-encre disabled:cursor-default"
+                    style={{
+                      background: b ? TEINTE_BIOME[biome.id] : "#0e1116",
+                      opacity: b && creusee ? 0.55 : 1,
+                    }}
+                  >
+                    {signe}
+                  </button>
+                );
+              }),
             )}
           </div>
-          <p className="font-mono text-[11px] text-sourd">{t("tour.dalle")}</p>
+          <div className="min-w-0 font-mono text-[11px] text-sourd">
+            <p>
+              {t("tour.dalle")} · {t("tour.dalle.beches", { n: beches })}
+            </p>
+            <p className="mt-1 leading-relaxed text-pretty">{t("tour.dalle.lede")}</p>
+          </div>
         </div>
 
         <Pendule />

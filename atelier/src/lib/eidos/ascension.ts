@@ -5,7 +5,9 @@
  * salle**, le pendule lit ce que ce coffre y a fait — honoré l'hôte : « offrir » ;
  * ouvert l'alcôve, franchi l'antre, pris un occupant : « lire » ; rien : « monter » —
  * et l'objet porté, puis dépose à l'étage et à la case qu'il calcule (pendule.ts).
- * Le joueur ne choisit pas un jeton abstrait : son acte est son choix.
+ * Le pendule lit l'acte et le propose ; le joueur décide en fin de salle parmi
+ * les trois, l'étage de chaque choix en clair (`destinationsDeSalle`), la case
+ * jamais : elle reste au pendule.
  *
  * Deux graines possibles : libre (le coffre et sa chaîne locale : une lecture,
  * rien ne compte) ou ancrée (ancrage.ts : la tête signée et une pièce prouvée,
@@ -16,12 +18,26 @@
  * porte l'état ; elle est hors feuille, comme tout ce que la Tour note.
  */
 
-import { assemblerAscension, graineAncree, type Ascension as AscensionExportee } from "./ancrage.ts";
+import {
+  assemblerAscension,
+  graineAncree,
+  type Ascension as AscensionExportee,
+} from "./ancrage.ts";
 import { concat, fromHex, hexOf, sha256d, utf8 } from "./hash.ts";
 import { arriverDansCoffre } from "./secrets.ts";
 import { tourDe } from "./jauge.ts";
 import type { PreuvePortable, SortieMin } from "./merkle.ts";
-import { CHOIX, ETAPES, etageDe, penduleInitial, spawnDe, transition, TAG_PENDULE, type Choix, type Spawn } from "./pendule.ts";
+import {
+  CHOIX,
+  ETAPES,
+  etageDe,
+  penduleInitial,
+  spawnDe,
+  transition,
+  TAG_PENDULE,
+  type Choix,
+  type Spawn,
+} from "./pendule.ts";
 import { agesScelles, porteDe, sceauxDuCoffre, type EntreeMonde } from "./sceaux.ts";
 import type { TeteReseau } from "./temoin.ts";
 import type { Coffre, Tour } from "./types.ts";
@@ -56,7 +72,12 @@ export function graineLibre(c: Pick<Coffre, "maitre" | "n" | "chaine">): Uint8Ar
 /** Ce que le pendule lit dans la salle : l'acte du coffre, pas un jeton. */
 export function choixDeSalle(t: Tour, etage: number): Choix {
   if (t.dons.includes(etage)) return "offrir";
-  if (t.alcoves.includes(etage) || t.antres.includes(etage) || t.captures.some(([e]) => e === etage)) return "lire";
+  if (
+    t.alcoves.includes(etage) ||
+    t.antres.includes(etage) ||
+    t.captures.some(([e]) => e === etage)
+  )
+    return "lire";
   return "monter";
 }
 
@@ -76,26 +97,87 @@ export function commencerDansCoffre(c: Coffre, ancre: Ancre | null): Coffre {
   const h0 = sha256d(concat(TAG_PENDULE, graine, u8(0), u8(0), u8(p)));
   const base = arriverDansCoffre(c, 0).coffre;
   const t = tourDe(base);
-  const ascension: AscensionEnCours = { graine: hexOf(graine), ancre, etape: 0, p, spawn: spawnDe(h0, p), choix: [], mots: [], fin: null };
+  const ascension: AscensionEnCours = {
+    graine: hexOf(graine),
+    ancre,
+    etape: 0,
+    p,
+    spawn: spawnDe(h0, p),
+    choix: [],
+    mots: [],
+    fin: null,
+  };
   return { ...base, tour: { ...t, depuis: 0, ascension } };
 }
 
 export type FinDeSalle =
-  | { ok: true; coffre: Coffre; choix: Choix; etage: number; spawn: Spawn; fin: AscensionEnCours["fin"] }
+  | {
+      ok: true;
+      coffre: Coffre;
+      choix: Choix;
+      etage: number;
+      spawn: Spawn;
+      fin: AscensionEnCours["fin"];
+    }
   | { ok: false; code: "aucune" | "finie" };
 
-/** Le pendule tranche : choix lu, objet porté, transition, arrivée — ou arrêt. */
-export function finDeSalleDansCoffre(c: Coffre, monde: readonly EntreeMonde[] | null): FinDeSalle {
+export type Destination = {
+  choix: Choix;
+  p: number;
+  etage: number;
+  porteFermee: boolean;
+  lu: boolean;
+};
+
+/** Où le pendule déposerait pour chacun des trois choix : l'étage, jamais la case. Null à la dernière salle. */
+export function destinationsDeSalle(
+  c: Coffre,
+  monde: readonly EntreeMonde[] | null,
+): Destination[] | null {
+  const t = tourDe(c);
+  const a = t.ascension;
+  if (!a || a.fin !== null || a.etape + 1 >= ETAPES) return null;
+  const lu = choixDeSalle(t, t.etage);
+  const graine = fromHex(a.graine);
+  const mot = t.porte ?? 0;
+  const ages = agesScelles(sceauxDuCoffre(monde, c), c);
+  return CHOIX.map((choix) => {
+    const { p } = transition(graine, a.etape, a.p, t.etage, choix, mot);
+    const e = etageDe(a.etape + 1, p);
+    let porteFermee = false;
+    for (let x = t.etage + 1; x <= e; x++) {
+      if (!porteDe(x, ages, c).ouverte) {
+        porteFermee = true;
+        break;
+      }
+    }
+    return { choix, p, etage: e, porteFermee, lu: choix === lu };
+  });
+}
+
+/** Le pendule tranche : choix décidé (ou lu), objet porté, transition, arrivée — ou arrêt. */
+export function finDeSalleDansCoffre(
+  c: Coffre,
+  monde: readonly EntreeMonde[] | null,
+  decision: Choix | null = null,
+): FinDeSalle {
   const t = tourDe(c);
   const a = t.ascension;
   if (!a) return { ok: false, code: "aucune" };
   if (a.fin !== null) return { ok: false, code: "finie" };
   const i = a.etape;
-  const choix = choixDeSalle(t, t.etage);
+  const choix = decision ?? choixDeSalle(t, t.etage);
   if (i + 1 >= ETAPES) {
     // dernière salle : rien à trancher, 26 choix suffisent aux 27 étapes
     const fini = { ...a, fin: "sommet" as const };
-    return { ok: true, coffre: { ...c, tour: { ...t, ascension: fini } }, choix, etage: t.etage, spawn: a.spawn, fin: "sommet" };
+    return {
+      ok: true,
+      coffre: { ...c, tour: { ...t, ascension: fini } },
+      choix,
+      etage: t.etage,
+      spawn: a.spawn,
+      fin: "sommet",
+    };
   }
   const mot = t.porte ?? 0;
   const graine = fromHex(a.graine);
@@ -107,13 +189,30 @@ export function finDeSalleDansCoffre(c: Coffre, monde: readonly EntreeMonde[] | 
     const porte = porteDe(x, ages, c);
     if (!porte.ouverte) {
       const arrete = { ...suivant, fin: "porte" as const };
-      return { ok: true, coffre: { ...c, tour: { ...t, ascension: arrete } }, choix, etage: t.etage, spawn: a.spawn, fin: "porte" };
+      return {
+        ok: true,
+        coffre: { ...c, tour: { ...t, ascension: arrete } },
+        choix,
+        etage: t.etage,
+        spawn: a.spawn,
+        fin: "porte",
+      };
     }
   }
   const spawn = spawnDe(h, p);
-  const arrive = arriverDansCoffre({ ...c, tour: { ...t, ascension: { ...suivant, spawn, etape: i + 1 } } }, e).coffre;
+  const arrive = arriverDansCoffre(
+    { ...c, tour: { ...t, ascension: { ...suivant, spawn, etape: i + 1 } } },
+    e,
+  ).coffre;
   const ta = tourDe(arrive);
-  return { ok: true, coffre: { ...arrive, tour: { ...ta, depuis: 0 } }, choix, etage: e, spawn, fin: null };
+  return {
+    ok: true,
+    coffre: { ...arrive, tour: { ...ta, depuis: 0 } },
+    choix,
+    etage: e,
+    spawn,
+    fin: null,
+  };
 }
 
 export function abandonnerDansCoffre(c: Coffre): Coffre {
@@ -132,7 +231,8 @@ export function exporterAscension(c: Pick<Coffre, "tour">): AscensionExportee | 
   const a = ascensionDe(c);
   if (!a) return { erreur: "aucune ascension" };
   if (!a.ancre) return { erreur: "ascension libre : une lecture, rien à exporter" };
-  if (a.fin !== "sommet") return { erreur: a.fin === null ? "ascension en cours" : `arrêtée (${a.fin})` };
+  if (a.fin !== "sommet")
+    return { erreur: a.fin === null ? "ascension en cours" : `arrêtée (${a.fin})` };
   return assemblerAscension(a.ancre.tete, a.ancre.piece, a.ancre.preuve, a.choix, a.mots);
 }
 

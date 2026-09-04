@@ -30,7 +30,8 @@ export const FR = {
 
   "coffre.eidolon": "solde",
   "coffre.scene": "Coffre",
-  "coffre.sceneLede": "Un coffre au pic de la cloche. La cloche suit le solde ; la teinte et les ornements suivent le butin : objets, gemmes, affixes, philosophale, sceaux. Les équations restent hors champ.",
+  "coffre.sceneLede":
+    "Un coffre au pic de la cloche. La cloche suit le solde ; la teinte et les ornements suivent le butin : objets, gemmes, affixes, philosophale, sceaux. Les équations restent hors champ.",
   "coffre.palier": "butin",
   "coffre.palier.nu": "nu · acier",
   "coffre.palier.garni": "garni · vert-de-gris",
@@ -181,27 +182,41 @@ export const FR = {
 
   "guide.sous": "Mode d'emploi",
   "guide.h": "Par où commencer",
-  "guide.lede": "Trois registres. Ce qui engage : le carnet, la chaîne, les signatures. Ce qui se lit : des figures. Ce qui se joue : hors invariant. Rien ne se croit, tout se rejoue.",
-  "guide.verifier": "Ces pages engagent. Une pièce y est prouvée, une signature y est vérifiée, une adresse y est relue.",
-  "guide.lire": "Ces pages lisent. Une carte, des muses : des figures dérivées de ce qui engage, jamais des garanties.",
-  "guide.jouer": "Ces pages jouent, dans la jauge du coffre. Le réseau n'en sait rien. Un sceau, seul, repose sur la chaîne.",
+  "guide.lede":
+    "Trois registres. Ce qui engage : le carnet, la chaîne, les signatures. Ce qui se lit : des figures. Ce qui se joue : hors invariant. Rien ne se croit, tout se rejoue.",
+  "guide.verifier":
+    "Ces pages engagent. Une pièce y est prouvée, une signature y est vérifiée, une adresse y est relue.",
+  "guide.lire":
+    "Ces pages lisent. Une carte, des muses : des figures dérivées de ce qui engage, jamais des garanties.",
+  "guide.jouer":
+    "Ces pages jouent, dans la jauge du coffre. Le réseau n'en sait rien. Un sceau, seul, repose sur la chaîne.",
   "guide.mots": "Cinq mots",
-  "guide.mot.piece": "pièce — une sortie du carnet : txid, rang, adresse, montant. Ce qui se dépense, ce qui se prouve.",
-  "guide.mot.artefact": "artefact — la lecture d'une pièce en muse : neuf empilements parmi soixante-quatre, dérivés du txid et de l'adresse.",
-  "guide.mot.relique": "relique — une pièce scellée dans le monde, dont la graine est dans un QR caché. La récupérer, c'est la dépenser.",
-  "guide.mot.sceau": "sceau — une relique récupérée dans ce coffre. Sa mise est celle de son âge ; il ouvre un quartier de la Tour ; il s'exporte en trophée.",
-  "guide.mot.objet": "objet — le jeu local : un mot de 32 bits, une muse, un âge. Il ne mute pas, il ne grandit pas.",
+  "guide.mot.piece":
+    "pièce — une sortie du carnet : txid, rang, adresse, montant. Ce qui se dépense, ce qui se prouve.",
+  "guide.mot.artefact":
+    "artefact — la lecture d'une pièce en muse : neuf empilements parmi soixante-quatre, dérivés du txid et de l'adresse.",
+  "guide.mot.relique":
+    "relique — une pièce scellée dans le monde, dont la graine est dans un QR caché. La récupérer, c'est la dépenser.",
+  "guide.mot.sceau":
+    "sceau — une relique récupérée dans ce coffre. Sa mise est celle de son âge ; il ouvre un quartier de la Tour ; il s'exporte en trophée.",
+  "guide.mot.objet":
+    "objet — le jeu local : un mot de 32 bits, une muse, un âge. Il ne mute pas, il ne grandit pas.",
   "guide.01": "Coffre",
-  "guide.01p": "Créez le coffre, puis envoyez : trois pièces au plus. Chargez le réseau d'essai pour voir vos pièces sur la chaîne.",
+  "guide.01p":
+    "Créez le coffre, puis envoyez : trois pièces au plus. Chargez le réseau d'essai pour voir vos pièces sur la chaîne.",
   "guide.02": "Journal",
-  "guide.02p": "Genèse, chaîne locale, preuve Merkle d'une pièce. Vérifiez, puis envoyez la tête à un autre appareil.",
+  "guide.02p":
+    "Genèse, chaîne locale, preuve Merkle d'une pièce. Vérifiez, puis envoyez la tête à un autre appareil.",
   "guide.03": "Témoin",
-  "guide.03p": "Un autre écran juge une preuve sans ouvrir le coffre. Suivez le réseau : la tête signée par un validateur, vérifiée ici.",
+  "guide.03p":
+    "Un autre écran juge une preuve sans ouvrir le coffre. Suivez le réseau : la tête signée par un validateur, vérifiée ici.",
   "guide.04": "Carte",
-  "guide.04p": "Les reliques du monde, par âge et par muse. Une lecture ; le trophée, lui, se juge.",
+  "guide.04p":
+    "Les reliques du monde, par âge et par muse. Une lecture ; le trophée, lui, se juge.",
   "guide.04b": "Voir la carte",
   "guide.05": "Reliques",
-  "guide.05p": "Quatre sceaux d'âge. Un QR trouvé dans le monde, lu ici, se dépense vers votre coffre. Rien ne s'achète.",
+  "guide.05p":
+    "Quatre sceaux d'âge. Un QR trouvé dans le monde, lu ici, se dépense vers votre coffre. Rien ne s'achète.",
   "guide.05b": "Voir les reliques",
   "guide.06": "Signes",
   "guide.06p": "L'adresse se lit en figures. Un changement se voit.",
@@ -210,44 +225,58 @@ export const FR = {
   "guide.07p": "Neuf façons de lire les mêmes figures.",
   "guide.07b": "Voir les lectures",
   "guide.08": "Limites",
-  "guide.08p": "Réseau d'essai, sans valeur. Sept validateurs connus. Pas de réseau pair à pair. La graine d'un coffre est en clair dans ce navigateur.",
+  "guide.08p":
+    "Réseau d'essai, sans valeur. Sept validateurs connus. Pas de réseau pair à pair. La graine d'un coffre est en clair dans ce navigateur.",
   "guide.09": "Objets",
   "guide.09p": "Un coffre, une racine. L'objet tient en 32 bits. La puissance ne grandit pas.",
   "guide.10": "Tour",
-  "guide.10p": "255 coupes, Terre au sol, Uranie au faîte. Quatre quartiers d'âge : une porte s'ouvre avec le sceau de l'âge. La ville est le coffre ; la tour lit.",
+  "guide.10p":
+    "255 coupes, Terre au sol, Uranie au faîte. Quatre quartiers d'âge : une porte s'ouvre avec le sceau de l'âge. La ville est le coffre ; la tour lit.",
   "guide.10b": "Monter",
 
   "tour.titre": "Tour",
-  "tour.lede": "Terre au sol, Uranie au faîte. Même norme à chaque palier. Les occupants d'un étage s'interfèrent.",
+  "tour.lede":
+    "Terre au sol, Uranie au faîte. Même norme à chaque palier. Les occupants d'un étage s'interfèrent.",
   "tour.pendule": "Pendule",
-  "tour.pendule.lede": "Explorez la salle. En fin de salle, le pendule lit ce que vous y avez fait — honoré : offrir ; fouillé, pris, franchi : lire ; rien : monter — et l'objet porté, puis vous dépose à l'étage et à la case qu'il calcule. Libre : une lecture. Ancrée sur une pièce et le bloc courant : ce qui compte.",
+  "tour.pendule.lede":
+    "Explorez la salle. En fin de salle, le pendule lit ce que vous y avez fait — honoré : offrir ; fouillé, pris, franchi : lire ; rien : monter — et vous le propose ; vous décidez parmi les trois, l'étage de chaque choix en clair, puis il vous dépose à la case qu'il calcule avec l'objet porté. Libre : une lecture. Ancrée sur une pièce et le bloc courant : ce qui compte.",
   "tour.pendule.cadran": "cadran à neuf crans",
   "tour.pendule.salle": "salle {i} / {n}",
   "tour.pendule.libre": "libre",
   "tour.pendule.ancree": "ancrée",
   "tour.pendule.arrivee": "arrivé case ({x}, {y})",
   "tour.pendule.piece": "pièce",
-  "tour.pendule.lu": "le pendule lira",
+  "tour.pendule.lu": "le pendule propose",
   "tour.pendule.choix.monter": "monter",
   "tour.pendule.choix.lire": "lire",
   "tour.pendule.choix.offrir": "offrir",
   "tour.pendule.porte": "objet porté",
   "tour.pendule.sansPorte": "sans objet porté (mot 0)",
-  "tour.pendule.aucune": "Aucune ascension. La Tour se lit librement ; le pendule commence à la porte de la ville.",
+  "tour.pendule.aucune":
+    "Aucune ascension. La Tour se lit librement ; le pendule commence à la porte de la ville.",
   "tour.pendule.finDeSalle": "Fin de salle",
+  "tour.pendule.decider":
+    "Décidez la fin de salle : le pendule dit l'étage de chaque choix, jamais la case.",
+  "tour.pendule.vers": "étage {n} · {muse}",
+  "tour.pendule.porteFermee": "porte fermée",
+  "tour.pendule.sommet": "Dernière salle : le sommet",
   "tour.pendule.abandonner": "Abandonner",
   "tour.pendule.commencerLibre": "Ascension libre",
   "tour.pendule.commencerAncree": "Ascension ancrée",
   "tour.pendule.choisirPiece": "Pièce d'ancrage…",
   "tour.pendule.sansPiece": "Aucune pièce de ce coffre sur le réseau : robinet ou relique d'abord.",
   "tour.pendule.fin.sommet": "Sommet : 27 salles. L'ascension ancrée s'exporte ci-dessous.",
-  "tour.pendule.fin.porte": "Arrêtée devant une porte : il faut le sceau de l'âge. Le pendule ne force rien.",
+  "tour.pendule.fin.porte":
+    "Arrêtée devant une porte : il faut le sceau de l'âge. Le pendule ne force rien.",
   "tour.pendule.fin.abandon": "Ascension abandonnée. La Tour se lit librement.",
   "tour.pendule.flash.libre": "Ascension libre : porte de la ville. Explorez, puis fin de salle.",
-  "tour.pendule.flash.ancree": "Ascension ancrée : tête et pièce gelées. Explorez, puis fin de salle.",
-  "tour.pendule.flash.salle": "Le pendule a lu « {choix} » : étage {n}, case ({x}, {y}).",
-  "tour.pendule.exportee": "Ascension ancrée, eidos-ascension/1 — à juger sur la Carte, sans rejouer.",
-  "tour.pendule.err.tete": "Suivez d'abord le réseau (Témoin) : une tête vérifiée ancre l'ascension.",
+  "tour.pendule.flash.ancree":
+    "Ascension ancrée : tête et pièce gelées. Explorez, puis fin de salle.",
+  "tour.pendule.flash.salle": "Vous avez décidé « {choix} » : étage {n}, case ({x}, {y}).",
+  "tour.pendule.exportee":
+    "Ascension ancrée, eidos-ascension/1 — à juger sur la Carte, sans rejouer.",
+  "tour.pendule.err.tete":
+    "Suivez d'abord le réseau (Témoin) : une tête vérifiée ancre l'ascension.",
   "tour.pendule.err.piece": "Cette pièce n'est pas à ce coffre sur le réseau.",
   "tour.pendule.err.aucune": "Aucune ascension en cours.",
   "tour.pendule.err.finie": "Ascension finie : commencez-en une autre.",
@@ -291,7 +320,8 @@ export const FR = {
   "tour.flash.capsule": "Une capsule vide : un glyphe creux.",
   "tour.flash.poste": "Trois blocs aujourd'hui d'abord, et une capsule par jour.",
   "tour.forge": "Forger la capsule",
-  "tour.forge.lede": "Une pierre et une pièce : la pièce tourne. Une gemme et du sel : une capsule au mot de la gemme.",
+  "tour.forge.lede":
+    "Une pierre et une pièce : la pièce tourne. Une gemme et du sel : une capsule au mot de la gemme.",
   "tour.forge.gemme": "Il faut une gemme.",
   "tour.forge.sel": "Il faut un élixir de sel.",
   "tour.forge.vide": "Deux objets.",
@@ -301,7 +331,8 @@ export const FR = {
   "tour.tourner.ou": "Tourner une pièce ici demande la forgeronne, ou du soufre bu à cet étage.",
   "tour.tourner.soufre": "Ni forgeronne ni soufre à cet étage.",
   "tour.echos": "Échos du quartier",
-  "tour.echos.fermes": "Un sceau de l'âge courant, honoré, les révèle. Ils se parcourent aussi sans les connaître.",
+  "tour.echos.fermes":
+    "Un sceau de l'âge courant, honoré, les révèle. Ils se parcourent aussi sans les connaître.",
   "tour.hymnes": "{n} hymne{s} : autant de cellules du bestiaire remplies.",
   "tour.flash.echo": "Écho {a} · {b} — un élixir de mercure.",
   "tour.offrir": "Offrir {nom}",
@@ -366,26 +397,41 @@ export const FR = {
   "tour.flash.repousse": "Repoussé à l'étage {n}. Le ticket reste.",
   "tour.fouille.aucune": "Rien ici.",
   "tour.fouille.deja": "Alcôve déjà ouverte.",
+  "tour.fouille.hors": "On ne creuse qu'une case pleine de la dalle.",
+  "tour.fouille.dejaCase": "Cette case est déjà creusée.",
+  "tour.fouille.epuise": "Trois coups de bêche par étage : plus rien à creuser ici.",
+  "tour.fouille.trouve": "Sous la dalle : {nom}. {n} coup(s) de bêche restant(s).",
+  "tour.fouille.rien": "Rien sous cette case. {n} coup(s) de bêche restant(s).",
+  "tour.dalle.lede":
+    "Creusez une case pleine : trois coups de bêche par étage, la case d'arrivée du pendule donne toujours. ◆ arrivée, ○ occupant, ✓ creusée avec trouvaille, · creusée à vide.",
+  "tour.dalle.beches": "{n} coup(s) de bêche",
   "tour.flash.alcove": "Une alcôve — {don}.",
   "tour.observatoire": "Observatoire",
-  "tour.obs.tete": "Tête du réseau : bloc {h}, validateur {v}, racine {r}… — signature vérifiée : {ok}.",
+  "tour.obs.tete":
+    "Tête du réseau : bloc {h}, validateur {v}, racine {r}… — signature vérifiée : {ok}.",
   "tour.obs.sansReseau": "Suivez le réseau depuis la page Témoin ; Uranie lira sa tête ici.",
-  "tour.obs.jauge": "Ce coffre : {h} hôtes honorés, {e} échos, {a} antres, {c} captures, {p} portes.",
-  "tour.obs.fermee": "{n}/21 cellules du bestiaire : à vingt et une, Uranie lit les cent une formes.",
+  "tour.obs.jauge":
+    "Ce coffre : {h} hôtes honorés, {e} échos, {a} antres, {c} captures, {p} portes.",
+  "tour.obs.fermee":
+    "{n}/21 cellules du bestiaire : à vingt et une, Uranie lit les cent une formes.",
   "tour.obs.formes": "Les 101 formes ; {n}/{max} rencontrées, entre crochets.",
   "tour.carte": "Carte",
-  "tour.carte.lede": "Étages atteints, honorés, portes. Les secrets n'y figurent qu'une fois découverts.",
-  "tour.carte.legende": "or : ici · gris : atteint · vert : honoré · bleu : alcôve · rouge : antre · cadre : porte (vert ouverte, rouge fermée)",
+  "tour.carte.lede":
+    "Étages atteints, honorés, portes. Les secrets n'y figurent qu'une fois découverts.",
+  "tour.carte.legende":
+    "or : ici · gris : atteint · vert : honoré · bleu : alcôve · rouge : antre · cadre : porte (vert ouverte, rouge fermée)",
   "inv.genre.elixir": "élixir",
   "inv.genre.capsule": "capsule",
   "inv.genre.capture": "capture",
   "inv.bestiaire": "Bestiaire",
-  "inv.bestiaire.lede": "Les captures, par cellule de la doxa : trois classes, sept régimes. Le Coffre montre ce que j'ai.",
+  "inv.bestiaire.lede":
+    "Les captures, par cellule de la doxa : trois classes, sept régimes. Le Coffre montre ce que j'ai.",
   "inv.bestiaire.cellules": "{n}/{max} cellules",
   "inv.bestiaire.vide": "Aucune capture. Une capsule et un occupant, dans la Tour.",
 
   "inv.titre": "Inventaire",
-  "inv.lede": "Poste du jour : trois blocs. 101 formes, joueurs sans plafond. Le roll pose une pierre. Une trouvaille d'avant garde son mot.",
+  "inv.lede":
+    "Poste du jour : trois blocs. 101 formes, joueurs sans plafond. Le roll pose une pierre. Une trouvaille d'avant garde son mot.",
   "inv.vide": "Aucun objet. Créez un bloc, puis tirez.",
   "inv.tirer": "Tirer l'objet",
   "inv.miner": "Créer un bloc · {r}",
@@ -449,8 +495,8 @@ export const FR = {
   "inv.lair": "antre palier {n} — plus tard",
   "flash.tirage": "{muse} · {age}",
 
-
-  "relique.lede": "Quatre sceaux d'âge : la mise d'une relique du monde, la clé d'un quartier de la Tour, un trophée vérifiable. Un sceau se trouve, il ne s'achète pas.",
+  "relique.lede":
+    "Quatre sceaux d'âge : la mise d'une relique du monde, la clé d'un quartier de la Tour, un trophée vérifiable. Un sceau se trouve, il ne s'achète pas.",
   "relique.coupe": "Coupe",
   "relique.trouvaille": "Dessin",
   "relique.ouv": "Chargement…",
@@ -460,16 +506,19 @@ export const FR = {
   "relique.aire": "taille",
   "relique.epoques": "durée",
   "relique.prixUnite": "eidôla",
-  "relique.prixAide": "Mise du sceau : Kali 2,10 · Satya 33,55. C'est ce qu'une relique de cet âge porte.",
+  "relique.prixAide":
+    "Mise du sceau : Kali 2,10 · Satya 33,55. C'est ce qu'une relique de cet âge porte.",
   "relique.acheter": "Simuler le sceau (atelier)",
   "relique.possedee": "Sceau dans le coffre",
   "relique.achetee": "Sceau {nom} simulé.",
   "relique.possessions": "{n} sceau{x}",
   "relique.court": "Solde trop court pour simuler. Minez dans le Journal.",
-  "relique.sceau.trouver": "Ce sceau ne s'achète pas : trouvez une relique {age} dans le monde et récupérez-la vers ce coffre.",
+  "relique.sceau.trouver":
+    "Ce sceau ne s'achète pas : trouvez une relique {age} dans le monde et récupérez-la vers ce coffre.",
   "relique.sceau.liste": "{n} relique{s} récupérée{s}",
   "tour.porte.ouverte": "Porte {n} · quartier {age} · votre sceau l'ouvre.",
-  "tour.porte.fermee": "Porte {n} · quartier {age} · il faut un sceau {age} : une relique du monde de cet âge, dans ce coffre.",
+  "tour.porte.fermee":
+    "Porte {n} · quartier {age} · il faut un sceau {age} : une relique du monde de cet âge, dans ce coffre.",
   "relique.graine": "graine",
   "relique.famille": "famille",
   "relique.glyphe": "glyphe",
@@ -498,7 +547,8 @@ export const FR = {
   "relique.qr.etat.intacte": "intacte",
   "relique.qr.etat.recuperee": "récupérée",
   "carte.titre": "Carte des reliques du monde",
-  "carte.lede": "Chaque relique déclarée, rangée par l'âge de son sceau et par la muse de sa pièce. Pleine : intacte. Vide : récupérée. Cerclée d'or : dans votre coffre. Une lecture de l'état publié, pas une preuve.",
+  "carte.lede":
+    "Chaque relique déclarée, rangée par l'âge de son sceau et par la muse de sa pièce. Pleine : intacte. Vide : récupérée. Cerclée d'or : dans votre coffre. Une lecture de l'état publié, pas une preuve.",
   "carte.age": "âge",
   "carte.legende": "● intacte · ○ récupérée",
   "carte.compte": "{n} relique{s} · {a} en attente",
@@ -510,7 +560,8 @@ export const FR = {
   "carte.trophee.sansTete": "Tête du réseau injoignable : suivez d'abord le réseau (Témoin).",
   "carte.trophee.teteRefusee": "La tête du réseau n'est pas vérifiée : pas de trophée.",
   "carte.trophee.juger": "Juger un trophée",
-  "carte.trophee.aide": "Collez un eidos-sceau/1. La feuille est recomposée, le chemin remonté, la racine comparée à la tête, la signature du validateur vérifiée contre federation.json. Sans rejouer.",
+  "carte.trophee.aide":
+    "Collez un eidos-sceau/1. La feuille est recomposée, le chemin remonté, la racine comparée à la tête, la signature du validateur vérifiée contre federation.json. Sans rejouer.",
   "carte.trophee.jugerBtn": "Juger",
   "carte.trophee.relie": "reliée à la relique publiée",
   "carte.trophee.nonRelie": "pièce prouvée, mais l'état publié ne la relie pas à cette relique",
@@ -526,11 +577,13 @@ export const FR = {
   "relique.qr.recuperee": "Déjà récupérée · bloc {b} · vers {v}.",
   "relique.qr.horsListe": "Aucune pièce à cette adresse, et rien de déclaré.",
   "relique.qr.recuperer": "Récupérer vers {a}",
-  "relique.qr.atelierPublic": "Coffre d'atelier (graine publique) : tout le monde pourra la dépenser. Passez en coffre personnel.",
+  "relique.qr.atelierPublic":
+    "Coffre d'atelier (graine publique) : tout le monde pourra la dépenser. Passez en coffre personnel.",
   "relique.qr.signee": "Signée · {txid} · {o} octets. Postez-la dans une issue « envoi ».",
   "relique.qr.ouvrir": "Ouvrir l'issue",
   "relique.qr.copier": "Copier",
-  "relique.qr.apres": "Le nœud l'inclut au prochain bloc (une heure au plus). Ensuite, Coffre → charger le réseau d'essai.",
+  "relique.qr.apres":
+    "Le nœud l'inclut au prochain bloc (une heure au plus). Ensuite, Coffre → charger le réseau d'essai.",
 
   "glyphes.h": "Figures",
   "glyphes.lede": "Trois étages. Un changement se voit tout de suite.",
@@ -593,8 +646,10 @@ export const FR = {
   "creer.popup": "Ouvrir la demande si elle est bloquée",
   "psnx.exporter": "Sauver eidos.carnet",
   "psnx.importer": "Ouvrir un carnet",
-  "psnx.aide": "Lamport signe une dépense, pas le fichier. La trace est SHA-256d, liée à la clé courante. Aucune courbe : ce n'est pas le vault Eidolon.",
-  "psnx.refus": "Fichier Eidolon (courbe) : l'empreinte se lit, pas les clés Lamport. Exportez un eidos.carnet d'ici.",
+  "psnx.aide":
+    "Lamport signe une dépense, pas le fichier. La trace est SHA-256d, liée à la clé courante. Aucune courbe : ce n'est pas le vault Eidolon.",
+  "psnx.refus":
+    "Fichier Eidolon (courbe) : l'empreinte se lit, pas les clés Lamport. Exportez un eidos.carnet d'ici.",
   "psnx.importe": "Carnet rouvert — pièces, reliques, clés Lamport.",
   "psnx.digest": "empreinte",
   "psnx.sauve": "Feuille proposée. Sur téléphone : Enregistrer dans Fichiers.",
@@ -629,7 +684,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "sous.guide": "How to",
   "coffre.eidolon": "balance",
   "coffre.scene": "Vault",
-  "coffre.sceneLede": "One vault at the bell's peak. The bell follows the balance; hue and ornaments follow the loot: objects, gems, affixes, philosopher's stone, seals. Equations stay off-screen.",
+  "coffre.sceneLede":
+    "One vault at the bell's peak. The bell follows the balance; hue and ornaments follow the loot: objects, gems, affixes, philosopher's stone, seals. Equations stay off-screen.",
   "coffre.palier": "loot",
   "coffre.palier.nu": "bare · steel",
   "coffre.palier.garni": "stocked · verdigris",
@@ -767,27 +823,41 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "temoin.reseau.juger": "Judge against the UTXO root",
   "guide.sous": "How to",
   "guide.h": "Where to start",
-  "guide.lede": "Three registers. What commits: the ledger, the chain, the signatures. What reads: figures. What plays: outside the invariant. Nothing is believed; everything is replayed.",
-  "guide.verifier": "These pages commit. A coin is proven here, a signature verified, an address re-read.",
-  "guide.lire": "These pages read. A map, the muses: figures derived from what commits, never guarantees.",
-  "guide.jouer": "These pages play, in the vault's gauge. The network knows nothing of it. Only a seal rests on the chain.",
+  "guide.lede":
+    "Three registers. What commits: the ledger, the chain, the signatures. What reads: figures. What plays: outside the invariant. Nothing is believed; everything is replayed.",
+  "guide.verifier":
+    "These pages commit. A coin is proven here, a signature verified, an address re-read.",
+  "guide.lire":
+    "These pages read. A map, the muses: figures derived from what commits, never guarantees.",
+  "guide.jouer":
+    "These pages play, in the vault's gauge. The network knows nothing of it. Only a seal rests on the chain.",
   "guide.mots": "Five words",
-  "guide.mot.piece": "coin — an output of the ledger: txid, index, address, amount. What is spent, what is proven.",
-  "guide.mot.artefact": "artefact — a coin read as a muse: nine stacks out of sixty-four, derived from txid and address.",
-  "guide.mot.relique": "relic — a coin sealed in the world, its seed in a hidden QR. Claiming it means spending it.",
-  "guide.mot.sceau": "seal — a relic claimed to this vault. Its stake is its age's; it opens a Tower quarter; it exports as a trophy.",
-  "guide.mot.objet": "object — the local game: a 32-bit word, a muse, an age. It does not mutate, it does not grow.",
+  "guide.mot.piece":
+    "coin — an output of the ledger: txid, index, address, amount. What is spent, what is proven.",
+  "guide.mot.artefact":
+    "artefact — a coin read as a muse: nine stacks out of sixty-four, derived from txid and address.",
+  "guide.mot.relique":
+    "relic — a coin sealed in the world, its seed in a hidden QR. Claiming it means spending it.",
+  "guide.mot.sceau":
+    "seal — a relic claimed to this vault. Its stake is its age's; it opens a Tower quarter; it exports as a trophy.",
+  "guide.mot.objet":
+    "object — the local game: a 32-bit word, a muse, an age. It does not mutate, it does not grow.",
   "guide.01": "Vault",
-  "guide.01p": "Create the vault, then send: three coins at most. Load the testnet to see your coins on the chain.",
+  "guide.01p":
+    "Create the vault, then send: three coins at most. Load the testnet to see your coins on the chain.",
   "guide.02": "Log",
-  "guide.02p": "Genesis, local chain, Merkle proof of a coin. Check, then send the head to another device.",
+  "guide.02p":
+    "Genesis, local chain, Merkle proof of a coin. Check, then send the head to another device.",
   "guide.03": "Witness",
-  "guide.03p": "Another screen judges a proof without opening the vault. Follow the network: the head signed by a validator, verified here.",
+  "guide.03p":
+    "Another screen judges a proof without opening the vault. Follow the network: the head signed by a validator, verified here.",
   "guide.04": "Map",
-  "guide.04p": "The world's relics, by age and by muse. A reading; the trophy, though, can be judged.",
+  "guide.04p":
+    "The world's relics, by age and by muse. A reading; the trophy, though, can be judged.",
   "guide.04b": "See the map",
   "guide.05": "Relics",
-  "guide.05p": "Four age seals. A QR found in the world, read here, is spent to your vault. Nothing is for sale.",
+  "guide.05p":
+    "Four age seals. A QR found in the world, read here, is spent to your vault. Nothing is for sale.",
   "guide.05b": "See the relics",
   "guide.06": "Signs",
   "guide.06p": "The address is drawn. A change shows.",
@@ -796,24 +866,28 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "guide.07p": "Nine ways to read the same figures.",
   "guide.07b": "See the readings",
   "guide.08": "Limits",
-  "guide.08p": "Testnet, no value. Seven known validators. No peer-to-peer network. A vault's seed is in the clear in this browser.",
+  "guide.08p":
+    "Testnet, no value. Seven known validators. No peer-to-peer network. A vault's seed is in the clear in this browser.",
   "guide.09": "Items",
   "guide.09p": "One vault, one root. The item fits in 32 bits. Power does not grow.",
   "guide.10": "Tower",
-  "guide.10p": "255 slices, Earth at the ground, Urania at the peak. Four age quarters: a gate opens with the seal of its age. The city is the vault; the tower reads.",
+  "guide.10p":
+    "255 slices, Earth at the ground, Urania at the peak. Four age quarters: a gate opens with the seal of its age. The city is the vault; the tower reads.",
   "guide.10b": "Climb",
 
   "tour.titre": "Tower",
-  "tour.lede": "Earth at the ground, Urania at the peak. Same norm on every floor. Occupants of a floor interfere.",
+  "tour.lede":
+    "Earth at the ground, Urania at the peak. Same norm on every floor. Occupants of a floor interfere.",
   "tour.pendule": "Pendulum",
-  "tour.pendule.lede": "Explore the room. At the end of the room the pendulum reads what you did there — honoured: offer; searched, taken, crossed: read; nothing: climb — and the object you carry, then sets you down on the floor and cell it computes. Free: a reading. Anchored on a coin and the current block: what counts.",
+  "tour.pendule.lede":
+    "Explore the room. At the end of the room the pendulum reads what you did there — honoured: offer; searched, taken, crossed: read; nothing: climb — and proposes it; you decide among the three, the floor of each choice in the open, then it sets you down on the cell it computes with the object you carry. Free: a reading. Anchored on a coin and the current block: what counts.",
   "tour.pendule.cadran": "nine-notch dial",
   "tour.pendule.salle": "room {i} / {n}",
   "tour.pendule.libre": "free",
   "tour.pendule.ancree": "anchored",
   "tour.pendule.arrivee": "arrived at cell ({x}, {y})",
   "tour.pendule.piece": "coin",
-  "tour.pendule.lu": "the pendulum will read",
+  "tour.pendule.lu": "the pendulum proposes",
   "tour.pendule.choix.monter": "climb",
   "tour.pendule.choix.lire": "read",
   "tour.pendule.choix.offrir": "offer",
@@ -821,19 +895,27 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.pendule.sansPorte": "no carried object (word 0)",
   "tour.pendule.aucune": "No ascent. The Tower reads freely; the pendulum starts at the city gate.",
   "tour.pendule.finDeSalle": "End of room",
+  "tour.pendule.decider":
+    "Decide the end of the room: the pendulum names the floor of each choice, never the cell.",
+  "tour.pendule.vers": "floor {n} · {muse}",
+  "tour.pendule.porteFermee": "closed door",
+  "tour.pendule.sommet": "Last room: the summit",
   "tour.pendule.abandonner": "Abandon",
   "tour.pendule.commencerLibre": "Free ascent",
   "tour.pendule.commencerAncree": "Anchored ascent",
   "tour.pendule.choisirPiece": "Anchor coin…",
   "tour.pendule.sansPiece": "No coin of this vault on the network: faucet or relic first.",
   "tour.pendule.fin.sommet": "Summit: 27 rooms. The anchored ascent exports below.",
-  "tour.pendule.fin.porte": "Stopped at a gate: the age seal is needed. The pendulum forces nothing.",
+  "tour.pendule.fin.porte":
+    "Stopped at a gate: the age seal is needed. The pendulum forces nothing.",
   "tour.pendule.fin.abandon": "Ascent abandoned. The Tower reads freely.",
   "tour.pendule.flash.libre": "Free ascent: city gate. Explore, then end of room.",
   "tour.pendule.flash.ancree": "Anchored ascent: head and coin frozen. Explore, then end of room.",
-  "tour.pendule.flash.salle": "The pendulum read “{choix}”: floor {n}, cell ({x}, {y}).",
-  "tour.pendule.exportee": "Anchored ascent, eidos-ascension/1 — to be judged on the Map, without replay.",
-  "tour.pendule.err.tete": "Follow the network first (Witness): a verified head anchors the ascent.",
+  "tour.pendule.flash.salle": "You decided “{choix}”: floor {n}, cell ({x}, {y}).",
+  "tour.pendule.exportee":
+    "Anchored ascent, eidos-ascension/1 — to be judged on the Map, without replay.",
+  "tour.pendule.err.tete":
+    "Follow the network first (Witness): a verified head anchors the ascent.",
   "tour.pendule.err.piece": "That coin is not this vault's on the network.",
   "tour.pendule.err.aucune": "No ascent in progress.",
   "tour.pendule.err.finie": "Ascent finished: start another.",
@@ -877,7 +959,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.flash.capsule": "An empty capsule: a hollow glyph.",
   "tour.flash.poste": "Three blocks today first, and one capsule a day.",
   "tour.forge": "Forge the capsule",
-  "tour.forge.lede": "A stone and a piece: the piece turns. A gem and salt: a capsule with the gem's word.",
+  "tour.forge.lede":
+    "A stone and a piece: the piece turns. A gem and salt: a capsule with the gem's word.",
   "tour.forge.gemme": "A gem is needed.",
   "tour.forge.sel": "A salt elixir is needed.",
   "tour.forge.vide": "Two items.",
@@ -887,7 +970,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.tourner.ou": "Turning a piece here takes the smith, or sulphur drunk on this floor.",
   "tour.tourner.soufre": "Neither smith nor sulphur on this floor.",
   "tour.echos": "Echoes of the quarter",
-  "tour.echos.fermes": "A seal of the current age, honoured, reveals them. They can be walked without knowing them.",
+  "tour.echos.fermes":
+    "A seal of the current age, honoured, reveals them. They can be walked without knowing them.",
   "tour.hymnes": "{n} hymn{s}: as many bestiary cells filled.",
   "tour.flash.echo": "Echo {a} · {b} — a mercury elixir.",
   "tour.offrir": "Offer {nom}",
@@ -928,7 +1012,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.boire.objet": "No item.",
   "tour.boire.deja": "This word has already been drunk.",
   "tour.boire.genre": "Not an elixir.",
-  "tour.flash.bu": "{espece} drunk on floor {n}; the effect holds here, then the vial is discarded.",
+  "tour.flash.bu":
+    "{espece} drunk on floor {n}; the effect holds here, then the vial is discarded.",
   "tour.espece.sel": "salt",
   "tour.espece.mercure": "mercury",
   "tour.espece.soufre": "sulphur",
@@ -952,26 +1037,40 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.flash.repousse": "Pushed back to floor {n}. The ticket stays.",
   "tour.fouille.aucune": "Nothing here.",
   "tour.fouille.deja": "Alcove already opened.",
+  "tour.fouille.hors": "Only a full cell of the slab can be dug.",
+  "tour.fouille.dejaCase": "This cell is already dug.",
+  "tour.fouille.epuise": "Three spade strokes per floor: nothing left to dig here.",
+  "tour.fouille.trouve": "Under the slab: {nom}. {n} stroke(s) left.",
+  "tour.fouille.rien": "Nothing under this cell. {n} stroke(s) left.",
+  "tour.dalle.lede":
+    "Dig a full cell: three spade strokes per floor, the pendulum's arrival cell always gives. ◆ arrival, ○ occupant, ✓ dug with a find, · dug empty.",
+  "tour.dalle.beches": "{n} spade stroke(s)",
   "tour.flash.alcove": "An alcove — {don}.",
   "tour.observatoire": "Observatory",
   "tour.obs.tete": "Network head: block {h}, validator {v}, root {r}… — signature verified: {ok}.",
-  "tour.obs.sansReseau": "Follow the network from the Witness page; Urania will read its head here.",
-  "tour.obs.jauge": "This vault: {h} hosts honoured, {e} echoes, {a} lairs, {c} captures, {p} gates.",
-  "tour.obs.fermee": "{n}/21 bestiary cells: at twenty-one, Urania reads the hundred and one forms.",
+  "tour.obs.sansReseau":
+    "Follow the network from the Witness page; Urania will read its head here.",
+  "tour.obs.jauge":
+    "This vault: {h} hosts honoured, {e} echoes, {a} lairs, {c} captures, {p} gates.",
+  "tour.obs.fermee":
+    "{n}/21 bestiary cells: at twenty-one, Urania reads the hundred and one forms.",
   "tour.obs.formes": "The 101 forms; {n}/{max} met, in brackets.",
   "tour.carte": "Map",
   "tour.carte.lede": "Floors reached, honoured, gates. Secrets appear only once found.",
-  "tour.carte.legende": "gold: here · grey: reached · green: honoured · blue: alcove · red: lair · frame: gate (green open, red closed)",
+  "tour.carte.legende":
+    "gold: here · grey: reached · green: honoured · blue: alcove · red: lair · frame: gate (green open, red closed)",
   "inv.genre.elixir": "elixir",
   "inv.genre.capsule": "capsule",
   "inv.genre.capture": "capture",
   "inv.bestiaire": "Bestiary",
-  "inv.bestiaire.lede": "Captures, by cell of the doxa: three classes, seven regimes. The Vault shows what I have.",
+  "inv.bestiaire.lede":
+    "Captures, by cell of the doxa: three classes, seven regimes. The Vault shows what I have.",
   "inv.bestiaire.cellules": "{n}/{max} cells",
   "inv.bestiaire.vide": "No capture. A capsule and an occupant, in the Tower.",
 
   "inv.titre": "Inventory",
-  "inv.lede": "Day post: three blocks. 101 forms, uncapped players. The roll sets a stone. An earlier find keeps its word.",
+  "inv.lede":
+    "Day post: three blocks. 101 forms, uncapped players. The roll sets a stone. An earlier find keeps its word.",
   "inv.vide": "No item. Make a block, then draw.",
   "inv.tirer": "Draw the item",
   "inv.miner": "Make a block · {r}",
@@ -1034,7 +1133,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "inv.sockets": "{n}/{max} gems",
   "inv.lair": "lair tier {n} — later",
   "flash.tirage": "{muse} · {age}",
-  "relique.lede": "Four age seals: the stake of a world relic, the key to a Tower quarter, a verifiable trophy. A seal is found, never bought.",
+  "relique.lede":
+    "Four age seals: the stake of a world relic, the key to a Tower quarter, a verifiable trophy. A seal is found, never bought.",
   "relique.coupe": "Cut",
   "relique.trouvaille": "Draw",
   "relique.ouv": "Loading…",
@@ -1050,10 +1150,12 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "relique.achetee": "Seal {nom} simulated.",
   "relique.possessions": "{n} seal{s}",
   "relique.court": "Not enough to simulate. Mine in the Log.",
-  "relique.sceau.trouver": "This seal is not for sale: find a {age} relic in the world and claim it to this vault.",
+  "relique.sceau.trouver":
+    "This seal is not for sale: find a {age} relic in the world and claim it to this vault.",
   "relique.sceau.liste": "{n} relic{s} claimed",
   "tour.porte.ouverte": "Gate {n} · {age} quarter · your seal opens it.",
-  "tour.porte.fermee": "Gate {n} · {age} quarter · a {age} seal is needed: a world relic of that age, in this vault.",
+  "tour.porte.fermee":
+    "Gate {n} · {age} quarter · a {age} seal is needed: a world relic of that age, in this vault.",
   "relique.graine": "seed",
   "relique.famille": "family",
   "relique.glyphe": "glyph",
@@ -1082,7 +1184,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "relique.qr.etat.intacte": "intact",
   "relique.qr.etat.recuperee": "claimed",
   "carte.titre": "Map of the world's relics",
-  "carte.lede": "Every declared relic, filed by the age of its seal and the muse of its coin. Full: intact. Empty: claimed. Gold ring: in your vault. A reading of the published state, not a proof.",
+  "carte.lede":
+    "Every declared relic, filed by the age of its seal and the muse of its coin. Full: intact. Empty: claimed. Gold ring: in your vault. A reading of the published state, not a proof.",
   "carte.age": "age",
   "carte.legende": "● intact · ○ claimed",
   "carte.compte": "{n} relic{s} · {a} pending",
@@ -1094,7 +1197,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "carte.trophee.sansTete": "Network head unreachable: follow the network first (Witness).",
   "carte.trophee.teteRefusee": "The network head is not verified: no trophy.",
   "carte.trophee.juger": "Judge a trophy",
-  "carte.trophee.aide": "Paste an eidos-sceau/1. The leaf is recomputed, the path climbed, the root compared to the head, the validator's signature checked against federation.json. No replay.",
+  "carte.trophee.aide":
+    "Paste an eidos-sceau/1. The leaf is recomputed, the path climbed, the root compared to the head, the validator's signature checked against federation.json. No replay.",
   "carte.trophee.jugerBtn": "Judge",
   "carte.trophee.relie": "linked to the published relic",
   "carte.trophee.nonRelie": "coin proven, but the published state does not link it to this relic",
@@ -1110,11 +1214,13 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "relique.qr.recuperee": "Already claimed · block {b} · to {v}.",
   "relique.qr.horsListe": "No coin at this address, nothing declared.",
   "relique.qr.recuperer": "Claim to {a}",
-  "relique.qr.atelierPublic": "Atelier vault (public seed): anyone could spend it. Switch to a personal vault.",
+  "relique.qr.atelierPublic":
+    "Atelier vault (public seed): anyone could spend it. Switch to a personal vault.",
   "relique.qr.signee": "Signed · {txid} · {o} bytes. Post it in an “envoi” issue.",
   "relique.qr.ouvrir": "Open the issue",
   "relique.qr.copier": "Copy",
-  "relique.qr.apres": "The node includes it in the next block (an hour at most). Then, Vault → load the testnet.",
+  "relique.qr.apres":
+    "The node includes it in the next block (an hour at most). Then, Vault → load the testnet.",
   "glyphes.h": "Figures",
   "glyphes.lede": "Three floors. A change shows at once.",
   "glyphes.empiler": "Stack",
@@ -1174,8 +1280,10 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "creer.popup": "Open the request if it was blocked",
   "psnx.exporter": "Save eidos.carnet",
   "psnx.importer": "Open a ledger",
-  "psnx.aide": "Lamport signs a spend, not the file. The trace is SHA-256d, bound to the current key. No curve: not an Eidolon vault.",
-  "psnx.refus": "Eidolon file (curve): the fingerprint reads, Lamport keys do not. Export eidos.carnet from here.",
+  "psnx.aide":
+    "Lamport signs a spend, not the file. The trace is SHA-256d, bound to the current key. No curve: not an Eidolon vault.",
+  "psnx.refus":
+    "Eidolon file (curve): the fingerprint reads, Lamport keys do not. Export eidos.carnet from here.",
   "psnx.importe": "Ledger reopened — coins, relics, Lamport keys.",
   "psnx.digest": "fingerprint",
   "psnx.sauve": "Sheet offered. On a phone: Save to Files.",

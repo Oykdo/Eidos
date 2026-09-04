@@ -26,8 +26,15 @@ import type { PreuvePortable } from "./eidos/merkle.ts";
 import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
 import { ETAT_URL } from "./eidos/envoi.ts";
 import { agesScelles, sceauxDuCoffre, type EntreeMonde, type Sceau } from "./eidos/sceaux.ts";
-import { abandonnerDansCoffre, commencerDansCoffre, exporterAscension, finDeSalleDansCoffre } from "./eidos/ascension.ts";
+import {
+  abandonnerDansCoffre,
+  commencerDansCoffre,
+  exporterAscension,
+  finDeSalleDansCoffre,
+} from "./eidos/ascension.ts";
 import { serialiserAscension } from "./eidos/ancrage.ts";
+import type { Choix } from "./eidos/pendule.ts";
+import { fouillerCaseDansCoffre } from "./eidos/fouilles.ts";
 import { preuveReseau, serialiser as serialiserPreuve } from "./eidos/merkle.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { t, type Msg } from "./i18n.ts";
@@ -108,6 +115,8 @@ type Etat = {
   prendre: (k: number, i: number) => void;
   franchir: () => void;
   fouiller: () => void;
+  /** Un coup de bêche sur une case de la dalle (fouilles.ts) */
+  fouillerCase: (x: number, y: number) => void;
   capsuleThalie: () => void;
   forgerCapsule: (iGemme: number, iSel: number) => void;
   tournerTour: (i: number, j: number) => void;
@@ -115,7 +124,7 @@ type Etat = {
   offrir: (i: number) => void;
   /** Le pendule : ascension libre (lecture) ou ancrée (ce qui compte) */
   commencerAscension: (ref: string | null) => void;
-  finDeSalle: () => void;
+  finDeSalle: (decision?: Choix | null) => void;
   abandonnerAscension: () => void;
   derniereAscension: string | null;
 };
@@ -494,16 +503,30 @@ export const useCoffre = create<Etat>((set, get) => ({
         set({ erreur: t("tour.pendule.err.piece"), flash: null });
         return;
       }
-      ancre = { tete: reseau.tete, piece: { txid: piece.txid, rang: piece.rang, adresse: piece.adresse, montant: piece.montant }, preuve: serialiserPreuve(p) };
+      ancre = {
+        tete: reseau.tete,
+        piece: {
+          txid: piece.txid,
+          rang: piece.rang,
+          adresse: piece.adresse,
+          montant: piece.montant,
+        },
+        preuve: serialiserPreuve(p),
+      };
     }
     const next = commencerDansCoffre(coffre, ancre);
     persister(next);
-    set({ coffre: next, erreur: null, derniereAscension: null, flash: t(ancre ? "tour.pendule.flash.ancree" : "tour.pendule.flash.libre") });
+    set({
+      coffre: next,
+      erreur: null,
+      derniereAscension: null,
+      flash: t(ancre ? "tour.pendule.flash.ancree" : "tour.pendule.flash.libre"),
+    });
   },
 
-  finDeSalle: () => {
+  finDeSalle: (decision = null) => {
     const { coffre, monde } = get();
-    const r = finDeSalleDansCoffre(coffre, monde);
+    const r = finDeSalleDansCoffre(coffre, monde, decision);
     if (!r.ok) {
       set({ erreur: t(`tour.pendule.err.${r.code}` as Msg), flash: null });
       return;
@@ -520,7 +543,12 @@ export const useCoffre = create<Etat>((set, get) => ({
       derniereAscension,
       flash: r.fin
         ? t(`tour.pendule.fin.${r.fin}` as Msg)
-        : t("tour.pendule.flash.salle", { choix: t(`tour.pendule.choix.${r.choix}` as Msg), n: r.etage, x: r.spawn.x, y: r.spawn.y }),
+        : t("tour.pendule.flash.salle", {
+            choix: t(`tour.pendule.choix.${r.choix}` as Msg),
+            n: r.etage,
+            x: r.spawn.x,
+            y: r.spawn.y,
+          }),
     });
   },
 
@@ -638,6 +666,23 @@ export const useCoffre = create<Etat>((set, get) => ({
     }
     persister(r.coffre);
     set({ coffre: r.coffre, erreur: null, flash: t("tour.flash.alcove", { don: r.coffret.nom }) });
+  },
+
+  fouillerCase: (x, y) => {
+    const { coffre } = get();
+    const r = fouillerCaseDansCoffre(coffre, coffre.tour.etage, x, y);
+    if (!r.ok) {
+      set({ erreur: null, flash: t(`tour.fouille.${r.code}` as Msg) });
+      return;
+    }
+    persister(r.coffre);
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: r.trouvaille
+        ? t("tour.fouille.trouve", { nom: r.trouvaille.nom, n: r.restantes })
+        : t("tour.fouille.rien", { n: r.restantes }),
+    });
   },
 
   capsuleThalie: () => {
