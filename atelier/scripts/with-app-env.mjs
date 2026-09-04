@@ -104,14 +104,29 @@ export function isMainModule(moduleUrl) {
   }
 }
 
+/** `CLE=VALEUR` en tête des arguments : posés dans l'environnement de l'enfant
+ *  (portable, là où `CLE=VALEUR cmd` n'existe que dans un shell POSIX). */
+export function splitEnvArgs(argv) {
+  const env = {};
+  let i = 0;
+  while (i < argv.length && /^[A-Z_][A-Z0-9_]*=/.test(argv[i])) {
+    const eq = argv[i].indexOf("=");
+    env[argv[i].slice(0, eq)] = argv[i].slice(eq + 1);
+    i += 1;
+  }
+  return { env, rest: argv.slice(i) };
+}
+
 function main(argv) {
-  const [command, ...args] = argv;
+  const { env: prefixe, rest } = splitEnvArgs(argv);
+  const [command, ...args] = rest;
   if (!command) {
-    console.error("usage: node scripts/with-app-env.mjs <command> [args…]");
+    console.error("usage: node scripts/with-app-env.mjs [CLE=VALEUR…] <command> [args…]");
     process.exit(2);
   }
-  const env = mergeAppEnv(readAppEnv(projectRoot()), process.env);
-  const child = spawn(command, args, { stdio: "inherit", env });
+  const env = { ...mergeAppEnv(readAppEnv(projectRoot()), process.env), ...prefixe };
+  // Windows : `vite` est `vite.cmd`, que seul un shell résout.
+  const child = spawn(command, args, { stdio: "inherit", env, shell: process.platform === "win32" });
   // The dev server is long-running and is stopped by signalling this wrapper.
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => child.kill(signal));

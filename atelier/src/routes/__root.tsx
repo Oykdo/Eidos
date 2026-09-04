@@ -1,5 +1,4 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { SwDrop } from "@/components/SwDrop";
 import appCss from "../styles.css?url";
@@ -41,9 +40,7 @@ export const Route = createRootRoute({
       <body className="min-h-dvh bg-fond font-mono text-encre">
         <PreviewHostBridge />
         <SwDrop />
-        <AuthProvider>
-          <Outlet />
-        </AuthProvider>
+        <Outlet />
         <Scripts />
       </body>
     </html>

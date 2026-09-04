@@ -126,3 +126,12 @@ test("the CLI still runs when invoked through a symlinked path", async () => {
   ]);
   assert.equal(stdout, "false");
 });
+
+test("splitEnvArgs : prefixes CLE=VALEUR poses, le reste intact", async () => {
+  const { splitEnvArgs } = await import("./with-app-env.mjs");
+  assert.deepEqual(splitEnvArgs(["EIDOS_PAGES=1", "A_B=x=y", "vite", "build"]), {
+    env: { EIDOS_PAGES: "1", A_B: "x=y" },
+    rest: ["vite", "build"],
+  });
+  assert.deepEqual(splitEnvArgs(["vite", "X=1"]), { env: {}, rest: ["vite", "X=1"] });
+});

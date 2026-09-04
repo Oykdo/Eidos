@@ -22,6 +22,7 @@ import hashlib, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import eonis as E
 import utxo as U
 import federation as F
 import wots as W
@@ -121,12 +122,21 @@ def calculer():
         "graine": g.hex(), "adresse": ar.hex(), "id": RQ.id_relique(ar),
         "base64url": RQ.b64url(g), "charge_utile": RQ.charge_utile(g),
     }
+    # glyphes : l'adresse WOTS+ du vecteur en 27 + 4 figures, et un condensat en 43
+    a0 = bytes.fromhex(v["wots"]["adresse"])
+    v["glyphes"] = {
+        "adresse": a0.hex(), "encodee": U.addr_encode(a0),
+        "condensat": m.hex(), "condensat_encode": E.encode_glyphs(m),
+        # 27e groupe force a ✚✚✚ : ses 2 bits de bourrage ne sont plus nuls
+        "bourrage_refuse": " ".join(U.addr_encode(a0).split("  |  ")[0].split(" ")[:26] + ["✚✚✚"])
+                           + "  |  " + U.addr_encode(a0).split("  |  ")[1],
+    }
     return v
 
 
 def verifier(v):
     attendu = calculer()
-    ecarts = [c for c in ("parametres", "wots", "tx", "xmss", "carnet", "tete", "relique")
+    ecarts = [c for c in ("parametres", "wots", "tx", "xmss", "carnet", "tete", "relique", "glyphes")
               if v.get(c) != attendu[c]]
     if ecarts:
         raise SystemExit(f"ECHEC : vecteurs divergents pour {', '.join(ecarts)}")
@@ -136,6 +146,12 @@ def verifier(v):
                           bytes.fromhex(v["xmss"]["message"]),
                           (x["indice"], bytes.fromhex(x["wots"]),
                            [bytes.fromhex(c) for c in x["chemin"]]))
+    g = v["glyphes"]
+    assert U.addr_decode(g["encodee"]) == bytes.fromhex(g["adresse"])
+    try:
+        U.addr_decode(g["bourrage_refuse"]); raise AssertionError("bourrage accepte")
+    except ValueError:
+        pass
     t = v["tx"]
     assert W.verifier(bytes.fromhex(v["wots"]["adresse"]), bytes.fromhex(t["sighash_0"]),
                       (bytes.fromhex(t["temoin_0"]["graine_publique"]),

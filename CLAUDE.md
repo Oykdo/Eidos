@@ -301,12 +301,14 @@ Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
 - La Tour : `docs/SPEC_TOUR.md` (hôtes = les neuf muses, secrets, élixirs
   de la tria prima, antres, portes par sceaux) — spec, à coder après H2/H3.
 
-### P4 — Vecteurs de test partagés Python ↔ TS
-Amorcé en P2/P3 : `vecteurs.json` (6 familles : paramètres, clé WOTS+, tx,
-XMSS, carnet, tête signée), `vecteurs.py` (`--generer` / vérification), relu
-par `vecteurs.test.ts`, `xmss.test.ts`, `merkle.test.ts`, `temoin.test.ts`.
-Reste : adresse encodée en glyphes, et le job CI `parite` qui exécute les
-deux côtés (Python + `npm test`).
+### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
+`vecteurs.json` : 8 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
+signée, relique, **glyphes** : adresse 27 + 4, condensat 43, bourrage refusé),
+écrit par `vecteurs.py --generer`, relu par `vecteurs.py` et par
+`vecteurs.test.ts`, `xmss.test.ts`, `merkle.test.ts`, `temoin.test.ts`,
+`trophee.test.ts`, `relique-qr.test.ts`. Job CI **`parite`** (tests.yml) :
+`python vecteurs.py`, puis `npm ci`, `npm run typecheck`, `npm test`.
+Toute évolution d'un format : `vecteurs.py --generer`, puis les deux côtés.
 
 ### P5 — État MSS persistant
 `k.indice = max(employes)+1` dérivé de la chaîne est sûr pour un seul écrivain
@@ -321,8 +323,16 @@ sur deux branches » qui doit être refusé côté signataire.
   (CVE-2012-2459) et pourquoi elle est bénigne ici (double dépense dans le bloc
   refusée).
 - Déplacer `consensus.py` et `store.py` dans `historique/` avec leur test.
-- Atelier : retirer `better-auth`, `pglite`, `kysely`, `jose`, `multiplayer/p2p.ts`,
-  `@react-three/*` s'ils ne sont pas branchés ; objectif < 20 dépendances.
+- Atelier — FAIT (septembre 2026) : retirés `better-auth`, `@electric-sql/pglite`,
+  `kysely`, `jose`, `pg`, `src/lib/auth/`, `src/lib/db.ts`, `src/lib/app-data/`,
+  `src/lib/multiplayer/`, `migrations/`, les scripts de migration, d'invariant
+  d'auth et de fumée Playwright, `@react-three/drei`, `react-query`,
+  `react-table`, `react-hook-form`, `recharts`, `cmdk`, `sonner`, `vaul`,
+  `date-fns`, `react-day-picker`, tous les `@radix-ui/*` sauf `react-slot`
+  (194 paquets en moins). Reste : **18 dépendances** d'exécution, 17 de dev.
+  `@react-three/fiber` + `three` restent : quatre scènes les utilisent.
+  `npm run build` ne migre plus rien. Le recensement des imports se refait avec
+  un script qui lit les spécificateurs, pas un `grep` du nom du paquet.
 
 ## 8. Conventions d'écriture
 

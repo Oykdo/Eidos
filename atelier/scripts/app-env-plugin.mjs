@@ -2,7 +2,7 @@
  * Dev-only `/__app-env` endpoint: the client env the running Vite server
  * resolved, as JSON.
  *
- * `scripts/check-auth-invariant.mjs` reads it to compare the live dev server's
+ *  (lu par un outil de contrôle externe pour comparer le serveur de dev
  * `VITE_AUTH_ENABLED` against the value the next build will resolve. The
  * config is loaded even when Vite is started outside `scripts/with-app-env.mjs`
  * — the case that check exists to catch. These are the same values Vite inlines

@@ -49,7 +49,7 @@ export function buildEpochTable(aEidolon: number, t = T, h0 = H0): number[] {
     exact.push(r);
     floors.push(r.toDecimalPlaces(0, Decimal.ROUND_FLOOR).toNumber());
   }
-  let reste = totalAtomes - floors.reduce((s, n) => s + n, 0);
+  const reste = totalAtomes - floors.reduce((s, n) => s + n, 0);
   const order = Array.from({ length: t }, (_, h) => h).sort((h1, h2) => {
     const f1 = exact[h1]!.minus(floors[h1]!);
     const f2 = exact[h2]!.minus(floors[h2]!);

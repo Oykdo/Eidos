@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fromHex, hexOf, sha256 } from "./hash.ts";
 import { graineDe, adresseDe, signerEntrees, sighash } from "./lamport.ts";
 import { serTx } from "./envoi.ts";
+import { encoderAdresse, encoderGlyphes, verifierAdresse } from "./glyphs.ts";
 import {
   TYPE_LTREE,
   TYPE_OTS,
@@ -42,6 +43,13 @@ type Vecteurs = {
     temoin_0: { graine_publique: string; signature: string };
     ser_tx_longueur: number;
     ser_tx_sha256: string;
+  };
+  glyphes: {
+    adresse: string;
+    encodee: string;
+    condensat: string;
+    condensat_encode: string;
+    bourrage_refuse: string;
   };
   xmss: {
     graine: string;
@@ -97,6 +105,15 @@ describe("vecteurs.json = vecteurs.py", () => {
     assert.equal(ser.length, V.tx.ser_tx_longueur);
     assert.equal(hexOf(sha256(ser)), V.tx.ser_tx_sha256);
     assert.equal(sig.adresseRendu, V.tx.sorties[1]!.adresse);
+  });
+
+  it("glyphes : adresse 27 + 4, condensat 43, bourrage refusé — mêmes figures que eonis.py", () => {
+    const g = V.glyphes;
+    assert.equal(encoderAdresse(fromHex(g.adresse)), g.encodee);
+    assert.equal(hexOf(verifierAdresse(g.encodee).a20), g.adresse);
+    assert.equal(encoderGlyphes(fromHex(g.condensat)), g.condensat_encode);
+    assert.equal(g.condensat_encode.split(" ").length, 43);
+    assert.throws(() => verifierAdresse(g.bourrage_refuse));
   });
 
   it("XMSS : la feuille 0 se reconstruit depuis la signature de bloc", () => {

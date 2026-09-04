@@ -74,6 +74,35 @@ jobs:
           python store.py --pay
           python store.py --verify
 
+  parite:
+    name: parite Python <-> TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: atelier/package-lock.json
+
+      - name: vecteurs.json relu par la spec Python
+        run: python vecteurs.py
+
+      - name: Atelier - dependances
+        run: npm ci
+        working-directory: atelier
+
+      - name: Atelier - typage
+        run: npm run typecheck
+        working-directory: atelier
+
+      - name: Atelier - tests (vecteurs.json relu par TypeScript)
+        run: npm test
+        working-directory: atelier
+
   empreintes:
     name: empreinte ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
