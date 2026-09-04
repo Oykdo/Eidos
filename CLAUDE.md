@@ -266,7 +266,16 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
   reporte dans `danse.ts` / `forme.ts` et leurs tests.
 - Reste : `qr.py` n'a pas de décodeur (scanner l'écran avant d'imprimer).
 
-### Refonte du hub — EN COURS
+### Coffre 3D — un seul coffre, palettes isochromatiques, ornements par butin (FAIT 2026-09)
+`lib/eidos/coffres.ts` : `scoreButin` / `palierButin` (objets 1, gemme 2, affixe
+rang−1, philosophale 4, sceau 1–4 ; seuils 1 / 4 / 9 → nu, garni, orné,
+précieux), `paletteDePalier` (une teinte par palier — acier 215°, vert-de-gris
+150°, ambre-or 42°, améthyste 275° — huit clartés 94→12 %, `hslVersHex`),
+`ornementsDe` cumulatifs (tas 10, ferrures 28, cage 265, couronne 8 cellules).
+`CoffreScene` : un coffre au pic de la cloche, cage au palier précieux.
+Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
+
+### Refonte du hub — FAIT
 - H1 FAIT : navigation en trois registres (Vérifier / Lire / Jouer) + Guide,
   routes inchangées (`Nav.tsx`).
 - H2 FAIT : l'Arbre d'origine (régimes, champ, lumen, ancre FNV : `lib/arbre/`,

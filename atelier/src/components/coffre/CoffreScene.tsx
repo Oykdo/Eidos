@@ -1,38 +1,34 @@
 /**
- * Scène muette des deux coffres.
+ * Scène muette du coffre.
  * Formules : docs/SPEC_AUDIT_COFFRES.md et lib/eidos/coffres.ts.
- * Cage (r,θ,φ) née sur la serrure du coffre de fond.
- * Fond atelier, pas parchemin — écart volontaire, noté dans l'audit.
+ * Un seul coffre au pic de la cloche ; palette isochromatique et ornements
+ * choisis par le palier du butin. Cage (r,θ,φ) née sur la serrure au palier
+ * « précieux ». Fond atelier, pas parchemin — écart volontaire, noté dans l'audit.
  */
 import { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { ATELIER_DPR, ATELIER_FOND, ATELIER_GL, LUMIERE_DIR, useOngletVisible } from "@/components/canvas/atelier.ts";
 import {
-  ATELIER_DPR,
-  ATELIER_FOND,
-  ATELIER_GL,
-  LUMIERE_DIR,
-  useOngletVisible,
-} from "@/components/canvas/atelier.ts";
-import {
-  COFFRE_AVANT,
-  COFFRE_FOND,
+  ORNEMENT_TEINTE,
+  PALETTES,
   SERRURE_LOCALE,
   gaussienne,
-  ORNEMENT_TEINTE,
+  ornementsDe,
+  voxelsCouronne,
+  voxelsFerrures,
   voxelsOrnementSpherique,
   voxelsTasCouvercle,
+  type Ornement,
   type Palette8,
 } from "@/lib/eidos/coffres.ts";
 
-function Gaussienne({ amplitude }: { amplitude: number }) {
+function Gaussienne({ amplitude, teinte }: { amplitude: number; teinte: string }) {
   const geo = useMemo(() => {
     const g = new THREE.PlaneGeometry(7.2, 7.2, 56, 56);
     const pos = g.attributes.position!;
     for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      pos.setZ(i, gaussienne(x * 0.55, y * 0.55) * (0.55 + amplitude));
+      pos.setZ(i, gaussienne(pos.getX(i) * 0.55, pos.getY(i) * 0.55) * (0.55 + amplitude));
     }
     g.computeVertexNormals();
     return g;
@@ -44,29 +40,17 @@ function Gaussienne({ amplitude }: { amplitude: number }) {
         roughness={0.55}
         metalness={0.18}
         wireframe
-        emissive="#c9a227"
+        emissive={teinte}
         emissiveIntensity={0.08 + amplitude * 0.12}
       />
     </mesh>
   );
 }
 
-function CoffreVoxel({
-  palette,
-  serrure,
-  or,
-}: {
-  palette: Palette8;
-  serrure: number;
-  or: number;
-}) {
+function CoffreVoxel({ palette, ornements }: { palette: Palette8; ornements: readonly Ornement[] }) {
   const mesh = useMemo(() => {
     const geo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
-    const mat = new THREE.MeshStandardMaterial({
-      color: "#ffffff",
-      roughness: 0.42,
-      metalness: 0.55,
-    });
+    const mat = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.42, metalness: 0.55 });
     const dummy = new THREE.Object3D();
     const cells: { p: THREE.Vector3; i: number }[] = [];
     for (let x = -4; x <= 4; x++) {
@@ -76,23 +60,22 @@ function CoffreVoxel({
           const ay = Math.abs(y);
           const az = Math.abs(z);
           const coque = ax === 4 || ay === 3 || az === 3;
-          const couvercle = y >= 2;
           if (!coque) continue;
           let i = 4;
-          if (couvercle) i = 2;
+          if (y >= 2) i = 2;
           if (ay === 3 && ax <= 1 && az === 3) i = 1;
-          if (ax === 0 && y === 0 && az === 3) i = serrure;
+          if (ax === 0 && y === 0 && az === 3) i = 7; // serrure, toujours la clarté la plus sombre
           if (ax === 4 && ay <= 1) i = 6;
           cells.push({ p: new THREE.Vector3(x * 0.2, y * 0.2 + 0.15, z * 0.2), i });
         }
       }
     }
-    for (const v of voxelsTasCouvercle()) {
-      cells.push({
-        p: new THREE.Vector3(v.x * 0.16, v.y * 0.16 + 0.12, v.z * 0.16),
-        i: or,
-      });
-    }
+    const poserCellules = (cs: { x: number; y: number; z: number }[], i: number, pas = 0.2, dy = 0.15) => {
+      for (const c of cs) cells.push({ p: new THREE.Vector3(c.x * pas, c.y * pas + dy, c.z * pas), i });
+    };
+    if (ornements.includes("ferrures")) poserCellules(voxelsFerrures(), 1);
+    if (ornements.includes("tas")) poserCellules(voxelsTasCouvercle(), 0, 0.16, 0.12);
+    if (ornements.includes("couronne")) poserCellules(voxelsCouronne(), 0, 0.2, 0.12);
     const inst = new THREE.InstancedMesh(geo, mat, cells.length);
     cells.forEach((c, n) => {
       dummy.position.copy(c.p);
@@ -103,8 +86,7 @@ function CoffreVoxel({
     inst.instanceMatrix.needsUpdate = true;
     if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     return inst;
-  }, [palette, serrure, or]);
-
+  }, [palette, ornements]);
   return <primitive object={mesh} />;
 }
 
@@ -112,10 +94,7 @@ function CageSerrure() {
   const mesh = useMemo(() => {
     const vs = voxelsOrnementSpherique();
     const geo = new THREE.BoxGeometry(0.92, 0.92, 0.92);
-    const mat = new THREE.MeshStandardMaterial({
-      roughness: 0.35,
-      metalness: 0.55,
-    });
+    const mat = new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.55 });
     const inst = new THREE.InstancedMesh(geo, mat, vs.length);
     const dummy = new THREE.Object3D();
     vs.forEach((v, i) => {
@@ -135,42 +114,24 @@ function CageSerrure() {
   );
 }
 
-function GroupeCoffre({
-  palette,
-  scale,
-  position,
-  serrure,
-  or,
-  cage,
-}: {
-  palette: Palette8;
-  scale: number;
-  position: readonly [number, number, number];
-  serrure: number;
-  or: number;
-  cage: boolean;
-}) {
+function GroupeCoffre({ palette, ornements, scale, y }: { palette: Palette8; ornements: readonly Ornement[]; scale: number; y: number }) {
   const group = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
-    if (!group.current) return;
-    group.current.rotation.y += Math.min(dt, 0.08) * (cage ? 0.1 : 0.06);
+    if (group.current) group.current.rotation.y += Math.min(dt, 0.08) * 0.08;
   });
   return (
-    <group ref={group} position={[...position]} scale={scale}>
-      <CoffreVoxel palette={palette} serrure={serrure} or={or} />
-      {cage ? <CageSerrure /> : null}
+    <group ref={group} position={[0, y, 0]} scale={scale}>
+      <CoffreVoxel palette={palette} ornements={ornements} />
+      {ornements.includes("cage") ? <CageSerrure /> : null}
     </group>
   );
 }
 
-export default function CoffreScene({
-  amplitude,
-}: {
-  atomes: number;
-  amplitude: number;
-}) {
+export default function CoffreScene({ amplitude, palier }: { amplitude: number; palier: 0 | 1 | 2 | 3 }) {
   const visible = useOngletVisible();
-  const echelle = 0.72 + amplitude * 0.38;
+  const palette = PALETTES[palier]!;
+  const ornements = ornementsDe(palier);
+  const echelle = 0.78 + amplitude * 0.32;
   const pic = gaussienne(0, 0) * (0.55 + amplitude);
   return (
     <Canvas
@@ -179,33 +140,14 @@ export default function CoffreScene({
       dpr={ATELIER_DPR}
       gl={ATELIER_GL}
       frameloop={visible ? "always" : "never"}
-      camera={{ position: [3.4, 2.6, 4.6], fov: 34 }}
+      camera={{ position: [2.6, 2.3, 3.6], fov: 34 }}
       onCreated={({ gl }) => gl.setClearColor(ATELIER_FOND, 1)}
     >
       <ambientLight intensity={0.7} />
-      <directionalLight
-        position={LUMIERE_DIR.position}
-        intensity={1.05}
-        color={LUMIERE_DIR.color}
-      />
-      <directionalLight position={[-4, 3, -3]} intensity={0.35} color="#8FCBFF" />
-      <Gaussienne amplitude={amplitude} />
-      <GroupeCoffre
-        palette={COFFRE_FOND.palette}
-        scale={COFFRE_FOND.scale * echelle}
-        position={[COFFRE_FOND.position[0], pic + 0.15, COFFRE_FOND.position[2]]}
-        serrure={7}
-        or={0}
-        cage
-      />
-      <GroupeCoffre
-        palette={COFFRE_AVANT.palette}
-        scale={COFFRE_AVANT.scale * echelle}
-        position={[COFFRE_AVANT.position[0], 0.12 + amplitude * 0.18, COFFRE_AVANT.position[2]]}
-        serrure={1}
-        or={1}
-        cage={false}
-      />
+      <directionalLight position={LUMIERE_DIR.position} intensity={1.05} color={LUMIERE_DIR.color} />
+      <directionalLight position={[-4, 3, -3]} intensity={0.35} color={palette[2]} />
+      <Gaussienne amplitude={amplitude} teinte={palette[3]!} />
+      <GroupeCoffre palette={palette} ornements={ornements} scale={echelle} y={pic + 0.15} />
     </Canvas>
   );
 }
