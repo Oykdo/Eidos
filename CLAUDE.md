@@ -266,6 +266,22 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
   reporte dans `danse.ts` / `forme.ts` et leurs tests.
 - Reste : `qr.py` n'a pas de décodeur (scanner l'écran avant d'imprimer).
 
+### Refonte du hub — EN COURS
+- H1 FAIT : navigation en trois registres (Vérifier / Lire / Jouer) + Guide,
+  routes inchangées (`Nav.tsx`).
+- H2 : l'Arbre d'origine (régimes abstraits) disparaît ; `/arbre` devient la
+  **carte des reliques du monde** (ancrage par adresse, paliers = âges,
+  familles = muses, reliques du coffre mises en avant). Lecture, pas preuve.
+- H3 : les reliques d'âge achetables deviennent des **sceaux** : mise scellée
+  dans une relique du monde (prix de l'âge, statut « scellée / sous-scellée »
+  publié par le nœud), clé des portes de la Tour, trophée exportable. L'achat
+  local disparaît hors coffre d'atelier.
+- H4 : Guide réécrit selon les trois registres. Vocabulaire fixé : pièce,
+  artefact (lecture en muse), relique (pièce scellée dans le monde), sceau,
+  objet (jeu local).
+- La Tour : `docs/SPEC_TOUR.md` (hôtes = les neuf muses, secrets, élixirs
+  de la tria prima, antres, portes par sceaux) — spec, à coder après H2/H3.
+
 ### P4 — Vecteurs de test partagés Python ↔ TS
 Amorcé en P2/P3 : `vecteurs.json` (6 familles : paramètres, clé WOTS+, tx,
 XMSS, carnet, tête signée), `vecteurs.py` (`--generer` / vérification), relu
