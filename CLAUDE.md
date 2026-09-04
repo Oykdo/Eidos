@@ -401,6 +401,11 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   pierre une fois sur quatre) dérivé de (étage, case, coffre) : les cases sont
   à tous, le contenu à chacun. Occupants posés sur la dalle (`caseOccupant`,
   même règle que la scène). 6 contrôles. Cap proposé : `docs/CAP_METROIDVANIA.md`.
+- Brume des antres : `docs/SPEC_BROUILLARD.md` (spec proposée, 2026-09-04) —
+  Earnshaw comme loi de la brume (neuf cases centrales jamais éclairées depuis
+  le bord), coïncidence de deux faisceaux de couleurs différentes comme seule
+  clé, fuite de relief au soufre, gardien à la case de laplacien maximal ;
+  décisions B1–B5 à prendre avant tout chantier.
 - UI : `TourView` (hôte et répliques, objet porté, occupants et prise, élixirs,
   antre, fouiller, carte 255 cases sans secrets non découverts, observatoire),
   `Bestiaire` dans la page Coffre ; `GENRES` gagne elixir, capsule, capture.
