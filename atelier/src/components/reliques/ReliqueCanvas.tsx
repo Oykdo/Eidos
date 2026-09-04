@@ -13,8 +13,11 @@ import {
   ATELIER_DPR,
   ATELIER_FOND,
   ATELIER_GL,
+  LUMIERE_CONTRE,
+  LUMIERE_DIR,
   useOngletVisible,
 } from "@/components/canvas/atelier.ts";
+import { MATIERE_AGE, couleurSRGB } from "@/components/canvas/matiere.ts";
 import { valeursUniforms } from "@/lib/reliques/forme.ts";
 import { PERIODE_DANSE_S } from "@/lib/reliques/danse.ts";
 import type { Genome } from "@/lib/reliques/genome.ts";
@@ -38,6 +41,13 @@ type Uniforms = {
   uAspect: { value: number };
   uRes: { value: THREE.Vector2 };
   uAA: { value: number };
+  // Lumière et matière du contrat d'atelier (atelier.ts, matiere.ts) — ajoutés en fin, jamais réordonnés.
+  uLumDir: { value: THREE.Vector3 };
+  uLumCol: { value: THREE.Color };
+  uContreDir: { value: THREE.Vector3 };
+  uContreCol: { value: THREE.Color };
+  uMatiere: { value: THREE.Vector2 };
+  uMetalAff: { value: THREE.Vector3 };
 };
 
 function fabriquerUniforms(): Uniforms {
@@ -60,12 +70,25 @@ function fabriquerUniforms(): Uniforms {
     uAspect: { value: 1 },
     uRes: { value: new THREE.Vector2(1, 1) },
     uAA: { value: 1 },
+    uLumDir: { value: new THREE.Vector3(...LUMIERE_DIR.position).normalize() },
+    uLumCol: { value: new THREE.Color(LUMIERE_DIR.color) },
+    uContreDir: { value: new THREE.Vector3(...LUMIERE_CONTRE.position).normalize() },
+    uContreCol: { value: new THREE.Color(LUMIERE_CONTRE.color) },
+    uMatiere: { value: new THREE.Vector2(0.32, 0.6) },
+    // Métal en sRGB 0..1, pour l'aura du fond composée en espace d'affichage.
+    uMetalAff: { value: new THREE.Vector3() },
   };
 }
 
 function appliquer(u: Uniforms, g: Genome, w: number, h: number) {
   const v = valeursUniforms(g);
-  u.uMetal.value.set(v.metal[0], v.metal[1], v.metal[2]);
+  // Le métal d'âge est un triplet sRGB : linéarisé ici, comme les couleurs des scènes voxel.
+  const c = couleurSRGB(v.metal[0] * 255, v.metal[1] * 255, v.metal[2] * 255);
+  u.uMetal.value.set(c.r, c.g, c.b);
+  u.uContreCol.value.copy(c);
+  u.uMetalAff.value.set(v.metal[0], v.metal[1], v.metal[2]);
+  const m = MATIERE_AGE[g.age];
+  u.uMatiere.value.set(m.roughness, m.metalness);
   u.uP0.value.fromArray(v.p0);
   u.uP1.value.fromArray(v.p1);
   u.uP2.value.fromArray(v.p2);
@@ -133,7 +156,6 @@ function ReliqueQuad({ genome }: { genome: Genome }) {
         uniforms={uniforms}
         depthWrite={false}
         depthTest={false}
-        toneMapped={false}
       />
     </mesh>
   );

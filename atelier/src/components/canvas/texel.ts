@@ -8,9 +8,16 @@ export type Cellule3 = { readonly x: number; readonly y: number; readonly z: num
 
 export const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5] as const;
 
-/** Seuil ordonné 0..15 (Bayer 4×4 replié sur les trois axes : à y fixe, motif exact en (x,z), coordonnées négatives comprises). */
+/**
+ * Seuil ordonné 0..15 : Bayer 4×4 replié sur les trois axes par un cisaillement
+ * impair (ligne x + y, colonne z + y). Sur tout plan x, y ou z constant, un bloc
+ * 4×4 porte les 16 seuils une fois : une face se lit directement par ses trois
+ * coordonnées, sans forme 2D (à y fixe, motif exact en (x, z) ; coordonnées
+ * négatives comprises). Un cisaillement pair (l'ancien x + 2y) ne portait que
+ * deux lignes du motif sur les faces x = const : la moitié ou aucune cellule.
+ */
 export function seuilBayer(x: number, y: number, z: number): number {
-  return BAYER4[((x + 2 * y) & 3) * 4 + ((z + y) & 3)]!;
+  return BAYER4[((x + y) & 3) * 4 + ((z + y) & 3)]!;
 }
 
 /** Clé entière d'une cellule dans [-64, 63]³. */

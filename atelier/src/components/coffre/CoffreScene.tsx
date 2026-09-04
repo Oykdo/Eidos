@@ -4,11 +4,30 @@
  * Un seul coffre au pic de la cloche ; palette isochromatique et ornements
  * choisis par le palier du butin. Cage (r,θ,φ) née sur la serrure au palier
  * « précieux ». Fond atelier, pas parchemin — écart volontaire, noté dans l'audit.
+ * Lumière et environnement du socle (canvas/) ; la coque vient de cellules.ts,
+ * la matière de matiere.ts par palier. Une figure, jamais une preuve.
  */
-import { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { ATELIER_DPR, ATELIER_FOND, ATELIER_GL, LUMIERE_DIR, useOngletVisible } from "@/components/canvas/atelier.ts";
+import {
+  ATELIER_DPR,
+  ATELIER_FOND,
+  ATELIER_GL,
+  brouillard,
+  useOngletVisible,
+} from "@/components/canvas/atelier.ts";
+import { EnvironnementAtelier } from "@/components/canvas/Environnement.tsx";
+import { Halo } from "@/components/canvas/Halo.tsx";
+import { LumieresAtelier } from "@/components/canvas/Lumieres.tsx";
+import {
+  MATIERE_FERRURE,
+  MATIERE_PALIER,
+  MATIERE_TRAMEE,
+  disposerInstance,
+  environnementDisponible,
+  matiereEffective,
+} from "@/components/canvas/matiere.ts";
 import {
   ORNEMENT_TEINTE,
   PALETTES,
@@ -16,12 +35,14 @@ import {
   gaussienne,
   ornementsDe,
   voxelsCouronne,
-  voxelsFerrures,
   voxelsOrnementSpherique,
   voxelsTasCouvercle,
   type Ornement,
   type Palette8,
 } from "@/lib/eidos/coffres.ts";
+import { cellulesCoque } from "./cellules.ts";
+
+type Palier = 0 | 1 | 2 | 3;
 
 function Gaussienne({ amplitude, teinte }: { amplitude: number; teinte: string }) {
   const geo = useMemo(() => {
@@ -33,8 +54,10 @@ function Gaussienne({ amplitude, teinte }: { amplitude: number; teinte: string }
     g.computeVertexNormals();
     return g;
   }, [amplitude]);
+  useEffect(() => () => geo.dispose(), [geo]);
+  // Hors environnement (rien à réfléchir sur un fil), fondue dans le brouillard.
   return (
-    <mesh geometry={geo} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh geometry={geo} rotation={[-Math.PI / 2, 0, 0]}>
       <meshStandardMaterial
         color="#3a4550"
         roughness={0.55}
@@ -42,38 +65,48 @@ function Gaussienne({ amplitude, teinte }: { amplitude: number; teinte: string }
         wireframe
         emissive={teinte}
         emissiveIntensity={0.08 + amplitude * 0.12}
+        envMapIntensity={0}
+        dithering
       />
     </mesh>
   );
 }
 
-function CoffreVoxel({ palette, ornements }: { palette: Palette8; ornements: readonly Ornement[] }) {
+function CoffreVoxel({
+  palette,
+  ornements,
+  palier,
+}: {
+  palette: Palette8;
+  ornements: readonly Ornement[];
+  palier: Palier;
+}) {
+  const gl = useThree((s) => s.gl);
   const mesh = useMemo(() => {
-    const geo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
-    const mat = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.42, metalness: 0.55 });
+    // Jointif au pas 0,2 : l'interstice 0,02 u (≈ 1 px) rampait en rotation.
+    const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+    const m = matiereEffective(MATIERE_PALIER[palier]!, environnementDisponible(gl));
+    // Matière blanche × couleur d'instance : l'ordre des huit clartés est préservé.
+    const mat = new THREE.MeshStandardMaterial({
+      color: "#ffffff",
+      roughness: m.roughness,
+      metalness: m.metalness,
+      ...MATIERE_TRAMEE,
+    });
     const dummy = new THREE.Object3D();
-    const cells: { p: THREE.Vector3; i: number }[] = [];
-    for (let x = -4; x <= 4; x++) {
-      for (let y = -3; y <= 3; y++) {
-        for (let z = -3; z <= 3; z++) {
-          const ax = Math.abs(x);
-          const ay = Math.abs(y);
-          const az = Math.abs(z);
-          const coque = ax === 4 || ay === 3 || az === 3;
-          if (!coque) continue;
-          let i = 4;
-          if (y >= 2) i = 2;
-          if (ay === 3 && ax <= 1 && az === 3) i = 1;
-          if (ax === 0 && y === 0 && az === 3) i = 7; // serrure, toujours la clarté la plus sombre
-          if (ax === 4 && ay <= 1) i = 6;
-          cells.push({ p: new THREE.Vector3(x * 0.2, y * 0.2 + 0.15, z * 0.2), i });
-        }
-      }
-    }
-    const poserCellules = (cs: { x: number; y: number; z: number }[], i: number, pas = 0.2, dy = 0.15) => {
-      for (const c of cs) cells.push({ p: new THREE.Vector3(c.x * pas, c.y * pas + dy, c.z * pas), i });
+    const cells: { p: THREE.Vector3; i: number }[] = cellulesCoque(ornements).map((c) => ({
+      p: new THREE.Vector3(c.x * 0.2, c.y * 0.2 + 0.15, c.z * 0.2),
+      i: c.i,
+    }));
+    const poserCellules = (
+      cs: { x: number; y: number; z: number }[],
+      i: number,
+      pas = 0.2,
+      dy = 0.15,
+    ) => {
+      for (const c of cs)
+        cells.push({ p: new THREE.Vector3(c.x * pas, c.y * pas + dy, c.z * pas), i });
     };
-    if (ornements.includes("ferrures")) poserCellules(voxelsFerrures(), 1);
     if (ornements.includes("tas")) poserCellules(voxelsTasCouvercle(), 0, 0.16, 0.12);
     if (ornements.includes("couronne")) poserCellules(voxelsCouronne(), 0, 0.2, 0.12);
     const inst = new THREE.InstancedMesh(geo, mat, cells.length);
@@ -86,15 +119,24 @@ function CoffreVoxel({ palette, ornements }: { palette: Palette8; ornements: rea
     inst.instanceMatrix.needsUpdate = true;
     if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     return inst;
-  }, [palette, ornements]);
+  }, [palette, ornements, palier, gl]);
+  useEffect(() => () => disposerInstance(mesh), [mesh]);
   return <primitive object={mesh} />;
 }
 
 function CageSerrure() {
+  const gl = useThree((s) => s.gl);
   const mesh = useMemo(() => {
     const vs = voxelsOrnementSpherique();
-    const geo = new THREE.BoxGeometry(0.92, 0.92, 0.92);
-    const mat = new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.55 });
+    // Cellule pleine : 1 × 0,085 = l'interstice d'hier (0,08 × 0,085) passait sous le pixel et scintillait.
+    const geo = new THREE.BoxGeometry(1, 1, 1);
+    // Même repli que la coque : sans environnement, la ferrure passe entière en matière peinte.
+    const m = matiereEffective(MATIERE_FERRURE, environnementDisponible(gl));
+    const mat = new THREE.MeshStandardMaterial({
+      roughness: m.roughness,
+      metalness: m.metalness,
+      ...MATIERE_TRAMEE,
+    });
     const inst = new THREE.InstancedMesh(geo, mat, vs.length);
     const dummy = new THREE.Object3D();
     vs.forEach((v, i) => {
@@ -106,7 +148,8 @@ function CageSerrure() {
     inst.instanceMatrix.needsUpdate = true;
     if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
     return inst;
-  }, []);
+  }, [gl]);
+  useEffect(() => () => disposerInstance(mesh), [mesh]);
   return (
     <group position={[...SERRURE_LOCALE]} scale={0.085}>
       <primitive object={mesh} />
@@ -114,25 +157,42 @@ function CageSerrure() {
   );
 }
 
-function GroupeCoffre({ palette, ornements, scale, y }: { palette: Palette8; ornements: readonly Ornement[]; scale: number; y: number }) {
+function GroupeCoffre({
+  palette,
+  ornements,
+  palier,
+  scale,
+  y,
+}: {
+  palette: Palette8;
+  ornements: readonly Ornement[];
+  palier: Palier;
+  scale: number;
+  y: number;
+}) {
   const group = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
     if (group.current) group.current.rotation.y += Math.min(dt, 0.08) * 0.08;
   });
   return (
     <group ref={group} position={[0, y, 0]} scale={scale}>
-      <CoffreVoxel palette={palette} ornements={ornements} />
+      <CoffreVoxel palette={palette} ornements={ornements} palier={palier} />
       {ornements.includes("cage") ? <CageSerrure /> : null}
     </group>
   );
 }
 
-export default function CoffreScene({ amplitude, palier }: { amplitude: number; palier: 0 | 1 | 2 | 3 }) {
+export default function CoffreScene({ amplitude, palier }: { amplitude: number; palier: Palier }) {
   const visible = useOngletVisible();
   const palette = PALETTES[palier]!;
   const ornements = ornementsDe(palier);
   const echelle = 0.78 + amplitude * 0.32;
   const pic = gaussienne(0, 0) * (0.55 + amplitude);
+  // Le halo vise le coffre ; recalculé quand le palier ou le solde change, jamais par image.
+  const cible = useMemo<[number, number, number]>(() => [0, pic + 0.15, 0], [pic]);
+  // Caméra à 5,0 du centre : le coffre (4,2–4,6) reste intact, le bord lointain de
+  // la cloche (≈ 9,8) fond aux deux tiers ; le terme en pic suit la hauteur du coffre.
+  const brume = useMemo(() => brouillard(5.4 + 0.4 * pic, 12.5 + 0.6 * pic), [pic]);
   return (
     <Canvas
       className="absolute inset-0 h-full w-full touch-none"
@@ -143,11 +203,18 @@ export default function CoffreScene({ amplitude, palier }: { amplitude: number; 
       camera={{ position: [2.6, 2.3, 3.6], fov: 34 }}
       onCreated={({ gl }) => gl.setClearColor(ATELIER_FOND, 1)}
     >
-      <ambientLight intensity={0.7} />
-      <directionalLight position={LUMIERE_DIR.position} intensity={1.05} color={LUMIERE_DIR.color} />
-      <directionalLight position={[-4, 3, -3]} intensity={0.35} color={palette[2]} />
+      <Halo teinte={palette[3]!} cible={cible} force={0.06} />
+      <fog attach="fog" args={brume} />
+      <LumieresAtelier contre={palette[2]!} />
+      <EnvironnementAtelier teinte={palette[2]!} />
       <Gaussienne amplitude={amplitude} teinte={palette[3]!} />
-      <GroupeCoffre palette={palette} ornements={ornements} scale={echelle} y={pic + 0.15} />
+      <GroupeCoffre
+        palette={palette}
+        ornements={ornements}
+        palier={palier}
+        scale={echelle}
+        y={pic + 0.15}
+      />
     </Canvas>
   );
 }

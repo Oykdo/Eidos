@@ -1,7 +1,7 @@
 /**
  * Contrats 3D partagés — coffre, inventaire, tour, reliques.
  * Aucun import de three en valeur : ce fichier est chargé par les hôtes qui
- * importent les scènes à la demande (le type ci-dessous s'efface à la compilation).
+ * importent les scènes à la demande.
  */
 
 import { useEffect, useState } from "react";
@@ -9,15 +9,17 @@ import type { ToneMapping } from "three";
 
 export const ATELIER_DPR: [number, number] = [1, 1.75];
 
-export const ATELIER_GL: {
-  antialias: boolean;
-  alpha: boolean;
-  powerPreference: "high-performance";
-  toneMapping?: ToneMapping;
-} = {
+/**
+ * Prop gl des quatre Canvas. R3F règle d'abord ACES par défaut puis applique
+ * ces clés (applyProps) : la valeur ci-dessous l'emporte, pour les
+ * MeshStandardMaterial comme pour le ShaderMaterial de la relique (toneMapped).
+ */
+export const ATELIER_GL = {
   antialias: true,
   alpha: false,
   powerPreference: "high-performance" as const,
+  toneMapping:
+    7 as ToneMapping /* THREE.NeutralToneMapping, constants.js l.482 — Khronos PBR Neutral : garde teinte et saturation de l'ambre 42° et de l'améthyste 275°, ce qu'ACES ne fait pas ; retirer cette clé ramène ACES partout, relique comprise */,
 };
 
 export const ATELIER_FOND = "#12151a";

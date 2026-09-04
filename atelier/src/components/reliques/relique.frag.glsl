@@ -18,6 +18,12 @@ uniform float uFov;
 uniform float uAspect;
 uniform vec2 uRes;
 uniform float uAA;
+uniform vec3 uLumDir;
+uniform vec3 uLumCol;
+uniform vec3 uContreDir;
+uniform vec3 uContreCol;
+uniform vec2 uMatiere;
+uniform vec3 uMetalAff;
 
 #define twist     uP0.x
 #define graisse   uP0.y
@@ -42,10 +48,6 @@ uniform float uAA;
 
 const float PI = 3.14159265359;
 const vec3 FOND = vec3(0.0706, 0.0824, 0.1020);
-const vec3 L1D = vec3(0.359, 0.807, 0.448);
-const vec3 L1C = vec3(0.867, 0.882, 0.902);
-const vec3 L2D = vec3(-0.546, 0.364, -0.728);
-const vec3 L2C = vec3(0.788, 0.635, 0.153);
 
 mat2 rot(float a) {
   float c = cos(a), s = sin(a);
@@ -276,24 +278,62 @@ float G_Smith(float NoV, float NoL, float r) {
   return gV * gL;
 }
 
+// Environnement analytique : la même pièce que Environnement.tsx (creux→encre, lobe de la clé, lobe de la contre).
+vec3 envi(vec3 r, float rough) {
+  float ciel = smoothstep(-0.5, 0.8, r.y);
+  vec3 e = mix(vec3(0.010, 0.012, 0.016), uLumCol * 0.22, ciel);
+  float k = mix(48.0, 3.0, rough);
+  float g = mix(1.0, 0.30, rough);
+  e += uLumCol * 0.9 * g * pow(max(dot(r, uLumDir), 0.0), k);
+  e += uContreCol * 0.5 * g * pow(max(dot(r, uContreDir), 0.0), k * 0.6);
+  return e;
+}
+
+// Tramage ordonné (Bayer 4×4) sur la couleur affichée : ±0,47 niveau/255. ES 1.00 : mod/floor seulement.
+float bayer2(vec2 q) { return 2.0 * abs(q.x - q.y) + q.y; }
+float bayer4(vec2 p) {
+  vec2 q = floor(mod(p, 4.0));
+  return (4.0 * bayer2(mod(q, 2.0)) + bayer2(floor(q * 0.5))) / 16.0;
+}
+
+// Sortie : même courbe que les MeshStandardMaterial (toneMapping() et linearToOutputTexel() injectés par three), puis brouillard en espace d'affichage.
+vec3 finir(vec3 col, float tHit, vec3 fond) {
+#ifdef TONE_MAPPING
+  col = toneMapping(col);
+#else
+  col = col / (col + vec3(1.0));
+#endif
+  col = linearToOutputTexel(vec4(col, 1.0)).rgb;
+  float fog = smoothstep(1.3, 2.6, tHit) * 0.20;
+  return mix(col, fond, fog);
+}
+
 vec3 shade(vec3 pos, vec3 rd) {
   vec3 n = calcNormal(pos);
   vec3 v = -rd;
   float occ = ao(pos, n);
-  float rough = mix(0.18, 0.58, densite);
-  vec3 albedo = uMetal * mix(0.55, 0.92, 1.0 - densite * 0.5);
-  albedo *= mix(0.62, 1.0, occ);
-  albedo *= 0.86 + 0.14 * gnoise(pos * 7.0 + 3.0 * grain);
-  albedo *= mix(1.0, 0.74, uUsure);
-
-  vec3 col = albedo * 0.34 * occ;
   float NoV = max(dot(n, v), 0.0);
-  vec3 F0 = mix(vec3(0.04), uMetal, mix(0.55, 0.92, 1.0 - densite));
+  float rough = clamp(uMatiere.x + 0.25 * densite, 0.20, 0.80);
+  float metal = uMatiere.y * (1.0 - 0.35 * uUsure);
+  vec3 base = uMetal * mix(0.70, 1.0, 1.0 - densite * 0.5);
+  // Grain en repère objet : on rejoue la chaîne rigide de map() en lecture seule (rot, danse, twistY déclarées plus haut).
+  vec3 po = pos;
+  po.xz = rot(uYaw) * po.xz;
+  po.xy = rot(lean * 0.35) * po.xy;
+  float sObj = (1.0 + 0.18 * cos(uPhase)) * (0.72 + 0.3 * echelle);
+  po = danse(po / sObj, int(uFamille + 0.5), uPhase);
+  po = twistY(po, twist * (0.35 + 1.4 * mercure));
+  base *= 0.90 + 0.10 * gnoise(po * 7.0 + 3.0 * grain);
+  vec3 albedo = base * (1.0 - metal);
+  vec3 F0 = mix(vec3(0.04), base, metal);
+  float ciel = n.y * 0.5 + 0.5;
+  vec3 amb = mix(vec3(0.012, 0.015, 0.020), uLumCol * 0.22, ciel);
+  vec3 col = albedo * amb * occ;
 
   for (int i = 0; i < 2; i++) {
-    vec3 L = i == 0 ? L1D : L2D;
-    vec3 Lc = i == 0 ? L1C * 0.85 : L2C * 0.38;
-    float sh = i == 0 ? shadow(pos + n * 0.012, L) : mix(0.4, 1.0, occ);
+    vec3 L = i == 0 ? uLumDir : uContreDir;
+    vec3 Lc = i == 0 ? uLumCol * 2.4 : uContreCol * 0.9;
+    float sh = i == 0 ? shadow(pos + n * 0.02, L) : mix(0.4, 1.0, occ);
     float NoL = max(dot(n, L), 0.0);
     vec3 h = normalize(L + v);
     float NoH = max(dot(n, h), 0.0);
@@ -306,8 +346,9 @@ vec3 shade(vec3 pos, vec3 rd) {
     col += (diff + spec) * Lc * NoL * sh;
   }
 
-  float fres = pow(1.0 - NoV, 3.0);
-  col += fres * mix(uMetal, L1C, 0.35) * 0.18;
+  vec3 r = reflect(rd, n);
+  vec3 Fa = F0 + (max(vec3(1.0 - rough), F0) - F0) * pow(1.0 - NoV, 5.0);
+  col += Fa * envi(r, rough) * mix(0.5, 1.0, occ);
 
   float thick = 0.0;
   vec3 q = pos + rd * 0.02;
@@ -328,18 +369,17 @@ vec3 trace(vec2 uv) {
   float tanF = tan(uFov * 0.5);
   vec3 rd = normalize(uCamFwd + ndc.x * uCamRight * tanF * uAspect + ndc.y * uCamUp * tanF);
   vec3 ro = uCamPos;
+  // Fond : aura dans la teinte du métal, nulle sur les quatre bords (r2 >= 1 sur tout bord, paysage comme portrait).
+  float asp = max(uAspect, 0.001);
+  vec2 e = vec2(ndc.x * max(asp, 1.0), ndc.y * max(1.0 / asp, 1.0));
+  float r2 = dot(e, e);
+  float masque = 1.0 - smoothstep(0.6, 1.0, r2);
+  vec3 fond = FOND + (uMetalAff * 0.045 * exp(-3.0 * r2) + vec3(0.012) * exp(-4.0 * r2)) * masque;
   float tHit;
   float hit = march(ro, rd, tHit);
-  if (hit < 0.5) {
-    float glow = exp(-12.0 * abs(ndc.y + 0.35)) * 0.04;
-    return FOND + uMetal * glow * 0.25;
-  }
+  if (hit < 0.5) return fond;
   vec3 pos = ro + rd * tHit;
-  vec3 col = shade(pos, rd);
-  float fog = 1.0 - exp(-0.018 * tHit * tHit);
-  col = mix(col, FOND, fog * 0.35);
-  col = col / (col + vec3(1.0));
-  return col;
+  return finir(shade(pos, rd), tHit, fond);
 }
 
 void main() {
@@ -352,5 +392,6 @@ void main() {
     acc += trace(vUv + vec2(-px.x, px.y * 0.5));
     col = acc * 0.25;
   }
+  col += vec3((bayer4(gl_FragCoord.xy) - 0.46875) / 255.0);
   gl_FragColor = vec4(col, 1.0);
 }

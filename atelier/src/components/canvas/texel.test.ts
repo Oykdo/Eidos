@@ -6,6 +6,7 @@ import { objetDePorte } from "../../lib/eidos/inventaire.ts";
 import { voxelsDe } from "../../lib/eidos/voxels.ts";
 import type { ObjetPorte } from "../../lib/eidos/types.ts";
 import {
+  BAYER4,
   CLARTE_OCCLUSION,
   clarteCellule,
   cleCellule,
@@ -28,18 +29,31 @@ function cube3(): Set<number> {
 }
 
 describe("texel", () => {
-  it("seuilBayer : à y fixe, tout bloc 4×4 en (x,z) porte les 16 seuils une fois", () => {
-    for (const y of [-3, 0, 5]) {
-      for (const ox of [-9, -4, -1, 0, 3, 7]) {
-        for (const oz of [-6, -1, 0, 2, 5]) {
-          const vus = new Set<number>();
-          for (let x = ox; x < ox + 4; x++) {
-            for (let z = oz; z < oz + 4; z++) vus.add(seuilBayer(x, y, z));
+  it("seuilBayer : sur tout plan x, y ou z constant, tout bloc 4×4 porte les 16 seuils une fois", () => {
+    const fixes = [-3, 0, 5];
+    const origines = [-9, -4, -1, 0, 3, 7];
+    const plans: readonly [string, (f: number, u: number, v: number) => number][] = [
+      ["y", (f, u, v) => seuilBayer(u, f, v)],
+      ["x", (f, u, v) => seuilBayer(f, u, v)],
+      ["z", (f, u, v) => seuilBayer(u, v, f)],
+    ];
+    for (const [axe, lire] of plans) {
+      for (const f of fixes) {
+        for (const ou of origines) {
+          for (const ov of [-6, -1, 0, 2, 5]) {
+            const vus = new Set<number>();
+            for (let u = ou; u < ou + 4; u++) {
+              for (let v = ov; v < ov + 4; v++) vus.add(lire(f, u, v));
+            }
+            assert.equal(vus.size, 16, `plan ${axe}=${f} origine (${ou},${ov})`);
+            for (let s = 0; s < 16; s++) assert.ok(vus.has(s));
           }
-          assert.equal(vus.size, 16, `y=${y} origine (${ox},${oz})`);
-          for (let s = 0; s < 16; s++) assert.ok(vus.has(s));
         }
       }
+    }
+    // À y = 0 le motif est celui de BAYER4 tel quel : cellules.seuilFace (coffre) s'y appuie.
+    for (let x = 0; x < 4; x++) {
+      for (let z = 0; z < 4; z++) assert.equal(seuilBayer(x, 0, z), BAYER4[x * 4 + z]);
     }
   });
 
