@@ -7,6 +7,7 @@ import {
   COFFRES_PHILO,
   EMPLACEMENTS_ARMURE,
   GENRES,
+  GENRES_TOUR,
   NOMS_ARME,
   SOCKETS_MAX,
   affixeDe,
@@ -35,7 +36,7 @@ function piece(over: Partial<ObjetPorte> = {}): ObjetPorte {
 }
 
 describe("équipement", () => {
-  it("sept genres, neuf emplacements d'armure, sept armes, six affixes", () => {
+  it("dix genres (trois donnés par la Tour), neuf emplacements d'armure, sept armes, six affixes", () => {
     assert.deepEqual([...GENRES], [
       "trouve",
       "pierre",
@@ -44,7 +45,13 @@ describe("équipement", () => {
       "gemme",
       "philosophale",
       "lair",
+      "elixir",
+      "capsule",
+      "capture",
     ]);
+    assert.deepEqual([...GENRES_TOUR], ["elixir", "capsule", "capture"]);
+    // la ville ne tire jamais un genre de la Tour
+    for (let r = 0; r < 64; r++) assert.ok(!(GENRES_TOUR as readonly string[]).includes(genreDeRoll(r)));
     assert.equal(EMPLACEMENTS_ARMURE.length, 9);
     assert.equal(NOMS_ARME.length, 7);
     assert.equal(AFFIXES.length, 6);

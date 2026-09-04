@@ -1,7 +1,7 @@
 # Spécification — La Tour : hôtes, secrets, élixirs, sceaux
 
 **Dépôt :** Oykdo/Eidos
-**Statut :** spécification, rien n'est codé (2026-09-04)
+**Statut :** codée (2026-09-04) — T1 à T7 dans `atelier/`, 24 contrôles ; les six décisions du §11 sont prises, les écarts au texte initial sont au §12
 **Périmètre :** `atelier/` uniquement — jeu local, hors invariant. Le nœud et la chaîne ne changent pas.
 **S'appuie sur :** `tour.ts`, `objets.ts`, `equipement.ts`, `combat.ts`, `groupe.ts`, `integrite.ts`, `poste.ts`, `inventaire.ts`, `signatures.ts`, `relique-qr.ts`, `docs/HANDOVER_RELIQUES_QR.md`
 
@@ -223,11 +223,29 @@ type Tour = {
 
 H2 (carte des reliques) et H3 (sceaux) du hub précèdent T5.
 
-## 11. Décisions qui vous reviennent
+## 11. Décisions prises
 
-1. Les **27 répliques par muse** : je les écris, ou vous les écrivez ? Elles portent la voix du projet.
-2. Les portes : un sceau **de l'âge exact**, ou tout sceau d'âge supérieur ouvre aussi ?
-3. Le coffre d'atelier : portes ouvertes (démonstration) ou fermées (même règle pour tous) ?
-4. Faut-il une **carte de la Tour** (255 cases, honorées / secrètes / fermées) dans la page, ou la Tour reste-t-elle à découvrir étage par étage ?
-5. Les captures : au plus **une libérée par étage** (proposé), ou tout le bestiaire compte dans la résonance d'ensemble ?
-6. Les **noms** des captures (9 × 12) : je les écris avec les répliques, ou vous ?
+1. **Les 27 répliques par muse** sont écrites, FR et EN, dans `lib/eidos/hotes-lexique.ts` : trois groupes de neuf (accueil, demande, don), chaque phrase cite une règle vraie du code. L'hôte tire une phrase par groupe avec sa graine. Le lexique est une jauge : le changer ne change ni un mot ni une graine.
+2. **Les portes veulent le sceau de l'âge exact.** Un âge est une géographie, pas une puissance : Satya n'ouvre pas 64. (`sceaux.porteDe`, inchangé ; contrôle ajouté.)
+3. **Le coffre d'atelier passe les portes** : démonstration, pas droit. Un coffre personnel n'ouvre qu'avec un sceau trouvé.
+4. **Une carte de la Tour**, 255 cases : atteint, ici, honoré, porte ouverte ou fermée. Les secrets n'y figurent qu'une fois découverts (alcôve ouverte, antre franchi). Les échos ne s'y dessinent pas : Polymnie les dit.
+5. **Une capture libérée par étage, au plus.** Elle entre dans la résonance d'ensemble du duel ; une capture de la classe du gardien dessert. Le choix est le jeu. La libération tombe en changeant d'étage.
+6. **Les 9 × 12 noms de capture** sont écrits, dans le même lexique : noms communs français (Chthon, Codex, Alambic, Pavane, Cothurne, Enclume, Aulos, Antienne, Astrolabe…), identiques en anglais. Une jauge ; l'identité est le mot.
+
+## 12. Ce qui a été codé, et ce qui a changé au contact du code
+
+Modules (`atelier/src/lib/eidos/`) : `jauge.ts` (T1), `lecture.ts`, `hotes.ts` + `hotes-lexique.ts` (T2), `secrets.ts` (T3, T4), `elixirs.ts`, `capsules.ts`, `bestiaire.ts` (T6), `sceaux.ts` (T5, complété), `carnet.ts` (la jauge voyage à côté du feuillet, hors empreinte), `store.ts` et `components/tour/TourView.tsx`, `components/inventaire/Bestiaire.tsx` (T7). Contrôles : `lecture` 3, `hotes` 5, `elixirs` 4, `secrets` 4, `capsules` 5, `bestiaire` 3, `sceaux` +1 (âge exact), `equipement` (dix genres) ; `integrite.test.ts` passe inchangé, `INTEGRITE` ne gagne aucune constante.
+
+Écarts, tous mesurés avant d'être décidés :
+
+- **Alcôve = croix au centre de la dalle** (la case centrale et ses quatre voisines à `true`), non plus la symétrie diagonale : celle-ci vaut 2⁻³⁶ par étage, aucun des 255 ne la porte. La croix donne treize alcôves (~1 sur 20), c'est la figure ✚, la lecture reste géométrique et sans indice textuel : un bouton **Fouiller** existe à chaque étage, il ne répond que là.
+- **L'orbite se lit au grain des figures.** `memeOrbite` exact ne se produit jamais entre un mot (échelle 724) et une coupe (norme 10⁸), ni entre deux mots quelconques. « Même orbite » dans la Tour = même première figure de `glypheLecture` (min(3, 4|Re q|/|q|)) : `lecture.figureOrbite`. Les **échos**, eux, gardent l'orbite exacte des coupes (`memeOrbite`) : 44 paires dans la Tour, 5 à 16 par quartier.
+- **La parade lit l'axe, pas l'orbite.** `ḡ(A)·(A·B)` rend `|A|²·B` en arithmétique exacte : la parade de la v1 était toujours vraie. Conjuguer ne change pas l'orbite, cela déplace l'axe ; c'est donc l'axe qu'on lit (`tientAxe`, seuil élite 87/100). Prise : `g c ḡ` tient l'axe de l'occupant. Duel : votre objet tient l'axe du biome (la coupe), comme le gardien — ou le mercure l'accorde d'office.
+- **Le gardien** se cherche depuis `SHA-256d("eidos-gardien/1" ‖ étage)` jusqu'à tenir l'axe de la coupe (élite ; suprême aux portes) : 17 essais en moyenne, 92 au pire, déterministe.
+- **Le portier** des portes 64 · 128 · 192 est un familier de Polymnie, gardienne des sceaux, quelle que soit la bande : c'est le sceau qu'il lit.
+- **Thalie et Uranie** se tiennent à 0 et 254, pas au médian de leur bande ; les sept autres muses au médian (42, 70, 99, 127, 155, 184, 212).
+- **Le ticket d'antre** est consommé au passage (retiré de la jauge) ; `tour.antres` note l'étage. Un ticket de la ville (`lair-1..3`) ouvre la bande de Thalie ; un ticket d'Euterpe porte l'étage où il fut donné (`palierLair`) et ouvre sa bande.
+- **Une capsule par jour civil** chez Thalie, contre trois blocs créés ce jour (`tour.capsules` note les jours).
+- **Le soufre s'éteint** quand la pièce a tourné (une fois) ; son mot reste dans `tour.bus`. Tourner dans la Tour exige Érato ou le soufre bu à l'étage ; enchâsser une gemme reste un geste de la ville.
+- **La cellule d'une capture** est celle de la forme du catalogue (les 101, l'ancre exclue) la plus proche de son mot — plus grand |alignement|, à égalité le plus petit rang. Les 491 occupants couvrent les 21 cellules : un bestiaire complet est possible.
+- **`Tour` gagne des champs** : `sommet` (carte), `depuis` (départ de la montée, pour l'ordre des échos), `alcoves`, `elixirs` = `{ étage, mot, espèce }[]` (l'espèce est notée, le mot n'est pas réécrit), `porte` (mot de l'objet porté), `capsules` (jours). `bus` garde les mots jamais réutilisables. La jauge est relue avec tolérance (`normaliserTour`) ; `exporterCarnet` la place sous `tour`, à côté du feuillet, hors empreinte : un carnet d'avant la Tour se relit tel quel.

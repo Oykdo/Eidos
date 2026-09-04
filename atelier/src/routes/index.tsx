@@ -5,6 +5,7 @@ import { Creer } from "@/components/Creer";
 import { Envoi } from "@/components/Envoi";
 import { Sorties } from "@/components/Sorties";
 import { Inventaire } from "@/components/inventaire/Inventaire";
+import { Bestiaire } from "@/components/inventaire/Bestiaire";
 import { CoffreVue } from "@/components/coffre/CoffreVue";
 import { Sauvegarde } from "@/components/Sauvegarde";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
@@ -47,6 +48,7 @@ function Home() {
       </p>
 
       <Inventaire />
+      <Bestiaire />
 
       <Creer />
       {coffre.nature === "personnel" ? <Envoi /> : null}

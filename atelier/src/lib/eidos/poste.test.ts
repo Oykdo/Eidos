@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { jourCivil, minesDuJour, peutMiner, posteDe, POSTE_JOUR } from "./poste.ts";
 import type { Coffre, HistoriqueTx } from "./types.ts";
+import { tourVide } from "./jauge.ts";
 
 function h(kind: HistoriqueTx["kind"], at: number): HistoriqueTx {
   return {
@@ -31,6 +32,7 @@ function coffre(nature: Coffre["nature"], histo: HistoriqueTx[]): Coffre {
     reliques: [],
     objets: [],
     philosophale: null,
+    tour: tourVide(),
   };
 }
 

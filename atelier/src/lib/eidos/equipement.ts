@@ -3,7 +3,11 @@
  * Pierre : tourne (préfixe T à gauche, suffixe S à droite) → nouvelle pièce.
  * Gemme : s'enchâsse, lecture composée, mot inchangé.
  * Philosophale : coffres 1–10, une arme divine. Même norme.
- * Lair : ticket d'antre, combat plus tard.
+ * Lair : ticket d'antre — ouvre l'antre de sa bande (secrets.ts).
+ * Elixir : sel, mercure, soufre ; se boit à un étage (elixirs.ts).
+ * Capsule : glyphe creux, prend un occupant (capsules.ts).
+ * Capture : un occupant d'étage devenu objet ; le bestiaire les range (bestiaire.ts).
+ * Ces trois genres ne sortent jamais d'un tirage (genreDeRoll) : la Tour les donne.
  */
 
 import { composer, objetDepuisGraine, paqueter } from "./objets.ts";
@@ -28,7 +32,13 @@ export const GENRES = [
   "gemme",
   "philosophale",
   "lair",
+  "elixir",
+  "capsule",
+  "capture",
 ] as const;
+
+/** Les genres que la Tour donne et que la ville ne tire pas. */
+export const GENRES_TOUR = ["elixir", "capsule", "capture"] as const;
 
 export const EMPLACEMENTS_ARMURE = [
   "casque",
@@ -121,6 +131,7 @@ export function nomDe(genre: Genre, emplacement: Emplacement | null, roll: numbe
   if (genre === "lair") return `lair-${1 + (roll % 3)}`;
   if (genre === "philosophale") return "philosophale";
   if (genre === "trouve") return "trouve";
+  /* elixir, capsule, capture : nommés par la Tour (espèce, « ··· », lexique). */
   return genre;
 }
 

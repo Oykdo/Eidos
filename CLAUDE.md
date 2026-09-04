@@ -306,8 +306,7 @@ Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
   (pièce, artefact, relique, sceau, objet) et Limites ; textes FR/EN
   `guide.verifier`, `guide.lire`, `guide.jouer`, `guide.mot.*`. La refonte du
   hub est close ; reste la Tour (`docs/SPEC_TOUR.md`).
-- La Tour : `docs/SPEC_TOUR.md` (hôtes = les neuf muses, secrets, élixirs
-  de la tria prima, antres, portes par sceaux, capsules et bestiaire) — spec.
+- La Tour : `docs/SPEC_TOUR.md` — FAIT, voir ci-dessous.
 - Le pendule-9 : `docs/SPEC_PENDULE.md` — décisions fondatrices O1–O5 à
   valider (le pendule choisit le **parcours** et la case de spawn, jamais le
   contenu d'un étage, qui reste public et fixe), esquisse de la transition en
@@ -316,6 +315,42 @@ Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
   `pendule-phase0.ts` (bot xorshift, trois mesures, `npm run phase0 [runs]`),
   `pendule.test.ts` (6 tests, table de vérité gelée). Toute retouche de la
   transition régénère la table sciemment.
+
+### La Tour — hôtes, secrets, élixirs, capsules, bestiaire (FAIT 2026-09, fourni par une session parallèle, fusionné le 2026-09-04)
+Spec : `docs/SPEC_TOUR.md` (§11 décisions, §12 écarts mesurés). Tout dans
+`atelier/src/lib/eidos/`, jauge `coffre.tour` hors feuille, aucune loi
+d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
+- `jauge.ts` : `Tour`, `tourVide`, `normaliserTour` (relecture tolérante) ;
+  `carnet.ts` exporte la jauge sous `tour`, à côté du feuillet, hors empreinte.
+- `lecture.ts` : l'orbite au grain des figures (`figureOrbite` = première
+  figure de `glypheLecture`), `paradeLue` (g x ḡ tient l'axe, seuil élite),
+  `motDeQ` (mot d'une coupe). `memeOrbite` exact ne se produit jamais entre un
+  mot et une coupe ; `ḡ(A)·(A·B)` rend toujours B : la Tour lit l'axe.
+- `hotes.ts` + `hotes-lexique.ts` : présence 1/7 + 0, 254, portes, muse au
+  médian de sa bande (Thalie 0, Uranie 254) ; 27 répliques × 9 muses, FR/EN,
+  chaque phrase cite une règle vraie ; 9 × 12 noms de capture ; demandes lues
+  dans le coffre ; dons `eidos-don/1` (elixir, gemme, lair ; jamais arme ni
+  philosophale) ; Érato forge, Polymnie révèle, Uranie lit.
+- `elixirs.ts` : espèce = étage dominant du glyphe ; bu à un étage, effet là
+  seulement, mot noté dans `bus`, jamais rebu ; le soufre s'éteint après un tour.
+- `secrets.ts` : alcôve = croix centrale de la dalle (13 étages ; la symétrie
+  diagonale de la v1 vaut 2⁻³⁶) ; échos = même orbite exacte des coupes (44
+  paires), montée dans l'ordre → mercure ; antre : gardien cherché depuis sa
+  graine jusqu'à tenir l'axe (élite ; suprême aux portes), duel en trois temps
+  (orbite / axe ou mercure / résonance d'ensemble avec la capture libérée),
+  repoussé d'un étage, ticket consommé au passage ; observatoire = lecture.
+- `capsules.ts` : capsule « ··· » (Thalie une par jour civil contre trois
+  blocs, alcôve, forge gemme + sel) ; prise nette / fragile (sel) / brisée ;
+  capture = `motDeQ(q)` de l'occupant, l'étage le perd pour ce coffre.
+- `bestiaire.ts` : cellule = forme la plus proche des 101 ; 21 cellules →
+  lecture d'Uranie ; accord par le mercure (conjugué par l'objet porté, ancien
+  mot dans `bus`) ; offrande à Terpsichore → gemme.
+- `sceaux.ts` : l'âge exact ouvre, le coffre d'atelier passe (démonstration).
+- UI : `TourView` (hôte et répliques, objet porté, occupants et prise, élixirs,
+  antre, fouiller, carte 255 cases sans secrets non découverts, observatoire),
+  `Bestiaire` dans la page Coffre ; `GENRES` gagne elixir, capsule, capture.
+- Contrôles : lecture 3, hôtes 5, élixirs 4, secrets 4, capsules 5, bestiaire 3,
+  sceaux +1. `npm test` : 254 (30 tests de scripts + 224 suites Eidos).
 
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 8 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête

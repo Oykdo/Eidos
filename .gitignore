@@ -53,3 +53,6 @@ docs/prive/
 
 # réglages locaux de l'assistant
 .claude/
+
+# fichiers reçus d'une autre session, fusionnés à la main : jamais versionnés tels quels
+atelier/docs/expé/

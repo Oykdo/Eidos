@@ -28,14 +28,24 @@ import { ETAT_URL } from "./eidos/envoi.ts";
 import { agesScelles, sceauxDuCoffre, type EntreeMonde, type Sceau } from "./eidos/sceaux.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { t, type Msg } from "./i18n.ts";
-import {
-  estPsnxEtranger,
-} from "./eidos/portable.ts";
+import { estPsnxEtranger } from "./eidos/portable.ts";
 import { exporterCarnet, ouvrirFichier } from "./eidos/carnet.ts";
 import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
 import { tirerDansCoffre, normaliserObjets, signatureDe } from "./eidos/inventaire.ts";
 import { craftDansCoffre, divinDansCoffre, type NomArme } from "./eidos/equipement.ts";
 import { peutMiner } from "./eidos/poste.ts";
+import { normaliserTour } from "./eidos/jauge.ts";
+import { honorerDansCoffre, tournerDansLaTour } from "./eidos/hotes.ts";
+import { boireDansCoffre } from "./eidos/elixirs.ts";
+import { arriverDansCoffre, franchirAntre, ouvrirAlcove } from "./eidos/secrets.ts";
+import {
+  capsuleDeThalie,
+  forgerCapsule,
+  libererDansCoffre,
+  prendreDansCoffre,
+} from "./eidos/capsules.ts";
+import { accorderDansCoffre, offrirDansCoffre } from "./eidos/bestiaire.ts";
+import { ETAGES } from "./eidos/tour.ts";
 
 const KEY = "eidos-coffre-v2";
 const KEY_TEMOIN = "eidos-temoin-v1";
@@ -86,6 +96,20 @@ type Etat = {
   exporterFichier: () => string;
   importerFichier: (nom: string, data: ArrayBuffer | string) => void;
   psnx: SpinorPublic | null;
+  /** La Tour — jauge hors feuille, docs/SPEC_TOUR.md */
+  allerEtage: (etage: number) => void;
+  honorer: () => void;
+  boire: (i: number) => void;
+  porter: (mot: number | null) => void;
+  liberer: (mot: number | null) => void;
+  prendre: (k: number, i: number) => void;
+  franchir: () => void;
+  fouiller: () => void;
+  capsuleThalie: () => void;
+  forgerCapsule: (iGemme: number, iSel: number) => void;
+  tournerTour: (i: number, j: number) => void;
+  accorder: (i: number) => void;
+  offrir: (i: number) => void;
 };
 
 function persister(c: Coffre) {
@@ -140,6 +164,7 @@ export const useCoffre = create<Etat>((set, get) => ({
           if (!Array.isArray(coffre.reliques)) coffre.reliques = [];
           coffre.objets = normaliserObjets(coffre.objets);
           if (coffre.philosophale === undefined) coffre.philosophale = null;
+          coffre.tour = normaliserTour(coffre.tour);
           if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
             coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");
           }
@@ -215,7 +240,11 @@ export const useCoffre = create<Etat>((set, get) => ({
     }
     let dest = "00".repeat(20);
     if (!destInterne && saisieDest.trim()) {
-      dest = saisieDest.trim().toLowerCase().replace(/[^0-9a-f]/g, "").slice(0, 40);
+      dest = saisieDest
+        .trim()
+        .toLowerCase()
+        .replace(/[^0-9a-f]/g, "")
+        .slice(0, 40);
       if (dest.length !== 40) {
         set({ erreur: t("err.dest") });
         return;
@@ -442,9 +471,174 @@ export const useCoffre = create<Etat>((set, get) => ({
 
   exporterFichier: () => exporterCarnet(get().coffre),
 
+  allerEtage: (etage) => {
+    const e = Math.max(0, Math.min(ETAGES - 1, etage | 0));
+    const r = arriverDansCoffre(get().coffre, e);
+    persister(r.coffre);
+    const echo = r.echos[0];
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: echo ? t("tour.flash.echo", { a: echo[0], b: echo[1] }) : null,
+    });
+  },
+
+  honorer: () => {
+    const { coffre, monde } = get();
+    const ages = agesScelles(sceauxDuCoffre(monde, coffre), coffre);
+    const r = honorerDansCoffre(coffre, coffre.tour.etage, { ages });
+    if (!r.ok) {
+      set({ erreur: t(`tour.flash.${r.code}` as Msg), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: t("tour.flash.don", {
+        nom: signatureDe(r.hote.muse).muse,
+        don: r.don.genre === "elixir" ? t(`tour.espece.${r.don.nom}` as Msg) : r.don.nom,
+      }),
+    });
+  },
+
+  boire: (i) => {
+    const { coffre } = get();
+    const r = boireDansCoffre(coffre, i, coffre.tour.etage);
+    if (!r.ok) {
+      set({ erreur: t(`tour.boire.${r.code}` as Msg), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: t("tour.flash.bu", { espece: r.espece, n: r.etage }),
+    });
+  },
+
+  porter: (mot) => {
+    const { coffre } = get();
+    const next = {
+      ...coffre,
+      tour: { ...normaliserTour(coffre.tour), porte: mot === null ? null : mot >>> 0 },
+    };
+    persister(next);
+    set({ coffre: next });
+  },
+
+  liberer: (mot) => {
+    const next = libererDansCoffre(get().coffre, mot);
+    persister(next);
+    set({ coffre: next });
+  },
+
+  prendre: (k, i) => {
+    const { coffre } = get();
+    const r = prendreDansCoffre(coffre, coffre.tour.etage, k, i);
+    persister(r.coffre);
+    if (!r.ok) {
+      set({ coffre: r.coffre, erreur: t(`tour.prise.${r.code}` as Msg), flash: null });
+      return;
+    }
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash:
+        t(`tour.prise.${r.prise.issue}` as Msg) +
+        " " +
+        t("tour.flash.capture", { nom: r.capture.nom }),
+    });
+  },
+
+  franchir: () => {
+    const { coffre } = get();
+    const r = franchirAntre(coffre, coffre.tour.etage);
+    persister(r.coffre);
+    if (!r.ok) {
+      set({
+        coffre: r.coffre,
+        erreur: r.code === "repousse" ? null : t(`tour.antre.${r.code}` as Msg),
+        flash: r.code === "repousse" ? t("tour.flash.repousse", { n: r.coffre.tour.etage }) : null,
+      });
+      return;
+    }
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: t("tour.flash.antre", { n: r.duel.temps ?? 0, don: r.don.nom }),
+    });
+  },
+
+  fouiller: () => {
+    const { coffre } = get();
+    const r = ouvrirAlcove(coffre, coffre.tour.etage);
+    if (!r.ok) {
+      set({ erreur: null, flash: t(`tour.fouille.${r.code}` as Msg) });
+      return;
+    }
+    persister(r.coffre);
+    set({ coffre: r.coffre, erreur: null, flash: t("tour.flash.alcove", { don: r.coffret.nom }) });
+  },
+
+  capsuleThalie: () => {
+    const r = capsuleDeThalie(get().coffre);
+    if (!r.ok) {
+      set({ erreur: t("tour.flash.poste"), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({ coffre: r.coffre, erreur: null, flash: t("tour.flash.capsule") });
+  },
+
+  forgerCapsule: (iGemme, iSel) => {
+    const r = forgerCapsule(get().coffre, iGemme, iSel);
+    if (!r.ok) {
+      set({ erreur: t(`tour.forge.${r.code}` as Msg), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({ coffre: r.coffre, erreur: null, flash: t("tour.flash.forge") });
+  },
+
+  tournerTour: (i, j) => {
+    const { coffre } = get();
+    const r = tournerDansLaTour(coffre, coffre.tour.etage, i, j);
+    if (!r.ok) {
+      set({
+        erreur: t(r.code === "soufre" ? "tour.tourner.soufre" : (`inv.craft.${r.code}` as Msg)),
+        flash: null,
+      });
+      return;
+    }
+    persister(r.coffre);
+    set({ coffre: r.coffre, erreur: null, flash: t("inv.craft.ok", { nom: r.objet.nom }) });
+  },
+
+  accorder: (i) => {
+    const { coffre } = get();
+    const r = accorderDansCoffre(coffre, i, coffre.tour.etage);
+    if (!r.ok) {
+      set({ erreur: t(`tour.accord.${r.code}` as Msg), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({ coffre: r.coffre, erreur: null, flash: t("tour.flash.accord", { nom: r.capture.nom }) });
+  },
+
+  offrir: (i) => {
+    const { coffre } = get();
+    const r = offrirDansCoffre(coffre, i, coffre.tour.etage);
+    if (!r.ok) {
+      set({ erreur: t(`tour.offrande.${r.code}` as Msg), flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({ coffre: r.coffre, erreur: null, flash: t("tour.flash.offrande", { nom: r.gemme.nom }) });
+  },
+
   importerFichier: (nom, data) => {
-    const octets =
-      typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
+    const octets = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
     if (estPsnxEtranger(nom, octets)) {
       const spin = spinorDepuisOctets(octets);
       set({
@@ -464,6 +658,7 @@ export const useCoffre = create<Etat>((set, get) => ({
     if (!Array.isArray(coffre.reliques)) coffre.reliques = [];
     coffre.objets = normaliserObjets(coffre.objets);
     if (coffre.philosophale === undefined) coffre.philosophale = null;
+    coffre.tour = normaliserTour(coffre.tour);
     if (coffre.nature !== "personnel") coffre.nature = "atelier";
     if (!Array.isArray(coffre.chaine) || coffre.chaine.length === 0) {
       coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");

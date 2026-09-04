@@ -10,6 +10,7 @@ import {
   quartierDe,
   sceauxDuCoffre,
 } from "./sceaux.ts";
+import { arriverDansCoffre } from "./secrets.ts";
 import { coffreAtelier, coffreNeuf } from "./wallet.ts";
 
 describe("sceaux d'âge — mise, portes, trophée", () => {
@@ -38,6 +39,20 @@ describe("sceaux d'âge — mise, portes, trophée", () => {
     assert.deepEqual(porteDe(192, ["Kali", "Treta"], perso), { ouverte: false, age: "Satya" });
     const atelier = coffreAtelier("vide");
     assert.deepEqual(porteDe(192, [], atelier), { ouverte: true, age: "Satya" });
+  });
+
+  it("l'âge exact, pas un autre : un sceau d'âge supérieur n'ouvre pas la porte d'en dessous", () => {
+    const perso = coffreNeuf("vide");
+    assert.deepEqual(porteDe(64, ["Satya", "Treta"], perso), { ouverte: false, age: "Dvapara" });
+    assert.deepEqual(porteDe(128, ["Satya"], perso), { ouverte: false, age: "Treta" });
+    assert.deepEqual(porteDe(128, ["Treta"], perso), { ouverte: true, age: "Treta" });
+    // la jauge note l'âge de la porte passée en montant, une fois
+    const bas = arriverDansCoffre(perso, 63).coffre;
+    assert.deepEqual(bas.tour.portes, []);
+    const haut = arriverDansCoffre(bas, 64).coffre;
+    assert.deepEqual(haut.tour.portes, ["Dvapara"]);
+    const encore = arriverDansCoffre(arriverDansCoffre(haut, 63).coffre, 64).coffre;
+    assert.deepEqual(encore.tour.portes, ["Dvapara"]);
   });
 
   it("les sceaux du coffre sont les reliques récupérées vers une de ses adresses", () => {

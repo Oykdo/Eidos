@@ -20,6 +20,7 @@ import {
   parserPsnx,
 } from "./portable.ts";
 import { normaliserObjets } from "./inventaire.ts";
+import { normaliserTour } from "./jauge.ts";
 
 export const KIND_CARNET = "eidos-carnet/1";
 export const TAG_CARNET = "eidos-carnet/1";
@@ -38,6 +39,17 @@ export type SnapshotCarnet = {
   empreinte: string;
 };
 
+/**
+ * Le feuillet porte tout ce qui engage le coffre. La jauge de la Tour
+ * (`coffre.tour`) voyage à côté, sous `tour`, hors empreinte : la perdre ne
+ * perd rien de vérifiable, l'altérer ne rompt pas le carnet.
+ */
+function feuilletDe(c: Coffre): Omit<Coffre, "tour"> {
+  const { tour: _jauge, ...f } = c;
+  void _jauge;
+  return f;
+}
+
 export type Ouverture =
   | { coffre: Coffre; source: "carnet" | "psnx"; empreinte: string; adresse: string }
   | { erreur: string };
@@ -53,7 +65,7 @@ function normaliser(c: Coffre): Coffre {
 }
 
 function corpsCarnet(coffre: Coffre) {
-  const f = normaliser(coffre);
+  const f = feuilletDe(normaliser(coffre));
   return {
     v: 1 as const,
     kind: KIND_CARNET,
@@ -70,7 +82,7 @@ export function empreinteCarnet(coffre: Coffre): string {
 
 export function exporterCarnet(coffre: Coffre): string {
   const corps = corpsCarnet(coffre);
-  return JSON.stringify({ ...corps, empreinte: empreinteCarnet(coffre) });
+  return JSON.stringify({ ...corps, empreinte: empreinteCarnet(coffre), tour: normaliserTour(coffre.tour) });
 }
 
 export function nomFichierCarnet(_coffre?: Coffre): string {
@@ -115,7 +127,7 @@ export function parserCarnet(raw: string): SnapshotCarnet | { erreur: string } {
       kind: KIND_CARNET,
       alg: ALG_CARNET,
       sig: SIG_CARNET,
-      feuillet,
+      feuillet: { ...feuillet, tour: normaliserTour(o.tour) },
       adresse,
       empreinte: attendu,
     };
@@ -153,7 +165,7 @@ export function ouvrirFichier(nom: string, data: ArrayBuffer | Uint8Array | stri
   const psnx = parserPsnx(texte);
   if (!("erreur" in psnx)) {
     return {
-      coffre: psnx.coffre,
+      coffre: { ...psnx.coffre, tour: normaliserTour(psnx.coffre.tour) },
       source: "psnx",
       empreinte: psnx.empreinte,
       adresse: adresseDe(psnx.coffre.maitre, psnx.coffre.n),

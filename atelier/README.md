@@ -27,6 +27,7 @@ L’unité est l’**eidôlon** (10⁸ atomes). La forme est la règle ; l’ima
 | **Reliques** | Lumen d’époque. Kali 2,10 · Satya 33,55. Sauvegarde `eidos.carnet`. |
 | **Glyphes** | 4 figures, 64 empilements. 31 groupes. Bourrage refusé. |
 | **Signes** | Lectures des mêmes 64. Pas un 5ᵉ glyphe. |
+| **Tour** | 255 coupes. Neuf muses et leurs familiers, élixirs de la tria prima, capsules et bestiaire, alcôves, échos, antres, portes par sceaux d'âge. Jauge hors feuille. |
 | **Guide** | Mode d’emploi. |
 
 Auth et base distante : **off**. Le carnet vit dans ce navigateur (`localStorage`). Pas de comptes, pas de fédération réelle, pas de nœud réseau.
@@ -101,6 +102,7 @@ The unit is the **eidôlon** (10⁸ atoms). The form is the rule; the image is w
 | **Relics** | Epoch lumen. Kali 2.10 · Satya 33.55. |
 | **Glyphs** | 64 stacks. Padding refused. |
 | **Signs** | Readings of the same 64. |
+| **Tower** | 255 slices. Nine muses and their households, tria prima elixirs, capsules and bestiary, alcoves, echoes, lairs, gates by age seal. Off-sheet gauge. |
 | **Guide** | How to use it. |
 
 Auth is **off**. The ledger lives in `localStorage`. No accounts, no live federation, no network node.

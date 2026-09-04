@@ -41,7 +41,17 @@ export type NatureCoffre = "atelier" | "personnel";
 
 export type NomAge = "Satya" | "Treta" | "Dvapara" | "Kali";
 
-export type Genre = "trouve" | "pierre" | "arme" | "armure" | "gemme" | "philosophale" | "lair";
+export type Genre =
+  | "trouve"
+  | "pierre"
+  | "arme"
+  | "armure"
+  | "gemme"
+  | "philosophale"
+  | "lair"
+  | "elixir"
+  | "capsule"
+  | "capture";
 export type EmplacementArmure =
   | "casque"
   | "plastron"
@@ -99,6 +109,46 @@ export type BlocLocal = {
   motif: MotifBloc;
 };
 
+/**
+ * Jauge de la Tour — hors feuille (docs/SPEC_TOUR.md §7).
+ * Rien ici n'est vérifiable ni signé ; tout se recalcule depuis les graines.
+ * Les élixirs, capsules et captures sont dans `objets`, pas ici.
+ */
+export type Espece = "sel" | "mercure" | "soufre";
+
+export type ElixirBu = { etage: number; mot: number; espece: Espece };
+
+export type Tour = {
+  /** étage courant */
+  etage: number;
+  /** plus haut étage atteint (carte) */
+  sommet: number;
+  /** étage d'où part la montée en cours (un écho se lit sans redescendre) */
+  depuis: number;
+  /** étages dont l'hôte a été honoré : un don par (coffre, étage) */
+  dons: number[];
+  /** échos parcourus */
+  echos: [number, number][];
+  /** antres franchis */
+  antres: number[];
+  /** alcôves ouvertes */
+  alcoves: number[];
+  /** mots des élixirs bus et des captures accordées : jamais réutilisables */
+  bus: number[];
+  /** élixirs bus : l'effet tient à cet étage, et là seulement ; l'espèce est notée, le mot n'est pas réécrit */
+  elixirs: ElixirBu[];
+  /** portes ouvertes (lecture des sceaux au moment du passage) */
+  portes: NomAge[];
+  /** (étage, k) des occupants pris par ce coffre */
+  captures: [number, number][];
+  /** mot de la capture libérée pour l'étage courant, au plus une */
+  liberee: number | null;
+  /** mot de l'objet porté dans la Tour ; null = le dernier du coffre */
+  porte: number | null;
+  /** jours civils où Thalie a donné une capsule (une par poste du jour honoré) */
+  capsules: number[];
+};
+
 export type Coffre = {
   maitre: string;
   n: number;
@@ -112,6 +162,7 @@ export type Coffre = {
   reliques: NomAge[];
   objets: ObjetPorte[];
   philosophale: string | null;
+  tour: Tour;
 };
 
 export type HistoriqueTx = {

@@ -9,6 +9,7 @@ import {
   txidLabel,
 } from "./lamport.ts";
 import type { Coffre, HistoriqueTx, NomAge, ScenarioId, Sortie } from "./types.ts";
+import { tourVide } from "./jauge.ts";
 import { choisirRegroupement, selectionner } from "./coinselect.ts";
 import { adresseRelique, prixReliqueAtomes, AGES_RELIQUE } from "./relique.ts";
 import {
@@ -80,6 +81,7 @@ function coffreVide(
     reliques: [],
     objets: [],
     philosophale: null,
+    tour: tourVide(),
   };
 }
 
@@ -122,6 +124,7 @@ export function chargerScenario(coffre: Coffre, scenario: ScenarioId): Coffre {
       reliques: [],
       objets: [],
       philosophale: null,
+      tour: tourVide(),
     },
     "atelier",
   );
