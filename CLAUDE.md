@@ -331,6 +331,11 @@ sur deux branches » qui doit être refusé côté signataire.
   `date-fns`, `react-day-picker`, tous les `@radix-ui/*` sauf `react-slot`
   (194 paquets en moins). Reste : **18 dépendances** d'exécution, 17 de dev.
   `@react-three/fiber` + `three` restent : quatre scènes les utilisent.
+  Tests des scripts du gabarit « app-builder » retirés (ils exigeaient
+  `AGENTS.md`, `.grok/skills/og/SKILL.md` et le drapeau `VITE_AUTH_ENABLED`,
+  absents du dépôt) ; `npm test` liste ses fichiers explicitement (le motif glob
+  n'était pas développé sous Windows, la CI n'avait pas de job Node).
+  `with-app-env` accepte `CLE=VALEUR` en tête et un shell sous Windows.
   `npm run build` ne migre plus rien. Le recensement des imports se refait avec
   un script qui lit les spécificateurs, pas un `grep` du nom du paquet.
 
