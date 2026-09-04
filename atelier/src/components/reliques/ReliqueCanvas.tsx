@@ -16,6 +16,7 @@ import {
   useOngletVisible,
 } from "@/components/canvas/atelier.ts";
 import { valeursUniforms } from "@/lib/reliques/forme.ts";
+import { PERIODE_DANSE_S } from "@/lib/reliques/danse.ts";
 import type { Genome } from "@/lib/reliques/genome.ts";
 
 type Uniforms = {
@@ -95,7 +96,7 @@ function ReliqueQuad({ genome }: { genome: Genome }) {
     const m = mat.current;
     if (!m) return;
     m.uniforms.uYaw.value = yaw.current;
-    m.uniforms.uPhase.value = state.clock.elapsedTime * ((Math.PI * 2) / 11.3);
+    m.uniforms.uPhase.value = state.clock.elapsedTime * ((Math.PI * 2) / PERIODE_DANSE_S);
     m.uniforms.uRes.value.set(size.width, size.height);
     m.uniforms.uAspect.value = size.width / Math.max(size.height, 1);
   });

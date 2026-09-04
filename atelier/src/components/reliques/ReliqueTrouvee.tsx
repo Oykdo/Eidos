@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { GlypheSvg } from "@/components/Mark";
 import { useI18n } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { ETAT_URL } from "@/lib/eidos/envoi.ts";
@@ -7,6 +8,7 @@ import {
   parserRelique,
   preparerRecuperation,
   statutRelique,
+  type EntreeRelique,
   type Recuperation,
   type ReliqueLue,
   type StatutRelique,
@@ -14,14 +16,60 @@ import {
 import { adresseRobinet } from "@/lib/eidos/robinet.ts";
 import { encoderAdresse } from "@/lib/eidos/glyphs.ts";
 import { fromHex } from "@/lib/eidos/hash.ts";
+import { SIGNATURES } from "@/lib/eidos/signatures.ts";
+import type { NomAge } from "@/lib/eidos/types.ts";
+import { genomeDeGoutte, type Genome } from "@/lib/reliques/genome.ts";
+import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";
+
+const ReliqueCanvas = lazy(() => import("./ReliqueCanvas"));
 
 type Detecteur = { detect(source: ImageBitmapSource): Promise<{ rawValue: string }[]> };
 type FenetreScanner = Window & {
   BarcodeDetector?: new (o?: { formats: string[] }) => Detecteur;
 };
 
+const AGES: readonly NomAge[] = ["Satya", "Treta", "Dvapara", "Kali"];
+
 function court(h: string): string {
   return `${h.slice(0, 8)}…${h.slice(-4)}`;
+}
+
+function ageDe(e: EntreeRelique | null | undefined): NomAge {
+  return e?.age && (AGES as readonly string[]).includes(e.age) ? (e.age as NomAge) : "Kali";
+}
+
+/** Génome d'une relique : l'œuf de la goutte (txid ‖ adresse) → muse. */
+function genomeRelique(adresse: string, txid: string | undefined, age: NomAge): Genome | null {
+  if (!txid || txid.length !== 64) return null;
+  return genomeDeGoutte(txid, adresse, age);
+}
+
+class RepliWebGL extends Component<{ fallback: ReactNode; children: ReactNode }, { err: boolean }> {
+  state = { err: false };
+  static getDerivedStateFromError(): { err: boolean } {
+    return { err: true };
+  }
+  componentDidCatch(_e: Error, _i: ErrorInfo) {
+    /* repli glyphe */
+  }
+  render() {
+    return this.state.err ? this.props.fallback : this.props.children;
+  }
+}
+
+function Muse({ genome }: { genome: Genome }) {
+  const { t } = useI18n();
+  const sig = SIGNATURES.find((s) => s.id === genome.famille);
+  if (!sig) return null;
+  return (
+    <p className="font-mono text-[13px] text-encre">
+      {sig.astre} {sig.muse}
+      <span className="text-sourd">
+        {" "}
+        · {t("relique.danse")} : {t(`danse.${genome.famille}`)}
+      </span>
+    </p>
+  );
 }
 
 /** Relique trouvée : lire le QR (caméra, collage ou fragment d'URL), lire
@@ -38,16 +86,36 @@ export function ReliqueTrouvee() {
   const [recup, setRecup] = useState<Recuperation | null>(null);
   const [scan, setScan] = useState(false);
   const [scanPossible, setScanPossible] = useState(false);
+  const [monde, setMonde] = useState<EntreeRelique[] | null>(null);
+  const [client, setClient] = useState(false);
+  const [glOk, setGlOk] = useState(false);
+  const reduced = usePrefersReducedMotion();
   const video = useRef<HTMLVideoElement | null>(null);
   const flux = useRef<MediaStream | null>(null);
 
   useEffect(() => {
+    setClient(true);
+    setGlOk(webglDisponible());
     setScanPossible(typeof (window as FenetreScanner).BarcodeDetector === "function");
     const h = window.location.hash;
     if (h.includes("r=")) {
       setTexte(h);
       history.replaceState(null, "", window.location.pathname + window.location.search);
     }
+    let cancel = false;
+    fetch(ETAT_URL, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((e: unknown) => {
+        if (cancel || !e) return;
+        const o = e as { reliques?: unknown };
+        setMonde(Array.isArray(o.reliques) ? (o.reliques as EntreeRelique[]) : []);
+      })
+      .catch(() => {
+        if (!cancel) setMonde([]);
+      });
+    return () => {
+      cancel = true;
+    };
   }, []);
 
   function arreterScan() {
@@ -75,7 +143,7 @@ export function ReliqueTrouvee() {
         if (!flux.current || !video.current) return;
         try {
           const codes = await det.detect(video.current);
-          const hit = codes.find((c) => parserRelique(c.rawValue) && !("erreur" in parserRelique(c.rawValue)));
+          const hit = codes.find((c) => !("erreur" in parserRelique(c.rawValue)));
           if (hit) {
             setTexte(hit.rawValue);
             arreterScan();
@@ -108,7 +176,9 @@ export function ReliqueTrouvee() {
     try {
       const rep = await fetch(ETAT_URL, { cache: "no-store" });
       if (!rep.ok) throw new Error(`etat.json ${rep.status}`);
-      setStatut(statutRelique(await rep.json(), r.adresse));
+      const e = (await rep.json()) as { reliques?: unknown };
+      setStatut(statutRelique(e, r.adresse));
+      if (Array.isArray(e.reliques)) setMonde(e.reliques as EntreeRelique[]);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : String(e));
     } finally {
@@ -126,6 +196,16 @@ export function ReliqueTrouvee() {
     }
     setRecup(r);
   }
+
+  const genome = useMemo(() => {
+    if (!lue || !statut) return null;
+    const age = ageDe(statut.entree);
+    if (statut.etat === "intacte") return genomeRelique(lue.adresse, statut.sortie.txid, age);
+    if (statut.etat === "recuperee") return genomeRelique(lue.adresse, statut.entree.txid, age);
+    return null;
+  }, [lue, statut]);
+
+  const use3d = client && glOk && !reduced;
 
   const etiquette = statut
     ? statut.etat === "intacte"
@@ -182,7 +262,21 @@ export function ReliqueTrouvee() {
             relique {lue.id}
             {statut?.entree?.age ? ` · ${statut.entree.age}` : ""}
           </p>
-          <p className="mt-1 break-all font-mono text-[11px] text-sourd">{encoderAdresse(fromHex(lue.adresse))}</p>
+          {genome ? <Muse genome={genome} /> : null}
+          {genome ? (
+            <div className="relative mt-3 aspect-square overflow-hidden rounded-md bg-fond">
+              {use3d ? (
+                <RepliWebGL fallback={<GlypheSvg etages={genome.etages} className="mx-auto mt-6 h-28 w-14" />}>
+                  <Suspense fallback={<div className="p-6 font-mono text-sm text-sourd">{t("relique.ouv")}</div>}>
+                    <ReliqueCanvas genome={genome} />
+                  </Suspense>
+                </RepliWebGL>
+              ) : (
+                <GlypheSvg etages={genome.etages} className="mx-auto mt-6 h-28 w-14" />
+              )}
+            </div>
+          ) : null}
+          <p className="mt-2 break-all font-mono text-[11px] text-sourd">{encoderAdresse(fromHex(lue.adresse))}</p>
           {etiquette ? (
             <p className={"mt-2 font-mono text-[12.5px] " + (statut?.etat === "intacte" ? "text-cuivre" : "text-encre")}>
               {etiquette}
@@ -237,6 +331,33 @@ export function ReliqueTrouvee() {
           ) : null}
         </div>
       ) : null}
+
+      <div className="mt-4 border-t border-trait pt-4">
+        <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">{t("relique.qr.monde")}</p>
+        {monde === null ? (
+          <p className="font-mono text-[12px] text-sourd">…</p>
+        ) : monde.length === 0 ? (
+          <p className="font-mono text-[12px] text-sourd">{t("relique.qr.mondeVide")}</p>
+        ) : (
+          <ul className="flex flex-col gap-1.5">
+            {monde.map((e) => {
+              const g = genomeRelique(e.adresse, e.txid, ageDe(e));
+              const sig = g ? SIGNATURES.find((s) => s.id === g.famille) : null;
+              return (
+                <li
+                  key={e.id}
+                  className="rounded-md bg-creux px-3 py-2 font-mono text-[12px] text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]"
+                >
+                  <span className="text-sourd">{e.id}</span> · {e.age ?? "?"} ·{" "}
+                  {sig ? `${sig.astre} ${sig.muse}` : t("relique.qr.muse") + " ?"} ·{" "}
+                  <span className={e.etat === "intacte" ? "text-cuivre" : "text-sourd"}>{t(`relique.qr.etat.${e.etat}`)}</span>
+                  {e.indice ? <span className="block text-[11px] text-sourd">« {e.indice} »</span> : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }

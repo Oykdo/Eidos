@@ -6,6 +6,7 @@
 
 import type { Genome } from "./genome.ts";
 import { FAMILLE_ORDRE, rangFamille } from "./genome.ts";
+import { danse, facteurDanse } from "./danse.ts";
 
 export type Vec3 = readonly [number, number, number];
 
@@ -151,9 +152,10 @@ function mapFamille(p: Vec3, g: Genome): number {
 export function sdfRelique(p: Vec3, g: Genome, phase: number): number {
   const rho = 1 + 0.18 * Math.cos(phase);
   const s = rho * (0.72 + 0.3 * pget(g, "echelle"));
-  const q: Vec3 = [p[0] / s, p[1] / s, p[2] / s];
+  const fam = Math.round(pget(g, "famille") * 8);
+  const q = danse([p[0] / s, p[1] / s, p[2] / s], fam, phase);
   const k = pget(g, "twist") * (0.35 + 1.4 * pget(g, "mercure"));
-  return mapFamille(twistY(q, k), g);
+  return mapFamille(twistY(q, k), g) * facteurDanse(fam);
 }
 
 export const POINTS_TEST: readonly Vec3[] = [

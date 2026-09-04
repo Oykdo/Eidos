@@ -257,8 +257,14 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
   de l'âge, R(θ) = a + b·cos θ, satellites et glyphe central tirés du txid).
 - Choix par défaut : 1 eidôlon par relique via le robinet (aucun type `sceau`),
   gardien manuel (`reliques.json` committé), indices publics dès le scellement.
-- Reste : `qr.py` n'a pas de décodeur (scanner l'écran avant d'imprimer) ; le
-  rendu 3D d'une relique trouvée dans la scène des coffres.
+- Rendu : la scène three.js (SDF raymarché, `ReliqueCanvas`) est animée ; depuis
+  R4, **une danse par muse** (`lib/reliques/danse.ts` = `danse()` du shader,
+  identité à phase 0, période 11,3 s : nutation, précession, tempo, culbute,
+  flamme, ronde, vis sans fin, phases, rebond), nom de la muse en tête de la
+  scène, relique trouvée rendue avec sa muse, liste « Reliques du monde ».
+  `forme.ts` reste la référence CPU du shader : toute retouche du GLSL se
+  reporte dans `danse.ts` / `forme.ts` et leurs tests.
+- Reste : `qr.py` n'a pas de décodeur (scanner l'écran avant d'imprimer).
 
 ### P4 — Vecteurs de test partagés Python ↔ TS
 Amorcé en P2/P3 : `vecteurs.json` (6 familles : paramètres, clé WOTS+, tx,

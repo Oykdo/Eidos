@@ -178,14 +178,39 @@ float shape(vec3 p) {
   return d;
 }
 
+// Danses — une par muse (même code que lib/reliques/danse.ts).
+vec3 rotXZ(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(c * p.x - s * p.z, p.y, s * p.x + c * p.z); }
+vec3 rotYZ(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(p.x, c * p.y - s * p.z, s * p.y + c * p.z); }
+vec3 rotXY(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(c * p.x - s * p.y, s * p.x + c * p.y, p.z); }
+vec3 rotAxe(vec3 v, vec3 k, float a) { float c = cos(a), s = sin(a); return v * c + cross(k, v) * s + k * dot(k, v) * (1.0 - c); }
+
+vec3 danse(vec3 p, int fam, float ph) {
+  float s = sin(ph);
+  float h = (1.0 - cos(ph)) * 0.5;
+  if (fam == 0) return rotXY(rotYZ(p, 0.25 * s), 0.18 * sin(2.0 * ph));      // Uranie : nutation
+  if (fam == 1) return rotYZ(p, 0.35 * s);                                    // Polymnie : précession
+  if (fam == 2) { float k = 1.0 + 0.12 * sin(2.0 * ph); float w = sqrt(k);   // Euterpe : tempo
+                  return vec3(p.x * w, p.y / k, p.z * w); }
+  if (fam == 3) return rotAxe(p, vec3(0.70710678, 0.70710678, 0.0), 0.4 * s); // Érato : culbute
+  if (fam == 4) { float k = 1.0 + 0.15 * h; return vec3(p.x, p.y / k, p.z); } // Melpomène : flamme
+  if (fam == 5) return rotXZ(p, ph);                                          // Terpsichore : ronde
+  if (fam == 6) return rotXZ(vec3(p.x, p.y - 0.05 * s, p.z), -ph);            // Calliope : vis sans fin
+  if (fam == 7) return rotXZ(p, 0.6 * s);                                     // Clio : phases
+  float k = 1.0 + 0.12 * s; float w = sqrt(k);                                // Thalie : rebond
+  return vec3(p.x * w, (p.y + 0.04 * s * s) / k, p.z * w);
+}
+
+float facteurDanse(int fam) { return (fam == 2 || fam == 4 || fam == 8) ? 0.85 : 1.0; }
+
 float map(vec3 p) {
   float rho = 1.0 + 0.18 * cos(uPhase);
   float s = rho * (0.72 + 0.3 * echelle);
+  int fam = int(uFamille + 0.5);
   p.xz = rot(uYaw) * p.xz;
   p.xy = rot(lean * 0.35) * p.xy;
-  vec3 q = p / s;
+  vec3 q = danse(p / s, fam, uPhase);
   float k = twist * (0.35 + 1.4 * mercure);
-  return shape(twistY(q, k));
+  return shape(twistY(q, k)) * facteurDanse(fam);
 }
 
 float march(vec3 ro, vec3 rd, out float tHit) {

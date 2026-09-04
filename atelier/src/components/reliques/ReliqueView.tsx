@@ -95,6 +95,7 @@ export function ReliqueView() {
     return genomeDeAge(lumen.age.nom);
   }, [choisi, lumen.age.nom]);
 
+  const museCourante = SIGNATURES.find((s) => s.id === genome.famille);
   const possedees = coffre.reliques ?? [];
   const aMoi = possedees.includes(lumen.age.nom);
   const solde = coffre.sorties.reduce((s, o) => s + o.montant, 0);
@@ -155,6 +156,12 @@ export function ReliqueView() {
 
         <section className="rounded-lg bg-carte p-4 shadow-[0_0_0_1px_rgb(198_203_209_/_0.14)]">
           <h2 className="font-display text-2xl font-light text-or">{lumen.age.nomAffiche}</h2>
+          {museCourante ? (
+            <p className="mt-1 font-mono text-[13px] text-encre">
+              {museCourante.astre} {museCourante.muse}
+              <span className="text-sourd"> · {t("relique.danse")} : {t(`danse.${genome.famille}`)}</span>
+            </p>
+          ) : null}
           <p className="mt-1 font-mono text-[26px] tabular-nums text-encre">
             {formaterPrix(lumen.prix)}
             <span className="ml-2 text-[12px] tracking-wide text-sourd uppercase">
@@ -186,7 +193,7 @@ export function ReliqueView() {
             <pre className="min-w-0 flex-1 font-mono text-[11px] leading-relaxed text-sourd">
               {genome.graine.slice(0, 8)}…{genome.graine.slice(-8)}
               {"\n"}
-              {genome.famille} · {codeDuGroupe(genome.etages)} · {lectureGlyphe(genome.etages)}
+              {museCourante?.muse ?? genome.famille} · {codeDuGroupe(genome.etages)} · {lectureGlyphe(genome.etages)}
             </pre>
           </div>
 
