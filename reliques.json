@@ -1,0 +1,5 @@
+{
+ "spec": "eidos-reliques/1",
+ "note": "Reliques dissimulees dans le monde reel : une piece scellee sur une adresse dont la graine est imprimee dans un code QR. La recuperer, c'est la depenser. Ce fichier est public et ne contient JAMAIS de graine. Le noeud publie le statut de chaque entree dans etat.json (attente / intacte / recuperee).",
+ "reliques": []
+}

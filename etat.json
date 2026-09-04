@@ -1,7 +1,7 @@
 {
  "spec": "eidos-etat/1",
  "reseau": "essai",
- "maj_unix": 1788523313,
+ "maj_unix": 1788524195,
  "hauteur": 1,
  "blocs": 2,
  "tete": "d958497169ac419c9b8e5206ea63d7d429ed8c6d1486208915717070ab1947c0",
@@ -43,6 +43,7 @@
  "robinet_epoque_atomes": 0,
  "robinet_budget_atomes": 504000000000,
  "artefacts": [],
+ "reliques": [],
  "cles_consommees": 2,
  "atomes_par_unite": 100000000,
  "emission_totale_atomes": 6289920000000000,

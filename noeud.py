@@ -51,6 +51,7 @@ CHAINE = os.path.join(HERE, "chaine-eidos.dat")
 MEMPOOL = os.path.join(HERE, "mempool.json")
 CONFIG = os.path.join(HERE, "federation.json")
 ETAT = os.path.join(HERE, "etat.json")
+RELIQUES = os.path.join(HERE, "reliques.json")
 MAGIC = b"EIDOS\x00\x00\x01"
 FORMAT = 3                     # 1 : Lamport ; 2 : WOTS+ / XMSS ; 3 : + racine UTXO
 GRAINE = "eidos-testnet-3"     # tag de dérivation des graines publiques du réseau
@@ -190,6 +191,8 @@ def charger(fed, bavard=False, depuis=None):
     if buf[:8] != MAGIC or int.from_bytes(buf[8:10], "big") != FORMAT:
         raise SystemExit("fichier non reconnu")
     ch = F.ChaineFederee(fed)
+    ch.reliques = charger_reliques()
+    adresses_reliques = {r["adresse"] for r in ch.reliques}
     i, n, confirme = 10, 0, False
     while i < len(buf):
         try:
@@ -199,6 +202,7 @@ def charger(fed, bavard=False, depuis=None):
             else:
                 ch.valider(blk)
             noter_gouttes(ch, blk)
+            noter_reliques(ch, blk, adresses_reliques)
         except (U.Rejet, ValueError, IndexError) as e:
             raise SystemExit(f"chaîne corrompue au bloc {n} : {e}")
         n += 1
@@ -303,6 +307,74 @@ def verse_deja(ch, adresse_hex):
         if a.hex() == adresse_hex:
             return True
     return False
+
+
+# ==========================================================================
+# Reliques : pièces scellées sur des adresses publiées (reliques.json), dont
+# la graine est cachée dans le monde. Le nœud ne fait que lire : une relique
+# est intacte tant que sa sortie n'est pas dépensée, récupérée sinon.
+# ==========================================================================
+def charger_reliques(chemin=None):
+    chemin = chemin or RELIQUES
+    if not os.path.exists(chemin):
+        return []
+    f = json.load(open(chemin, encoding="utf-8"))
+    out = []
+    for r in f.get("reliques", []):
+        a = r.get("adresse", "")
+        if isinstance(a, str) and len(a) == 40 and all(c in "0123456789abcdef" for c in a):
+            out.append(r)
+    return out
+
+
+def id_relique(adresse: bytes) -> str:
+    return hashlib.sha256(b"eidos-relique-qr/1" + adresse).hexdigest()[:16]
+
+
+def noter_reliques(ch, blk, adresses):
+    """À appeler après validation, bloc par bloc, dans l'ordre. `adresses` :
+    ensemble des adresses hex de reliques.json. Note les sorties créées sur
+    ces adresses et leur dépense (bloc, txid, destination)."""
+    if not hasattr(ch, "reliques_sorties"):
+        ch.reliques_sorties = {}       # (txid, vout) -> adresse hex
+        ch.reliques_recuperees = {}    # adresse hex -> {bloc, txid, vers}
+    h = blk["height"]
+    for tx in blk["txs"]:
+        for (ptxid, vout) in tx.inputs:
+            a = ch.reliques_sorties.pop((ptxid, vout), None)
+            if a is not None and a not in ch.reliques_recuperees:
+                vers = next((o.hex() for o, _ in tx.outputs if o.hex() not in adresses), None)
+                ch.reliques_recuperees[a] = {"bloc": h, "txid": tx.txid().hex(), "vers": vers}
+        for v, (o, _m) in enumerate(tx.outputs):
+            if o.hex() in adresses:
+                ch.reliques_sorties[(tx.txid(), v)] = o.hex()
+
+
+def etat_reliques(ch, liste):
+    """Une entrée par relique publiée : attente (rien reçu), intacte (sortie
+    non dépensée, montant), recuperee (bloc, txid, vers, artefact)."""
+    out = []
+    par_adresse = {}
+    for (txid, vout), (a, m) in ch.carnet.utxo.items():
+        par_adresse.setdefault(a.hex(), []).append((txid, vout, m))
+    for r in liste:
+        a = r["adresse"]
+        e = {"id": r.get("id") or id_relique(bytes.fromhex(a)), "adresse": a}
+        for k in ("age", "indice", "scellee_le"):
+            if k in r:
+                e[k] = r[k]
+        rec = getattr(ch, "reliques_recuperees", {}).get(a)
+        if rec:
+            e.update(etat="recuperee", **rec)
+            art = artefact_de_goutte(bytes.fromhex(rec["txid"]), bytes.fromhex(a))
+            e["artefact"] = art["id"] if art else None
+        elif a in par_adresse:
+            txid, vout, m = par_adresse[a][0]
+            e.update(etat="intacte", txid=txid.hex(), rang=vout, montant=m)
+        else:
+            e["etat"] = "attente"
+        out.append(e)
+    return out
 
 
 # 9 empilements du chœur. Même table que atelier/src/lib/eidos/signatures.ts
@@ -545,6 +617,7 @@ def forger(maintenant=None):
         blk = _forger_un(ch, k, v, h, ts, paiements + envois, frais)
         d = ch.valider(blk)
         noter_gouttes(ch, blk)
+        noter_reliques(ch, blk, {r["adresse"] for r in getattr(ch, "reliques", [])})
         ajouter(blk)
         if modifie:
             json.dump(file, open(MEMPOOL, "w"), indent=1, ensure_ascii=False)
@@ -598,6 +671,8 @@ def ecrire_etat(ch, blocs):
         "robinet_epoque_atomes": robinet_epoque_atomes(ch, max(carnet.hauteur, 0)),
         "robinet_budget_atomes": budget_epoque(max(carnet.hauteur, 0)),
         "artefacts": artefacts_du_carnet(ch),
+        # reliques publiées (reliques.json) et leur statut, lecture sans preuve
+        "reliques": etat_reliques(ch, getattr(ch, "reliques", [])),
         "cles_consommees": sum(len(s) for s in ch.indices.values()),
         "atomes_par_unite": E.ATOMES,
         "emission_totale_atomes": 62_899_200 * E.ATOMES,
@@ -707,6 +782,64 @@ def _test_depuis():
         print(f"ok : {ok} controles reprise (--depuis)")
     finally:
         CHAINE = ancien
+
+
+def _test_reliques():
+    """Statut des reliques : attente → intacte → recuperee, adresse inconnue
+    ignorée, artefact attaché. Chaîne en mémoire, aucun fichier."""
+    t0 = 1756540680
+    cles = F.cles_de_test(7, hauteur=4)
+    fed = F.Federation.depuis_cles(cles, t0, hauteur=4)
+    ch = F.ChaineFederee(fed)
+    gardien, chercheur, autre = U.Portefeuille("gardien"), U.Portefeuille("chercheur"), U.Portefeuille("autre")
+    graine_relique = hashlib.sha256(b"relique/sous la troisieme arche").digest()
+    a_rel = W.adresse_de(graine_relique)
+    liste = [{"id": "arche", "adresse": a_rel.hex(), "age": "Kali", "indice": "sous la 3e arche"},
+             {"adresse": "ff" * 20}]
+    adresses = {r["adresse"] for r in liste}
+    ok = 0
+
+    def bloc(h, txs):
+        blk = F.forger(ch, cles, txs, t0 + h * F.CRENEAU)
+        ch.valider(blk, maintenant=t0 + h * F.CRENEAU)
+        noter_reliques(ch, blk, adresses)
+
+    bloc(0, [U.coinbase(0, gardien.nouvelle_adresse())])
+    e = etat_reliques(ch, liste)
+    assert [x["etat"] for x in e] == ["attente", "attente"] and e[0]["id"] == "arche"
+    assert e[1]["id"] == id_relique(bytes.fromhex("ff" * 20)) and len(e[1]["id"]) == 16
+    print("relique publiee, rien recu         : attente"); ok += 1
+
+    # le gardien scelle : 1 eidôlon vers l'adresse de la relique
+    piece = list(ch.carnet.utxo)[0]
+    ga = ch.carnet.utxo[piece][0]
+    t = U.Tx([piece], [(a_rel, E.ATOMES), (gardien.nouvelle_adresse(), ch.carnet.utxo[piece][1] - E.ATOMES)])
+    gardien.signer(t, 0, ga)
+    bloc(1, [U.coinbase(1, gardien.nouvelle_adresse()), t])
+    e = etat_reliques(ch, liste)
+    assert e[0]["etat"] == "intacte" and e[0]["montant"] == E.ATOMES and e[0]["txid"] == t.txid().hex()
+    print("scellee par le gardien             : intacte (1 eidolon)"); ok += 1
+
+    # une adresse hors liste reçoit aussi : ignorée
+    piece = [k for k, v in ch.carnet.utxo.items() if v[0] != a_rel][0]
+    t2 = U.Tx([piece], [(autre.nouvelle_adresse(), ch.carnet.utxo[piece][1])])
+    gardien.signer(t2, 0, ch.carnet.utxo[piece][0])
+    bloc(2, [U.coinbase(2, gardien.nouvelle_adresse()), t2])
+    assert len(getattr(ch, "reliques_sorties")) == 1
+    print("sortie hors liste                  : ignoree"); ok += 1
+
+    # le chercheur scanne le QR (il a la graine) et dépense vers son coffre
+    dest = chercheur.nouvelle_adresse()
+    rel = (t.txid(), 0)
+    t3 = U.Tx([rel], [(dest, E.ATOMES)])
+    t3.sign(0, graine_relique)
+    bloc(3, [U.coinbase(3, gardien.nouvelle_adresse()), t3])
+    e = etat_reliques(ch, liste)
+    assert e[0]["etat"] == "recuperee" and e[0]["bloc"] == 3 and e[0]["txid"] == t3.txid().hex()
+    assert e[0]["vers"] == dest.hex() and "artefact" in e[0]
+    assert a_rel in ch.carnet.cles_usees      # la graine ne resservira pas
+    print(f"recuperee au bloc 3 vers {dest.hex()[:8]}… : artefact {e[0]['artefact']}"); ok += 1
+    print(f"ok : {ok} controles reliques")
 
 
 def _test_artefact():
