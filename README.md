@@ -182,7 +182,7 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `chaine-eidos.dat` | — | the testnet chain, written by the CI | — |
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `docs/` | — | specifications: relics, tower, pendulum, Sybil, vault audit; banner generator | 2 |
-| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 273 Eidos tests | 273 |
+| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 286 Eidos tests | 286 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (issues), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor.
 

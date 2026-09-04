@@ -291,6 +291,39 @@ précieux), `paletteDePalier` (une teinte par palier — acier 215°, vert-de-gr
 `CoffreScene` : un coffre au pic de la cloche, cage au palier précieux.
 Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
 
+### Rendu de l'atelier — socle et quatre scènes (FAIT 2026-09-04)
+Plan « Lumière et matière » (trois juges sur trois, greffes « Grain et
+profondeur » et « Cohérence »), implémenté scène par scène avec relecture
+adversariale (GLSL ES 1.00 / three, gardien Eidos, perf mobile) avant commit.
+- Socle `components/canvas/` : `atelier.ts` (contrat de lumière : résidu
+  ambiant 0,2, hémisphère encre/creux, clé inchangée, contre-lumière teintée
+  par la scène, `ENV_INTENSITE`, `brouillard()` vers #12151a, **clé
+  `toneMapping: 7` (Neutral) posée en dernier**, three importé en type
+  seulement : les hôtes ne chargent pas three), `matiere.ts` (matières par
+  palier, par âge, pierre, ferrure ; métal ≤ 0,60 ; `environnementDisponible`
+  + repli « peinture » ; `couleurSRGB`, `disposerInstance`), `texel.ts` (Bayer
+  4×4 par cellule entière, exact sur tout plan axial, occlusion de voisinage,
+  cellules encloses ; test avec vecteur gelé Satya 168/216), `Lumieres.tsx`,
+  `Environnement.tsx` (sphère de sommets préfiltrée une fois par PMREM 64 px,
+  rebake par teinte d'âge/palier/biome seulement), `Halo.tsx` (dôme à couleurs
+  de sommets, bords #12151a exacts sur les deux axes).
+- Inventaire : couleur de la jauge en sRGB, cubes jointifs, trame + occlusion,
+  encloses retirées, émissif supprimé, environnement par âge, halo, brouillard.
+- Tour : dalle pierre satinée, clartés en sRGB, trois tons de faces par
+  voisinage, ombre de contact, occupants en matière de classe derrière le
+  repli, rendu à la demande. Coffre : `cellules.ts` (coque hors de la scène,
+  ferrures dédoublonnées, trame et contact, testés), matière par palier, cage
+  en ferrures ; `SPEC_AUDIT_COFFRES.md` v2.1. Relique : `glsl.test.ts` (filet
+  statique ES 1.00, parité des uniforms), lumières et matière depuis le
+  contrat, `envi()` analytique, `shade()` réécrit, sortie par
+  `toneMapping()` + OETF de three, aura de fond exacte aux bords, Bayer 4×4 ;
+  **SDF, danse et uniforms de forme intacts** (tests gelés).
+- Règles : aucune dépendance, aucune texture ; jamais `#include` ni
+  `dithering()` dans le shader ; pas de smoothstep à bornes inversées ; le
+  navigateur est le seul compilateur GLSL : contrôle visuel sur `/`, `/tour`,
+  `/reliques` avec la console ouverte à chaque retouche. Reste hors lot :
+  tas du coffre partiellement enfoui dans le couvercle (décision de spec).
+
 ### Refonte du hub — FAIT
 - H1 FAIT : navigation en trois registres (Vérifier / Lire / Jouer) + Guide,
   routes inchangées (`Nav.tsx`).
