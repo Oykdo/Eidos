@@ -66,7 +66,7 @@ Ce n’est pas un nœud P2P.
 3. **Témoin** — adopter la tête, juger.
 4. **Clés** — rejouer l’attaque de réemploi. Graine d’atelier **publique**.
 5. **Carte** — les reliques du monde ; exporter, puis juger un trophée.
-6. **Reliques** — ellipse `a × a/2`. Kali 2,10 · Satya 33,55. Creuser, acheter, sauver `eidos.carnet`.
+6. **Reliques** — quatre sceaux d’âge (mise Kali 2,10 · Satya 33,55). Lire un QR trouvé dans le monde, récupérer la relique vers le coffre. Rien ne s’achète.
 7. **Glyphes** — 4 figures × 3 étages = 64. **Interdit** d’en tirer une graine.
 8. **Signes** — neuf lectures des mêmes 64.
 

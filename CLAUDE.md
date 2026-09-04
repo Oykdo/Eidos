@@ -285,9 +285,10 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
   devant une porte sans sceau (coffre d'atelier : ouvert, démonstration), la
   page Reliques ne vend plus (simulation en atelier seulement). 3 tests.
   Reste : le trophée exportable (avec la carte, H2).
-- H4 : Guide réécrit selon les trois registres. Vocabulaire fixé : pièce,
-  artefact (lecture en muse), relique (pièce scellée dans le monde), sceau,
-  objet (jeu local).
+- H4 FAIT : Guide en trois registres (Vérifier / Lire / Jouer), « Cinq mots »
+  (pièce, artefact, relique, sceau, objet) et Limites ; textes FR/EN
+  `guide.verifier`, `guide.lire`, `guide.jouer`, `guide.mot.*`. La refonte du
+  hub est close ; reste la Tour (`docs/SPEC_TOUR.md`).
 - La Tour : `docs/SPEC_TOUR.md` (hôtes = les neuf muses, secrets, élixirs
   de la tria prima, antres, portes par sceaux) — spec, à coder après H2/H3.
 
