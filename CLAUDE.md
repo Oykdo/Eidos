@@ -272,10 +272,15 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
 - H2 : l'Arbre d'origine (régimes abstraits) disparaît ; `/arbre` devient la
   **carte des reliques du monde** (ancrage par adresse, paliers = âges,
   familles = muses, reliques du coffre mises en avant). Lecture, pas preuve.
-- H3 : les reliques d'âge achetables deviennent des **sceaux** : mise scellée
-  dans une relique du monde (prix de l'âge, statut « scellée / sous-scellée »
-  publié par le nœud), clé des portes de la Tour, trophée exportable. L'achat
-  local disparaît hors coffre d'atelier.
+- H3 FAIT : **sceaux d'âge**. `noeud.mise_sceau(age)` (émission de l'âge / 10⁶ :
+  Kali 2,10 … Satya 33,55) ; `etat.json.reliques[]` porte `mise_attendue` et
+  `scellee` (5ᵉ contrôle) ; la planche de `relique.py --sceller` annonce la mise.
+  Atelier : `sceaux.ts` (quartiers 0–63 / 64–127 / 128–191 / 192–254, portes
+  64 · 128 · 192, `sceauxDuCoffre` = reliques récupérées vers une adresse du
+  coffre, `porteDe`), store `monde` / `chargerMonde`, la Tour ferme « Monter »
+  devant une porte sans sceau (coffre d'atelier : ouvert, démonstration), la
+  page Reliques ne vend plus (simulation en atelier seulement). 3 tests.
+  Reste : le trophée exportable (avec la carte, H2).
 - H4 : Guide réécrit selon les trois registres. Vocabulaire fixé : pièce,
   artefact (lecture en muse), relique (pièce scellée dans le monde), sceau,
   objet (jeu local).

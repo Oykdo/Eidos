@@ -24,6 +24,8 @@ import {
 import type { Coffre, NomAge, ScenarioId } from "./eidos/types.ts";
 import type { PreuvePortable } from "./eidos/merkle.ts";
 import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
+import { ETAT_URL } from "./eidos/envoi.ts";
+import { agesScelles, sceauxDuCoffre, type EntreeMonde, type Sceau } from "./eidos/sceaux.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { t, type Msg } from "./i18n.ts";
 import {
@@ -53,6 +55,11 @@ type Etat = {
   reseauOccupe: boolean;
   suivreReseau: () => Promise<void>;
   jugerReseau: (ref: string) => void;
+  /** Reliques du monde (etat.json.reliques) ; null tant que rien n'est lu. Lecture, pas preuve. */
+  monde: EntreeMonde[] | null;
+  chargerMonde: () => Promise<void>;
+  sceaux: () => Sceau[];
+  agesScelles: () => NomAge[];
   hydrater: () => void;
   charger: (id: ScenarioId) => void;
   robinet: () => void;
@@ -117,6 +124,7 @@ export const useCoffre = create<Etat>((set, get) => ({
   temoinFlash: null,
   reseau: null,
   reseauOccupe: false,
+  monde: null,
   demandeReseau: null,
   psnx: null,
 
@@ -332,6 +340,21 @@ export const useCoffre = create<Etat>((set, get) => ({
         : `réseau · bloc ${r.tete.hauteur} — signature refusée (${r.verdict.motif})`,
     });
   },
+
+  chargerMonde: async () => {
+    try {
+      const r = await fetch(ETAT_URL, { cache: "no-store" });
+      if (!r.ok) throw new Error(String(r.status));
+      const e = (await r.json()) as { reliques?: unknown };
+      set({ monde: Array.isArray(e.reliques) ? (e.reliques as EntreeMonde[]) : [] });
+    } catch {
+      if (get().monde === null) set({ monde: [] });
+    }
+  },
+
+  sceaux: () => sceauxDuCoffre(get().monde, get().coffre),
+
+  agesScelles: () => agesScelles(sceauxDuCoffre(get().monde, get().coffre), get().coffre),
 
   jugerReseau: (ref) => {
     const { reseau, temoin } = get();

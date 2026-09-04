@@ -331,6 +331,19 @@ def id_relique(adresse: bytes) -> str:
     return hashlib.sha256(b"eidos-relique-qr/1" + adresse).hexdigest()[:16]
 
 
+DIVISEUR_SCEAU = 1_000_000
+
+
+def mise_sceau(age):
+    """Mise attendue dans une relique de cet âge, en atomes : émission de
+    l'âge / 10⁶ — même règle que atelier relique.ts (Kali 2,10 … Satya 33,55).
+    None si l'âge est inconnu."""
+    for nom, a, epoques in E.AGES:
+        if nom == age:
+            return a * E.T * epoques * E.ATOMES // DIVISEUR_SCEAU
+    return None
+
+
 def noter_reliques(ch, blk, adresses):
     """À appeler après validation, bloc par bloc, dans l'ordre. `adresses` :
     ensemble des adresses hex de reliques.json. Note les sorties créées sur
@@ -373,6 +386,12 @@ def etat_reliques(ch, liste):
             e.update(etat="intacte", txid=txid.hex(), rang=vout, montant=m)
         else:
             e["etat"] = "attente"
+        # sceau : la mise attendue pour l'âge, et si elle est tenue. Lecture.
+        mise = mise_sceau(r.get("age"))
+        if mise is not None:
+            e["mise_attendue"] = mise
+            if e["etat"] == "intacte":
+                e["scellee"] = e["montant"] >= mise
         out.append(e)
     return out
 
@@ -818,7 +837,9 @@ def _test_reliques():
     bloc(1, [U.coinbase(1, gardien.nouvelle_adresse()), t])
     e = etat_reliques(ch, liste)
     assert e[0]["etat"] == "intacte" and e[0]["montant"] == E.ATOMES and e[0]["txid"] == t.txid().hex()
-    print("scellee par le gardien             : intacte (1 eidolon)"); ok += 1
+    assert e[0]["mise_attendue"] == mise_sceau("Kali") == 209_664_000 and e[0]["scellee"] is False
+    assert "mise_attendue" not in e[1]
+    print("scellee par le gardien             : intacte (1 eidolon) — sous-scellee pour Kali (2,10)"); ok += 1
 
     # une adresse hors liste reçoit aussi : ignorée
     piece = [k for k, v in ch.carnet.utxo.items() if v[0] != a_rel][0]
@@ -839,6 +860,20 @@ def _test_reliques():
     assert e[0]["vers"] == dest.hex() and "artefact" in e[0]
     assert a_rel in ch.carnet.cles_usees      # la graine ne resservira pas
     print(f"recuperee au bloc 3 vers {dest.hex()[:8]}… : artefact {e[0]['artefact']}"); ok += 1
+
+    # une seconde relique, Satya, recoit sa mise entiere : scellee
+    graine2 = hashlib.sha256(b"relique/dvapara").digest()
+    a2 = W.adresse_de(graine2)
+    liste2 = [{"id": "dvapara", "adresse": a2.hex(), "age": "Dvapara"}]
+    adresses.add(a2.hex())
+    piece = [k for k, v in ch.carnet.utxo.items() if v[1] >= mise_sceau("Dvapara") + 1][0]
+    t4 = U.Tx([piece], [(a2, mise_sceau("Dvapara")), (gardien.nouvelle_adresse(), ch.carnet.utxo[piece][1] - mise_sceau("Dvapara"))])
+    gardien.signer(t4, 0, ch.carnet.utxo[piece][0])
+    bloc(4, [U.coinbase(4, gardien.nouvelle_adresse()), t4])
+    e2 = etat_reliques(ch, liste2)
+    assert e2[0]["etat"] == "intacte" and e2[0]["scellee"] is True and e2[0]["mise_attendue"] == 838_656_000
+    assert [mise_sceau(n) for n in ("Satya", "Treta", "Dvapara", "Kali")] == [3_354_624_000, 1_886_976_000, 838_656_000, 209_664_000]
+    print("relique Dvapara avec 8,39 en mise  : scellee (prix decroissants)"); ok += 1
     print(f"ok : {ok} controles reliques")
 
 

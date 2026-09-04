@@ -35,6 +35,7 @@ import eonis as E
 import utxo as U
 import wots as W
 import qr as Q
+import noeud as N
 
 RELIQUES = os.path.join(HERE, "reliques.json")
 BASE_URL = "https://oykdo.github.io/Eidos/reliques"
@@ -60,14 +61,17 @@ def charge_utile(graine: bytes) -> str:
 # ---------------------------------------------------------------------------
 def planche(ident, age, indice, adresse, date):
     glyphes = U.addr_encode(adresse)
+    mise = N.mise_sceau(age)
     return (
         f"EIDOS — relique {ident}\n"
         f"age : {age}   scellee le {date}\n"
         f"indice : {indice or '(aucun)'}\n\n"
         f"adresse (hex) : {adresse.hex()}\n"
         f"adresse (glyphes) :\n{glyphes}\n\n"
-        "Sceller : ouvrir une issue titree « robinet » sur github.com/Oykdo/Eidos\n"
-        "avec les 31 symboles ci-dessus ; le noeud versera 1 eidolon a la relique.\n"
+        f"Mise du sceau {age} : {mise / E.ATOMES:.2f} eidola. Le robinet n'en verse\n"
+        "qu'un (issue « robinet » avec les 31 symboles ci-dessus) : completer par\n"
+        "un envoi depuis votre coffre vers cette adresse. En dessous de la mise, le\n"
+        "noeud publie « sous-scellee » ; la relique reste recuperable.\n"
         "Cacher : le QR (fichier .svg) est le SEUL porteur de la graine. Une photo\n"
         "suffit a recuperer la relique — premier arrive, premier servi.\n"
         "Verifier : scanner l'ecran avant d'imprimer.\n"
@@ -182,6 +186,7 @@ def tests():
     assert "graine" not in json.dumps(f) and b64url(graine) not in json.dumps(f)
     txt = open(r["planche"], encoding="utf-8").read()
     assert b64url(graine) not in txt and graine.hex() not in txt and r["adresse"] in txt
+    assert "Mise du sceau Kali : 2.10 eidola" in txt
     assert U.addr_decode(U.addr_encode(bytes.fromhex(r["adresse"]))) == bytes.fromhex(r["adresse"])
     print(f"scellee : id {r['id']}, planche sans graine, reliques.json : OK"); ok += 1
 

@@ -37,11 +37,11 @@ describe("i18n", () => {
   it("reliques : libellés gelés", () => {
     assert.equal(
       FR["relique.lede"],
-      "Quatre reliques. Un objet par graine. Rien ne se croit, tout se rejoue.",
+      "Quatre sceaux d'âge : la mise d'une relique du monde, la clé d'un quartier de la Tour, un trophée vérifiable. Un sceau se trouve, il ne s'achète pas.",
     );
     assert.equal(
       EN["relique.lede"],
-      "Four relics. One object per seed. Nothing is believed; everything is replayed.",
+      "Four age seals: the stake of a world relic, the key to a Tower quarter, a verifiable trophy. A seal is found, never bought.",
     );
     assert.equal(FR["relique.preuveAide"], "Collez eidos-artefact/1. Même preuve, même relique.");
     assert.equal(EN["relique.preuveAide"], "Paste eidos-artefact/1. Same proof, same relic.");

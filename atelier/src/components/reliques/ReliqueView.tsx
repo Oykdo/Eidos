@@ -24,6 +24,7 @@ import { chargerEtat } from "@/lib/arbre/etat.ts";
 import { ARTEFACTS_CHAINES, fusionnerArtefacts } from "@/lib/reliques/catalogue.ts";
 import { genomeAvecAge, genomeDeAge, genomeDeArtefact } from "@/lib/reliques/genome.ts";
 import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";
+import { agesScelles, sceauxDuCoffre } from "@/lib/eidos/sceaux.ts";
 
 const ReliqueCanvas = lazy(() => import("./ReliqueCanvas"));
 
@@ -53,6 +54,8 @@ export function ReliqueView() {
   const coffre = useCoffre((s) => s.coffre);
   const hydrater = useCoffre((s) => s.hydrater);
   const acheter = useCoffre((s) => s.acheterRelique);
+  const monde = useCoffre((s) => s.monde);
+  const chargerMonde = useCoffre((s) => s.chargerMonde);
   const erreur = useCoffre((s) => s.erreur);
   const flash = useCoffre((s) => s.flash);
 
@@ -67,6 +70,10 @@ export function ReliqueView() {
   useEffect(() => {
     hydrater();
   }, [hydrater]);
+
+  useEffect(() => {
+    if (monde === null) void chargerMonde();
+  }, [monde, chargerMonde]);
 
   useEffect(() => {
     setClient(true);
@@ -96,10 +103,12 @@ export function ReliqueView() {
   }, [choisi, lumen.age.nom]);
 
   const museCourante = SIGNATURES.find((s) => s.id === genome.famille);
-  const possedees = coffre.reliques ?? [];
+  const sceaux = sceauxDuCoffre(monde, coffre);
+  const possedees = agesScelles(sceaux, coffre);
   const aMoi = possedees.includes(lumen.age.nom);
   const solde = coffre.sorties.reduce((s, o) => s + o.montant, 0);
-  const peut = !aMoi && solde >= lumen.prixAtomes;
+  const simulation = coffre.nature === "atelier";
+  const peut = simulation && !aMoi && solde >= lumen.prixAtomes;
   const use3d = client && glOk && !reduced;
 
   const ascii = (
@@ -200,13 +209,23 @@ export function ReliqueView() {
           <div className="mt-4">
             {aMoi ? (
               <p className="font-mono text-sm text-cuivre">{t("relique.possedee")}</p>
-            ) : (
+            ) : simulation ? (
               <Button type="button" disabled={!peut} onClick={() => acheter(lumen.age.nom)}>
                 {t("relique.acheter")}
               </Button>
+            ) : (
+              <p className="font-mono text-[12px] leading-relaxed text-sourd text-pretty">
+                {t("relique.sceau.trouver", { age: lumen.age.nomAffiche })}
+              </p>
             )}
-            {!aMoi && !peut ? (
+            {simulation && !aMoi && !peut ? (
               <p className="mt-2 font-mono text-[12px] text-sourd">{t("relique.court")}</p>
+            ) : null}
+            {sceaux.length > 0 ? (
+              <p className="mt-2 font-mono text-[11px] text-sourd">
+                {t("relique.sceau.liste", { n: sceaux.length })} ·{" "}
+                {sceaux.map((s) => `${s.id} (${s.age})`).join(" · ")}
+              </p>
             ) : null}
             <p className="mt-2 min-h-5 font-mono text-sm" role="status">
               {erreur ? <span className="text-fer">{erreur}</span> : null}

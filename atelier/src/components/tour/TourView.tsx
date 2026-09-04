@@ -7,6 +7,7 @@ import { useCoffre } from "@/lib/store.ts";
 import { qDeMot, paireDe } from "@/lib/eidos/resonance.ts";
 import { produit, conjugue } from "@/lib/eidos/cosmos.ts";
 import { memeOrbite, memeRayon } from "@/lib/eidos/groupe.ts";
+import { agesScelles, porteDe, sceauxDuCoffre } from "@/lib/eidos/sceaux.ts";
 import {
   ETAGES,
   TEINTE_BIOME,
@@ -23,6 +24,9 @@ export function TourView() {
   const { t } = useI18n();
   const hydrater = useCoffre((s) => s.hydrater);
   const objets = useCoffre((s) => s.coffre.objets) ?? [];
+  const coffre = useCoffre((s) => s.coffre);
+  const monde = useCoffre((s) => s.monde);
+  const chargerMonde = useCoffre((s) => s.chargerMonde);
   const [etage, setEtage] = useState(0);
   const [k, setK] = useState(0);
   const [gl, setGl] = useState(false);
@@ -38,6 +42,11 @@ export function TourView() {
     setK(0);
   }, [etage]);
 
+  useEffect(() => {
+    if (monde === null) void chargerMonde();
+  }, [monde, chargerMonde]);
+
+  const porteSuivante = porteDe(etage + 1, agesScelles(sceauxDuCoffre(monde, coffre), coffre), coffre);
   const biome = biomeDe(etage);
   const coupe = useMemo(() => coupeDe(etage), [etage]);
   const occupants = useMemo(() => occupantsDe(etage), [etage]);
@@ -102,7 +111,7 @@ export function TourView() {
           <Button
             type="button"
             variant="or"
-            disabled={etage >= ETAGES - 1}
+            disabled={etage >= ETAGES - 1 || !porteSuivante.ouverte}
             onClick={() => setEtage((e) => Math.min(ETAGES - 1, e + 1))}
           >
             {t("tour.monter")}
@@ -111,6 +120,13 @@ export function TourView() {
             <Link to="/">{t("tour.ville")}</Link>
           </Button>
         </div>
+        {porteSuivante.age ? (
+          <p className={"mt-2 font-mono text-[12px] " + (porteSuivante.ouverte ? "text-cuivre" : "text-fer")}>
+            {porteSuivante.ouverte
+              ? t("tour.porte.ouverte", { n: etage + 1, age: porteSuivante.age })
+              : t("tour.porte.fermee", { n: etage + 1, age: porteSuivante.age })}
+          </p>
+        ) : null}
 
         <div className="mt-4 flex flex-wrap gap-2">
           {occupants.map((o) => (
