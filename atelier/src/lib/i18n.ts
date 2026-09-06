@@ -201,7 +201,7 @@ export const FR = {
   "guide.mot.objet": "objet — un mot de 32 bits. Il ne grandit pas.",
   "guide.01": "Coffre",
   "guide.01p":
-    "Créez votre coffre. Le secret reste dans ce navigateur. L'appareil demande alors eidos.carnet : gardez-le. Trois cartons papier (Sel, Mercure, Soufre) : deux suffisent, un seul ne dépense pas.",
+    "Créez votre coffre. Le secret reste dans ce navigateur. L'appareil demande alors eidos.carnet : gardez-le. Papier : 32 grilles × 64 signes, trois cartons (Sel, Mercure, Soufre). Deux suffisent.",
   "guide.02": "Journal",
   "guide.02p":
     "Le journal montre la genèse, la chaîne, et la preuve d'une pièce. Les exemples se jouent sans coffre personnel. La preuve se copie vers le Témoin.",
@@ -700,7 +700,7 @@ export const FR = {
   "chymie.unicode": "Autres signes Unicode — hors alphabet du carnet.",
   "chymie.vide": "Créez un coffre pour lire le carnet.",
   "papier.h": "Papier",
-  "papier.lede": "Trois cartons. Deux suffisent. Un seul ne dépense pas. Le carnet ne change pas.",
+  "papier.lede": "32 grilles, 64 signes. Deux cartons suffisent. Un seul ne dépense pas.",
   "papier.imprimer": "Imprimer les cartons",
   "papier.image": "Enregistrer l'image",
   "papier.vide": "Créez un coffre personnel pour le papier.",
@@ -893,7 +893,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "guide.mot.objet": "object — a 32-bit word. It does not grow.",
   "guide.01": "Vault",
   "guide.01p":
-    "Create your vault. The secret stays in this browser. The device then asks for eidos.carnet: keep it. Three paper cards (Salt, Mercury, Sulfur): two suffice, one cannot spend.",
+    "Create your vault. The secret stays in this browser. The device then asks for eidos.carnet: keep it. Paper: 32 grids × 64 signs, three cards (Salt, Mercury, Sulfur). Two suffice.",
   "guide.02": "Log",
   "guide.02p":
     "The log shows genesis, the chain, and the proof of a coin. Examples run without a personal vault. The proof copies over to the Witness.",
@@ -1386,7 +1386,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "chymie.unicode": "Other Unicode signs — outside the ledger alphabet.",
   "chymie.vide": "Create a vault to read the ledger.",
   "papier.h": "Paper",
-  "papier.lede": "Three cards. Two suffice. One cannot spend. The ledger file does not change.",
+  "papier.lede": "32 grids, 64 signs. Two cards suffice. One cannot spend.",
   "papier.imprimer": "Print the cards",
   "papier.image": "Save the image",
   "papier.vide": "Create a personal vault for the paper.",

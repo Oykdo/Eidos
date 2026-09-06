@@ -4,12 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Marque } from "@/components/chymie/Marque.tsx";
 import { analyserGraine } from "@/lib/eidos/lamport.ts";
 import { fromHex } from "@/lib/eidos/hash.ts";
-import {
-  COTE,
-  papiersDe,
-  signeDe,
-  type Carte,
-} from "@/lib/eidos/papier.ts";
+import { papiersDe, signeDe, type Carte, type Grille } from "@/lib/eidos/papier.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { useI18n } from "@/lib/i18n.ts";
 import { cn } from "@/lib/utils";
@@ -19,7 +14,24 @@ function Case({ code }: { code: number | null }) {
     return <span className="block size-full rounded-[2px] bg-creux" />;
   }
   const s = signeDe(code);
-  return <Marque trait={s.trait} uni={s.uni} className="size-5 text-[14px]" />;
+  return <Marque trait={s.trait} uni={s.uni} className="size-4 text-[12px]" />;
+}
+
+function Mini({ g, i }: { g: Grille; i: number }) {
+  return (
+    <li className="min-w-0">
+      <div className="grid grid-cols-2 gap-px bg-trait p-px">
+        {([0, 1, 2, 3] as const).map((pos) => (
+          <div key={pos} className="flex aspect-square items-center justify-center bg-carte">
+            <Case code={pos === g.pos ? g.code : null} />
+          </div>
+        ))}
+      </div>
+      <p className="mt-0.5 text-center font-mono text-[9px] tabular-nums text-sourd">
+        {String(i).padStart(2, "0")}
+      </p>
+    </li>
+  );
 }
 
 function Carton({ carte, locale }: { carte: Carte; locale: "fr" | "en" }) {
@@ -30,19 +42,14 @@ function Carton({ carte, locale }: { carte: Carte; locale: "fr" | "en" }) {
         <span>
           {carte.prima.uni} {nom}
         </span>
-        <span className="text-sourd">EIDOS</span>
+        <span className="text-sourd">32 × 64</span>
       </header>
-      <div
-        className="grid gap-px bg-trait p-px"
-        style={{ gridTemplateColumns: `repeat(${COTE}, minmax(0, 1fr))` }}
-      >
-        {carte.cellules.map((c) => (
-          <div key={c.i} className="flex aspect-square items-center justify-center bg-carte">
-            <Case code={c.code} />
-          </div>
+      <ol className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+        {carte.grilles.map((g, i) => (
+          <Mini key={i} g={g} i={i} />
         ))}
-      </div>
-      <ol className="mt-2 flex items-center justify-center gap-2">
+      </ol>
+      <ol className="mt-3 flex items-center justify-center gap-2">
         {carte.controle.map((code, i) => (
           <li key={i} className="flex size-8 items-center justify-center rounded-sm bg-creux">
             <Case code={code} />
@@ -54,37 +61,45 @@ function Carton({ carte, locale }: { carte: Carte; locale: "fr" | "en" }) {
 }
 
 function svgPapier(cartes: Carte[]): string {
-  const W = 420;
-  const H = 520;
-  const cell = 44;
-  const gap = 4;
-  const left = 42;
-  const top0 = 56;
+  const W = 520;
+  const H = 640;
+  const mini = 52;
+  const cell = 24;
+  const gapG = 10;
+  const cols = 8;
+  const left = 28;
+  const top0 = 52;
   const pages = cartes.map((carte, p) => {
     const y0 = p * H;
-    const cells = carte.cellules
-      .map((c) => {
-        const r = Math.floor(c.i / COTE);
-        const col = c.i % COTE;
-        const x = left + col * (cell + gap);
-        const y = y0 + top0 + r * (cell + gap);
-        if (c.code === null) {
-          return `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="#1a1e24" stroke="#3a4048"/>`;
-        }
-        const s = signeDe(c.code);
-        return `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="#161a20" stroke="#3a4048"/><text x="${x + cell / 2}" y="${y + cell / 2 + 6}" text-anchor="middle" font-size="18" fill="#C9A227">${esc(s.uni)}</text>`;
+    const grilles = carte.grilles
+      .map((g, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x0 = left + col * (mini + gapG);
+        const y1 = y0 + top0 + row * (mini + 18);
+        const cells = [0, 1, 2, 3]
+          .map((pos) => {
+            const x = x0 + (pos % 2) * (cell + 1);
+            const y = y1 + Math.floor(pos / 2) * (cell + 1);
+            if (pos !== g.pos) {
+              return `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="#1a1e24" stroke="#3a4048"/>`;
+            }
+            const s = signeDe(g.code);
+            return `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="#161a20" stroke="#C9A227"/><text x="${x + cell / 2}" y="${y + cell / 2 + 5}" text-anchor="middle" font-size="13" fill="#C9A227">${esc(s.uni)}</text>`;
+          })
+          .join("");
+        return `${cells}<text x="${x0 + cell}" y="${y1 + mini + 2}" text-anchor="middle" font-family="monospace" font-size="8" fill="#6E7581">${String(i).padStart(2, "0")}</text>`;
       })
       .join("");
+    const ctrlY = y0 + top0 + 4 * (mini + 18) + 8;
     const ctrl = carte.controle
       .map((code, i) => {
         const s = signeDe(code);
-        const x = left + 70 + i * (cell + 8);
-        const y = y0 + top0 + 7 * (cell + gap) + 16;
-        return `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="#1a1e24" stroke="#C9A227"/><text x="${x + cell / 2}" y="${y + cell / 2 + 6}" text-anchor="middle" font-size="18" fill="#C9A227">${esc(s.uni)}</text>`;
+        const x = left + 140 + i * 40;
+        return `<rect x="${x}" y="${ctrlY}" width="32" height="32" fill="#1a1e24" stroke="#C9A227"/><text x="${x + 16}" y="${ctrlY + 22}" text-anchor="middle" font-size="16" fill="#C9A227">${esc(s.uni)}</text>`;
       })
       .join("");
-    const nom = carte.prima.fr;
-    return `<rect x="0" y="${y0}" width="${W}" height="${H}" fill="#12151A"/><text x="${left}" y="${y0 + 32}" font-family="Georgia, serif" font-size="16" fill="#C9A227">${esc(carte.prima.uni)} ${esc(nom)}</text><text x="${W - 42}" y="${y0 + 32}" text-anchor="end" font-family="monospace" font-size="11" fill="#6E7581">EIDOS</text>${cells}${ctrl}`;
+    return `<rect x="0" y="${y0}" width="${W}" height="${H}" fill="#12151A"/><text x="${left}" y="${y0 + 32}" font-family="Georgia, serif" font-size="16" fill="#C9A227">${esc(carte.prima.uni)} ${esc(carte.prima.fr)}</text><text x="${W - 28}" y="${y0 + 32}" text-anchor="end" font-family="monospace" font-size="11" fill="#6E7581">32 × 64</text>${grilles}${ctrl}`;
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H * 3}" viewBox="0 0 ${W} ${H * 3}">${pages.join("")}</svg>`;
 }

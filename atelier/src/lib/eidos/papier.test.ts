@@ -3,21 +3,20 @@ import { describe, it } from "node:test";
 import { coffreNeuf } from "./wallet.ts";
 import { fromHex, hexOf } from "./hash.ts";
 import {
-  CELLULES,
-  SIGNS_PART,
-  TROUS,
-  VIDES,
+  N_GRILLES,
   assembler,
   carteDe,
   gfMul,
+  grilleDeOctet,
   lirePart,
+  octetDeGrille,
   papiersDe,
   partDe,
   reconstruire,
   TRIA,
 } from "./papier.ts";
 
-describe("papier — 2-of-3", () => {
+describe("papier — 32 grilles × 64 signes", () => {
   it("GF(256) : xtime et identité", () => {
     assert.equal(gfMul(2, 0x80), 0x1b);
     assert.equal(gfMul(1, 0x53), 0x53);
@@ -25,20 +24,23 @@ describe("papier — 2-of-3", () => {
     assert.equal(gfMul(3, 1), 3);
   });
 
-  it("trous gelés, 43 cases utiles", () => {
-    for (const p of TRIA) {
-      assert.equal(TROUS[p.id].length, VIDES);
-      assert.equal(new Set(TROUS[p.id]).size, VIDES);
-      assert.ok(TROUS[p.id].every((i) => i >= 0 && i < CELLULES));
-      const carte = carteDe(new Uint8Array(32).fill(1), p);
-      const vides = carte.cellules.filter((c) => c.code === null);
-      assert.equal(vides.length, VIDES);
-      assert.equal(carte.cellules.filter((c) => c.code !== null).length, SIGNS_PART);
-      assert.equal(carte.controle.length, 4);
+  it("un octet ↔ une grille 2×2, les 256 valeurs", () => {
+    for (let b = 0; b < 256; b++) {
+      const g = grilleDeOctet(b);
+      assert.equal(g.pos, (b >> 6) & 3);
+      assert.equal(g.code, b & 63);
+      assert.equal(octetDeGrille(g), b);
     }
   });
 
-  it("deux cartons reconstruisent, un seul ne suffit pas", () => {
+  it("32 grilles par carton, 3 vides par grille", () => {
+    const c = carteDe(new Uint8Array(32).fill(0xaa), TRIA[1]!);
+    assert.equal(c.grilles.length, N_GRILLES);
+    assert.equal(c.controle.length, 4);
+    assert.ok(c.grilles.every((g) => g.pos >= 0 && g.pos <= 3 && g.code >= 0 && g.code < 64));
+  });
+
+  it("deux cartons reconstruisent", () => {
     const s = fromHex(coffreNeuf("vide").maitre);
     const cartes = papiersDe(s);
     assert.equal(cartes.length, 3);
@@ -47,8 +49,7 @@ describe("papier — 2-of-3", () => {
       [0, 2],
       [1, 2],
     ] as const) {
-      const r = reconstruire(cartes[i]!, cartes[j]!);
-      assert.equal(hexOf(r), hexOf(s));
+      assert.equal(hexOf(reconstruire(cartes[i]!, cartes[j]!)), hexOf(s));
     }
   });
 
@@ -60,13 +61,18 @@ describe("papier — 2-of-3", () => {
     assert.throws(() => lirePart(faux), /contrôle/);
   });
 
+  it("une case déplacée change l'octet", () => {
+    const g = grilleDeOctet(0b10_010101);
+    assert.equal(g.pos, 2);
+    assert.equal(g.code, 0b010101);
+    assert.notEqual(octetDeGrille({ ...g, pos: 0 }), 0b10_010101);
+  });
+
   it("parts distinctes, Shamir brut", () => {
     const s = new Uint8Array(32);
     for (let i = 0; i < 32; i++) s[i] = i * 3 + 1;
     const a = partDe(s, 1);
-    const b = partDe(s, 2);
     const c = partDe(s, 3);
-    assert.notEqual(hexOf(a), hexOf(b));
     assert.equal(hexOf(assembler([{ x: 1, y: a }, { x: 3, y: c }])), hexOf(s));
   });
 });

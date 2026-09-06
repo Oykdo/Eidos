@@ -1,21 +1,17 @@
 /**
- * Papier — trois cartons de bingo incomplet (Sel, Mercure, Soufre).
+ * Papier — 32 mini-grilles × 64 signes, trois cartons (Sel, Mercure, Soufre).
  *
- * La graine (32 o) se partage en 2-of-3, Shamir GF(256). Les cartons
- * s'en déduisent : même coffre, mêmes papiers. Le JSON eidos.carnet
- * ne change pas. Une carte ne dépense pas ; deux reconstruisent.
- *
- * Grille 7×7, six cases vides (le carton incomplet), 43 signes = la part,
- * plus une rangée de 4 signes de contrôle (SHA-256d des 32 o, 3 octets).
+ * Un octet = une grille 2×2 incomplète : la case remplie (2 bits) et le
+ * signe parmi 64 (6 bits). 32 grilles = 32 octets = 256 bits.
+ * Shamir GF(256) 2-of-3 : deux cartons reconstruisent, un seul ne dépense pas.
+ * Rangée de 4 signes : SHA-256d de la part (3 octets). Le JSON ne change pas.
  */
 
-import { CARACTERES, decoderChymie, encoderChymie } from "./chymie.ts";
+import { CARACTERES } from "./chymie.ts";
 import { concat, sha256, sha256d, utf8 } from "./hash.ts";
 
-export const COTE = 7;
-export const CELLULES = COTE * COTE;
-export const VIDES = 6;
-export const SIGNS_PART = 43;
+export const N_GRILLES = 32;
+export const COTE = 2;
 export const SIGNS_CTRL = 4;
 
 export type PrimaId = "sel" | "mercure" | "soufre";
@@ -34,19 +30,12 @@ export const TRIA: readonly Prima[] = [
   { id: "soufre", x: 3, fr: "Soufre", en: "Sulfur", uni: "🜍" },
 ] as const;
 
-/** Six trous, positions 0..48, gelées. 49 − 6 = 43. */
-export const TROUS: Record<PrimaId, readonly number[]> = {
-  sel: [0, 6, 21, 24, 42, 48],
-  mercure: [10, 16, 18, 30, 32, 38],
-  soufre: [3, 15, 19, 28, 34, 45],
-};
-
-const TAG = utf8("eidos-papier/1");
+const TAG = utf8("eidos-papier/2");
 
 const EXP = new Uint8Array(512);
 const LOG = new Uint8Array(256);
 (() => {
-  const xtime = (a: number) => ((a << 1) ^ ((a & 0x80) ? 0x1b : 0)) & 255;
+  const xtime = (a: number) => ((a << 1) ^ (a & 0x80 ? 0x1b : 0)) & 255;
   let x = 1;
   for (let i = 0; i < 255; i++) {
     EXP[i] = x;
@@ -123,43 +112,36 @@ export function decoderCtrl(codes: number[]): Uint8Array {
   return o;
 }
 
-export function positionsDonnees(id: PrimaId): number[] {
-  const trou = new Set(TROUS[id]);
-  const p: number[] = [];
-  for (let i = 0; i < CELLULES; i++) if (!trou.has(i)) p.push(i);
-  return p;
+/** Case remplie 0..3 = 2 bits de poids fort ; signe 0..63 = 6 bits. */
+export type Grille = { pos: 0 | 1 | 2 | 3; code: number };
+
+export function grilleDeOctet(b: number): Grille {
+  const v = b & 255;
+  return { pos: ((v >> 6) & 3) as 0 | 1 | 2 | 3, code: v & 63 };
 }
 
-export type Cellule = { i: number; code: number | null };
+export function octetDeGrille(g: Grille): number {
+  return ((g.pos & 3) << 6) | (g.code & 63);
+}
 
 export type Carte = {
   prima: Prima;
-  cellules: Cellule[];
+  grilles: Grille[];
   controle: number[];
   part: Uint8Array;
 };
 
 export function carteDe(secret: Uint8Array, prima: Prima): Carte {
   const part = partDe(secret, prima.x);
-  const codes = encoderChymie(part);
-  if (codes.length !== SIGNS_PART) throw new Error("43 signes");
-  const pos = positionsDonnees(prima.id);
-  if (pos.length !== SIGNS_PART) throw new Error("43 cases");
-  const cellules: Cellule[] = Array.from({ length: CELLULES }, (_, i) => ({ i, code: null }));
-  for (let k = 0; k < pos.length; k++) cellules[pos[k]!] = { i: pos[k]!, code: codes[k]! };
+  const grilles = Array.from({ length: N_GRILLES }, (_, i) => grilleDeOctet(part[i]!));
   const controle = encoderCtrl(sha256d(part).slice(0, 3));
-  return { prima, cellules, controle, part };
+  return { prima, grilles, controle, part };
 }
 
-export function lirePart(carte: Pick<Carte, "prima" | "cellules" | "controle">): Uint8Array {
-  const pos = positionsDonnees(carte.prima.id);
-  const codes: number[] = [];
-  for (const i of pos) {
-    const c = carte.cellules[i]?.code;
-    if (c === null || c === undefined) throw new Error("case vide au mauvais endroit");
-    codes.push(c);
-  }
-  const part = decoderChymie(codes, 32);
+export function lirePart(carte: Pick<Carte, "prima" | "grilles" | "controle">): Uint8Array {
+  if (carte.grilles.length !== N_GRILLES) throw new Error("32 grilles");
+  const part = new Uint8Array(N_GRILLES);
+  for (let i = 0; i < N_GRILLES; i++) part[i] = octetDeGrille(carte.grilles[i]!);
   const ctrl = decoderCtrl(carte.controle);
   const attendu = sha256d(part).slice(0, 3);
   if (ctrl[0] !== attendu[0] || ctrl[1] !== attendu[1] || ctrl[2] !== attendu[2]) {
