@@ -713,6 +713,10 @@ def ecrire_etat(ch, blocs):
         "sorties_non_depensees": len(carnet.utxo),
         "robinet_epoque_atomes": robinet_epoque_atomes(ch, max(carnet.hauteur, 0)),
         "robinet_budget_atomes": budget_epoque(max(carnet.hauteur, 0)),
+        # canaux du robinet, publiés pour que l'atelier les propose : l'issue
+        # GitHub (robinet.yml) et, si le dépôt en déclare une, la boîte aux
+        # lettres relevée par courriel.py (variable EIDOS_ROBINET_COURRIEL)
+        "robinet_canaux": robinet_canaux(),
         "artefacts": artefacts_du_carnet(ch),
         # reliques publiées (reliques.json) et leur statut, lecture sans preuve
         "reliques": etat_reliques(ch, getattr(ch, "reliques", [])),
@@ -736,6 +740,16 @@ def ecrire_etat(ch, blocs):
           f"invariant {'OK' if etat['invariant'] else 'ROMPU'}")
     if not etat["invariant"]:
         raise SystemExit("invariant rompu — publication refusée")
+
+
+ROBINET_ISSUE = "https://github.com/Oykdo/Eidos/issues/new"
+
+
+def robinet_canaux():
+    """Lecture publiée, pas une règle : l'atelier propose ce que le nœud annonce."""
+    courriel = os.environ.get("EIDOS_ROBINET_COURRIEL", "").strip()[:254]
+    return {"issue": ROBINET_ISSUE,
+            "courriel": courriel if "@" in courriel else None}
 
 
 def tete_signee(ch):

@@ -63,6 +63,9 @@ jobs:
       # --amorcer-indice ne touche que les validateurs sans fichier ; les
       # autres gardent max(chaîne, fichier).
       - name: Forger
+        env:
+          # boîte aux lettres du robinet, publiée dans etat.json (courriel.py)
+          EIDOS_ROBINET_COURRIEL: ${{ vars.EIDOS_ROBINET_COURRIEL }}
         run: |
           n=$(python3 -c "import json; print(json.load(open('federation.json'))['n'])")
           presents=$(ls indice-*.json 2>/dev/null | wc -l)

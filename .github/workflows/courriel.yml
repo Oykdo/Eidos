@@ -1,0 +1,53 @@
+name: courriel
+
+# Second canal du robinet : une boîte aux lettres relevée par IMAP à la
+# minute 37 de chaque heure (le nœud forge à la minute 7). Chaque message non
+# lu passe au même filtre que les issues (robinet.py) ; le corps n'est jamais
+# interpolé dans une commande. Le job ne tourne que si le dépôt déclare une
+# boîte (variable EIDOS_ROBINET_COURRIEL, publiée dans etat.json) ; les
+# identifiants IMAP sont des secrets.
+
+on:
+  schedule:
+    - cron: "37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Même groupe que chaine.yml et robinet.yml : jamais deux écritures
+# simultanées sur mempool.json.
+concurrency:
+  group: chaine
+  cancel-in-progress: false
+
+jobs:
+  relever:
+    if: github.ref == 'refs/heads/main' && vars.EIDOS_ROBINET_COURRIEL != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Relever la boîte et inscrire dans la file
+        env:
+          EIDOS_IMAP_HOTE: ${{ secrets.EIDOS_IMAP_HOTE }}
+          EIDOS_IMAP_UTILISATEUR: ${{ secrets.EIDOS_IMAP_UTILISATEUR }}
+          EIDOS_IMAP_MOT_DE_PASSE: ${{ secrets.EIDOS_IMAP_MOT_DE_PASSE }}
+          EIDOS_IMAP_DOSSIER: ${{ vars.EIDOS_IMAP_DOSSIER }}
+        run: python courriel.py --relever
+
+      - name: Publier la file
+        run: |
+          git config user.name  "eidos-noeud"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f mempool.json
+          if git diff --cached --quiet; then
+            echo "file inchangee"
+            exit 0
+          fi
+          git commit -m "robinet : courriel du $(date -u +%FT%TZ)"
+          git push || { git pull --rebase --autostash && git push; }

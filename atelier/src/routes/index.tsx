@@ -1,19 +1,34 @@
 import { useEffect } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { Creer } from "@/components/Creer";
 import { Envoi } from "@/components/Envoi";
 import { Sorties } from "@/components/Sorties";
+import { Robinet } from "@/components/Robinet";
+import { Ecosysteme } from "@/components/Ecosysteme";
 import { Inventaire } from "@/components/inventaire/Inventaire";
 import { Bestiaire } from "@/components/inventaire/Bestiaire";
 import { CoffreVue } from "@/components/coffre/CoffreVue";
 import { Sauvegarde } from "@/components/Sauvegarde";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { useCoffre } from "@/lib/store";
-import { useI18n } from "@/lib/i18n.ts";
+import { useI18n, type Msg } from "@/lib/i18n.ts";
 
 export const Route = createFileRoute("/")({ component: Home });
 
+function Titre({ id }: { id: Msg }) {
+  const { t } = useI18n();
+  return (
+    <p className="mt-2 px-1 font-mono text-[9.5px] uppercase tracking-[0.16em] text-sourd/70">{t(id)}</p>
+  );
+}
+
+/**
+ * L'accueil, en quatre blocs : le coffre (solde, scène, entrer ou ouvrir),
+ * le robinet (local ou réseau, suivi de la demande, pièces servies),
+ * l'écosystème (les pages, par registre), puis ce que le coffre contient
+ * (inventaire, bestiaire, envoi, pièces, sauvegarde).
+ */
 function Home() {
   const { t } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
@@ -24,6 +39,7 @@ function Home() {
   }, [hydrater]);
 
   const solde = coffre.sorties.reduce((s, o) => s + o.montant, 0);
+  const personnel = coffre.nature === "personnel";
 
   return (
     <Shell actuel="coffre">
@@ -38,22 +54,26 @@ function Home() {
 
       <CoffreVue />
 
-      <p className="text-center">
-        <Link
-          to="/tour"
-          className="inline-flex h-8 items-center rounded-sm px-2.5 font-mono text-[11px] tracking-wide text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)] hover:text-encre"
-        >
-          {t("tour.titre")}
-        </Link>
-      </p>
+      {!personnel ? (
+        <>
+          <Titre id="accueil.entrer" />
+          <Creer />
+          <Sauvegarde />
+        </>
+      ) : null}
 
+      <Titre id="accueil.robinet" />
+      <Robinet />
+
+      <Titre id="accueil.ecosysteme" />
+      <Ecosysteme actuel="coffre" />
+
+      <Titre id="accueil.contenu" />
       <Inventaire />
       <Bestiaire />
-
-      <Creer />
-      {coffre.nature === "personnel" ? <Envoi /> : null}
+      {personnel ? <Envoi /> : null}
       <Sorties />
-      <Sauvegarde />
+      {personnel ? <Sauvegarde /> : null}
     </Shell>
   );
 }

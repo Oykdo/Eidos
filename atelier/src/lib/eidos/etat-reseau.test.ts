@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parserEtat } from "./etat-reseau.ts";
+import { ETAT_URL, parserCanaux, parserEtat, parserMempool, statutDemande } from "./etat-reseau.ts";
+import { ETAT_URL as ETAT_URL_ENVOI } from "./envoi.ts";
 
 describe("état publié — lecture", () => {
   it("sorties « txid:rang », artefacts, trésor ; le reste par défaut", () => {
@@ -34,5 +35,49 @@ describe("état publié — lecture", () => {
     assert.equal(e.tresor_adresse, null);
     assert.deepEqual(e.sorties, []);
     assert.deepEqual(parserEtat({ sorties: 3, artefacts: "x" }).artefacts, []);
+  });
+
+  it("canaux du robinet : l'issue et la boîte, ou rien", () => {
+    assert.deepEqual(parserCanaux({ robinet_canaux: { issue: "https://github.com/Oykdo/Eidos/issues/new", courriel: "robinet@example.org" } }), {
+      issue: "https://github.com/Oykdo/Eidos/issues/new",
+      courriel: "robinet@example.org",
+    });
+    assert.deepEqual(parserCanaux({ robinet_canaux: { issue: "javascript:alert(1)", courriel: "pas une adresse" } }), { issue: null, courriel: null });
+    assert.deepEqual(parserCanaux({ robinet_canaux: { courriel: null } }), { issue: null, courriel: null });
+    assert.deepEqual(parserCanaux(null), { issue: null, courriel: null });
+    assert.deepEqual(parserCanaux({ robinet_canaux: "x" }), { issue: null, courriel: null });
+  });
+
+  it("file publiée : demandes lues, malformées ignorées ; statut du coffre", () => {
+    const a = "11".repeat(20);
+    const b = "22".repeat(20);
+    const demandes = parserMempool({
+      demandes: [
+        { type: "robinet", adresse: a, issue: 3, etat: "servie", bloc: 12 },
+        { type: "robinet", adresse: b, etat: "refus", motif: "budget", canal: "courriel", ref: "ab" },
+        { type: "envoi", etat: "en_attente", donnees: "…" },
+        { type: "robinet", adresse: "zz", etat: "en_attente" },
+        { type: "autre", adresse: a, etat: "en_attente" },
+        { type: "robinet", adresse: a, etat: "perdu" },
+        null,
+        { type: "robinet", adresse: a, issue: 9, etat: "en_attente" },
+      ],
+    });
+    assert.equal(demandes.length, 5);
+    assert.equal(demandes[0]!.canal, "issue");
+    assert.equal(demandes[1]!.canal, "courriel");
+    assert.equal(demandes[3]!.adresse, null);
+    const mienne = statutDemande(demandes, [a]);
+    assert.ok(mienne && mienne.etat === "en_attente" && mienne.issue === 9);
+    const sienne = statutDemande(demandes, new Set([b]));
+    assert.ok(sienne && sienne.etat === "refus" && sienne.motif === "budget");
+    assert.equal(statutDemande(demandes, ["33".repeat(20)]), null);
+    assert.deepEqual(parserMempool({ demandes: "x" }), []);
+    assert.deepEqual(parserMempool(undefined), []);
+  });
+
+  it("une seule adresse pour l'état publié", () => {
+    assert.equal(ETAT_URL, ETAT_URL_ENVOI);
+    assert.match(ETAT_URL, /^https:\/\/raw\.githubusercontent\.com\//);
   });
 });

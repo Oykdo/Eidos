@@ -32,7 +32,8 @@ export const LARGEUR_LIGNE = 76;
 export const MAX_CARACTERES_ISSUE = 65_536;
 /** robinet.py refuse au-delà (MAX_TX_CARACTERES). */
 export const MAX_CARACTERES_ROBINET = 80_000;
-export const ETAT_URL = "https://oykdo.github.io/Eidos/etat.json";
+/** L'état publié, lu au dépôt : le build Pages de l'atelier ne le contient pas. */
+export const ETAT_URL = "https://raw.githubusercontent.com/Oykdo/Eidos/main/etat.json";
 
 export type Temoin = { grainePub: Uint8Array; sig: Uint8Array } | null;
 

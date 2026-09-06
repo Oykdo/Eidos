@@ -123,7 +123,7 @@ Two consensus paths coexist in the repository: the **federated** one (`federatio
 | Chain file | `chaine-eidos.dat`, format 3, written by the CI and never by hand |
 | Published state | `etat.json`: balances, outputs, signed head, relics, invariant |
 
-- **Faucet.** Open an issue containing an address in glyphs; `robinet.py` serves **one eidôlon per request**, one served request per GitHub account per epoch, one pending at a time, within an epoch budget of `a·T / 8`. The issue body is never interpolated into a command: it travels through an environment variable, and only what passes the glyph filter and the checksum is kept.
+- **Faucet.** Two channels feed the same queue: a GitHub issue containing an address in glyphs (`robinet.py`), or an email with subject `robinet` to the mailbox the node publishes in `etat.json.robinet_canaux` (`courriel.py`, IMAP from the standard library, no GitHub account). One eidôlon per request, one served request per author (GitHub account or sender address) per epoch, one pending at a time, within an epoch budget of `a·T / 8`. Neither an issue body nor an email body is ever interpolated into a command: they travel through an environment variable, and only what passes the glyph filter and the checksum is kept. The atelier home page prepares either request, follows it in `mempool.json`, and loads the coins once served.
 - **Transfers.** The atelier signs a spend and emits a text block between `-----EIDOS-----` markers (base64, 76-column lines); paste it in an issue. The node validates each transfer in a candidate block on a deep copy of the ledger, includes at most 8 per block, carries their fees into the coinbase, and expires requests older than one epoch.
 
 Never write `chaine-eidos.dat`, `etat.json` or `mempool.json` from a workstation: those files belong to the `chaine` and `robinet` workflows.
@@ -170,8 +170,9 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `wots.py` | 284 | WOTS+ w = 16, L-tree, addresses, fingerprints | 5 |
 | `utxo.py` | 509 | witnesses, addresses, transactions, ledger, UTXO root, validation | 15 |
 | `federation.py` | 694 | XMSS, rotation, liveness, signed head, locked persistent counter | 18 |
-| `noeud.py` | 1084 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 4 + 5 + 2 |
-| `robinet.py` | 356 | faucet queue fed by issues, per-author brake | 11 |
+| `noeud.py` | 1098 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 4 + 5 + 2 |
+| `robinet.py` | 392 | faucet queue fed by issues and email, per-author brake | 11 |
+| `courriel.py` | 275 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
 | `vecteurs.py` | 171 | shared vectors Python ↔ TS (`vecteurs.json`, 8 families) | parity |
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
@@ -182,7 +183,7 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `chaine-eidos.dat` | — | the testnet chain, written by the CI | — |
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `docs/` | — | specifications: relics, tower, pendulum, Sybil, vault audit; banner generator | 2 |
-| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 300 Eidos tests | 300 |
+| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 308 Eidos tests | 308 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (issues), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor.
 
@@ -195,6 +196,7 @@ python3 wots.py                # 5
 python3 utxo.py                # 15
 python3 vecteurs.py            # Python ↔ TS parity
 python3 robinet.py --test      # 11
+python3 courriel.py --test     # 6
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_depuis()"      # 4

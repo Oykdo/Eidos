@@ -35,6 +35,14 @@ Le workflow transmet l'auteur de l'issue (`EIDOS_ISSUE_AUTHOR`). Règle 4 : **un
 
 Ce frein est côté file ; le nœud tranche toujours par adresse et par budget, et ne croit pas la file.
 
+## 3bis. Le courriel, second canal (2026-09-06)
+
+Décision d'auteur : le robinet doit avoir un canal hors GitHub. Sans serveur, le seul canal que le cron peut relever en bibliothèque standard, et qui ne coûte au joueur ni compte nouveau ni application, est une **boîte aux lettres** : `courriel.py` relève INBOX par IMAP à la minute 37 (`courriel.yml`), passe chaque message non lu au même filtre que les issues, et applique la règle 4 à l'**adresse d'expéditeur**. La page d'accueil de l'atelier prépare le courriel (sujet `robinet`, glyphes dans le corps) quand le nœud publie une boîte dans `etat.json.robinet_canaux`.
+
+Ce que cela coûte à une armée : une adresse de courriel par eidôlon et par époque. C'est **moins** qu'un compte GitHub, et c'est assumé : le budget d'époque `a·T/8` et le refus par adresse bornent le total quoi qu'il arrive ; le frein par auteur ne règle que le partage entre demandeurs. L'expéditeur d'un courriel se falsifie plus aisément qu'un compte GitHub ; le nœud ne s'en sert que comme clé de frein, jamais comme preuve. Un message est marqué lu qu'il soit accepté ou non : une boîte inondée n'arrête pas le cron, elle épuise au plus `MAX_MESSAGES` relevés par heure. Les identifiants IMAP sont des secrets du dépôt : qui les tient tient la boîte, pas la chaîne.
+
+Refusé : un relais serveur (Vercel, fonction) qui ouvrirait des issues au nom d'un robot — il verrait les IP, contredirait « pas de serveur », et déplacerait le frein sur une adresse IP, falsifiable et pénible pour un joueur honnête.
+
 ## 4. Ce qu'on ne fait pas, et pourquoi
 
 - **Pas d'empreinte de navigateur ni d'identifiant de machine** : falsifiable en une ligne, gênant pour un joueur à deux appareils, contraire à « rien ne se croit ».

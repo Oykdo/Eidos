@@ -1,57 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { useI18n, type Msg } from "@/lib/i18n.ts";
+import { useI18n } from "@/lib/i18n.ts";
+import { GROUPES, GUIDE, groupeDe, type NavId, type Page } from "@/lib/navigation.ts";
 
-export type NavId =
-  "coffre" | "tour" | "journal" | "temoin" | "arbre" | "reliques" | "glyphes" | "signatures" | "guide";
+export type { NavId } from "@/lib/navigation.ts";
 
-type Chemin = "/" | "/tour" | "/journal" | "/temoin" | "/arbre" | "/reliques" | "/glyphes" | "/signatures" | "/guide";
-
-type Item = { to: Chemin; id: NavId; label: Msg };
-
-/**
- * Trois registres, pas neuf onglets à plat :
- *   Vérifier — ce qui engage : carnet, chaîne, signatures, adresses.
- *   Lire     — des figures : la carte des reliques, les lectures en muses.
- *   Jouer    — hors invariant : la tour, les sceaux et reliques.
- * Le Guide reste à part.
- */
-const GROUPES: { id: "verifier" | "lire" | "jouer"; label: Msg; items: Item[] }[] = [
-  {
-    id: "verifier",
-    label: "nav.groupe.verifier",
-    items: [
-      { to: "/", id: "coffre", label: "nav.coffre" },
-      { to: "/journal", id: "journal", label: "nav.journal" },
-      { to: "/temoin", id: "temoin", label: "nav.temoin" },
-      { to: "/glyphes", id: "glyphes", label: "nav.glyphes" },
-    ],
-  },
-  {
-    id: "lire",
-    label: "nav.groupe.lire",
-    items: [
-      { to: "/arbre", id: "arbre", label: "nav.arbre" },
-      { to: "/signatures", id: "signatures", label: "nav.signatures" },
-    ],
-  },
-  {
-    id: "jouer",
-    label: "nav.groupe.jouer",
-    items: [
-      { to: "/tour", id: "tour", label: "nav.tour" },
-      { to: "/reliques", id: "reliques", label: "nav.reliques" },
-    ],
-  },
-];
-
-const GUIDE: Item = { to: "/guide", id: "guide", label: "nav.guide" };
-
-function groupeDe(id: NavId): "verifier" | "lire" | "jouer" | "guide" {
-  return GROUPES.find((g) => g.items.some((it) => it.id === id))?.id ?? "guide";
-}
-
-function Onglet({ it, actuel }: { it: Item; actuel: NavId }) {
+/** Trois registres et le Guide, depuis la liste unique de lib/navigation.ts. */
+function Onglet({ it, actuel }: { it: Page; actuel: NavId }) {
   const { t } = useI18n();
   return (
     <Link

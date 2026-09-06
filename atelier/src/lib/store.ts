@@ -7,6 +7,7 @@ import {
   appliquerEnvoi,
   appliquerRegroupement,
   minerCoffre,
+  chargerTestnet,
   acheterRelique as appliquerAchat,
 } from "./eidos/wallet.ts";
 import { blocGenese, sceller } from "./eidos/chaine.ts";
@@ -24,7 +25,17 @@ import {
 import type { Coffre, NomAge, ScenarioId } from "./eidos/types.ts";
 import type { PreuvePortable } from "./eidos/merkle.ts";
 import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
-import { ETAT_URL } from "./eidos/envoi.ts";
+import { ETAT_URL, lireEtat } from "./eidos/envoi.ts";
+import {
+  MEMPOOL_URL,
+  parserCanaux,
+  parserEtat,
+  parserMempool,
+  statutDemande,
+  type CanauxRobinet,
+  type DemandeReseau,
+} from "./eidos/etat-reseau.ts";
+import { adresseDe } from "./eidos/lamport.ts";
 import { agesScelles, sceauxDuCoffre, type EntreeMonde, type Sceau } from "./eidos/sceaux.ts";
 import {
   abandonnerDansCoffre,
@@ -85,6 +96,15 @@ type Etat = {
   robinet: () => void;
   robinetReseau: () => void;
   demandeReseau: DemandeRobinet | null;
+  /** Le robinet vu du réseau : canaux publiés, demande de ce coffre dans la
+   *  file, hauteur ; lecture (etat.json, mempool.json), jamais persistée. */
+  canaux: CanauxRobinet | null;
+  demandeStatut: DemandeReseau | null;
+  reseauHauteur: number | null;
+  robinetOccupe: boolean;
+  lireRobinet: () => Promise<void>;
+  chargerReseau: () => Promise<void>;
+  noterDemande: (r: DemandeRobinet) => void;
   envoyer: () => void;
   regrouper: () => void;
   personnel: () => void;
@@ -168,6 +188,10 @@ export const useCoffre = create<Etat>((set, get) => ({
   monde: null,
   derniereAscension: null,
   demandeReseau: null,
+  canaux: null,
+  demandeStatut: null,
+  reseauHauteur: null,
+  robinetOccupe: false,
   psnx: null,
 
   hydrater: () => {
@@ -242,6 +266,58 @@ export const useCoffre = create<Etat>((set, get) => ({
       erreur: null,
       flash: t("flash.reseau"),
     });
+  },
+
+  noterDemande: (r) => set({ demandeReseau: r, erreur: null, flash: t("flash.reseau") }),
+
+  lireRobinet: async () => {
+    const { coffre } = get();
+    const adresses = new Set<string>();
+    for (let i = 0; i < coffre.n + 8; i++) adresses.add(adresseDe(coffre.maitre, i));
+    try {
+      const [re, rm] = await Promise.all([
+        fetch(ETAT_URL, { cache: "no-store" }),
+        fetch(MEMPOOL_URL, { cache: "no-store" }),
+      ]);
+      const etat: unknown = re.ok ? await re.json() : null;
+      const mempool: unknown = rm.ok ? await rm.json() : null;
+      set({
+        canaux: etat ? parserCanaux(etat) : get().canaux,
+        reseauHauteur: etat ? parserEtat(etat).hauteur : get().reseauHauteur,
+        demandeStatut: mempool ? statutDemande(parserMempool(mempool), adresses) : get().demandeStatut,
+      });
+    } catch {
+      /* réseau injoignable : on garde ce qu'on a */
+    }
+  },
+
+  chargerReseau: async () => {
+    if (get().robinetOccupe) return;
+    const coffre = get().coffre;
+    if (coffre.nature !== "personnel") {
+      set({ erreur: t("err.atelier") });
+      return;
+    }
+    set({ robinetOccupe: true });
+    try {
+      const etat = await lireEtat();
+      const next = chargerTestnet(coffre, etat);
+      if (next.sorties.length === 0) {
+        set({ erreur: null, flash: t("robinet.chargeVide"), reseauHauteur: etat.hauteur });
+        return;
+      }
+      persister(next);
+      set({
+        coffre: next,
+        erreur: null,
+        flash: t("robinet.charge", { n: next.sorties.length }),
+        reseauHauteur: etat.hauteur,
+      });
+    } catch {
+      set({ erreur: t("robinet.injoignable") });
+    } finally {
+      set({ robinetOccupe: false });
+    }
   },
 
   envoyer: () => {

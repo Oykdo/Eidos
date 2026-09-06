@@ -42,7 +42,8 @@ noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, 
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
 reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
-robinet.py          file mempool.json alimentée par issues GitHub, frein par auteur (11 contrôles)
+robinet.py          file mempool.json alimentée par issues GitHub et courriels, frein par auteur (11 contrôles)
+courriel.py         second canal du robinet : boîte IMAP relevée par courriel.yml, même filtre (6 contrôles)
 consensus.py        difficulté PoW et travail cumulé — chemin HISTORIQUE
 store.py            chaîne PoW sur disque (chaine.dat) — chemin HISTORIQUE
 federation.json     racines + graines publiques des 7 validateurs, t0, créneau 3600 s
@@ -51,7 +52,8 @@ etat.json           état publié (soldes, sorties, artefacts, invariant)
 mempool.json        demandes robinet / envoi
 atelier/            interface web (TanStack Start, React), rejoue la spec en TS
 .github/workflows/  tests.yml (3 OS × 2 Python + empreintes), chaine.yml (cron
-                    horaire), robinet.yml (issues), pages.yml, init.yml
+                    horaire), robinet.yml (issues), courriel.yml (boîte IMAP, minute 37,
+                    seulement si la variable EIDOS_ROBINET_COURRIEL est posée), pages.yml, init.yml
 ```
 
 Deux consensus coexistent : **fédéré** (`federation.py` + `noeud.py`, le vrai) et
@@ -103,9 +105,12 @@ empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 - **Coinbase exacte** : `reward_at(h) + frais`, ni plus ni moins.
 - **Sérialisation canonique** : `Tx.core()` retrouvé à l'octet près après
   désérialisation, sinon `ValueError`.
-- **Le corps d'une issue n'est jamais interpolé dans une commande.** Il transite
-  par `EIDOS_ISSUE_BODY` et `robinet.py` ne retient que ce qui passe le filtre
-  de figures + somme de contrôle (ou base64 sur lignes entières pour `envoi`).
+- **Le corps d'une issue ou d'un courriel n'est jamais interpolé dans une commande.**
+  Il transite par `EIDOS_ISSUE_BODY` et `robinet.py` ne retient que ce qui passe
+  le filtre de figures + somme de contrôle (ou base64 sur lignes entières pour
+  `envoi`). `courriel.py` passe par le même chemin (`EIDOS_CANAL`, `EIDOS_CANAL_REF`),
+  marque tout message lu qu'il soit accepté ou non, et n'écrit jamais les
+  identifiants IMAP ailleurs que dans l'environnement du run.
 - **Aucun état local versionné** hors `chaine-eidos.dat`, `etat.json`,
   `mempool.json` (job `hygiene`). Pas de `chaine.dat`, pas de `portefeuille.json`.
 - **Figures ≠ preuves.** L'Arbre, les Signes, les reliques, les artefacts sont
@@ -132,6 +137,7 @@ python3 wots.py                # 5
 python3 utxo.py                # 15
 python3 vecteurs.py            # parité Python ↔ TS (vecteurs.json)
 python3 robinet.py --test      # 11
+python3 courriel.py --test     # 6
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_depuis()"      # 4
@@ -221,7 +227,8 @@ Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
   encapsulation, `lireEtat`, `sortiesDuCoffre`) ; `wallet.ts` :
   `appliquerEnvoi` renvoie `envoi.texte` prêt pour une issue, `chargerTestnet`
   importe les pièces du testnet d'un coffre.
-- Reste hors P1 : brancher l'export et l'import dans l'interface (page Coffre) ;
+- Reste hors P1 : brancher l'export d'un envoi dans l'interface (page Coffre) —
+  l'import des pièces du réseau est branché depuis le 2026-09-06 (section Robinet) ;
   un témoin Lamport (24 577 o) limite un envoi à UNE entrée par issue GitHub
   (65 536 caractères) — P2 lève cette limite.
 
@@ -449,6 +456,35 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   `Bestiaire` dans la page Coffre ; `GENRES` gagne elixir, capsule, capture.
 - Contrôles : lecture 3, hôtes 5, élixirs 4, secrets 4, capsules 5, bestiaire 3,
   sceaux +1. `npm test` : 254 (30 tests de scripts + 224 suites Eidos).
+
+### Accueil, écosystème et robinet à deux canaux — FAIT (2026-09-06)
+- `atelier/src/lib/navigation.ts` : la liste unique des pages (trois registres +
+  Guide, label et lede) ; `Nav.tsx` et `Ecosysteme.tsx` la lisent. Ajouter une
+  page = une entrée, une route, deux textes FR/EN ; `navigation.test.ts`
+  vérifie les trois (3 contrôles).
+- Accueil (`routes/index.tsx`) en quatre blocs : coffre (solde, scène, Créer /
+  Ouvrir un carnet pour un coffre d'atelier), Robinet, Écosystème, contenu.
+- `Robinet.tsx` : coffre d'atelier = versement local (« Ici · +1 », sans valeur) ;
+  coffre personnel = adresse en glyphes, demande par issue GitHub préremplie ou
+  par courriel prérempli quand `etat.json.robinet_canaux.courriel` est publié,
+  statut de la demande lu dans `mempool.json` (`etat-reseau.parserMempool`,
+  `statutDemande`, +3 contrôles), « Charger mes pièces du réseau »
+  (`store.chargerReseau` → `wallet.chargerTestnet`, jamais si le réseau ne
+  connaît aucune pièce du coffre). `robinet.courrielDemande` (+2 contrôles).
+  `envoi.ETAT_URL` lit désormais le dépôt brut, comme `etat-reseau.ts` : le
+  build Pages ne contient pas `etat.json`.
+- Nœud : `courriel.py` (IMAP + email en bibliothèque standard, `--relever`,
+  `--test`), `robinet.py` note `canal` et `ref` (`EIDOS_CANAL`,
+  `EIDOS_CANAL_REF`, une référence jamais inscrite deux fois), `noeud.ecrire_etat`
+  publie `robinet_canaux` (issue, courriel depuis `EIDOS_ROBINET_COURRIEL`).
+  `courriel.yml` : cron à la minute 37, seulement si la variable de dépôt
+  `EIDOS_ROBINET_COURRIEL` est posée ; secrets `EIDOS_IMAP_HOTE`,
+  `EIDOS_IMAP_UTILISATEUR`, `EIDOS_IMAP_MOT_DE_PASSE`. Décision D1 (2026-09-06) :
+  un autre canal que GitHub ; le courriel est le seul qui ne coûte ni serveur
+  ni compte nouveau au joueur, et son frein par expéditeur est assumé plus
+  faible (`docs/SPEC_SYBIL.md` §3bis). Sans boîte déclarée, rien ne change.
+- Racine `index.html` : n'est plus un portefeuille ; explique que Pages doit
+  publier le workflow (Source : GitHub Actions) et redirige vers le dépôt.
 
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 8 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête

@@ -15,10 +15,16 @@ Le carnet tranche, pas la file :
   1. une sortie non depensee a cette adresse → refus (depenser d'abord)
   2. budget d'epoque a·T/8 deja servi + file → refus
   3. deja en_attente pour cette adresse → ignore
-  4. un meme auteur GitHub (EIDOS_ISSUE_AUTHOR) : une demande servie par
-     epoque, une seule en attente → refus au-dela. C'est le seul point
-     d'entree des eidola, donc le seul frein qui coute a une armee de
-     comptes : un compte GitHub par eidolon, une epoque d'attente ensuite.
+  4. un meme auteur (EIDOS_ISSUE_AUTHOR : compte GitHub, ou adresse de
+     courriel par courriel.py) : une demande servie par epoque, une seule en
+     attente → refus au-dela. C'est le seul point d'entree des eidola, donc
+     le seul frein qui coute a une armee de comptes : un compte par eidolon,
+     une epoque d'attente ensuite.
+
+Deux canaux alimentent la file : l'issue GitHub (robinet.yml) et le courriel
+(courriel.py, courriel.yml). Le canal se declare par EIDOS_CANAL (« issue »
+par defaut) et EIDOS_CANAL_REF (reference du message) : une demande porte
+alors canal et ref, et une meme ref n'est jamais inscrite deux fois.
 
 SECURITE. Le texte de l'issue est ecrit par n'importe qui. Il n'est jamais
 interpole dans une commande : il arrive par la variable d'environnement
@@ -210,13 +216,35 @@ def extraire_transaction(texte: str) -> str:
     return jeton
 
 
+def canal_courant():
+    """(canal, ref) declares par l'environnement ; (« issue », None) par defaut."""
+    canal = os.environ.get("EIDOS_CANAL", "issue").strip()[:16] or "issue"
+    ref = os.environ.get("EIDOS_CANAL_REF", "").strip()[:64] or None
+    return canal, ref
+
+
+def deja_par_ref(f, ref):
+    return ref is not None and any(d.get("ref") == ref for d in f["demandes"])
+
+
+def noter_canal(d, canal, ref):
+    if canal != "issue":
+        d["canal"] = canal
+    if ref:
+        d["ref"] = ref
+
+
 def ajouter_envoi():
     corps = os.environ.get("EIDOS_ISSUE_BODY", "")
     numero = os.environ.get("EIDOS_ISSUE_NUMBER", "0")
     numero = int(numero) if numero.isdigit() else 0
+    canal, ref = canal_courant()
     donnees = extraire_transaction(corps)
 
     f = charger_file()
+    if deja_par_ref(f, ref):
+        print(f"message deja en file : {ref}")
+        return
     if len(f["demandes"]) >= MAX_FILE:
         refus("file pleine")
     if any(d.get("donnees") == donnees for d in f["demandes"]):
@@ -229,6 +257,7 @@ def ajouter_envoi():
         "donnees": donnees,
         "etat": "en_attente",
     }
+    noter_canal(d, canal, ref)
     creneau = creneau_courant()
     if creneau is not None:
         d["creneau"] = creneau
@@ -243,12 +272,16 @@ def ajouter():
     numero = os.environ.get("EIDOS_ISSUE_NUMBER", "0")
     numero = int(numero) if numero.isdigit() else 0
     auteur = os.environ.get("EIDOS_ISSUE_AUTHOR", "").strip()[:64] or None
+    canal, ref = canal_courant()
 
     a20 = extraire(corps)                     # leve ValueError si invalide
     adresse = a20.hex()
 
     f = charger_file()
     etat = charger_etat()
+    if deja_par_ref(f, ref):
+        print(f"message deja en file : {ref}")
+        return
     if len(f["demandes"]) >= MAX_FILE:
         refus("file pleine")
     if any(d.get("adresse") == adresse and d.get("etat") == "en_attente"
@@ -270,9 +303,10 @@ def ajouter():
     }
     if auteur:
         d["auteur"] = auteur
+    noter_canal(d, canal, ref)
     f["demandes"].append(d)
     ecrire_file(f)
-    print(f"ajoutee : {adresse}  (issue #{numero})")
+    print(f"ajoutee : {adresse}  ({canal} {ref or '#' + str(numero)})")
 
 
 def _tests():
@@ -340,7 +374,9 @@ if __name__ == "__main__":
         f = charger_file()
         for d in f["demandes"]:
             adr = d.get("adresse", d.get("type", "?"))
-            print(f"{d['etat']:<12} {adr}  issue #{d['issue']}")
+            origine = (f"issue #{d.get('issue', 0)}" if d.get("canal", "issue") == "issue"
+                       else f"{d['canal']} {d.get('ref', '?')}")
+            print(f"{d['etat']:<12} {adr}  {origine}")
         print(f"{len(f['demandes'])} demande(s)")
     elif "--envoi" in sys.argv:
         try:

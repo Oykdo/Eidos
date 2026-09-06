@@ -123,7 +123,7 @@ Deux consensus coexistent dans le dépôt : le **fédéré** (`federation.py` + 
 | Fichier de chaîne | `chaine-eidos.dat`, format 3, écrit par la CI et jamais à la main |
 | État publié | `etat.json` : soldes, sorties, tête signée, reliques, invariant |
 
-- **Robinet.** Ouvrez une issue contenant une adresse en glyphes ; `robinet.py` sert **un eidôlon par demande**, une demande servie par compte GitHub et par époque, une seule en attente, dans un budget d'époque de `a·T / 8`. Le corps de l'issue n'est jamais interpolé dans une commande : il transite par une variable d'environnement, et seul ce qui passe le filtre de figures et la somme de contrôle est retenu.
+- **Robinet.** Deux canaux alimentent la même file : une issue GitHub contenant une adresse en glyphes (`robinet.py`), ou un courriel de sujet `robinet` vers la boîte que le nœud publie dans `etat.json.robinet_canaux` (`courriel.py`, IMAP en bibliothèque standard, sans compte GitHub). Un eidôlon par demande, une demande servie par auteur (compte GitHub ou adresse d'expéditeur) et par époque, une seule en attente, dans un budget d'époque de `a·T / 8`. Ni le corps d'une issue ni celui d'un courriel n'est jamais interpolé dans une commande : ils transitent par une variable d'environnement, et seul ce qui passe le filtre de figures et la somme de contrôle est retenu. La page d'accueil de l'atelier prépare l'une ou l'autre demande, la suit dans `mempool.json` et charge les pièces une fois servies.
 - **Envois.** L'atelier signe une dépense et produit un bloc de texte entre marqueurs `-----EIDOS-----` (base64, lignes de 76) ; collez-le dans une issue. Le nœud valide chaque envoi dans un bloc candidat sur une copie profonde du carnet, en inclut au plus 8 par bloc, porte leurs frais dans la coinbase, et fait expirer les demandes de plus d'une époque.
 
 Ne jamais écrire `chaine-eidos.dat`, `etat.json` ni `mempool.json` depuis un poste : ces fichiers appartiennent aux workflows `chaine` et `robinet`.
@@ -170,8 +170,9 @@ Détail : [`atelier/README.md`](atelier/README.md).
 | `wots.py` | 284 | WOTS+ w = 16, arbre L, adresses, empreintes | 5 |
 | `utxo.py` | 509 | témoins, adresses, transactions, carnet, racine UTXO, validation | 15 |
 | `federation.py` | 694 | XMSS, rotation, vivacité, tête signée, compteur persistant verrouillé | 18 |
-| `noeud.py` | 1084 | nœud du testnet : rejeu, forge, robinet, envois, `--depuis`, reliques, `etat.json` | 5 + 4 + 5 + 2 |
-| `robinet.py` | 356 | file du robinet alimentée par issues, frein par auteur | 11 |
+| `noeud.py` | 1098 | nœud du testnet : rejeu, forge, robinet, envois, `--depuis`, reliques, `etat.json` | 5 + 4 + 5 + 2 |
+| `robinet.py` | 392 | file du robinet alimentée par issues et courriels, frein par auteur | 11 |
+| `courriel.py` | 275 | second canal du robinet : boîte IMAP, même filtre, frein par expéditeur | 6 |
 | `vecteurs.py` | 171 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 8 familles) | parité |
 | `qr.py` | 428 | encodeur QR, bibliothèque standard, niveau H, versions 1–10 | 5 |
 | `relique.py` | 236 | gardien des reliques : sceller, animer | 3 |
@@ -182,7 +183,7 @@ Détail : [`atelier/README.md`](atelier/README.md).
 | `chaine-eidos.dat` | — | la chaîne du testnet, écrite par la CI | — |
 | `etat.json`, `mempool.json` | — | état publié ; demandes de robinet et d'envoi | — |
 | `docs/` | — | spécifications : reliques, tour, pendule, Sybil, audit des coffres ; générateur des bannières | 2 |
-| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 300 tests Eidos | 300 |
+| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 308 tests Eidos | 308 |
 
 CI (`.github/workflows/`) : `tests.yml` (3 OS × 2 Python, empreintes, hygiène, `parite`), `chaine.yml` (forge horaire), `robinet.yml` (issues), `pages.yml` (atelier), `init.yml`. Python 3.9 est le plancher.
 
@@ -195,6 +196,7 @@ python3 wots.py                # 5
 python3 utxo.py                # 15
 python3 vecteurs.py            # parité Python ↔ TS
 python3 robinet.py --test      # 11
+python3 courriel.py --test     # 6
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_depuis()"      # 4
