@@ -44,6 +44,8 @@ function Carte({ titre, lede, children }: { titre: string; lede: string; childre
 }
 
 const MOTS: Msg[] = ["guide.mot.piece", "guide.mot.artefact", "guide.mot.relique", "guide.mot.sceau", "guide.mot.objet"];
+const PAS: Msg[] = ["guide.pas1", "guide.pas2", "guide.pas3"];
+const LIMITES: Msg[] = ["guide.08a", "guide.08b", "guide.08c", "guide.08d"];
 
 export function Guide() {
   const { t } = useI18n();
@@ -57,6 +59,11 @@ export function Guide() {
       <section className="rounded-lg bg-carte px-5 py-6 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]">
         <h2 className="font-display text-[26px] font-light text-or">{t("guide.h")}</h2>
         <p className="mt-3 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">{t("guide.lede")}</p>
+        <ul className="mt-4 space-y-1.5 font-mono text-[12.5px] leading-relaxed text-encre">
+          {PAS.map((k) => (
+            <li key={k}>{t(k)}</li>
+          ))}
+        </ul>
         <Button
           type="button"
           variant="or"
@@ -102,7 +109,8 @@ export function Guide() {
       {onglet === "mots" ? (
         <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
           <h2 className="font-mono text-base font-normal text-encre">{t("guide.mots")}</h2>
-          <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 font-mono text-[12.5px] leading-relaxed">
+          <p className="mt-2 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">{t("guide.motsLede")}</p>
+          <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 font-mono text-[12.5px] leading-relaxed">
             {MOTS.map((k) => {
               const [mot, sens] = t(k).split(" — ");
               return (
@@ -120,6 +128,13 @@ export function Guide() {
         <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
           <h2 className="font-mono text-base font-normal text-encre">{t("guide.08")}</h2>
           <p className="mt-2 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">{t("guide.08p")}</p>
+          <ul className="mt-4 flex flex-col font-mono text-[12.5px] leading-relaxed text-encre">
+            {LIMITES.map((k) => (
+              <li key={k} className="border-t border-trait py-3 first:border-t-0 first:pt-0 last:pb-0">
+                {t(k)}
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
     </Shell>

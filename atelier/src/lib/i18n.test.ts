@@ -55,11 +55,11 @@ describe("i18n", () => {
     assert.equal(EN["relique.preuveAide"], "Paste eidos-artefact/1. Same proof, same relic.");
     assert.equal(
       FR["guide.09p"],
-      "Un coffre, une racine. L'objet tient en 32 bits. La puissance ne grandit pas.",
+      "Un coffre, une racine. Chaque objet tient en 32 bits. Il ne grandit pas : la puissance ne s'accumule pas.",
     );
     assert.equal(
       EN["guide.09p"],
-      "One vault, one root. The item fits in 32 bits. Power does not grow.",
+      "One vault, one root. Each item fits in 32 bits. It does not grow: power does not pile up.",
     );
   });
 });
