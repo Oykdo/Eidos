@@ -6,6 +6,7 @@ import { Onglets } from "@/components/Onglets";
 import { Button } from "@/components/ui/button";
 import { useCoffre } from "@/lib/store.ts";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
+import { proposerCarnet } from "@/lib/eidos/sauver.ts";
 
 type Chemin = "/" | "/journal" | "/temoin" | "/glyphes" | "/arbre" | "/signatures" | "/tour" | "/reliques";
 type OngletGuide = "verifier" | "lire" | "jouer" | "mots" | "limites";
@@ -47,6 +48,7 @@ const MOTS: Msg[] = ["guide.mot.piece", "guide.mot.artefact", "guide.mot.relique
 export function Guide() {
   const { t } = useI18n();
   const creer = useCoffre((s) => s.creer);
+  const exporterFichier = useCoffre((s) => s.exporterFichier);
   const navigate = useNavigate();
   const [onglet, setOnglet] = useState<OngletGuide>("verifier");
 
@@ -61,7 +63,10 @@ export function Guide() {
           className="mt-4 w-auto"
           onClick={() => {
             creer();
-            void navigate({ to: "/" });
+            void (async () => {
+              await proposerCarnet(exporterFichier());
+              void navigate({ to: "/" });
+            })();
           }}
         >
           {t("creer.bouton")}

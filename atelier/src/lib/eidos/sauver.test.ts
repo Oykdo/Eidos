@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { NOM_CARNET } from "./carnet.ts";
-import { fichierCarnet } from "./sauver.ts";
+import { enregistrerSous, fichierCarnet } from "./sauver.ts";
 
 describe("sauver carnet", () => {
   it("le fichier porte le nom gelé et le JSON", () => {
@@ -11,5 +11,9 @@ describe("sauver carnet", () => {
     assert.equal(f.name, "eidos.carnet");
     assert.equal(f.type, "application/json");
     assert.equal(f.size, raw.length);
+  });
+
+  it("sans sélecteur de fichier, enregistrerSous s'abstient", async () => {
+    assert.equal(await enregistrerSous("{}"), "absent");
   });
 });

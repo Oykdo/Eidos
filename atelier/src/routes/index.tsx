@@ -54,12 +54,8 @@ function Home() {
             </p>
           </section>
           <CoffreVue />
-          {!personnel ? (
-            <>
-              <Creer />
-              <Sauvegarde />
-            </>
-          ) : null}
+          {!personnel ? <Creer /> : null}
+          <Sauvegarde />
         </>
       ) : null}
 

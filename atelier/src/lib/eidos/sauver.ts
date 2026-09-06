@@ -1,15 +1,47 @@
 /**
- * Proposer eidos.carnet à l'appareil.
- * iOS ignore <a download> (surtout en PWA). La feuille de partage
- * mène à Enregistrer dans Fichiers. Le téléchargement reste le repli bureau.
+ * Proposer eidos.carnet à l'appareil, après que le coffre existe.
+ * 1. showSaveFilePicker — l'appareil demande où écrire.
+ * 2. feuille de partage (iOS : Enregistrer dans Fichiers).
+ * 3. téléchargement, repli bureau.
  */
 
 import { NOM_CARNET } from "./carnet.ts";
 
-export type IssueSauver = "partage" | "telechargement" | "presse-papiers" | "annule";
+export type IssueSauver = "fichier" | "partage" | "telechargement" | "presse-papiers" | "annule";
 
 export function fichierCarnet(raw: string, nom = NOM_CARNET): File {
   return new File([raw], nom, { type: "application/json" });
+}
+
+type Picker = {
+  showSaveFilePicker?: (o: {
+    suggestedName?: string;
+    types?: { description: string; accept: Record<string, string[]> }[];
+  }) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: BlobPart) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+};
+
+/** Demande un emplacement pour eidos.carnet. Absent si l'API n'est pas là. */
+export async function enregistrerSous(raw: string): Promise<"fichier" | "annule" | "absent"> {
+  const w = globalThis as typeof globalThis & Picker;
+  if (typeof w.showSaveFilePicker !== "function") return "absent";
+  try {
+    const h = await w.showSaveFilePicker({
+      suggestedName: NOM_CARNET,
+      types: [{ description: NOM_CARNET, accept: { "application/json": [".carnet"] } }],
+    });
+    const wr = await h.createWritable();
+    await wr.write(raw);
+    await wr.close();
+    return "fichier";
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") return "annule";
+    return "absent";
+  }
 }
 
 function peutPartager(file: File): boolean {
@@ -39,6 +71,9 @@ function telecharger(file: File): void {
 }
 
 export async function proposerCarnet(raw: string): Promise<IssueSauver> {
+  const sous = await enregistrerSous(raw);
+  if (sous === "fichier" || sous === "annule") return sous;
+
   const principal = fichierCarnet(raw);
   const json = fichierCarnet(raw, "eidos.carnet.json");
 

@@ -620,7 +620,7 @@ export const FR = {
   "sig.m.terre": "terre",
 
   "creer.titre": "Créer mon coffre",
-  "creer.lede": "Secret sur cet appareil. Robinet : +1.",
+  "creer.lede": "Secret sur cet appareil. Puis eidos.carnet.",
   "creer.bouton": "Créer mon coffre",
   "creer.fait": "Coffre créé.",
   "robinet.bouton": "Robinet · +1",
@@ -669,6 +669,7 @@ export const FR = {
   "psnx.importe": "Carnet rouvert — pièces, reliques, clés Lamport.",
   "psnx.digest": "empreinte",
   "psnx.sauve": "Feuille proposée. Sur téléphone : Enregistrer dans Fichiers.",
+  "psnx.fichier": "eidos.carnet enregistré.",
   "psnx.copie": "Copié. Collez dans un fichier eidos.carnet.",
   "psnx.annule": "Sauvetage annulé.",
 
@@ -1270,7 +1271,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "sig.m.lune": "silver",
   "sig.m.terre": "earth",
   "creer.titre": "Create my vault",
-  "creer.lede": "Secret stays on this device. Tap: +1.",
+  "creer.lede": "Secret stays on this device. Then eidos.carnet.",
   "creer.bouton": "Create my vault",
   "creer.fait": "Vault created.",
   "robinet.bouton": "Tap · +1",
@@ -1319,6 +1320,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "psnx.importe": "Ledger reopened — coins, relics, Lamport keys.",
   "psnx.digest": "fingerprint",
   "psnx.sauve": "Sheet offered. On a phone: Save to Files.",
+  "psnx.fichier": "eidos.carnet saved.",
   "psnx.copie": "Copied. Paste into a file named eidos.carnet.",
   "psnx.annule": "Save cancelled.",
   "lang.fr": "FR",

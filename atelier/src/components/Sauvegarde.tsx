@@ -6,6 +6,7 @@ import { useI18n, type Msg } from "@/lib/i18n.ts";
 import { proposerCarnet, type IssueSauver } from "@/lib/eidos/sauver.ts";
 
 const FLASH: Record<IssueSauver, Msg> = {
+  fichier: "psnx.fichier",
   partage: "psnx.sauve",
   telechargement: "psnx.sauve",
   "presse-papiers": "psnx.copie",
