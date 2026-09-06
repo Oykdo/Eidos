@@ -84,4 +84,22 @@ describe("carnet unique Lamport-SHA256", () => {
   it("le nom du fichier est unique", () => {
     assert.equal(NOM_CARNET, "eidos.carnet");
   });
+
+  it("carnet.eidos et BOM UTF-8 s'ouvrent", () => {
+    const c = coffreNeuf("une-piece");
+    const json = exporterCarnet(c);
+    const bom = new Uint8Array([0xef, 0xbb, 0xbf, ...new TextEncoder().encode(json)]);
+    const lu = ouvrirFichier("carnet.eidos", bom);
+    assert.ok(!("erreur" in lu), "erreur" in lu ? lu.erreur : "");
+    if ("erreur" in lu) return;
+    assert.equal(lu.source, "carnet");
+    assert.equal(lu.coffre.maitre, c.maitre);
+  });
+
+  it("un blanc avant l'accolade n'est pas Eidolon", () => {
+    const c = coffreNeuf("vide");
+    const raw = `  \n${exporterCarnet(c)}`;
+    const lu = ouvrirFichier("eidos.carnet", new TextEncoder().encode(raw));
+    assert.ok(!("erreur" in lu), "erreur" in lu ? lu.erreur : "");
+  });
 });

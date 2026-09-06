@@ -53,4 +53,12 @@ describe("portable psnx", () => {
     assert.ok(estPsnxEtranger("vault.psnx", faux));
     assert.ok(!estPsnxEtranger("coffre.psnx", fromHex("7b7d")));
   });
+
+  it("carnet.eidos JSON n'est pas un PSNX Eidolon", () => {
+    const json = new TextEncoder().encode('{"v":1,"kind":"eidos-carnet/1"}');
+    const bom = new Uint8Array([0xef, 0xbb, 0xbf, ...json]);
+    assert.ok(!estPsnxEtranger("carnet.eidos", json));
+    assert.ok(!estPsnxEtranger("carnet.eidos", bom));
+    assert.ok(!estPsnxEtranger("eidos.carnet", new TextEncoder().encode("\n{")));
+  });
 });

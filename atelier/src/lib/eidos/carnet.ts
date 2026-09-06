@@ -17,6 +17,7 @@ import { hexOf, sha256d, utf8 } from "./hash.ts";
 import { adresseDe } from "./lamport.ts";
 import {
   estPsnxEtranger,
+  decoderFichier,
   parserPsnx,
 } from "./portable.ts";
 import { normaliserObjets } from "./inventaire.ts";
@@ -26,6 +27,7 @@ export const KIND_CARNET = "eidos-carnet/1";
 export const TAG_CARNET = "eidos-carnet/1";
 export const EXT_CARNET = ".carnet";
 export const NOM_CARNET = "eidos.carnet";
+export const NOMS_CARNET = ["eidos.carnet", "carnet.eidos", "eidos.carnet.json"] as const;
 export const SIG_CARNET = "lamport-sha256";
 export const ALG_CARNET = "sha256d";
 
@@ -144,14 +146,14 @@ export function ouvrirFichier(nom: string, data: ArrayBuffer | Uint8Array | stri
         ? data
         : new Uint8Array(data);
 
-  if (estPsnxEtranger(nom, octets)) {
+  const texte = typeof data === "string" ? data.trim() : decoderFichier(octets);
+  if (estPsnxEtranger(nom, octets) && !texte.startsWith("{")) {
     return {
       erreur:
         "Fichier Eidolon (courbe) : l'empreinte se lit, pas les clés Lamport. Exportez un eidos.carnet d'ici.",
     };
   }
 
-  const texte = typeof data === "string" ? data : new TextDecoder().decode(octets);
   const carnet = parserCarnet(texte);
   if (!("erreur" in carnet)) {
     return {
@@ -172,6 +174,8 @@ export function ouvrirFichier(nom: string, data: ArrayBuffer | Uint8Array | stri
     };
   }
 
-  if (nom.toLowerCase().endsWith(EXT_CARNET)) return { erreur: carnet.erreur };
+  if (nom.toLowerCase().endsWith(EXT_CARNET) || nom.toLowerCase().endsWith(".eidos")) {
+    return { erreur: carnet.erreur };
+  }
   return { erreur: psnx.erreur };
 }

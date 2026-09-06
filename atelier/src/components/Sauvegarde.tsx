@@ -58,7 +58,7 @@ export function Sauvegarde() {
         <input
           ref={inputRef}
           type="file"
-          accept=".carnet,.psnx,.json,application/json,application/octet-stream"
+          accept=".carnet,.eidos,.psnx,.json,application/json,application/octet-stream,text/plain"
           className="sr-only"
           onChange={(e) => {
             const f = e.target.files?.[0];

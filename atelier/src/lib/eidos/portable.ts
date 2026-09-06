@@ -132,11 +132,50 @@ export function parserCoffrePortable(
 }
 
 /** Binaire Eidolon, ou extension .psnx sans JSON Eidos. */
+const WS = new Set([0x09, 0x0a, 0x0d, 0x20]);
+
+export function sansBom(octets: Uint8Array): Uint8Array {
+  if (octets.length >= 3 && octets[0] === 0xef && octets[1] === 0xbb && octets[2] === 0xbf) {
+    return octets.subarray(3);
+  }
+  return octets;
+}
+
+/** UTF-8 (BOM, espaces) ou UTF-16. Un carnet iOS arrive souvent avec BOM. */
+export function decoderFichier(octets: Uint8Array): string {
+  if (octets.length >= 2 && octets[0] === 0xff && octets[1] === 0xfe) {
+    return new TextDecoder("utf-16le").decode(octets.subarray(2)).trim();
+  }
+  if (octets.length >= 2 && octets[0] === 0xfe && octets[1] === 0xff) {
+    return new TextDecoder("utf-16be").decode(octets.subarray(2)).trim();
+  }
+  return new TextDecoder("utf-8").decode(sansBom(octets)).trim();
+}
+
+export function debutJson(octets: Uint8Array): boolean {
+  if (octets.length >= 4 && octets[0] === 0xff && octets[1] === 0xfe && octets[2] === 0x7b && octets[3] === 0x00) {
+    return true;
+  }
+  if (octets.length >= 4 && octets[0] === 0xfe && octets[1] === 0xff && octets[2] === 0x00 && octets[3] === 0x7b) {
+    return true;
+  }
+  const o = sansBom(octets);
+  let i = 0;
+  while (i < o.length && WS.has(o[i]!)) i++;
+  return o[i] === 0x7b;
+}
+
+export function estNomCarnet(nom: string): boolean {
+  const n = nom.toLowerCase();
+  return n.endsWith(".carnet") || n.endsWith(".eidos") || n.endsWith(".carnet.json");
+}
+
 export function estPsnxEtranger(nom: string, octets: Uint8Array): boolean {
+  if (debutJson(octets)) return false;
+  if (estNomCarnet(nom) || nom.toLowerCase().endsWith(".json")) return false;
   const nomPsnx = nom.toLowerCase().endsWith(EXT_PSNX);
   if (octets.length === 0) return nomPsnx;
-  if (octets[0] === 0x7b) return false; // JSON {
-  return nomPsnx || (octets.length > 8 && octets[0] !== 0x7b);
+  return nomPsnx || octets.length > 8;
 }
 
 export function estPsnx(nom: string, octets: Uint8Array): boolean {
