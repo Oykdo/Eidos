@@ -191,7 +191,15 @@ plus lus.
 3. `python3 noeud.py --init && python3 noeud.py --forger && python3 noeud.py --verifier`.
 4. Mettre à jour les empreintes du README et `genesis-data.ts`.
 5. Commit unique « testnet : réinitialisation v2 », puis laisser `chaine.yml`
-   reprendre au cron.
+   reprendre au cron. Les blocs forgés à l'étape 3 laissent leurs
+   `indice-<v>.json` sur le poste, jamais dans le cache CI : le premier cron
+   voit un état MSS **incomplet** (moins de fichiers que de validateurs) et
+   amorce ces validateurs depuis la chaîne, avec un avertissement dans le run
+   (c'est ce que fait l'étape « Forger » ; un état partiel vaut absence). Ne
+   plus jamais forger depuis le poste ensuite.
+6. GitHub Pages doit rester activé (Settings → Pages → Source : GitHub
+   Actions) : `deploy-pages` ne sait pas l'activer (404 « Ensure GitHub Pages
+   has been enabled ») et le site rend 404 tant qu'il ne l'est pas.
 
 Le testnet n'a aucune valeur : le réinitialiser est gratuit. Ne pas bricoler
 une migration in-place.
@@ -470,9 +478,12 @@ même indice sur deux branches refusée côté signataire), `noeud._test_indice`
 (fichier perdu → la chaîne fait foi ; blocs perdus → le fichier fait foi).
 `chaine.yml` : forge seulement sur `main` ; cache `indice-<sha(federation.json)>-<run>-<tentative>`
 avec restauration par préfixe de génération (une réinitialisation §6 change
-`federation.json`, donc l'ancien état ne revient jamais) ; sans état, amorçage
-explicite tracé par un avertissement du run. Meilleur effort : perdu, le nœud
-CI repart de la chaîne en le disant. Pour une fédération réelle, chaque
+`federation.json`, donc l'ancien état ne revient jamais) ; sans état, ou
+avec moins de fichiers que de validateurs (2026-09-06 : les blocs 0 et 1 de
+testnet-3 forgés sur le poste ont laissé le validateur 3 sans fichier, et le
+cron a refusé chaque créneau pendant deux jours), amorçage explicite tracé par
+un avertissement du run. Meilleur effort : perdu, le nœud CI repart de la
+chaîne en le disant. Pour une fédération réelle, chaque
 validateur garde son fichier chez lui, le sauvegarde, et ne l'amorce jamais
 à l'aveugle.
 

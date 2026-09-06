@@ -56,13 +56,20 @@ jobs:
             indice-${{ hashFiles('federation.json') }}-
 
       # Sans état alors que la chaîne a des blocs, le nœud refuse : on amorce
-      # explicitement, et ça se lit dans le journal du run.
+      # explicitement, et ça se lit dans le journal du run. Un état PARTIEL
+      # (moins de fichiers que de validateurs) vaut absence : les blocs forgés
+      # hors CI (§6, --init && --forger sur un poste) laissent leurs fichiers
+      # sur ce poste, et le nœud refuserait chaque créneau de ces validateurs.
+      # --amorcer-indice ne touche que les validateurs sans fichier ; les
+      # autres gardent max(chaîne, fichier).
       - name: Forger
         run: |
-          if ls indice-*.json >/dev/null 2>&1; then
+          n=$(python3 -c "import json; print(json.load(open('federation.json'))['n'])")
+          presents=$(ls indice-*.json 2>/dev/null | wc -l)
+          if [ "$presents" -ge "$n" ]; then
             python3 noeud.py --forger
           else
-            echo "::warning::état MSS persistant absent — amorçage explicite depuis la chaîne"
+            echo "::warning::état MSS persistant incomplet ($presents/$n fichiers) — amorçage explicite depuis la chaîne pour les validateurs sans fichier"
             python3 noeud.py --forger --amorcer-indice
           fi
 
