@@ -31,7 +31,7 @@ export const FR = {
   "coffre.eidolon": "solde",
   "coffre.scene": "Coffre",
   "coffre.sceneLede":
-    "La cloche suit le solde ; les ornements, le butin.",
+    "La taille suit le solde ; les ornements, le butin.",
   "coffre.palier": "butin",
   "coffre.palier.nu": "nu · acier",
   "coffre.palier.garni": "garni · vert-de-gris",
@@ -739,7 +739,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "sous.guide": "How to",
   "coffre.eidolon": "balance",
   "coffre.scene": "Vault",
-  "coffre.sceneLede": "The bell follows the balance; ornaments follow the loot.",
+  "coffre.sceneLede": "Size follows the balance; ornaments follow the loot.",
   "coffre.palier": "loot",
   "coffre.palier.nu": "bare · steel",
   "coffre.palier.garni": "stocked · verdigris",

@@ -1,13 +1,12 @@
 /**
  * Scène muette du coffre.
  * Formules : docs/SPEC_AUDIT_COFFRES.md et lib/eidos/coffres.ts.
- * Un seul coffre au pic de la cloche ; palette isochromatique et ornements
- * choisis par le palier du butin. Cage (r,θ,φ) née sur la serrure au palier
- * « précieux ». Fond atelier, pas parchemin — écart volontaire, noté dans l'audit.
- * Lumière et environnement du socle (canvas/) ; la coque vient de cellules.ts,
- * la matière de matiere.ts par palier. Une figure, jamais une preuve.
+ * Un seul coffre, face caméra, au centre du cadre. Pas de cloche au sol :
+ * l'amplitude règle l'échelle, pas une colline. Palette isochromatique et
+ * ornements choisis par le palier du butin. Cage (r,θ,φ) née sur la serrure
+ * au palier « précieux ». Une figure, jamais une preuve.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import {
@@ -32,7 +31,6 @@ import {
   ORNEMENT_TEINTE,
   PALETTES,
   SERRURE_LOCALE,
-  gaussienne,
   ornementsDe,
   voxelsCouronne,
   voxelsOrnementSpherique,
@@ -44,28 +42,25 @@ import { cellulesCoque } from "./cellules.ts";
 
 type Palier = 0 | 1 | 2 | 3;
 
-function Gaussienne({ amplitude, teinte }: { amplitude: number; teinte: string }) {
-  const geo = useMemo(() => {
-    const g = new THREE.PlaneGeometry(7.2, 7.2, 56, 56);
-    const pos = g.attributes.position!;
-    for (let i = 0; i < pos.count; i++) {
-      pos.setZ(i, gaussienne(pos.getX(i) * 0.55, pos.getY(i) * 0.55) * (0.55 + amplitude));
-    }
-    g.computeVertexNormals();
-    return g;
-  }, [amplitude]);
-  useEffect(() => () => geo.dispose(), [geo]);
-  // Hors environnement (rien à réfléchir sur un fil), fondue dans le brouillard.
+const CIBLE: [number, number, number] = [0, 0.28, 0];
+
+function Viser() {
+  const camera = useThree((s) => s.camera);
+  useLayoutEffect(() => {
+    camera.lookAt(CIBLE[0], CIBLE[1], CIBLE[2]);
+  }, [camera]);
+  return null;
+}
+
+function Socle() {
   return (
-    <mesh geometry={geo} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh position={[0, -0.52, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[1.9, 1.5]} />
       <meshStandardMaterial
-        color="#3a4550"
-        roughness={0.55}
-        metalness={0.18}
-        wireframe
-        emissive={teinte}
-        emissiveIntensity={0.08 + amplitude * 0.12}
-        envMapIntensity={0}
+        color="#1a1e24"
+        roughness={0.9}
+        metalness={0.05}
+        envMapIntensity={0.2}
         dithering
       />
     </mesh>
@@ -83,10 +78,8 @@ function CoffreVoxel({
 }) {
   const gl = useThree((s) => s.gl);
   const mesh = useMemo(() => {
-    // Jointif au pas 0,2 : l'interstice 0,02 u (≈ 1 px) rampait en rotation.
     const geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
     const m = matiereEffective(MATIERE_PALIER[palier]!, environnementDisponible(gl));
-    // Matière blanche × couleur d'instance : l'ordre des huit clartés est préservé.
     const mat = new THREE.MeshStandardMaterial({
       color: "#ffffff",
       roughness: m.roughness,
@@ -128,9 +121,7 @@ function CageSerrure() {
   const gl = useThree((s) => s.gl);
   const mesh = useMemo(() => {
     const vs = voxelsOrnementSpherique();
-    // Cellule pleine : 1 × 0,085 = l'interstice d'hier (0,08 × 0,085) passait sous le pixel et scintillait.
     const geo = new THREE.BoxGeometry(1, 1, 1);
-    // Même repli que la coque : sans environnement, la ferrure passe entière en matière peinte.
     const m = matiereEffective(MATIERE_FERRURE, environnementDisponible(gl));
     const mat = new THREE.MeshStandardMaterial({
       roughness: m.roughness,
@@ -162,20 +153,19 @@ function GroupeCoffre({
   ornements,
   palier,
   scale,
-  y,
 }: {
   palette: Palette8;
   ornements: readonly Ornement[];
   palier: Palier;
   scale: number;
-  y: number;
 }) {
   const group = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
-    if (group.current) group.current.rotation.y += Math.min(dt, 0.08) * 0.08;
+    if (group.current) group.current.rotation.y += Math.min(dt, 0.08) * 0.06;
   });
   return (
-    <group ref={group} position={[0, y, 0]} scale={scale}>
+    <group ref={group} position={[0, 0, 0]} scale={scale}>
+      <Socle />
       <CoffreVoxel palette={palette} ornements={ornements} palier={palier} />
       {ornements.includes("cage") ? <CageSerrure /> : null}
     </group>
@@ -186,13 +176,8 @@ export default function CoffreScene({ amplitude, palier }: { amplitude: number; 
   const visible = useOngletVisible();
   const palette = PALETTES[palier]!;
   const ornements = ornementsDe(palier);
-  const echelle = 0.78 + amplitude * 0.32;
-  const pic = gaussienne(0, 0) * (0.55 + amplitude);
-  // Le halo vise le coffre ; recalculé quand le palier ou le solde change, jamais par image.
-  const cible = useMemo<[number, number, number]>(() => [0, pic + 0.15, 0], [pic]);
-  // Caméra à 5,0 du centre : le coffre (4,2–4,6) reste intact, le bord lointain de
-  // la cloche (≈ 9,8) fond aux deux tiers ; le terme en pic suit la hauteur du coffre.
-  const brume = useMemo(() => brouillard(5.4 + 0.4 * pic, 12.5 + 0.6 * pic), [pic]);
+  const echelle = 0.86 + amplitude * 0.22;
+  const brume = useMemo(() => brouillard(4.2, 11), []);
   return (
     <Canvas
       className="absolute inset-0 h-full w-full touch-none"
@@ -200,20 +185,22 @@ export default function CoffreScene({ amplitude, palier }: { amplitude: number; 
       dpr={ATELIER_DPR}
       gl={ATELIER_GL}
       frameloop={visible ? "always" : "never"}
-      camera={{ position: [2.6, 2.3, 3.6], fov: 34 }}
-      onCreated={({ gl }) => gl.setClearColor(ATELIER_FOND, 1)}
+      camera={{ position: [0, 1.15, 3.55], fov: 32 }}
+      onCreated={({ gl, camera }) => {
+        gl.setClearColor(ATELIER_FOND, 1);
+        camera.lookAt(CIBLE[0], CIBLE[1], CIBLE[2]);
+      }}
     >
-      <Halo teinte={palette[3]!} cible={cible} force={0.06} />
+      <Viser />
+      <Halo teinte={palette[3]!} cible={CIBLE} force={0.06} />
       <fog attach="fog" args={brume} />
       <LumieresAtelier contre={palette[2]!} />
       <EnvironnementAtelier teinte={palette[2]!} />
-      <Gaussienne amplitude={amplitude} teinte={palette[3]!} />
       <GroupeCoffre
         palette={palette}
         ornements={ornements}
         palier={palier}
         scale={echelle}
-        y={pic + 0.15}
       />
     </Canvas>
   );
