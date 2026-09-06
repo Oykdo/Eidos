@@ -697,6 +697,7 @@ export const FR = {
   "chymie.lede": "L'empreinte du carnet, en signes. Un changement se voit.",
   "chymie.ligne": "Ligne du carnet",
   "chymie.plaque": "Les soixante-quatre signes. Lecture, pas preuve.",
+  "chymie.unicode": "Autres signes Unicode — hors alphabet du carnet.",
   "chymie.vide": "Créez un coffre pour lire le carnet.",
 
   "lang.fr": "FR",
@@ -1374,6 +1375,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "chymie.lede": "The ledger fingerprint, in signs. A change shows.",
   "chymie.ligne": "Ledger line",
   "chymie.plaque": "The sixty-four signs. A reading, not a proof.",
+  "chymie.unicode": "Other Unicode signs — outside the ledger alphabet.",
   "chymie.vide": "Create a vault to read the ledger.",
   "lang.fr": "FR",
   "lang.en": "EN",

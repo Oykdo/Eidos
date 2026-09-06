@@ -4,6 +4,7 @@ import { coffreNeuf } from "./wallet.ts";
 import { empreinteCarnet, exporterCarnet, ouvrirFichier } from "./carnet.ts";
 import {
   CARACTERES,
+  CHYMIE_UNICODE,
   N_CHYMIE,
   caracteresDe,
   decoderChymie,
@@ -19,6 +20,14 @@ describe("caractères chymiques", () => {
     assert.equal(CARACTERES[8]!.fr, "Argent, ou Lune");
     assert.equal(CARACTERES[37]!.fr, "Or");
     assert.equal(CARACTERES[51]!.fr, "Soufre");
+    assert.ok(CARACTERES.every((c) => c.uni.length > 0));
+    assert.equal(CARACTERES[0]!.uni, "♂");
+    assert.equal(CARACTERES[37]!.uni, "☉");
+    const extra = new Set(CHYMIE_UNICODE.map((c) => c.id));
+    assert.equal(extra.size, CHYMIE_UNICODE.length);
+    assert.ok(CHYMIE_UNICODE.every((c) => c.uni.length > 0));
+    const clash = CHYMIE_UNICODE.filter((c) => CARACTERES.some((a) => a.id === c.id));
+    assert.deepEqual(clash, []);
   });
 
   it("l'empreinte du carnet se lit et se reprend", () => {

@@ -365,7 +365,28 @@ const DESSINS: Record<string, (className?: string) => ReactNode> = {
   ),
 };
 
-export function Marque({ trait, className }: { trait: string; className?: string }) {
-  const f = DESSINS[trait] ?? DESSINS.sel;
+export function Marque({
+  trait,
+  uni,
+  className,
+}: {
+  trait?: string;
+  uni?: string;
+  className?: string;
+}) {
+  if (uni) {
+    return (
+      <span
+        className={cn(
+          "inline-flex size-4 shrink-0 items-center justify-center font-serif text-[13px] leading-none text-or",
+          className,
+        )}
+        aria-hidden
+      >
+        {uni}
+      </span>
+    );
+  }
+  const f = DESSINS[trait ?? "sel"] ?? DESSINS.sel;
   return f(className);
 }

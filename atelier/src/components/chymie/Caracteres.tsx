@@ -1,5 +1,5 @@
 import { Marque } from "@/components/chymie/Marque.tsx";
-import { CARACTERES, caracteresDe } from "@/lib/eidos/chymie.ts";
+import { CARACTERES, CHYMIE_UNICODE, caracteresDe } from "@/lib/eidos/chymie.ts";
 import { empreinteCarnet } from "@/lib/eidos/carnet.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { useI18n } from "@/lib/i18n.ts";
@@ -23,7 +23,7 @@ export function Caracteres() {
         <ol className="mt-4 flex flex-wrap gap-1.5" aria-label={t("chymie.ligne")}>
           {ligne.map((c, i) => (
             <li key={`${c.id}-${i}`} title={locale === "fr" ? c.fr : c.en}>
-              <Marque trait={c.trait} className="size-5" />
+              <Marque trait={c.trait} uni={c.uni} className="size-5 text-[15px]" />
             </li>
           ))}
         </ol>
@@ -42,7 +42,24 @@ export function Caracteres() {
             )}
           >
             <span className="min-w-0 truncate">{locale === "fr" ? c.fr : c.en}</span>
-            <Marque trait={c.trait} className={cn("size-3.5", vus.has(c.id) ? "text-or" : "text-plomb")} />
+            <Marque
+              trait={c.trait}
+              uni={c.uni}
+              className={cn("size-3.5 text-[12px]", vus.has(c.id) ? "text-or" : "text-plomb")}
+            />
+          </li>
+        ))}
+      </ul>
+
+      <h3 className="mt-5 font-mono text-[12.5px] text-encre">{t("chymie.unicode")}</h3>
+      <ul className="mt-2 columns-2 gap-x-4 sm:columns-3">
+        {CHYMIE_UNICODE.map((c) => (
+          <li
+            key={c.id}
+            className="mb-1 flex break-inside-avoid items-center justify-between gap-2 font-mono text-[11px] leading-tight text-sourd"
+          >
+            <span className="min-w-0 truncate">{locale === "fr" ? c.fr : c.en}</span>
+            <Marque uni={c.uni} className="size-3.5 text-[12px] text-plomb" />
           </li>
         ))}
       </ul>
