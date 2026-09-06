@@ -1,4 +1,13 @@
 {
  "spec": "eidos-mempool/1",
- "demandes": []
+ "demandes": [
+  {
+   "type": "robinet",
+   "adresse": "47b1910e588a49fdf29489d1f5a9c2b45b8bfcd0",
+   "issue": 7,
+   "montant_atomes": 100000000,
+   "etat": "en_attente",
+   "auteur": "Oykdo"
+  }
+ ]
 }
