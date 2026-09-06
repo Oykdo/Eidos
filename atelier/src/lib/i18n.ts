@@ -693,6 +693,11 @@ export const FR = {
   "psnx.fichier": "eidos.carnet enregistré.",
   "psnx.copie": "Copié. Collez dans un fichier eidos.carnet.",
   "psnx.annule": "Sauvetage annulé.",
+  "chymie.h": "Caractères chymiques",
+  "chymie.lede": "L'empreinte du carnet, en signes. Un changement se voit.",
+  "chymie.ligne": "Ligne du carnet",
+  "chymie.plaque": "Les soixante-quatre signes. Lecture, pas preuve.",
+  "chymie.vide": "Créez un coffre pour lire le carnet.",
 
   "lang.fr": "FR",
   "lang.en": "EN",
@@ -1365,6 +1370,11 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "psnx.fichier": "eidos.carnet saved.",
   "psnx.copie": "Copied. Paste into a file named eidos.carnet.",
   "psnx.annule": "Save cancelled.",
+  "chymie.h": "Chymical characters",
+  "chymie.lede": "The ledger fingerprint, in signs. A change shows.",
+  "chymie.ligne": "Ledger line",
+  "chymie.plaque": "The sixty-four signs. A reading, not a proof.",
+  "chymie.vide": "Create a vault to read the ledger.",
   "lang.fr": "FR",
   "lang.en": "EN",
 };

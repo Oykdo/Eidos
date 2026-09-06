@@ -3,6 +3,7 @@ import { Download, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCoffre } from "@/lib/store.ts";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
+import { Caracteres } from "@/components/chymie/Caracteres.tsx";
 import { proposerCarnet, type IssueSauver } from "@/lib/eidos/sauver.ts";
 
 const FLASH: Record<IssueSauver, Msg> = {
@@ -41,6 +42,7 @@ export function Sauvegarde() {
   }
 
   return (
+    <>
     <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
       <h2 className="font-mono text-base font-normal text-encre">{t("psnx.exporter")}</h2>
       <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
@@ -78,5 +80,7 @@ export function Sauvegarde() {
         ) : null}
       </p>
     </section>
+    <Caracteres />
+    </>
   );
 }
