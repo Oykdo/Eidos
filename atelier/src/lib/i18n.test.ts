@@ -34,14 +34,22 @@ describe("i18n", () => {
     }
   });
 
+  it("aucun époque ni aeon dans l'UI", () => {
+    const re = /époque|epoch|aeon/i;
+    for (const k of Object.keys(FR) as Msg[]) {
+      assert.equal(re.test(FR[k]), false, `FR ${k}`);
+      assert.equal(re.test(EN[k]), false, `EN ${k}`);
+    }
+  });
+
   it("reliques : libellés gelés", () => {
     assert.equal(
       FR["relique.lede"],
-      "Quatre sceaux d'âge : la mise d'une relique du monde, la clé d'un quartier de la Tour, un trophée vérifiable. Un sceau se trouve, il ne s'achète pas.",
+      "Un sceau se trouve, il ne s'achète pas.",
     );
     assert.equal(
       EN["relique.lede"],
-      "Four age seals: the stake of a world relic, the key to a Tower quarter, a verifiable trophy. A seal is found, never bought.",
+      "A seal is found, never bought.",
     );
     assert.equal(FR["relique.preuveAide"], "Collez eidos-artefact/1. Même preuve, même relique.");
     assert.equal(EN["relique.preuveAide"], "Paste eidos-artefact/1. Same proof, same relic.");
