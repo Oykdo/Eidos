@@ -22,12 +22,12 @@ import {
 import { ageOf, rewardAt } from "@/lib/eidos/eonis.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { posteDe, POSTE_JOUR } from "@/lib/eidos/poste.ts";
-import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";
+import { nomPierre } from "@/lib/eidos/pierres.ts";
 
 const VoxelCanvas = lazy(() => import("./VoxelCanvas"));
 
 export function Inventaire() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
   const tirer = useCoffre((s) => s.tirer);
   const miner = useCoffre((s) => s.miner);
@@ -172,12 +172,14 @@ export function Inventaire() {
                 )}
               >
                 <VoxelIcon objet={o} size={64} />
-                <span className="mt-1 font-mono text-[10px] tracking-wide">
-                  {t(`inv.genre.${o.genre}` as Msg)}
-                  {o.affixe ? ` ${o.affixe}` : ""}
-                  {o.emplacement && o.genre === "armure"
-                    ? ` ${t(`inv.slot.${o.emplacement}` as Msg)}`
-                    : ""}
+                <span className="mt-1 text-center font-mono text-[10px] tracking-wide">
+                  {o.genre === "pierre" || o.genre === "gemme"
+                    ? `${nomPierre(o, locale)}${o.affixe ? ` ${o.affixe}` : ""}`
+                    : `${t(`inv.genre.${o.genre}` as Msg)}${o.affixe ? ` ${o.affixe}` : ""}${
+                        o.emplacement && o.genre === "armure"
+                          ? ` ${t(`inv.slot.${o.emplacement}` as Msg)}`
+                          : ""
+                      }`}
                 </span>
               </button>
             );

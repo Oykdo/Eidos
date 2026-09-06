@@ -707,6 +707,9 @@ export const FR = {
   "papier.publique": "Graine publique — le papier ne cache rien.",
   "papier.sauve": "Image proposée.",
   "papier.ctrl": "La rangée sous chaque carton : un signe faux se voit.",
+  "pierres.h": "Pierres",
+  "pierres.lede":
+    "Les 64 signes. Une pierre tourne une pièce ; une gemme s'enchâsse. Craft et enchantement : la règle n'est pas gelée.",
 
   "lang.fr": "FR",
   "lang.en": "EN",
@@ -1393,6 +1396,9 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "papier.publique": "Public seed — the paper hides nothing.",
   "papier.sauve": "Image offered.",
   "papier.ctrl": "The row under each card: a wrong sign shows.",
+  "pierres.h": "Stones",
+  "pierres.lede":
+    "The 64 signs. A stone turns a piece; a gem sockets. Craft and enchantment: the rule is not frozen.",
   "lang.fr": "FR",
   "lang.en": "EN",
 };

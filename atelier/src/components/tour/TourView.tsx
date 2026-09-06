@@ -40,6 +40,7 @@ import {
 } from "@/lib/eidos/fouilles.ts";
 import { tourDe } from "@/lib/eidos/jauge.ts";
 import { Pendule } from "@/components/tour/Pendule";
+import { Pierres } from "@/components/tour/Pierres.tsx";
 import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";
 import type { ObjetPorte } from "@/lib/eidos/types.ts";
 
@@ -615,6 +616,8 @@ export function TourView() {
             />
           ) : null}
         </Bloc>
+
+        <Pierres objets={objets} />
 
         <Bloc titre={t("tour.antre")}>
           {antreFranchi ? (
