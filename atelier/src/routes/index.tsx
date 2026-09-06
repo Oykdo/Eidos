@@ -45,7 +45,7 @@ function Home() {
 
       {onglet === "coffre" ? (
         <>
-          <section className="rounded-lg bg-carte px-5 py-6 text-center shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]">
+          <section className="rounded-lg bg-carte px-5 py-6 text-center shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] print:hidden">
             <p className="font-display text-[26px] font-light tabular-nums leading-none text-or">
               {formaterAtomes(solde)}
             </p>

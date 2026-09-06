@@ -13,7 +13,7 @@ export function Caracteres() {
   const vus = new Set(ligne.map((c) => c.id));
 
   return (
-    <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6">
+    <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6 print:hidden">
       <h2 className="font-mono text-base font-normal text-encre">{t("chymie.h")}</h2>
       <p className="mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
         {t("chymie.lede")}

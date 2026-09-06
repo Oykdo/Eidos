@@ -14,7 +14,7 @@ export function Onglets<T extends string>({
 }) {
   const { t } = useI18n();
   return (
-    <div role="tablist" aria-label={label} className="flex flex-wrap gap-1">
+    <div role="tablist" aria-label={label} className="flex flex-wrap gap-1 print:hidden">
       {items.map((it) => {
         const on = actuel === it.id;
         return (
