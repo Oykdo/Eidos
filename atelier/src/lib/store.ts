@@ -818,18 +818,18 @@ export const useCoffre = create<Etat>((set, get) => ({
   },
 
   importerFichier: (nom, data) => {
-    const octets = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
-    if (estPsnxEtranger(nom, octets)) {
-      const spin = spinorDepuisOctets(octets);
-      set({
-        psnx: spin,
-        erreur: null,
-        flash: t("psnx.refus"),
-      });
-      return;
-    }
     const lu = ouvrirFichier(nom, data);
     if ("erreur" in lu) {
+      const octets = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
+      if (estPsnxEtranger(nom, octets)) {
+        const spin = spinorDepuisOctets(octets);
+        set({
+          psnx: spin,
+          erreur: null,
+          flash: t("psnx.refus"),
+        });
+        return;
+      }
       set({ erreur: lu.erreur, flash: null });
       return;
     }
@@ -844,11 +844,14 @@ export const useCoffre = create<Etat>((set, get) => ({
       coffre = sceller({ ...coffre, chaine: [blocGenese()] }, "atelier");
     }
     persister(coffre);
+    const n = coffre.sorties.length;
+    const m = coffre.objets.length;
+    const vide = n === 0 && m === 0;
     set({
       coffre,
       saisieMontant: montantPour(coffre.scenario ?? "vide"),
       erreur: null,
-      flash: t("psnx.importe"),
+      flash: vide ? t("psnx.importe.vide") : t("psnx.importe", { n, m }),
       psnx: null,
     });
   },

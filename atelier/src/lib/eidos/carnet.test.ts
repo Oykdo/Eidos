@@ -3,6 +3,9 @@ import { describe, it } from "node:test";
 import { coffreNeuf } from "./wallet.ts";
 import { exporterPsnx } from "./portable.ts";
 import { adresseDe } from "./lamport.ts";
+import { sha256d, utf8 } from "./hash.ts";
+import { objetDepuisGraine } from "./objets.ts";
+import { habille } from "./equipement.ts";
 import {
   ALG_CARNET,
   KIND_CARNET,
@@ -101,5 +104,24 @@ describe("carnet unique Lamport-SHA256", () => {
     const raw = `  \n${exporterCarnet(c)}`;
     const lu = ouvrirFichier("eidos.carnet", new TextEncoder().encode(raw));
     assert.ok(!("erreur" in lu), "erreur" in lu ? lu.erreur : "");
+  });
+
+  it("pièces et objets reviennent", () => {
+    const c = coffreNeuf("une-piece");
+    const o = objetDepuisGraine(sha256d(utf8("carnet-objet")), "Kali");
+    c.objets = [
+      habille(
+        { mot: o.mot, archetype: o.archetype, age: o.age, nonce: 3, hauteur: 4 },
+        8,
+        { genre: "arme", emplacement: "arme", sockets: 1, nom: "Lame" },
+      ),
+    ];
+    const lu = ouvrirFichier("carnet.eidos", exporterCarnet(c));
+    assert.ok(!("erreur" in lu), "erreur" in lu ? lu.erreur : "");
+    if ("erreur" in lu) return;
+    assert.equal(lu.coffre.sorties.length, c.sorties.length);
+    assert.equal(lu.coffre.objets.length, 1);
+    assert.equal(lu.coffre.objets[0]!.mot, o.mot >>> 0);
+    assert.equal(lu.coffre.objets[0]!.genre, "arme");
   });
 });

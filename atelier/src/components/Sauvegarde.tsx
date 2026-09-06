@@ -33,11 +33,12 @@ export function Sauvegarde() {
 
   function ouvrir(f: File) {
     const reader = new FileReader();
+    reader.onerror = () => setStatut(t("psnx.lire"));
     reader.onload = () => {
       const r = reader.result;
-      if (r instanceof ArrayBuffer) importerFichier(f.name, r);
-      else if (typeof r === "string") importerFichier(f.name, r);
-      setStatut(null);
+      if (r instanceof ArrayBuffer) importerFichier(f.name || "eidos.carnet", r);
+      else if (typeof r === "string") importerFichier(f.name || "eidos.carnet", r);
+      else setStatut(t("psnx.lire"));
     };
     reader.readAsArrayBuffer(f);
   }

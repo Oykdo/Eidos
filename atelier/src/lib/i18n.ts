@@ -684,10 +684,13 @@ export const FR = {
   "eco.guide": "Mode d'emploi.",
   "psnx.exporter": "Sauver eidos.carnet",
   "psnx.importer": "Ouvrir un carnet",
-  "psnx.aide": "Lamport signe une dépense, pas le fichier.",
+  "psnx.aide":
+    "Après le robinet et les tirages, exportez de nouveau. Un carnet pris à la création est vide.",
   "psnx.refus":
     "Fichier Eidolon (courbe) : l'empreinte se lit, pas les clés Lamport. Exportez un eidos.carnet d'ici.",
-  "psnx.importe": "Carnet rouvert — pièces, reliques, clés Lamport.",
+  "psnx.importe": "Ouvert : {n} pièces, {m} objets.",
+  "psnx.importe.vide": "Carnet ouvert, vide. Exportez après le robinet et les tirages.",
+  "psnx.lire": "Le fichier n'a pas pu être lu.",
   "psnx.digest": "empreinte",
   "psnx.sauve": "Feuille proposée. Sur téléphone : Enregistrer dans Fichiers.",
   "psnx.fichier": "eidos.carnet enregistré.",
@@ -1373,10 +1376,13 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "eco.guide": "How-to.",
   "psnx.exporter": "Save eidos.carnet",
   "psnx.importer": "Open a ledger",
-  "psnx.aide": "Lamport signs a spend, not the file.",
+  "psnx.aide":
+    "After the tap and draws, export again. A ledger taken at creation is empty.",
   "psnx.refus":
     "Eidolon file (curve): the fingerprint reads, Lamport keys do not. Export eidos.carnet from here.",
-  "psnx.importe": "Ledger reopened — coins, relics, Lamport keys.",
+  "psnx.importe": "Opened: {n} coins, {m} items.",
+  "psnx.importe.vide": "Ledger opened, empty. Export after the tap and draws.",
+  "psnx.lire": "The file could not be read.",
   "psnx.digest": "fingerprint",
   "psnx.sauve": "Sheet offered. On a phone: Save to Files.",
   "psnx.fichier": "eidos.carnet saved.",
