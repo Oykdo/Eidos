@@ -23,6 +23,7 @@ import { ageOf, rewardAt } from "@/lib/eidos/eonis.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
 import { posteDe, POSTE_JOUR } from "@/lib/eidos/poste.ts";
 import { nomPierre } from "@/lib/eidos/pierres.ts";
+import { usePrefersReducedMotion, webglDisponible } from "@/components/canvas/atelier.ts";
 
 const VoxelCanvas = lazy(() => import("./VoxelCanvas"));
 
