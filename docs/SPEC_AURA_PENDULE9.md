@@ -88,3 +88,16 @@ Décision :
 - Conséquence assumée : un juge (`jugerAscension`) ne peut pas distinguer un run avec Cube d'un run sans. Un titre « sans Cube » exigerait que l'usage devienne un choix du pendule (4ᵉ `CHOIX`), donc un `TAG_PENDULE` versionné — reporté, LIST 9.
 
 Falsification cheap faite : `ancrer()` en Python reproduit la dérivation de `graineAncree` à l'octet (même tag, même ordre, `rang` sur 4 octets gros-boutiste) ; le lien réel par vecteur partagé (`vecteurs.json`) reste à faire si le labo devait un jour juger.
+
+## 9. Aura et jauge de la Veillée — l'aura est une lecture, pas un second budget (K29–K34)
+La Veillée n'a qu'un compte, et il ne remonte jamais : 64 feuilles WOTS+, un geste signé = une feuille (`veillee.ts`). Un système d'aura parallèle — huit compteurs qui se transfèrent et qu'un Cube restaure — contredirait cette règle en une ligne. Décision : **l'aura d'une veillée est une projection des feuilles brûlées sur les 8 positions du pendule.** Rien n'est ajouté à la jauge ; rien ne s'y prouve ; l'aura se recalcule depuis les gestes et le parcours rejoué.
+
+La coïncidence structurelle qui rend la projection naturelle : `HAUTEUR_VEILLEE = 6` ⇒ 64 = 8 × 8. Chaque agrégateur porte huit feuilles. Un geste à l'étape k brûle une feuille de l'agrégateur de la position `p(k)+1` ; à la source (cran 8) la feuille va au débordement, comme au-delà de huit sur un agrégateur.
+
+    aura_k = 8 − min(8, brûlées_k) · débordement = Σ max(0, brûlées_k − 8) + brûlées à la source · Σ = feuilles signées
+
+Kill criteria (`labo/aura_veillee.py`, fixture réelle `labo/veillee_atelier.json` exportée par `atelier/scripts/exporter-veillee.ts`, bot gourmand graine 7, jour du vecteur) : identité comptable (K29), aura jamais croissante geste après geste (K30), Cube sans prise → `Rejet` (K31), un franchir par étape au plus (K32), refus d'un trou d'indice (K33), fixture réelle au sommet (K34).
+
+Lecture de la fixture : sommet atteint, 46 feuilles sur 64, aura finale vigueur 6 · souffle 8 · focus 1 · ancrage 0 · éclat 0 · écho 6 · ombre 1 · vide 4, débordement 8. Le gourmand vide deux agrégateurs et déborde de huit : la projection *voit* une politique, ce qu'un total de feuilles ne montre pas — c'est sa seule valeur ajoutée, et elle suffit.
+
+Conséquences : la loi du 9 (transfert-miroir) et le Cube restent des mécaniques de la **Tour libre** (`pendule9_run.py`), hors veillée. Le labo n'importe jamais les signatures : l'export les retire, le juge reste `jugerVeillee`. Un run qui compte n'a pas plus d'aura qu'un run libre — l'aura ne compte pas.

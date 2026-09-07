@@ -232,6 +232,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `labo/aura_voxel_lab.py` | 109 | labo pendule-9 : avatar voxelisé, aura graduelle, 8 agrégateurs — figures, pas preuves | 9 |
 | `labo/pendule9_run.py` | 171 | labo : run de 255 étages, sceau, Cube de Saturne et ancrage | 11 |
 | `labo/unification.py` | 94 | labo : contrat avec `pendule.ts`, fixtures synthétique et réelle (`exporter-run.ts`) | 8 |
+| `labo/aura_veillee.py` | 75 | labo : l'aura d'une veillée, lecture des 64 feuilles sur 8 positions (`exporter-veillee.ts`) | 6 |
 | `consensus.py` | 204 | difficulté PoW et travail cumulé — historique | 6 |
 | `store.py` | 278 | chaîne PoW sur disque — historique | — |
 | `federation.json` | — | racines et graines publiques des 7 validateurs, t0, créneau | — |

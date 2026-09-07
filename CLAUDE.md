@@ -56,7 +56,7 @@ federation.json     racines + graines publiques des 7 validateurs, t0, créneau 
 chaine-eidos.dat    la chaîne du testnet (écrite par la CI, jamais à la main)
 etat.json           état publié (soldes, sorties, artefacts, invariant)
 mempool.json        demandes robinet / envoi
-labo/               laboratoire pendule-9 hors chaîne (aura, avatar, agrégateurs) — figures, pas preuves (28 contrôles)
+labo/               laboratoire pendule-9 hors chaîne (aura, avatar, agrégateurs) — figures, pas preuves (34 contrôles)
 veillees/           preuves de veillée déposées (index.json + un fichier par preuve), écrites par veillees.yml
 atelier/            interface web (TanStack Start, React), rejoue la spec en TS ;
                     scripts/deposer-veillee.ts = le juge des preuves dans la CI (logique dans lib/eidos/depot.ts)
@@ -249,7 +249,7 @@ L'historique détaillé (décisions, limites, reliquats de chaque chantier) est 
 - Accueil, écosystème et robinet à deux canaux — FAIT (2026-09-06)
 - La Veillée — roguelike XMSS, PR 1 à 3 FAITES (2026-09-07 : jauge, gestes reliés à la Tour, sac et extraction, en-têtes de chaîne côté atelier, page Veillée, arbre à l'écran, son, classement et fantômes, bot de mesure), voir docs/BIBLE_VEILLEE.md ; dépôt des preuves par issue (`veillees.yml`, `depot.ts`) ; Guide étoffé (cœur, mécaniques, lore)
 - Fond orbital de l'accueil — FAIT (2026-09-07) : `lib/accueil/orbites.ts` (11 contrôles), `components/accueil/FondOrbital.tsx` + `fond-orbital.ts` (4), la loi d'émission en limaçon, neuf astres-muses dansants, phase de l'époque lue dans la tête suivie, parallaxe et clic vers la page de la muse ; aucune trace du pointeur
-- Labo pendule-9 — aura, avatar voxelisé, 8 agrégateurs, pont `exporter-run.ts` → `labo/unification.py`, workflow `labo.yml` — PR 1 FAITE (2026-09-07), LIST des zones non branchées dans docs/FEUILLE_DE_ROUTE.md
+- Labo pendule-9 — aura, avatar voxelisé, 8 agrégateurs, pont `exporter-run.ts` → `labo/unification.py`, workflow `labo.yml`, aura de la veillée = lecture des 64 feuilles — PR 1–3 FAITES (2026-09-07), LIST des zones non branchées dans docs/FEUILLE_DE_ROUTE.md
 - P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 - P5 — État MSS persistant — FAIT (septembre 2026)
 

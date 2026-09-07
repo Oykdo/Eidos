@@ -458,6 +458,11 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
      modes p/d au lieu d'une nouvelle table.
   9. Titre « sans Cube » : impossible tant que le Cube n'est pas un `CHOIX` du pendule (la trace ne
      le voit pas) ; exige un `TAG_PENDULE` versionné.
+- **LIST 5 tranchée (2026-09-07, spec §9, K29–K34)** : l'aura d'une veillée est une projection des
+  64 feuilles (8 × 8) sur les 8 positions du pendule, jamais croissante, sans Cube ni transfert ;
+  `atelier/scripts/exporter-veillee.ts` (bot gourmand, sans signatures) → `labo/veillee_atelier.json`,
+  lu par `labo/aura_veillee.py`, parité à l'octet dans `labo.yml`. Reste : la Tour libre (jauge
+  `coffre.tour`, hors veillée) garde la loi du 9 et le Cube — LIST 2 et 4 dépendent de ce choix.
 - **LIST 3 tranchée (2026-09-07, spec §8, K27–K28)** : le Cube ne touche que les 8 agrégateurs
   (`actuel := résiduel`, une fois) ; jamais graine, trace, tête, pièce ni étape jouée. Compatible
   avec « ce qui compte est ancré » parce que la trace ne contient que `(p, e, s)`. `ancrer()` en
