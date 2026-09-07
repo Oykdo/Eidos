@@ -173,7 +173,7 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `noeud.py` | 1151 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 3 + 4 + 5 + 2 |
 | `robinet.py` | 420 | faucet queue fed by issues and email, per-author brake | 14 |
 | `courriel.py` | 321 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
-| `vecteurs.py` | 171 | shared vectors Python ↔ TS (`vecteurs.json`, 8 families) | parity |
+| `vecteurs.py` | 203 | shared vectors Python ↔ TS (`vecteurs.json`, 9 families) | parity |
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
 | `consensus.py` | 204 | PoW difficulty and cumulative work — historical | 6 |
@@ -183,7 +183,7 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `chaine-eidos.dat` | — | the testnet chain, written by the CI | — |
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `docs/` | — | specifications: relics, tower, pendulum, Sybil, vault audit; banner generator | 2 |
-| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 308 Eidos tests | 308 |
+| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 338 Eidos tests | 338 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (issues), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor.
 
