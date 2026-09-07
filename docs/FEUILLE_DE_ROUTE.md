@@ -334,12 +334,15 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   d'arrivée, ouvrir l'alcôve, prendre, franchir vers les trois destinations,
   s'effacer), fin, verdict jugé sans rejeu, fantôme, preuve exportée. Store : réserve
   d'indice dans localStorage (`eidos-veillee-reserve-v1`) écrite avant la signature,
-  repli session ; chaîne et fédération lues jamais persistées. `npm test` : 350.
+  repli session ; chaîne et fédération lues jamais persistées. `npm test` : 352.
 - Reste : PR 3 (arbre à l'écran, son et haptique, classement statique, fantômes dans
   la salle ; bot xorshift sur mille veillées avant), PR 4 (gardiens C3, Guide
-  « Jouer »), PR 5 [OUVERT] Godot/Rust. Limite connue : le coffre d'atelier ne peut
-  ouvrir une veillée que s'il a une pièce sur le réseau ; une veillée libre (sans
-  ancre, jauge seulement) reste à décider.
+  « Jouer »), PR 5 [OUVERT] Godot/Rust.
+- **Veillée libre (2026-09-07)** : `Veillee.ancre` vaut `null` — les salles du jour,
+  l'arbre (graine `… ‖ "libre"`), aucune pièce ; comme l'ascension libre, une lecture :
+  `exporterVeillee` et `jugerVeillee` la refusent, `lectureVeillee` en donne les comptes.
+  Le coffre d'atelier, ou tout coffre sans pièce sur le réseau, y joue ; bouton
+  « Veillée libre » sur la page. +2 contrôles.
 
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête

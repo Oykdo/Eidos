@@ -18,6 +18,7 @@ import {
   graineDuJour,
   jourDe,
   jugerVeillee,
+  lectureVeillee,
   ouvrirVeillee,
   parcoursDe,
   parserVeillee,
@@ -30,6 +31,7 @@ import {
 import { verifierMss } from "./xmss.ts";
 
 type TeteBrute = Record<string, unknown>;
+type SortieBrute = { txid: string; rang: number; adresse: string; montant: number };
 const VEC = JSON.parse(readFileSync(new URL("../../../../vecteurs.json", import.meta.url), "utf8")) as {
   xmss: {
     graine: string;
@@ -47,8 +49,8 @@ const VEC = JSON.parse(readFileSync(new URL("../../../../vecteurs.json", import.
     veille: TeteBrute;
     premier_du_jour: TeteBrute;
     second_du_jour: TeteBrute;
-    sorties_au_premier: { txid: string; rang: number; adresse: string; montant: number }[];
-    sorties_au_second: { txid: string; rang: number; adresse: string; montant: number }[];
+    sorties_au_premier: SortieBrute[];
+    sorties_au_second: SortieBrute[];
   };
 };
 
@@ -63,9 +65,8 @@ const veille = tete(VEC.veillee.veille);
 const jour = tete(VEC.veillee.premier_du_jour);
 const second = tete(VEC.veillee.second_du_jour);
 const piece = VEC.veillee.sorties_au_premier[0]!;
-// la pièce est prouvée contre la racine UTXO du premier bloc du jour : le carnet
-// publié au second bloc contient aussi la coinbase du second — on prouve avec
-// les sorties du premier (vecteur), donc sans elle
+// la pièce est prouvée contre la racine UTXO du premier bloc du jour, avec les
+// sorties de ce bloc (vecteur) ; au second bloc, le carnet a une sortie de plus
 const preuveJour = (() => {
   const p = preuveReseau(VEC.veillee.sorties_au_premier, `${piece.txid}:${piece.rang}`);
   if (!p) throw new Error("preuve absente");
@@ -76,15 +77,15 @@ const MAITRE = "coffre-de-test";
 const arbre = construireArbre(graineArbre(MAITRE, jour.idBloc, piece));
 
 function ouvrir(): Veillee {
-  const v = ouvrirVeillee(arbre, jour, veille, piece, preuveJour);
+  const v = ouvrirVeillee(arbre, jour, veille, { piece, preuve: preuveJour });
   if ("erreur" in v) throw new Error(v.erreur);
   return v;
 }
 
-function franchir(v: Veillee, n: number, choix = 0): Veillee {
+function franchir(v: Veillee, n: number, a = arbre, choix = 0): Veillee {
   let x = v;
   for (let k = 0; k < n; k++) {
-    const r = signerGeste(x, arbre, { g: "franchir", arg: choix, mot: 1000 + k });
+    const r = signerGeste(x, a, { g: "franchir", arg: choix, mot: 1000 + k });
     if ("erreur" in r) throw new Error(r.erreur);
     x = r;
   }
@@ -127,36 +128,64 @@ describe("le jour : le premier bloc, prouvé par deux têtes", () => {
     // la graine du parcours ne dépend que du bloc : même jour pour tous
     assert.equal(hexOf(graineDuJour(jour.idBloc)), hexOf(graineDuJour(jour.idBloc)));
     assert.notEqual(hexOf(graineDuJour(jour.idBloc)), hexOf(graineDuJour(second.idBloc)));
-    // la graine de l'arbre dépend du coffre : deux coffres, deux arbres
+    // la graine de l'arbre dépend du coffre, de la pièce, et « libre » est une pièce à part
     assert.notEqual(hexOf(graineArbre("a", jour.idBloc, piece)), hexOf(graineArbre("b", jour.idBloc, piece)));
     assert.notEqual(hexOf(graineArbre("a", jour.idBloc, piece)), hexOf(graineArbre("a", jour.idBloc, { ...piece, rang: 1 })));
+    assert.notEqual(hexOf(graineArbre("a", jour.idBloc, piece)), hexOf(graineArbre("a", jour.idBloc, null)));
   });
 
   it("ouvrir refuse le second bloc, une preuve étrangère, un arbre d'une autre hauteur", () => {
-    assert.match((ouvrirVeillee(arbre, second, jour, piece, preuveJour) as { erreur: string }).erreur, /premier bloc/);
-    assert.match((ouvrirVeillee(arbre, jour, veille, piece, { ...preuveJour, racine: "00".repeat(32) }) as { erreur: string }).erreur, /rompu|étrangère/);
+    assert.match((ouvrirVeillee(arbre, second, jour, { piece, preuve: preuveJour }) as { erreur: string }).erreur, /premier bloc/);
+    assert.match(
+      (ouvrirVeillee(arbre, jour, veille, { piece, preuve: { ...preuveJour, racine: "00".repeat(32) } }) as { erreur: string }).erreur,
+      /rompu|étrangère/,
+    );
     const petit = construireArbre(fromHex(VEC.xmss.graine), 4);
-    assert.match((ouvrirVeillee(petit, jour, veille, piece, preuveJour) as { erreur: string }).erreur, /hauteur/);
+    assert.match((ouvrirVeillee(petit, jour, veille, { piece, preuve: preuveJour }) as { erreur: string }).erreur, /hauteur/);
     const v = ouvrir();
     assert.equal(v.jour, VEC.veillee.jour);
     assert.equal(feuillesRestantes(v), FEUILLES);
     assert.equal(parcoursDe(v).etage, 0);
+    assert.ok(v.ancre && v.ancre.teteAncre.idBloc === jour.idBloc);
   });
 
   it("l'ancre : une tête du même jour, au plus tôt le bloc du jour ; la pièce prouvée contre elle", () => {
     const p2 = serialiser(preuveReseau(VEC.veillee.sorties_au_second, `${piece.txid}:${piece.rang}`)!);
-    const v = ouvrirVeillee(arbre, jour, veille, piece, p2, second);
+    const v = ouvrirVeillee(arbre, jour, veille, { piece, preuve: p2, teteAncre: second });
     assert.ok(!("erreur" in v), "erreur" in v ? v.erreur : "");
     if ("erreur" in v) return;
-    assert.equal(v.teteAncre.idBloc, second.idBloc);
+    assert.equal(v.ancre!.teteAncre.idBloc, second.idBloc);
     const fini = arreterVeillee(v, "abandon");
     const j = jugerVeillee(fini, fed);
     assert.ok(j.ok, j.ok ? "" : j.motif);
-    assert.match((ouvrirVeillee(arbre, jour, veille, piece, preuveJour, second) as { erreur: string }).erreur, /ancrage/);
-    assert.match((ouvrirVeillee(arbre, jour, veille, piece, preuveJour, veille) as { erreur: string }).erreur, /du jour|précède/);
+    assert.match((ouvrirVeillee(arbre, jour, veille, { piece, preuve: preuveJour, teteAncre: second }) as { erreur: string }).erreur, /ancrage/);
+    assert.match((ouvrirVeillee(arbre, jour, veille, { piece, preuve: preuveJour, teteAncre: veille }) as { erreur: string }).erreur, /du jour|précède/);
     const relue = parserVeillee(serialiserVeillee(fini));
     assert.ok(!("erreur" in relue));
-    assert.match((jugerVeillee({ ...fini, teteAncre: veille }, fed) as { motif: string }).motif, /du jour|précède|étrangère/);
+    const veilleAncre = { ...fini, ancre: { ...fini.ancre!, teteAncre: veille } };
+    assert.match((jugerVeillee(veilleAncre, fed) as { motif: string }).motif, /du jour|précède|étrangère/);
+  });
+
+  it("une veillée libre : les mêmes salles, l'arbre, aucune pièce — une lecture, ni exportée ni jugée", () => {
+    const libre = construireArbre(graineArbre(MAITRE, jour.idBloc, null));
+    const v0 = ouvrirVeillee(libre, jour, veille, null);
+    assert.ok(!("erreur" in v0), "erreur" in v0 ? v0.erreur : "");
+    if ("erreur" in v0) return;
+    assert.equal(v0.ancre, null);
+    assert.equal(v0.jour, VEC.veillee.jour);
+    // même parcours que la veillée ancrée du même jour
+    const ancree = franchir(ouvrir(), 5);
+    let v = signerGeste(v0, libre, { g: "parler", arg: 0 }) as Veillee;
+    v = franchir(v, 5, libre);
+    assert.deepEqual(parcoursDe(v).etapes.map((e) => e.e), parcoursDe(ancree).etapes.map((e) => e.e));
+    assert.deepEqual(lectureVeillee(v), { salles: 6, feuilles: 6, butin: 1, libre: true, fin: null });
+    const fini = arreterVeillee(v, "abandon");
+    assert.match((exporterVeillee(fini) as { erreur: string }).erreur, /libre/);
+    assert.match((jugerVeillee(fini, fed) as { motif: string }).motif, /libre/);
+    const relue = parserVeillee(serialiserVeillee(fini));
+    assert.ok(!("erreur" in relue) && relue.ancre === null);
+    // l'arbre de l'ancrée ne signe pas la libre
+    assert.equal((signerGeste(v0, arbre, { g: "parler", arg: 0 }) as { erreur: string }).erreur, "arbre");
   });
 });
 
@@ -178,6 +207,7 @@ describe("la clé comme vie : une feuille par geste, l'arbre vide est la fin", (
       assert.equal(j.butin, 1);
       assert.equal(j.feuilles, FRANCHIR_AU_SOMMET + 1);
       assert.equal(scoreVeillee(j), ETAPES * FEUILLES + 1);
+      assert.equal(scoreVeillee(lectureVeillee(v)), scoreVeillee(j));
       const attendu = run(graineDuJour(jour.idBloc), () => CHOIX[0]!, (i) => 1000 + i);
       assert.deepEqual(j.etapes, attendu);
       assert.ok(j.etapes[ETAPES - 1]!.e >= 226, "dernière salle dans la bande d'Uranie");
@@ -248,5 +278,6 @@ describe("la clé comme vie : une feuille par geste, l'arbre vide est la fin", (
     assert.equal((signerGeste(ouvrir(), autreArbre, { g: "parler", arg: 0 }) as { erreur: string }).erreur, "arbre");
     assert.equal((signerGeste(ouvrir(), arbre, { g: "franchir", arg: 3 }) as { erreur: string }).erreur, "choix");
     assert.ok("erreur" in parserVeillee("{}"));
+    assert.ok("erreur" in parserVeillee(JSON.stringify({ ...v, ancre: { piece: 1 } })));
   });
 });

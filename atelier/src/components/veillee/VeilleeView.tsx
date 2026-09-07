@@ -14,7 +14,7 @@ import { tourDe } from "@/lib/eidos/jauge.ts";
 import { ETAPES } from "@/lib/eidos/pendule.ts";
 import { aUneAlcove } from "@/lib/eidos/secrets.ts";
 import { biomeDe } from "@/lib/eidos/tour.ts";
-import { FEUILLES, feuillesRestantes, jugerVeillee, scoreVeillee } from "@/lib/eidos/veillee.ts";
+import { FEUILLES, feuillesRestantes, jugerVeillee, lectureVeillee, scoreVeillee } from "@/lib/eidos/veillee.ts";
 import { REPLIQUES_VEILLEE } from "@/lib/eidos/veillee-lexique.ts";
 import { veilleeDe } from "@/lib/eidos/veillee-tour.ts";
 
@@ -59,7 +59,8 @@ export function VeilleeView() {
   const spawn = active ? spawnIci(coffre, etage) : null;
   const capsuleIndex = (coffre.objets ?? []).findIndex((o) => estCapsule(o));
   const occupants = active ? occupantsRestants(coffre, etage) : [];
-  const verdict = w && w.v.fin !== null && federation ? jugerVeillee(w.v, federation) : null;
+  const verdict = w && w.v.fin !== null && w.v.ancre && federation ? jugerVeillee(w.v, federation) : null;
+  const lecture = w ? lectureVeillee(w.v) : null;
   const fantome =
     w && w.v.fin !== null
       ? fantomeDe(
@@ -112,6 +113,16 @@ export function VeilleeView() {
                 <p className="mt-1 font-mono text-[12px] text-cuivre">{t("veillee.atelier")}</p>
               ) : null}
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <Button
+                  type="button"
+                  variant="discret"
+                  className="w-auto"
+                  disabled={!jourInfo}
+                  title={!jourInfo ? t("veillee.err.chaine") : undefined}
+                  onClick={() => ouvrir(null)}
+                >
+                  {t("veillee.ouvrirLibre")}
+                </Button>
                 {ancrables.length > 0 ? (
                   <>
                     <select
@@ -147,6 +158,8 @@ export function VeilleeView() {
               </div>
               <p className="mt-2 font-mono text-[13px] text-encre">
                 {t("veillee.salle", { i: (tour.ascension?.etape ?? 0) + 1, n: ETAPES, e: etage })} · {biome.astre} {biome.muse}
+                {" · "}
+                <span className={w.v.ancre ? "text-or" : "text-sourd"}>{w.v.ancre ? t("veillee.ancree") : t("veillee.libre")}</span>
               </p>
               <p className="mt-1 font-mono text-[12px] text-or">{nomDeSalle(etage, locale)}</p>
               <p className="mt-1 font-mono text-[12px] italic text-sourd">« {REPLIQUES_VEILLEE[biome.id][locale]} »</p>
@@ -213,11 +226,13 @@ export function VeilleeView() {
                 <>
                   <p className="mt-3 font-mono text-[12px] text-cuivre">{t(`veillee.fin.${w.v.fin}` as Msg)}</p>
                   <p className="mt-1 font-mono text-[12px] text-encre">
-                    {verdict
-                      ? verdict.ok
-                        ? t("veillee.verdict", { salles: verdict.salles, butin: verdict.butin, score: scoreVeillee(verdict) })
-                        : t("veillee.verdict.ko", { motif: verdict.motif })
-                      : t("veillee.verdict.sansFed")}
+                    {!w.v.ancre && lecture
+                      ? t("veillee.libre.lecture", { salles: lecture.salles, butin: lecture.butin, score: scoreVeillee(lecture) })
+                      : verdict
+                        ? verdict.ok
+                          ? t("veillee.verdict", { salles: verdict.salles, butin: verdict.butin, score: scoreVeillee(verdict) })
+                          : t("veillee.verdict.ko", { motif: verdict.motif })
+                        : t("veillee.verdict.sansFed")}
                   </p>
                   {fantome ? <p className="mt-1 font-mono text-[12px] text-sourd">{t("veillee.fantome", { nom: fantome.nom })}</p> : null}
                   {derniere ? (

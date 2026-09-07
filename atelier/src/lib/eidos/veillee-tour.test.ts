@@ -7,7 +7,7 @@ import { normaliserTour, tourDe } from "./jauge.ts";
 import { preuveReseau, serialiser } from "./merkle.ts";
 import { parserFederation, parserTeteReseau } from "./temoin.ts";
 import type { Coffre } from "./types.ts";
-import { FEUILLES, FRANCHIR_AU_SOMMET, jugerVeillee, parcoursDe } from "./veillee.ts";
+import { FEUILLES, FRANCHIR_AU_SOMMET, jugerVeillee, lectureVeillee, parcoursDe } from "./veillee.ts";
 import {
   abandonnerVeilleeDansCoffre,
   capturerDansCoffre,
@@ -43,9 +43,9 @@ const veille = tete(VEC.veillee.veille);
 const piece = VEC.veillee.sorties_au_premier[0]!;
 const preuve = serialiser(preuveReseau(VEC.veillee.sorties_au_premier, `${piece.txid}:${piece.rang}`)!);
 
-function ouvrir(c: Coffre): Coffre {
+function ouvrir(c: Coffre, ancree = true): Coffre {
   oublierReserves();
-  const r = ouvrirVeilleeDansCoffre(c, jour, veille, piece, preuve);
+  const r = ouvrirVeilleeDansCoffre(c, jour, veille, ancree ? { piece, preuve } : null);
   if (!r.ok) throw new Error(r.motif);
   return r.coffre;
 }
@@ -63,7 +63,7 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
     assert.equal(feuilles(c), FEUILLES);
     assert.equal(veilleeDe(c)!.indiceReserve, 0);
     assert.equal((exporterVeilleeDuCoffre(c) as { code: string }).code, "finie");
-    assert.equal((ouvrirVeilleeDansCoffre(c, jour, veille, piece, preuve) as { code: string }).code, "finie");
+    assert.equal((ouvrirVeilleeDansCoffre(c, jour, veille, { piece, preuve }) as { code: string }).code, "finie");
     // relue depuis la jauge : la veillée revient, une forme absurde revient à null
     const t = normaliserTour(JSON.parse(JSON.stringify(c.tour)));
     assert.equal(t.veillee!.v.racine, veilleeDe(c)!.v.racine);
@@ -145,6 +145,38 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
     assert.equal(veilleeDe(abandonnerVeilleeDansCoffre(c))!.v.fin, "porte");
   });
 
+  it("veillée libre : sans pièce, l'atelier comme tout coffre joue les salles du jour ; rien ne s'exporte", () => {
+    let c = ouvrir(coffreAtelier("vide"), false);
+    assert.ok(enVeillee(c));
+    assert.equal(veilleeDe(c)!.v.ancre, null);
+    assert.equal(ascensionDe(c)!.ancre, null);
+    const p = parlerDansCoffre(c, []);
+    assert.ok(p.ok, p.ok ? "" : p.motif);
+    c = p.coffre;
+    const etagesLibre: number[] = [];
+    for (let k = 0; k < FRANCHIR_AU_SOMMET; k++) {
+      const r = franchirDansCoffre(c, [], "monter");
+      assert.ok(r.ok, r.ok ? "" : r.motif);
+      c = r.coffre;
+      etagesLibre.push(r.etage);
+    }
+    assert.equal(veilleeDe(c)!.v.fin, "sommet");
+    assert.deepEqual(lectureVeillee(veilleeDe(c)!.v), { salles: 27, feuilles: 27, butin: 1, libre: true, fin: "sommet" });
+    assert.equal((exporterVeilleeDuCoffre(c) as { code: string }).code, "libre");
+    assert.match((jugerVeillee(veilleeDe(c)!.v, fed) as { motif: string }).motif, /libre/);
+    // les mêmes salles que la veillée ancrée du même jour
+    let a = ouvrir(coffreAtelier("vide"));
+    const etagesAncree: number[] = [];
+    for (let k = 0; k < FRANCHIR_AU_SOMMET; k++) {
+      const r = franchirDansCoffre(a, [], "monter") as { ok: true; coffre: Coffre; etage: number };
+      a = r.coffre;
+      etagesAncree.push(r.etage);
+    }
+    assert.deepEqual(etagesLibre, etagesAncree);
+    const perso = ouvrir(coffreNeuf("vide"), false);
+    assert.equal((exporterVeilleeDuCoffre(abandonnerVeilleeDansCoffre(perso)) as { code: string }).code, "libre");
+  });
+
   it("réserve d'indice : une jauge relue d'avant un geste ne resigne pas la feuille", () => {
     const c0 = ouvrir(coffreAtelier("vide"));
     const c1 = (parlerDansCoffre(c0, []) as { coffre: Coffre }).coffre;
@@ -157,7 +189,7 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
     const bidouille: Coffre = { ...c0, tour: { ...t, veillee: { ...t.veillee!, indiceReserve: 3 } } };
     const b = creuserDansCoffre(bidouille, spawnIci(c0, 0)!.x, spawnIci(c0, 0)!.y, () => true);
     assert.ok(!b.ok && b.code === "reserve");
-    // s'effacer : abandon, exportable pour un coffre personnel
+    // s'effacer : abandon, exportable pour un coffre personnel ancré
     const p = abandonnerVeilleeDansCoffre(ouvrir(coffreNeuf("vide")));
     assert.equal(veilleeDe(p)!.v.fin, "abandon");
     assert.ok(!("ok" in exporterVeilleeDuCoffre(p)));
