@@ -14,8 +14,14 @@ p(k)+1 (parcours rejoué par pendule.ts) ; à la position 9 (source), la feuille
 Le transfert-miroir (loi du 9) et le Cube de Saturne sont des mécaniques de la Tour libre ; sur une
 veillée ils n'ont pas de prise (K31) : les feuilles ne reviennent pas.
 
-Usage : python3 labo/aura_veillee.py [veillee.json]     (sans argument : fixture réelle labo/veillee_atelier.json)
-Fixture : export de atelier/scripts/exporter-veillee.ts (bot « gourmand », graine 7, jour du vecteur)."""
+Usage : python3 labo/aura_veillee.py [veillee.json]     (sans argument : les deux fixtures)
+Deux fixtures, deux formes de run :
+  labo/veillee_atelier.json — bot « gourmand » (graine 7, jour du vecteur), sommet, 46 feuilles ;
+     régénérable par `exporter-veillee.ts 7`, comparée à l'octet par la CI.
+  labo/veillee_jouee.json — une veillée VRAIMENT JOUÉE (parler puis trois franchir, puis abandon),
+     relue par `exporter-veillee.ts --depuis` ; source `veillee_jouee_source.json` (format
+     serialiserVeillee, signatures comprises : le labo ne les lit pas). NON régénérable en CI —
+     un run joué ne se rejoue pas, c'est le propos."""
 import json, os, sys
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")  # Windows : console cp1252
 sys.path.insert(0, os.path.dirname(__file__))
@@ -63,13 +69,30 @@ def lab_test(v):
     bad = json.loads(json.dumps(v)); bad["gestes"][3]["i"] = 7
     try: valider_veillee(bad); R["K33_refus_trou_dindice"] = False
     except ValueError: R["K33_refus_trou_dindice"] = True
-    R["K34_fixture_reelle_au_sommet"] = v["fin"] == "sommet" and len(v["parcours"]) == ETAPES and L["restantes"] == FEUILLES - len(v["gestes"])
+    R["K34_comptes_coherents"] = L["restantes"] == FEUILLES - len(v["gestes"]) and \
+        len(v["parcours"]) == 1 + sum(1 for g in v["gestes"] if g["g"] == "franchir")
     return R, L
 
+def fixtures():
+    ici = os.path.dirname(__file__)
+    return [os.path.join(ici, n) for n in ("veillee_atelier.json", "veillee_jouee.json")]
+
 if __name__ == "__main__":
-    chemin = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "veillee_atelier.json")
-    v = json.load(open(chemin, encoding="utf-8"))
-    R, L = lab_test(v)
-    for k, ok in R.items(): print(("PASS " if ok else "FAIL "), k)
-    print("aura :", {AGG[k]: L["aura"][k] for k in AGG}, "| débordement", L["debordement"], "| feuilles", L["feuilles"], "/ 64 | fin", L["fin"])
-    sys.exit(0 if all(R.values()) else 1)
+    chemins = [sys.argv[1]] if len(sys.argv) > 1 else fixtures()
+    ok_total = True
+    for chemin in chemins:
+        v = json.load(open(chemin, encoding="utf-8"))
+        R, L = lab_test(v)
+        print("---", os.path.basename(chemin))
+        for k, ok in R.items(): print(("PASS " if ok else "FAIL "), k)
+        print("aura :", {AGG[k]: L["aura"][k] for k in AGG}, "| débordement", L["debordement"],
+              "| feuilles", L["feuilles"], "/ 64 | fin", L["fin"])
+        ok_total = ok_total and all(R.values())
+    if len(chemins) > 1:
+        # K36 — le labo n'est pas taillé pour le bot : une veillée jouée, abandonnée avant le sommet,
+        # se lit avec les mêmes règles. C'est la seule chose qu'une fixture non régénérable prouve.
+        a, b = (json.load(open(c, encoding="utf-8")) for c in chemins)
+        k36 = a["fin"] == "sommet" and b["fin"] != "sommet" and lecture(b)["feuilles"] < lecture(a)["feuilles"]
+        print(("PASS " if k36 else "FAIL "), "K36_deux_formes_de_run")
+        ok_total = ok_total and k36
+    sys.exit(0 if ok_total else 1)

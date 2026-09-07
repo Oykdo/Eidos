@@ -232,7 +232,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `labo/aura_voxel_lab.py` | 109 | pendulum-9 lab: voxel avatar, graded aura, 8 aggregators — figures, not proofs | 9 |
 | `labo/pendule9_run.py` | 171 | lab: 255-floor run, seal, Saturn Cube and anchoring | 11 |
 | `labo/unification.py` | 98 | lab: contract with `pendule.ts`, synthetic and real fixtures (`exporter-run.ts`), gift | 9 |
-| `labo/aura_veillee.py` | 75 | lab: a vigil's aura, reading of the 64 leaves over 8 positions (`exporter-veillee.ts`) | 6 |
+| `labo/aura_veillee.py` | 98 | lab: a vigil's aura, reading of the 64 leaves over 8 positions (bot and played vigil) | 8 |
 | `consensus.py` | 204 | PoW difficulty and cumulative work — historical | 6 |
 | `store.py` | 278 | PoW chain on disk — historical | — |
 | `federation.json` | — | roots and public seeds of the 7 validators, t0, slot | — |

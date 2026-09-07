@@ -450,8 +450,11 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
      à relier à `SIGNATURES` et à la muse de bande (`rangBande`).
   5. Aura ↔ Veillée : la jauge (`jauge.ts`, `veillee.ts`) ignore les 8 agrégateurs ; décider si
      l'aura est une lecture de la jauge ou un système parallèle.
-  6. Export réel : `exporter-run.ts` fige choix et objet porté ; brancher `sauver.ts` pour
-     exporter de vrais runs joués.
+  6. FAIT (2026-09-07, spec §11, K36) — `sauver.ts` n'était pas la bonne porte (c'est le sélecteur
+     de fichier du navigateur) : `exporter-veillee.ts --depuis <fichier>` relit une veillée jouée
+     depuis un carnet ou un export `serialiserVeillee`. Deuxième fixture `labo/veillee_jouee.json`,
+     non régénérable par construction. Reste : `exporter-run.ts` fige toujours choix et objet porté
+     (une ascension jouée se relirait par `parserAscension`, même schéma).
   7. Le mapping « racine digitale + balancier » de `pendule9_run.py` reste un chemin parallèle à
      `pendule.ts` ; à retirer quand 1–6 seront tranchés, `unification.py` suffit alors.
   8. Spinor : `spinor.ts` existe côté atelier (SU(2)/SO(3)) et pourrait porter l'orientation des
