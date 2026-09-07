@@ -4,9 +4,9 @@ name: labo
 on:
   push:
     branches: [main]
-    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/scripts/exporter-signatures.ts", "atelier/src/lib/eidos/signatures.ts", "atelier/src/lib/eidos/voxels.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json"]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/scripts/exporter-signatures.ts", "atelier/src/lib/eidos/signatures.ts", "atelier/src/lib/eidos/voxels.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json", "docs/SPEC_COFFRE_HORAIRE.md", "chaine-eidos.dat", "etat.json"]
   pull_request:
-    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/scripts/exporter-signatures.ts", "atelier/src/lib/eidos/signatures.ts", "atelier/src/lib/eidos/voxels.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json"]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/scripts/exporter-signatures.ts", "atelier/src/lib/eidos/signatures.ts", "atelier/src/lib/eidos/voxels.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json", "docs/SPEC_COFFRE_HORAIRE.md", "chaine-eidos.dat", "etat.json"]
   workflow_dispatch:
 concurrency:
   group: labo-${{ github.ref }}
@@ -33,6 +33,8 @@ jobs:
         run: python labo/unification.py
       - name: K29–K36 aura de la veillée (bot et veillée jouée)
         run: python labo/aura_veillee.py
+      - name: K39–K46 coffre horaire sur les vraies têtes du testnet
+        run: python labo/coffre_horaire.py
       - name: hygiène — la fixture régénérée est identique au dépôt
         shell: bash
         run: git diff --exit-code -- labo/run_fixture.json
