@@ -6,7 +6,7 @@ Contrat (docs/SPEC_AURA_PENDULE9.md §7) — un run exporté par atelier `pendul
     [{"i": 0..26, "p": 0..8, "e": 0..254, "s": {"x": 0..8, "y": p}}, ...]   (27 étapes)
 Cran p (Terre = 8 … Uranie = 0)  →  position pendule-9 = p + 1 (1..8 = agrégateur, 9 = source).
 Coût d'une étape = 1 + bande(e) // 3, bande(e) = min(8, e·9 // 255) — même formule que bandeDe().
-Le genre du don reste à pendule.ts (genreDon) ; le labo n'ajoute que le tier = position.
+Le don : genre par hachage (genreDon, à l'atelier), quantité = position = tier du labo (quantiteDon, K35).
 
 Usage : python3 labo/unification.py [run.json]     (sans argument : fixture synthétique)
 Deux fixtures : labo/run_fixture.json est SYNTHÉTIQUE (même forme, pas tour.ts) ;
@@ -79,6 +79,9 @@ def lab_test():
     ra = json.load(open(os.path.join(os.path.dirname(__file__), "run_atelier.json"), encoding="utf-8"))
     sta = appliquer_aura(ra, 3)
     R["K26_export_atelier_lisible_et_source_atteinte"] = any(x["pos"] == 9 for x in sta["log"]) and total(sta["aggs"]) == total(base_aggregators())
+    # K35 — LIST 1 : le tier du labo EST la quantité du don de l'atelier (quantiteDon = p + 1) ;
+    # le genre reste au hachage (genreDon), le labo n'y touche pas.
+    R["K35_tier_egale_quantite_don"] = all(et.get("q") == et["p"] + 1 == x["tier"] for et, x in zip(ra, sta["log"]))
     R["K25_cout_borne"] = all(1 <= cout(e) <= 3 for e in range(ETAGES)) and cout(0) == 1 and cout(254) == 3
     return R, run, st1
 

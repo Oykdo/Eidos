@@ -56,7 +56,7 @@ federation.json     racines + graines publiques des 7 validateurs, t0, créneau 
 chaine-eidos.dat    la chaîne du testnet (écrite par la CI, jamais à la main)
 etat.json           état publié (soldes, sorties, artefacts, invariant)
 mempool.json        demandes robinet / envoi
-labo/               laboratoire pendule-9 hors chaîne (aura, avatar, agrégateurs) — figures, pas preuves (34 contrôles)
+labo/               laboratoire pendule-9 hors chaîne (aura, avatar, agrégateurs) — figures, pas preuves (35 contrôles)
 veillees/           preuves de veillée déposées (index.json + un fichier par preuve), écrites par veillees.yml
 atelier/            interface web (TanStack Start, React), rejoue la spec en TS ;
                     scripts/deposer-veillee.ts = le juge des preuves dans la CI (logique dans lib/eidos/depot.ts)
@@ -169,7 +169,7 @@ python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 407 suites Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 408 suites Eidos
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 ```
 

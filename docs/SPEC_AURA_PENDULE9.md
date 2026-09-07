@@ -101,3 +101,10 @@ Kill criteria (`labo/aura_veillee.py`, fixture réelle `labo/veillee_atelier.jso
 Lecture de la fixture : sommet atteint, 46 feuilles sur 64, aura finale vigueur 6 · souffle 8 · focus 1 · ancrage 0 · éclat 0 · écho 6 · ombre 1 · vide 4, débordement 8. Le gourmand vide deux agrégateurs et déborde de huit : la projection *voit* une politique, ce qu'un total de feuilles ne montre pas — c'est sa seule valeur ajoutée, et elle suffit.
 
 Conséquences : la loi du 9 (transfert-miroir) et le Cube restent des mécaniques de la **Tour libre** (`pendule9_run.py`), hors veillée. Le labo n'importe jamais les signatures : l'export les retire, le juge reste `jugerVeillee`. Un run qui compte n'a pas plus d'aura qu'un run libre — l'aura ne compte pas.
+
+## 10. Le don : genre au hachage, quantité à la position (LIST 1, K35)
+`genreDon(e, s, maître, n)` reste seul juge du **genre** (élixir, pierre, gemme, lair) : c'est ce que phase 0 mesure (`gemmesParLigneMax`), on n'y touche pas. Le labo n'apportait qu'un « tier = position » ; il devient la **quantité** : `quantiteDon(s) = s.y + 1 = p + 1`, de 1 (Uranie) à 9 (Terre, la source). Ni maître, ni run, ni coffre n'y entrent — deux joueurs sur la même case reçoivent le même nombre. `don()` assemble les deux.
+
+Contrôles : `pendule.test.ts` (quantité = y + 1, indépendante de x, du maître et du run, bornée 1..9, genre inchangé) ; `exporter-run.ts` exporte `q`, et K35 vérifie que `q = p + 1 = tier` sur l'export réel. Les mesures de phase 0 sont inchangées par construction (elles ne lisent que le genre).
+
+Ce qui reste ouvert : rien ne *donne* encore ce don dans la Tour — `genreDon` n'est appelé que par phase 0. Brancher `don()` sur l'arrivée d'étage (`veillee-tour.ts` / hôtes) est un chantier de jeu, pas de labo : LIST 10.
