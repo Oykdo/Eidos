@@ -142,7 +142,7 @@ Details: [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 
 | Register | Page | Role |
 |---|---|---|
-| Verify | **Vault** | Balance, send, save `eidos.carnet` |
+| Verify | **Vault** | Balance, send, save `eidos.carnet` — behind it, the orbital background: the emission law as a limaçon, nine muse-stars with their dances, the epoch's phase read from the followed head, a parallax toward the pointer, a click to each muse's page; a reading, nothing is stored |
 | | **Log** | Genesis, chain, Merkle proof |
 | | **Witness** | A second memory: the signed head, not the keys. Judges a published output |
 | | **Glyphs** | 64 stacks, padding refused |
