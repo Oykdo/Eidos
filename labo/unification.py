@@ -9,8 +9,9 @@ Coût d'une étape = 1 + bande(e) // 3, bande(e) = min(8, e·9 // 255) — même
 Le genre du don reste à pendule.ts (genreDon) ; le labo n'ajoute que le tier = position.
 
 Usage : python3 labo/unification.py [run.json]     (sans argument : fixture synthétique)
-AVERTISSEMENT : la fixture labo/run_fixture.json est SYNTHÉTIQUE (même forme, pas tour.ts) ;
-la parité réelle exige un export depuis l'atelier — voir .github/workflows/labo.yml, job parité."""
+Deux fixtures : labo/run_fixture.json est SYNTHÉTIQUE (même forme, pas tour.ts) ;
+labo/run_atelier.json est un export RÉEL de atelier/scripts/exporter-run.ts (labo 0 labo),
+que le job parité de .github/workflows/labo.yml régénère et compare à l'octet."""
 import hashlib, json, sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from aura_voxel_lab import base_aggregators, transfer, total, AGG, CAP
@@ -71,6 +72,12 @@ def lab_test():
     bad = json.loads(json.dumps(run)); bad[5]["s"]["y"] = (bad[5]["p"] + 1) % 9
     try: valider_run(bad); R["K24_refus_spawn_incoherent"] = False
     except ValueError: R["K24_refus_spawn_incoherent"] = True
+    # K26 — export réel de l'atelier (scripts/exporter-run.ts, maitre=labo n=0 ville=labo) : lisible,
+    # et le cran 8 (source) est atteint — l'hypothèse « jamais de source en 27 étapes » ne tenait
+    # que sur la fixture synthétique ; sur dix runs réels, 1 à 7 passages par la source.
+    ra = json.load(open(os.path.join(os.path.dirname(__file__), "run_atelier.json")))
+    sta = appliquer_aura(ra, 3)
+    R["K26_export_atelier_lisible_et_source_atteinte"] = any(x["pos"] == 9 for x in sta["log"]) and total(sta["aggs"]) == total(base_aggregators())
     R["K25_cout_borne"] = all(1 <= cout(e) <= 3 for e in range(ETAGES)) and cout(0) == 1 and cout(254) == 3
     return R, run, st1
 

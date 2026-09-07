@@ -422,6 +422,41 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   franchir toujours possible. `GesteOk` porte `ajoutes`, `verses`, `perdus`. Le coffre
   n'a pas de places : ce qui borne le butin est l'arbre. +3 contrôles.
 
+### Labo pendule-9 — aura, avatar voxelisé, 8 agrégateurs — PR 1 FAITE (2026-09-07), voir docs/SPEC_AURA_PENDULE9.md
+- `labo/` (Python stdlib, figures pas preuves) : `aura_voxel_lab.py` (avatar 16×32×16, visage /
+  taille / poids sans équipement ; aura gaussienne radiale × e^(−Γt) avec plancher résiduel ;
+  8 agrégateurs aux positions 1..8, 9 = source, loi du 9 ; K1–K9), `pendule9_run.py`
+  (255 étages par racine digitale + balancier, sceau en chaîne de hash, Cube de Saturne ;
+  K10–K18), `unification.py` (contrat d'échange avec `pendule.ts` : 27 étapes `{i,p,e,s}`,
+  cran p → position p+1, coût `1 + bande(e)//3` ; K19–K26).
+- Pont atelier → labo : `atelier/scripts/exporter-run.ts` (choix fixes, portMot 0), fixture réelle
+  `labo/run_atelier.json` comparée à l'octet par le job `parite-atelier` de `labo.yml`
+  (matrice 3 OS × Python 3.9/3.12 + hygiène stdlib/fixtures). Groupe de concurrence propre,
+  `contents: read`, déclenché seulement sur les chemins du labo et de `pendule.ts`/`tour.ts`.
+- Deux hypothèses falsifiées en route : l'asymétrie 9/9/9/9/9/5/5/5 après 255 étages vient de la
+  queue 255 = 28·9 + 3, pas d'un biais de drainage (K18) ; « le cran 8 n'est jamais atteint »
+  ne tenait que sur la fixture synthétique — 1 à 7 passages par la source sur dix runs réels (K26).
+  La redistribution reste au cran 8.
+- **Reste — zones non branchées (LIST) :**
+  1. Loot : `tier = position` du labo n'est pas relié à `genreDon` (`pendule.ts`) — décider si le
+     tier module le genre, la quantité, ou seulement la lecture.
+  2. Avatar : `labo/aura_voxel_lab.py` (corps 16×32×16) et `voxels.ts` (objets, VOXEL_N = 12) sont
+     deux voxelisations sans lien — port TS du corps ou abandon du corps Python au profit d'une
+     scène `@react-three/fiber` (le coffre 3D en est le modèle).
+  3. Cube de Saturne : « restaure sans signer le sceau » est une figure Python ; le sceau réel est
+     `ancrage.ts` (graine `eidos-ascension/1`). Spécifier ce que le Cube peut toucher sans rompre
+     « ce qui compte est ancré ».
+  4. Muses ↔ modes orbitaux s/p/d/f : table [C] (`MUSES` dans `pendule9_run.py`) sans effet de jeu ;
+     à relier à `SIGNATURES` et à la muse de bande (`rangBande`).
+  5. Aura ↔ Veillée : la jauge (`jauge.ts`, `veillee.ts`) ignore les 8 agrégateurs ; décider si
+     l'aura est une lecture de la jauge ou un système parallèle.
+  6. Export réel : `exporter-run.ts` fige choix et objet porté ; brancher `sauver.ts` pour
+     exporter de vrais runs joués.
+  7. Le mapping « racine digitale + balancier » de `pendule9_run.py` reste un chemin parallèle à
+     `pendule.ts` ; à retirer quand 1–6 seront tranchés, `unification.py` suffit alors.
+  8. Spinor : `spinor.ts` existe côté atelier (SU(2)/SO(3)) et pourrait porter l'orientation des
+     modes p/d au lieu d'une nouvelle table.
+
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
 signée, **veillée** : trois têtes à cheval sur minuit UTC, relique, **glyphes** : adresse 27 + 4, condensat 43, bourrage refusé),

@@ -72,8 +72,8 @@ Contrat d'échange (JSON, 27 étapes) : `{"i","p","e","s":{"x","y"}}` avec `s.y 
 
 Kill criteria : fixture valide (K19), déterminisme (K20), invariant (K21), source vidée à 9 (K22), équivalence des agrégateurs touchés entre le chemin racine digitale et le chemin crans (K23), refus d'un spawn incohérent (K24), coût borné (K25).
 
-**Constat de lab :** sur la fixture synthétique, le cran 8 (source) n'est jamais atteint en 27 étapes : `source_9` monte à 18 sans redistribution. La transition de `pendule.ts` (`+1 + h%3 + tenue`, inversion sur muse impaire) ne garantit pas non plus un passage par 8. Décision ouverte : redistribuer à chaque changement de bande (tous les 3 étages) plutôt qu'au seul cran 8.
+**Constat de lab — hypothèse falsifiée (K26).** Sur la fixture synthétique le cran 8 (source) n'était jamais atteint et `source_9` montait à 18 ; sur l'export réel de `pendule.ts` (tenue, inversion par muse), la source est atteinte 1 à 7 fois sur 27 étapes, sur dix runs. La redistribution reste au cran 8 ; l'idée « redistribuer par bande » est abandonnée.
 
 **GitHub Actions — `.github/workflows/labo.yml` :** matrice 3 OS × Python 3.9/3.12 sur K1–K25, hygiène (fixture identique au dépôt, stdlib seulement), et un job `parite-atelier` qui s'active dès qu'`atelier/scripts/exporter-run.ts` existe : export d'un vrai run TS → lecture par `unification.py`. Groupe de concurrence propre, `contents: read`, déclenché seulement sur `labo/**`.
 
-**Chantier suivant :** `atelier/scripts/exporter-run.ts` (10 lignes : `run()` sur une graine de ville publique, `JSON.stringify` sur stdout) — le job de parité devient alors réel.
+**Pont réel :** `atelier/scripts/exporter-run.ts` (`node --experimental-strip-types`, args maitre n ville, choix fixes, portMot 0) ; fixture réelle `labo/run_atelier.json`, comparée à l'octet dans le job `parite-atelier`. La LIST des zones non branchées est dans `docs/FEUILLE_DE_ROUTE.md`.
