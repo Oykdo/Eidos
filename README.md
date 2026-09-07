@@ -230,7 +230,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
 | `labo/aura_voxel_lab.py` | 109 | pendulum-9 lab: voxel avatar, graded aura, 8 aggregators — figures, not proofs | 9 |
-| `labo/pendule9_run.py` | 142 | lab: 255-floor run, seal, Saturn Cube | 9 |
+| `labo/pendule9_run.py` | 171 | lab: 255-floor run, seal, Saturn Cube and anchoring | 11 |
 | `labo/unification.py` | 94 | lab: contract with `pendule.ts`, synthetic and real fixtures (`exporter-run.ts`) | 8 |
 | `consensus.py` | 204 | PoW difficulty and cumulative work — historical | 6 |
 | `store.py` | 278 | PoW chain on disk — historical | — |

@@ -456,6 +456,12 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
      `pendule.ts` ; à retirer quand 1–6 seront tranchés, `unification.py` suffit alors.
   8. Spinor : `spinor.ts` existe côté atelier (SU(2)/SO(3)) et pourrait porter l'orientation des
      modes p/d au lieu d'une nouvelle table.
+  9. Titre « sans Cube » : impossible tant que le Cube n'est pas un `CHOIX` du pendule (la trace ne
+     le voit pas) ; exige un `TAG_PENDULE` versionné.
+- **LIST 3 tranchée (2026-09-07, spec §8, K27–K28)** : le Cube ne touche que les 8 agrégateurs
+  (`actuel := résiduel`, une fois) ; jamais graine, trace, tête, pièce ni étape jouée. Compatible
+  avec « ce qui compte est ancré » parce que la trace ne contient que `(p, e, s)`. `ancrer()` en
+  Python reproduit `graineAncree` à l'octet, sans vecteur partagé pour l'instant.
 
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
