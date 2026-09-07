@@ -11,7 +11,7 @@
 A prototype chain with **bounded emission and no halving**, a **federated consensus**, and **post-quantum signatures made of hashing alone** — no elliptic curve anywhere. The specification is Python, standard library only. A web atelier replays the same rules in the browser. Testnet only: the eidôlon has no value.
 
 - Live atelier: [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/)
-- Testnet: seven validators, one block per hour forged by GitHub Actions, faucet and transfers through issues
+- Testnet: seven validators, one block per hour forged by GitHub Actions, faucet through issues or email, transfers through issues
 - One file for your vault: `eidos.carnet`
 
 ## Contents
@@ -154,6 +154,8 @@ Details: [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 
 **The Tower and the pendulum.** Exploration is free; at the end of each room the pendulum reads what the vault did there (honoured the host, opened an alcove, captured an occupant, or nothing) and chooses the **route** — 27 stops across nine bands — and the arrival cell, never the content of a floor, which stays public and fixed. A free run is a reading and counts for nothing. A run that counts is **anchored**: its seed is `SHA-256d("eidos-ascension/1" ‖ id_bloc ‖ txid ‖ rank)` — a signed head and a proven, unspent coin, never the vault, the machine or the browser. The finished ascension is exported and judged without replay. No browser fingerprint, no machine lock, no client proof of work: what counts is anchored, what is free is worth nothing ([`docs/SPEC_SYBIL.md`](docs/SPEC_SYBIL.md)).
 
+**The Vigil (La Veillée).** A roguelike where the key is the life: a run enters with an XMSS tree of 64 WOTS+ leaves, every gesture that counts (crossing a room, talking to the host, digging, capturing) burns one leaf, and an empty tree ends the climb — permadeath as a theorem, not a rule. The day's vigil is the same for everyone: its route derives from the **first block of the UTC day**, proven by two signed heads without replay; it counts because it is anchored on an unspent coin. The finished run exports as `eidos-veillee/1` and is judged by anyone (heads, coin, every leaf in order, the route recomputed). Rooms are named after the era of their egg; other players' runs come back as ghosts. Design bible: [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md) — core library in this repository, page and leaderboard next.
+
 **Figures are not proofs.** The map, the signs, the relic scene and the artefacts are readings; only the ledger, the chain and the signatures commit.
 
 **One file.** The vault is written to `eidos.carnet`. WOTS+ signs a spend, not the file — signing a backup would burn a one-time key; the file carries a SHA-256d trace bound to the current address. A legacy `.psnx` still opens, then rewrites as `.carnet`.
@@ -182,7 +184,7 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `reliques.json` | — | declared relics: id, address, age, hint — never a seed | — |
 | `chaine-eidos.dat` | — | the testnet chain, written by the CI | — |
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
-| `docs/` | — | specifications: relics, tower, pendulum, Sybil, vault audit; banner generator | 2 |
+| `docs/` | — | specifications: relics, tower, pendulum, Sybil, vault audit, vigil bible; banner generator | 2 |
 | `atelier/` | — | web atelier; `npm test` runs 30 script tests and 338 Eidos tests | 338 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (issues), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor.
