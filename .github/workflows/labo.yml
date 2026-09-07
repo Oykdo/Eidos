@@ -1,0 +1,62 @@
+name: labo
+# Laboratoire pendule-9 : aura, avatar voxelisé, agrégateurs, unification.
+# Hors chaîne : ne touche ni chaine-eidos.dat, ni etat.json, ni mempool.json (groupe de concurrence distinct).
+on:
+  push:
+    branches: [main]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml"]
+  pull_request:
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml"]
+  workflow_dispatch:
+concurrency:
+  group: labo-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  kill-criteria:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.9", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ matrix.python }}" }
+      - name: K1–K9 aura / avatar
+        run: python labo/aura_voxel_lab.py
+      - name: K10–K18 run 255 étages
+        run: python labo/pendule9_run.py
+      - name: K19–K25 unification
+        run: python labo/unification.py
+      - name: hygiène — la fixture régénérée est identique au dépôt
+        shell: bash
+        run: git diff --exit-code -- labo/run_fixture.json
+      - name: hygiène — bibliothèque standard seulement
+        shell: bash
+        run: |
+          ! grep -rEn "^(import|from) (numpy|scipy|pandas|requests)" labo/ || (echo "dépendance hors stdlib" && exit 1)
+  parite-atelier:
+    # Parité réelle pendule.ts → labo : exporte un run depuis l'atelier et le fait lire par unification.py.
+    # Ne s'exécute que si le script d'export existe (chantier suivant : atelier/scripts/exporter-run.ts).
+    runs-on: ubuntu-latest
+    needs: kill-criteria
+    steps:
+      - uses: actions/checkout@v4
+      - id: export
+        shell: bash
+        run: |
+          if [ -f atelier/scripts/exporter-run.ts ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "::notice::exporter-run.ts absent — parité réelle sautée (fixture synthétique seulement)"; fi
+      - if: steps.export.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: atelier/package-lock.json }
+      - if: steps.export.outputs.present == 'true'
+        working-directory: atelier
+        run: npm ci && npx tsx scripts/exporter-run.ts > ../run_atelier.json
+      - if: steps.export.outputs.present == 'true'
+        uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - if: steps.export.outputs.present == 'true'
+        run: python labo/unification.py run_atelier.json
