@@ -318,11 +318,28 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   store) ; une jauge relue d'avant un geste est refusée (`reserve`). L'arbre se
   reconstruit depuis le maître, jamais stocké ; le coffre d'atelier joue et
   n'exporte pas. 6 contrôles.
-- Reste de PR 2 : morceau 3 (en-têtes de `chaine-eidos.dat` lus côté atelier pour
-  la tête de la veille), morceau 4 (page Veillée, `navigation.ts`, store avec réserve
-  localStorage, huit répliques dans `hotes-lexique.ts`). Puis PR 3 (arbre à l'écran,
-  classement statique, fantômes ; bot xorshift sur mille veillées avant), PR 4
-  (gardiens C3), PR 5 [OUVERT] Godot/Rust.
+- **PR 2, morceaux 3 et 4 FAITS (2026-09-07)** : `chaine-reseau.ts` lit les en-têtes
+  de `chaine-eidos.dat` (FORMAT 3, corps sautés par la longueur, `txid = sha256d(core)`
+  pour la racine de Merkle), vérifie chaque tête XMSS et le chaînage, rend le premier
+  bloc du jour et la tête de la veille (`premierDuJour`, `tetesDeLaVeillee`) ; testé
+  sur la chaîne réelle du dépôt et sur les vecteurs, 4 contrôles. **L'ancre** : la
+  pièce est prouvée contre une tête **du même jour**, au plus tôt le bloc du jour
+  (`teteAncre`, en pratique la tête suivie, car `etat.json` ne publie que le carnet
+  courant) ; le juge vérifie cette troisième tête ; famille `veillee` : sorties au
+  second bloc, +1 contrôle. Page **Veillée** (registre Jouer, `routes/veillee.tsx`,
+  `components/veillee/VeilleeView.tsx`) : lire la chaîne, suivre le réseau, le bloc du
+  jour et la veille, ouvrir sur une pièce du coffre, compteur de feuilles, salle et
+  nom d'ère, réplique de la muse (`veillee-lexique.ts`, une par muse, les trois groupes
+  de neuf de `hotes-lexique.ts` intacts, 1 contrôle), gestes (parler, creuser la case
+  d'arrivée, ouvrir l'alcôve, prendre, franchir vers les trois destinations,
+  s'effacer), fin, verdict jugé sans rejeu, fantôme, preuve exportée. Store : réserve
+  d'indice dans localStorage (`eidos-veillee-reserve-v1`) écrite avant la signature,
+  repli session ; chaîne et fédération lues jamais persistées. `npm test` : 350.
+- Reste : PR 3 (arbre à l'écran, son et haptique, classement statique, fantômes dans
+  la salle ; bot xorshift sur mille veillées avant), PR 4 (gardiens C3, Guide
+  « Jouer »), PR 5 [OUVERT] Godot/Rust. Limite connue : le coffre d'atelier ne peut
+  ouvrir une veillée que s'il a une pièce sur le réseau ; une veillée libre (sans
+  ancre, jauge seulement) reste à décider.
 
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête

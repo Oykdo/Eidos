@@ -46,6 +46,25 @@ import {
 import { serialiserAscension } from "./eidos/ancrage.ts";
 import type { Choix } from "./eidos/pendule.ts";
 import { fouillerCaseDansCoffre } from "./eidos/fouilles.ts";
+import { suivreChaine, tetesDeLaVeillee } from "./eidos/chaine-reseau.ts";
+import { FEDERATION_URL, parserFederation, type FederationPublique, type TeteReseau } from "./eidos/temoin.ts";
+import { serialiserVeillee } from "./eidos/veillee.ts";
+import {
+  abandonnerVeilleeDansCoffre,
+  capturerDansCoffre,
+  creuserDansCoffre,
+  effacerVeilleeDansCoffre,
+  exporterVeilleeDuCoffre,
+  franchirDansCoffre,
+  ouvrirAlcoveDansCoffre,
+  ouvrirVeilleeDansCoffre,
+  parlerDansCoffre,
+  reserverEnSession,
+  veilleeDe,
+  type GesteOk,
+  type RefusVeillee,
+  type Reserver,
+} from "./eidos/veillee-tour.ts";
 import { preuveReseau, serialiser as serialiserPreuve } from "./eidos/merkle.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { t, type Msg } from "./i18n.ts";
@@ -147,6 +166,20 @@ type Etat = {
   finDeSalle: (decision?: Choix | null) => void;
   abandonnerAscension: () => void;
   derniereAscension: string | null;
+  /** La veillée — chaine-reseau.ts, veillee-tour.ts. La chaîne lue et la fédération ne sont jamais persistées. */
+  chaine: { tetes: TeteReseau[]; hauteur: number } | null;
+  chaineOccupe: boolean;
+  federation: FederationPublique | null;
+  suivreChaine: () => Promise<void>;
+  ouvrirVeillee: (ref: string) => void;
+  veilleeParler: () => void;
+  veilleeCreuser: (x: number, y: number) => void;
+  veilleeAlcove: () => void;
+  veilleeCapturer: (k: number, i: number) => void;
+  veilleeFranchir: (decision?: Choix | null) => void;
+  veilleeAbandonner: () => void;
+  veilleeEffacer: () => void;
+  derniereVeillee: string | null;
 };
 
 function persister(c: Coffre) {
@@ -155,6 +188,47 @@ function persister(c: Coffre) {
   } catch {
     /* quota */
   }
+}
+
+const KEY_RESERVE = "eidos-veillee-reserve-v1";
+
+/** La réserve d'indice, écrite dans localStorage AVANT la signature (comme
+ *  indice-<v>.json chez un validateur) ; repli sur la session si le stockage manque. */
+const reserverLocal: Reserver = (racine, i) => {
+  try {
+    const m = JSON.parse(localStorage.getItem(KEY_RESERVE) ?? "{}") as Record<string, unknown>;
+    const dernier = typeof m[racine] === "number" ? (m[racine] as number) : 0;
+    if (i < dernier) return false;
+    m[racine] = i + 1;
+    localStorage.setItem(KEY_RESERVE, JSON.stringify(m));
+  } catch {
+    /* stockage absent : la session fait foi */
+  }
+  return reserverEnSession(racine, i);
+};
+
+/** Après un geste : persister, dire la feuille ou la fin, préparer l'export si elle est finie. */
+function apresGeste(
+  r: GesteOk | RefusVeillee,
+  set: (p: Partial<Pick<Etat, "coffre" | "erreur" | "flash" | "derniereVeillee">>) => void,
+): void {
+  if (!r.ok) {
+    set({ erreur: `${t(`veillee.err.${r.code}` as Msg)} — ${r.motif}`, flash: null });
+    return;
+  }
+  persister(r.coffre);
+  let derniereVeillee: string | null = null;
+  const w = veilleeDe(r.coffre);
+  if (w && w.v.fin !== null) {
+    const ex = exporterVeilleeDuCoffre(r.coffre);
+    if (!("ok" in ex)) derniereVeillee = serialiserVeillee(ex);
+  }
+  set({
+    coffre: r.coffre,
+    erreur: null,
+    flash: r.fin ? t(`veillee.fin.${r.fin}` as Msg) : t("veillee.flash.feuille", { n: r.feuilles }),
+    derniereVeillee,
+  });
 }
 
 function persisterTemoin(t: Temoin) {
@@ -187,6 +261,10 @@ export const useCoffre = create<Etat>((set, get) => ({
   reseauOccupe: false,
   monde: null,
   derniereAscension: null,
+  chaine: null,
+  chaineOccupe: false,
+  federation: null,
+  derniereVeillee: null,
   demandeReseau: null,
   canaux: null,
   demandeStatut: null,
@@ -636,6 +714,90 @@ export const useCoffre = create<Etat>((set, get) => ({
             y: r.spawn.y,
           }),
     });
+  },
+
+  suivreChaine: async () => {
+    set({ chaineOccupe: true });
+    let fed = get().federation;
+    if (!fed) {
+      try {
+        const r = await fetch(FEDERATION_URL, { cache: "no-store" });
+        const f = parserFederation(await r.json());
+        if ("erreur" in f) {
+          set({ chaineOccupe: false, erreur: f.erreur, flash: null });
+          return;
+        }
+        fed = f;
+      } catch (e) {
+        set({ chaineOccupe: false, erreur: e instanceof Error ? e.message : String(e), flash: null });
+        return;
+      }
+    }
+    const r = await suivreChaine(fed);
+    if ("erreur" in r) {
+      set({ chaineOccupe: false, erreur: r.erreur, flash: null });
+      return;
+    }
+    set({
+      chaine: r,
+      federation: fed,
+      chaineOccupe: false,
+      erreur: null,
+      flash: t("veillee.chaine.hauteur", { h: r.hauteur }),
+    });
+  },
+
+  ouvrirVeillee: (ref) => {
+    const { coffre, chaine, reseau } = get();
+    if (!chaine) {
+      set({ erreur: t("veillee.err.chaine"), flash: null });
+      return;
+    }
+    if (!reseau || !reseau.verdict.ok) {
+      set({ erreur: t("veillee.err.tete"), flash: null });
+      return;
+    }
+    const jour = tetesDeLaVeillee(chaine.tetes);
+    if (!jour) {
+      set({ erreur: t("veillee.err.jour"), flash: null });
+      return;
+    }
+    const piece = reseau.sorties.find((s) => `${s.txid}:${s.rang}` === ref);
+    const p = piece ? preuveReseau(reseau.sorties, ref) : null;
+    if (!piece || !p || !coffre.sorties.some((s) => s.adresse === piece.adresse)) {
+      set({ erreur: t("veillee.err.piece"), flash: null });
+      return;
+    }
+    const r = ouvrirVeilleeDansCoffre(coffre, jour.tete, jour.veille, piece, serialiserPreuve(p), reseau.tete);
+    if (!r.ok) {
+      set({ erreur: `${t(`veillee.err.${r.code}` as Msg)} — ${r.motif}`, flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({ coffre: r.coffre, erreur: null, flash: t("veillee.flash.ouverte", { h: jour.tete.hauteur }), derniereVeillee: null });
+  },
+
+  veilleeParler: () => apresGeste(parlerDansCoffre(get().coffre, get().monde, reserverLocal), set),
+  veilleeCreuser: (x, y) => apresGeste(creuserDansCoffre(get().coffre, x, y, reserverLocal), set),
+  veilleeAlcove: () => apresGeste(ouvrirAlcoveDansCoffre(get().coffre, reserverLocal), set),
+  veilleeCapturer: (k, i) => apresGeste(capturerDansCoffre(get().coffre, k, i, reserverLocal), set),
+  veilleeFranchir: (decision = null) =>
+    apresGeste(franchirDansCoffre(get().coffre, get().monde, decision, reserverLocal), set),
+  veilleeAbandonner: () => {
+    const next = abandonnerVeilleeDansCoffre(get().coffre);
+    persister(next);
+    const ex = exporterVeilleeDuCoffre(next);
+    set({
+      coffre: next,
+      erreur: null,
+      flash: t("veillee.fin.abandon"),
+      derniereVeillee: "ok" in ex ? null : serialiserVeillee(ex),
+    });
+  },
+  veilleeEffacer: () => {
+    const next = effacerVeilleeDansCoffre(get().coffre);
+    persister(next);
+    set({ coffre: next, erreur: null, flash: null, derniereVeillee: null });
   },
 
   abandonnerAscension: () => {

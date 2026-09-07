@@ -149,12 +149,13 @@ Détail : [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 | Lire | **Carte** | Reliques du monde par âge et par muse ; trophée d'un sceau, jugé sans rejeu |
 | | **Signes** | Lectures des mêmes 64 glyphes |
 | Jouer | **Tour** | 255 étages, neuf muses en hôtes, élixirs, capsules et bestiaire, secrets, portes par sceau |
+| | **Veillée** | Le roguelike du jour : 64 feuilles WOTS+ pour vie, 27 salles tirées du premier bloc du jour, preuve jugée sans rejeu |
 | | **Reliques** | La scène de la relique et « Relique trouvée » |
 | | **Guide** | Vérifier / Lire / Jouer, les cinq mots, les limites |
 
 **La Tour et le pendule.** L'exploration est libre ; en fin de salle, le pendule lit ce que le coffre y a fait (honoré l'hôte, ouvert une alcôve, pris un occupant, ou rien) et choisit le **parcours** — 27 étapes sur neuf bandes — et la case d'arrivée, jamais le contenu d'un étage, qui reste public et fixe. Un run libre est une lecture et ne compte pour rien. Un run qui compte est **ancré** : sa graine est `SHA-256d("eidos-ascension/1" ‖ id_bloc ‖ txid ‖ rang)` — une tête signée et une pièce prouvée non dépensée, jamais le coffre, la machine ni le navigateur. L'ascension achevée s'exporte et se juge sans rejeu. Pas d'empreinte de navigateur, pas de verrou de machine, pas de preuve de travail côté client : ce qui compte est ancré, ce qui est libre ne vaut rien ([`docs/SPEC_SYBIL.md`](docs/SPEC_SYBIL.md)).
 
-**La Veillée.** Un roguelike où la clé est la vie : un run entre avec un arbre XMSS de 64 feuilles WOTS+, chaque geste qui compte (franchir une salle, parler à l'hôte, creuser, prendre) brûle une feuille, et l'arbre vide arrête la montée — la mort permanente comme théorème, pas comme règle. La veillée du jour est la même pour tous : son parcours dérive du **premier bloc du jour UTC**, prouvé par deux têtes signées sans rejeu ; elle compte parce qu'elle est ancrée sur une pièce non dépensée. Le run achevé s'exporte en `eidos-veillee/1` et se juge par quiconque (têtes, pièce, chaque feuille dans l'ordre, parcours recalculé). Les salles portent le nom de l'ère de leur œuf ; les runs des autres reviennent en fantômes. Bible de conception : [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md) — le cœur est dans ce dépôt, la page et le classement suivent.
+**La Veillée.** Un roguelike où la clé est la vie : un run entre avec un arbre XMSS de 64 feuilles WOTS+, chaque geste qui compte (franchir une salle, parler à l'hôte, creuser, prendre) brûle une feuille, et l'arbre vide arrête la montée — la mort permanente comme théorème, pas comme règle. La veillée du jour est la même pour tous : son parcours dérive du **premier bloc du jour UTC**, prouvé par deux têtes signées sans rejeu ; elle compte parce qu'elle est ancrée sur une pièce non dépensée. Le run achevé s'exporte en `eidos-veillee/1` et se juge par quiconque (têtes, pièce, chaque feuille dans l'ordre, parcours recalculé). Les salles portent le nom de l'ère de leur œuf ; les runs des autres reviennent en fantômes. Bible de conception : [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md) — le cœur et la page Veillée sont dans ce dépôt, le classement et les fantômes suivent.
 
 **Figures ≠ preuves.** La carte, les signes, la scène de la relique et les artefacts sont des lectures ; seuls le carnet, la chaîne et les signatures engagent.
 
@@ -175,7 +176,7 @@ Détail : [`atelier/README.md`](atelier/README.md).
 | `noeud.py` | 1151 | nœud du testnet : rejeu, forge, robinet, envois, `--depuis`, reliques, `etat.json` | 5 + 3 + 4 + 5 + 2 |
 | `robinet.py` | 420 | file du robinet alimentée par issues et courriels, frein par auteur | 14 |
 | `courriel.py` | 321 | second canal du robinet : boîte IMAP, même filtre, frein par expéditeur | 6 |
-| `vecteurs.py` | 203 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 9 familles) | parité |
+| `vecteurs.py` | 206 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 9 familles) | parité |
 | `qr.py` | 428 | encodeur QR, bibliothèque standard, niveau H, versions 1–10 | 5 |
 | `relique.py` | 236 | gardien des reliques : sceller, animer | 3 |
 | `consensus.py` | 204 | difficulté PoW et travail cumulé — historique | 6 |
@@ -185,7 +186,7 @@ Détail : [`atelier/README.md`](atelier/README.md).
 | `chaine-eidos.dat` | — | la chaîne du testnet, écrite par la CI | — |
 | `etat.json`, `mempool.json` | — | état publié ; demandes de robinet et d'envoi | — |
 | `docs/` | — | spécifications : reliques, tour, pendule, Sybil, audit des coffres, bible de la veillée ; générateur des bannières | 2 |
-| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 338 tests Eidos | 338 |
+| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 350 tests Eidos | 350 |
 
 CI (`.github/workflows/`) : `tests.yml` (3 OS × 2 Python, empreintes, hygiène, `parite`), `chaine.yml` (forge horaire), `robinet.yml` (issues), `pages.yml` (atelier), `init.yml`. Python 3.9 est le plancher.
 

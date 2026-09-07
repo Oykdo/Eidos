@@ -14,8 +14,10 @@
  * est le PREMIER bloc du jour civil UTC — ce qui se prouve avec deux têtes
  * signées (la veille, le jour) sans rejouer la chaîne : `tete.prev` est la
  * tête de la veille et leurs jours diffèrent. Et elle **compte** parce qu'elle
- * est ancrée comme une ascension (ancrage.ts) : une pièce non dépensée à cette
- * tête, prouvée contre la racine UTXO. L'arbre, lui, est **au coffre** :
+ * est ancrée comme une ascension (ancrage.ts) : une pièce non dépensée,
+ * prouvée contre la racine UTXO d'une tête **du même jour** (`teteAncre`, au
+ * plus tôt le bloc du jour : celle où l'on ouvre, en pratique, car `etat.json`
+ * ne publie que le carnet courant). L'arbre, lui, est **au coffre** :
  * `graineArbre = SHA-256d(tag ‖ maître ‖ id_bloc ‖ txid ‖ rang)`, sa racine
  * est engagée dans chaque message. Même bloc + même pièce + même coffre ⇒
  * même arbre : deux appareils signeraient la même feuille deux fois, et un
@@ -198,6 +200,8 @@ export type Veillee = {
   jour: number;
   tete: TeteReseau;
   veille: TeteReseau;
+  /** la tête du même jour contre laquelle la pièce est prouvée (hauteur ≥ tete) */
+  teteAncre: TeteReseau;
   piece: SortieMin;
   preuve: PreuvePortable;
   racine: string;
@@ -251,26 +255,41 @@ export function messageGeste(racine: Uint8Array, i: number, g: Geste, precedent:
   );
 }
 
-/** Ouvre la veillée du jour : la tête du jour et celle de la veille, la pièce et sa preuve, l'arbre. */
+/** L'ancre est une tête du même jour, au plus tôt le bloc du jour. */
+export function ancreDuJour(
+  tete: Pick<TeteReseau, "hauteur" | "ts">,
+  teteAncre: Pick<TeteReseau, "hauteur" | "ts">,
+): { ok: true } | { ok: false; motif: string } {
+  if (jourDe(teteAncre.ts) !== jourDe(tete.ts)) return { ok: false, motif: "l'ancre n'est pas du jour" };
+  if (teteAncre.hauteur < tete.hauteur) return { ok: false, motif: "l'ancre précède le bloc du jour" };
+  return { ok: true };
+}
+
+/** Ouvre la veillée du jour : la tête du jour et celle de la veille, la pièce et sa preuve
+ *  contre `teteAncre` (une tête du même jour, par défaut le bloc du jour), l'arbre. */
 export function ouvrirVeillee(
   arbre: ArbreFeuilles,
   tete: TeteReseau,
   veille: TeteReseau,
   piece: SortieMin,
   preuve: PreuvePortable,
+  teteAncre: TeteReseau = tete,
 ): Veillee | { erreur: string } {
   if (arbre.hauteur !== HAUTEUR_VEILLEE) return { erreur: `arbre de hauteur ${HAUTEUR_VEILLEE} attendu` };
   const j = estPremierDuJour(tete, veille);
   if (!j.ok) return { erreur: j.motif };
+  const an = ancreDuJour(tete, teteAncre);
+  if (!an.ok) return { erreur: an.motif };
   if (hexOf(feuilleSortie(piece)) !== preuve.feuille) return { erreur: "la feuille ne correspond pas à la pièce" };
   if (!verifierPreuve(preuve)) return { erreur: "chemin rompu" };
-  if (preuve.racine !== tete.utxoRoot) return { erreur: "pièce étrangère à la tête du jour" };
+  if (preuve.racine !== teteAncre.utxoRoot) return { erreur: "pièce étrangère à la tête d'ancrage" };
   return {
     v: 1,
     spec: SPEC_VEILLEE,
     jour: j.jour,
     tete,
     veille,
+    teteAncre,
     piece: { txid: piece.txid, rang: piece.rang, adresse: piece.adresse, montant: piece.montant },
     preuve,
     racine: hexOf(arbre.racine),
@@ -339,9 +358,13 @@ export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeille
   const j = estPremierDuJour(v.tete, v.veille);
   if (!j.ok) return { ok: false, motif: j.motif };
   if (j.jour !== v.jour) return { ok: false, motif: "jour déclaré ≠ jour du bloc" };
+  const va = verifierTeteReseau(v.teteAncre, fed);
+  if (!va.ok) return { ok: false, motif: `tête d'ancrage refusée (${va.motif})` };
+  const an = ancreDuJour(v.tete, v.teteAncre);
+  if (!an.ok) return { ok: false, motif: an.motif };
   if (hexOf(feuilleSortie(v.piece)) !== v.preuve.feuille) return { ok: false, motif: "la feuille ne correspond pas à la pièce" };
   if (!verifierPreuve(v.preuve)) return { ok: false, motif: "chemin rompu" };
-  if (v.preuve.racine !== v.tete.utxoRoot) return { ok: false, motif: "pièce étrangère à la tête du jour" };
+  if (v.preuve.racine !== v.teteAncre.utxoRoot) return { ok: false, motif: "pièce étrangère à la tête d'ancrage" };
   if (!/^[0-9a-f]{64}$/.test(v.racine) || !/^[0-9a-f]{64}$/.test(v.grainePub)) {
     return { ok: false, motif: "racine ou graine publique mal formée" };
   }
@@ -442,7 +465,9 @@ export function parserVeillee(raw: string): Veillee | { erreur: string } {
     return { erreur: "JSON invalide" };
   }
   if (!o || o.v !== 1 || o.spec !== SPEC_VEILLEE) return { erreur: "pas une veillée eidos-veillee/1" };
-  if (!teteBienFormee(o.tete) || !teteBienFormee(o.veille)) return { erreur: "tête mal formée" };
+  if (!teteBienFormee(o.tete) || !teteBienFormee(o.veille) || !teteBienFormee(o.teteAncre)) {
+    return { erreur: "tête mal formée" };
+  }
   const p = o.piece as Record<string, unknown> | undefined;
   if (
     !p ||

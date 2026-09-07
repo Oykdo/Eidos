@@ -11,6 +11,7 @@ import type { Msg } from "./i18n.ts";
 export type NavId =
   | "coffre"
   | "tour"
+  | "veillee"
   | "journal"
   | "temoin"
   | "arbre"
@@ -22,6 +23,7 @@ export type NavId =
 export type Chemin =
   | "/"
   | "/tour"
+  | "/veillee"
   | "/journal"
   | "/temoin"
   | "/arbre"
@@ -66,6 +68,7 @@ export const GROUPES: Groupe[] = [
     label: "nav.groupe.jouer",
     items: [
       { to: "/tour", id: "tour", label: "nav.tour", lede: "eco.tour" },
+      { to: "/veillee", id: "veillee", label: "nav.veillee", lede: "eco.veillee" },
       { to: "/reliques", id: "reliques", label: "nav.reliques", lede: "eco.reliques" },
     ],
   },

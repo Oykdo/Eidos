@@ -77,7 +77,7 @@ Deux natures, déjà distinguées par `SPEC_SYBIL` et `SPEC_FORUM` §3.3 [FIXE],
 La veillée du jour civil UTC J est ancrée sur le **premier bloc dont `ts` ≥ minuit de J**. Cela se prouve avec **deux têtes signées** et sans rejeu (`estPremierDuJour`) : la tête du jour `T` et celle de la veille `V`, telles que `T.prev = id_bloc(V)`, `T.hauteur = V.hauteur + 1`, `jour(V.ts) < jour(T.ts)`. Les deux sont vérifiées XMSS contre `federation.json` ; les deux voyagent dans l'export. La famille `veillee` de `vecteurs.json` gèle trois blocs de test à cheval sur le 2025-08-31 00:00 UTC (la veille, le premier du jour, le second du jour, qui est refusé).
 
 - **Graine du parcours** : `SHA-256d("eidos-veillee/1" ‖ id_bloc du jour)` — **la même pour tous**, indépendante de la pièce : c'est ce qui fait un Wordle (27 salles identiques). Elle diffère de la graine d'ascension (`eidos-ascension/1` ‖ bloc ‖ pièce), qui reste celle de l'épreuve individuelle.
-- **Ancre** : la pièce du joueur, non dépensée à la tête du jour, prouvée contre `utxo_root` (`preuveReseau`). Deux joueurs, mêmes salles, pièces différentes, arbres différents.
+- **Ancre** : la pièce du joueur, non dépensée, prouvée contre `utxo_root` d'une **tête du même jour** (`teteAncre`, hauteur ≥ celle du bloc du jour ; en pratique la tête où l'on ouvre, car `etat.json` ne publie que le carnet courant). Le juge vérifie cette troisième tête comme les deux autres. Deux joueurs, mêmes salles, pièces différentes, arbres différents ; une pièce, une veillée par jour, quelle que soit l'heure de l'ancre.
 - **Où prendre la tête de la veille** : `etat.json` ne publie que la tête courante ; le Témoin de l'atelier note chaque tête vue (`temoin.avancer`) et la chaîne brute est publique (`chaine-eidos.dat`, format 3). PR 2 lit les en-têtes du fichier de chaîne côté atelier pour retrouver `V` et `T` à toute heure ; ce sont des en-têtes signés, rien n'est cru.
 - **Fourches** : le jour est défini par la chaîne signée ; en cas de réorganisation (créneau refusé puis remplacé), la tête de plus grande hauteur signée par le proposant légitime du créneau fait foi, et une veillée ancrée sur un bloc orphelin devient un « murmure » (§6) : jugeable, non classée, car sa tête ne s'étend plus. Le nœud fédéré ne réorganise pas en pratique (finalité au tour complet, `ChaineFederee.finalise`) ; la règle est écrite pour le jour où il le ferait.
 
@@ -112,8 +112,8 @@ Entre les deux, la stratégie : 26 feuilles de franchir sont dues ; 38 sont à p
 ```
 Veillee {
   v: 1, spec: "eidos-veillee/1", jour,
-  tete, veille            en-têtes étendus + signature XMSS (temoin.TeteReseau)
-  piece, preuve           sortie non dépensée à tete.utxo_root, preuve Merkle
+  tete, veille, teteAncre en-têtes étendus + signature XMSS (temoin.TeteReseau)
+  piece, preuve           sortie non dépensée à teteAncre.utxo_root (même jour), preuve Merkle
   racine, grainePub, hauteur = 6
   gestes[]                { i, g, etape, etage, arg, mot, msg, sig: { indice, wots, chemin } }
   fin                     sommet | epuise | porte | abandon
@@ -124,7 +124,7 @@ Taille : un geste = 2 144 + 6 × 32 octets de signature ≈ 2,4 Ko ; 64 gestes �
 
 **Le juge** (`jugerVeillee`, sans rejeu, sans serveur) :
 1. les deux têtes vérifiées XMSS contre `federation.json` ; le jour prouvé (§4.1) ;
-2. la pièce : feuille recalculée, chemin vérifié, racine = `utxo_root` de la tête du jour ;
+2. la tête d'ancrage vérifiée, du même jour, pas avant le bloc du jour ; la pièce : feuille recalculée, chemin vérifié, racine = son `utxo_root` ;
 3. chaque geste, dans l'ordre : indice = rang (une feuille par geste, sans trou), message recalculé (chaîne intacte), signature WOTS+ vérifiée contre la racine de l'arbre, étape et étage égaux à ceux du pendule recalculé ;
 4. la fin cohérente avec les comptes (sommet ⇔ 26 franchir ; épuisé ⇔ 64 gestes).
 
@@ -184,7 +184,7 @@ Le nom est **celui de la dernière salle atteinte** : « Ombre de l'Ère des Che
 | C6 | **L'arbre s'affiche comme un arbre parce que c'en est un** ; sa racine est engagée dans chaque geste (codé) | si un testeur croit que l'arbre est décoratif, afficher le chemin d'authentification au clic |
 | C7 | **Bloc du jour = premier bloc après minuit UTC**, prouvé par deux têtes (codé) ; tag `eidos-veillee/1` distinct | si plus d'un jour sur dix n'a pas de bloc « premier » lisible (créneaux sautés à minuit), passer à « premier bloc dont le créneau ≥ minuit », qui se prouve de la même façon |
 
-### 8.2 Huit répliques (à ajouter à `hotes-lexique.ts`, groupe « don », PR 2)
+### 8.2 Neuf répliques (`veillee-lexique.ts`, une par muse ; les trois groupes de neuf de `hotes-lexique.ts` restent intacts)
 
 | Muse | FR | EN |
 |---|---|---|
@@ -194,7 +194,8 @@ Le nom est **celui de la dernière salle atteinte** : « Ombre de l'Ère des Che
 | Terpsichore | Le pendule choisit l'étage, jamais ce qu'il contient. | The pendulum picks the floor, never what it holds. |
 | Melpomène | La dernière feuille ne remonte pas ; la preuve, elle, reste. | The last leaf never returns; the proof remains. |
 | Érato | Une feuille brûlée deux fois, et tout le run est refusé. | Burn one leaf twice and the whole run is refused. |
-| Polymnie | Le premier bloc du jour fait la veillée ; le second n'est plus qu'un bloc. | The day's first block makes the vigil; the second is just a block. |
+| Euterpe | Le premier bloc du jour fait la veillée ; le second n'est plus qu'un bloc. | The day's first block makes the vigil; the second is just a block. |
+| Polymnie | Une porte sans sceau arrête la veillée, et ne brûle rien. | A door without a seal ends the vigil, and burns nothing. |
 | Uranie | Ce que tu as signé, quiconque le juge sans rejouer la chaîne. | What you signed, anyone judges without replaying the chain. |
 
 ### 8.3 Table figure → source → usage
