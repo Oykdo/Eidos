@@ -4,6 +4,7 @@ Figures, pas preuves : lecture hors carnet. Bibliothèque standard, déterminist
 Usage : python3 aura_voxel_lab.py
 LIMITE : aura scalaire radiale seulement ; les modes orbitaux s/p/d/f restent des conjectures [C]."""
 import math, json, hashlib, sys
+if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")  # Windows : console cp1252
 
 # ---------- [A] Avatar voxelisé ----------
 GRID = (16, 32, 16)  # W, H, D (unités : voxel)

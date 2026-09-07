@@ -13,6 +13,7 @@ Deux fixtures : labo/run_fixture.json est SYNTHÉTIQUE (même forme, pas tour.ts
 labo/run_atelier.json est un export RÉEL de atelier/scripts/exporter-run.ts (labo 0 labo),
 que le job parité de .github/workflows/labo.yml régénère et compare à l'octet."""
 import hashlib, json, sys, os
+if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")  # Windows : console cp1252
 sys.path.insert(0, os.path.dirname(__file__))
 from aura_voxel_lab import base_aggregators, transfer, total, AGG, CAP
 from pendule9_run import redistribute_source_9, seal_sign, cube_de_saturne, position, digital_root, cost as cost_dr
@@ -75,7 +76,7 @@ def lab_test():
     # K26 — export réel de l'atelier (scripts/exporter-run.ts, maitre=labo n=0 ville=labo) : lisible,
     # et le cran 8 (source) est atteint — l'hypothèse « jamais de source en 27 étapes » ne tenait
     # que sur la fixture synthétique ; sur dix runs réels, 1 à 7 passages par la source.
-    ra = json.load(open(os.path.join(os.path.dirname(__file__), "run_atelier.json")))
+    ra = json.load(open(os.path.join(os.path.dirname(__file__), "run_atelier.json"), encoding="utf-8"))
     sta = appliquer_aura(ra, 3)
     R["K26_export_atelier_lisible_et_source_atteinte"] = any(x["pos"] == 9 for x in sta["log"]) and total(sta["aggs"]) == total(base_aggregators())
     R["K25_cout_borne"] = all(1 <= cout(e) <= 3 for e in range(ETAGES)) and cout(0) == 1 and cout(254) == 3
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         sys.exit(0)
     R, run, st = lab_test()
     for k, ok in R.items(): print(("PASS " if ok else "FAIL "), k)
-    json.dump(run, open(os.path.join(os.path.dirname(__file__), "run_fixture.json"), "w"), indent=0)
+    json.dump(run, open(os.path.join(os.path.dirname(__file__), "run_fixture.json"), "w", encoding="utf-8", newline="\n"), indent=0)
     print("étapes :", " ".join(f"{x['e']}:{x['agg'][:3]}" for x in st["log"]))
     print("fin :", {AGG[k]: st["aggs"][k]["actuel"] for k in AGG}, "source_9 =", st["aggs"].get("source_9", 0), "sceau", st["seal"][:16])
     sys.exit(0 if all(R.values()) else 1)
