@@ -8,7 +8,8 @@ HANDOVER appliqué — étapes 1→4.
 2. Redistribution de source_9 au passage 9 → 10 → 1 (fin de cycle).
 3. Renderer : export JSON du voxel + rendu ASCII de contrôle (Three.js reporté).
 4. GDD : Muses ↔ modes orbitaux, encodé comme table [C] non testée."""
-import hashlib, json, math
+import hashlib, json, math, sys, os
+if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")  # Windows : console cp1252
 from aura_voxel_lab import (avatar_params, voxelize, base_aggregators, transfer, total,
                             AGG, MIRROR, CAP, GRID, aura)
 
@@ -89,7 +90,7 @@ def enter_floor(st):
 
 # ---------- 3. Renderer ----------
 def export_voxels(parts, path):
-    json.dump({"grid": GRID, "parts": {k: sorted(v) for k, v in parts.items()}}, open(path, "w"))
+    json.dump({"grid": GRID, "parts": {k: sorted(v) for k, v in parts.items()}}, open(path, "w", encoding="utf-8"))
 
 def ascii_front(parts, aggs):
     """Projection frontale (x,y) + halo d'aura ASCII (valeur A(r,0) quantifiée)."""
@@ -133,8 +134,9 @@ def lab_test():
     R["K14_cube_restaure_sans_signer"] = ok and s1["seal"] == seal_before and all(
         s1["aggs"][k]["actuel"] == CAP for k in AGG) and not cube_de_saturne(s1)
     R["K15_source_9_vidée_à_9"] = all(e["source_9"] == 0 for e in s1["log"] if e["pos"] == 9)
-    parts = voxelize(s1["avatar"]); export_voxels(parts, "avatar_seed3.json")
-    back = json.load(open("avatar_seed3.json"))
+    chemin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "avatar_seed3.json")
+    parts = voxelize(s1["avatar"]); export_voxels(parts, chemin)
+    back = json.load(open(chemin))
     R["K16_export_json_roundtrip"] = {k: set(map(tuple, v)) for k, v in back["parts"].items()} == parts
     s3 = new_run(3)
     for _ in range(255): enter_floor(s3)
