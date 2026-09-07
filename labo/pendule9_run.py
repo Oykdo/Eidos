@@ -1,34 +1,36 @@
 #!/usr/bin/env python3
-"""Pendule-9 — laboratoire : avatar voxelisé, aura graduelle, 8 agrégateurs, run de 255 étages.
+"""Pendule-9 — la Tour libre : agrégateurs, sceau, Cube de Saturne, muses (spec §8, §12, §14).
 Figures, pas preuves : rien ici n'engage le carnet ni la chaîne. Bibliothèque standard.
-Usage : python3 pendule9_run.py   (K10–K18, K27–K28)
+Usage : python3 pendule9_run.py   (K11–K17, K27–K28, K37–K38)
 
-HANDOVER appliqué — étapes 1→4.
-1. base_aggregators() branché sur le générateur de donjon pendule-9 (spawn = agrégateur touché).
-2. Redistribution de source_9 au passage 9 → 10 → 1 (fin de cycle).
-3. Renderer : export JSON du voxel + rendu ASCII de contrôle (Three.js reporté).
-4. GDD : Muses ↔ modes orbitaux, encodé comme table [C] non testée."""
+Un run est une suite d'étapes VENUES DE L'ATELIER (labo/run_atelier.json, exporté par
+atelier/scripts/exporter-run.ts). Le mapping « racine digitale + balancier » qui vivait ici —
+255 étages parcourus un par un, cycles de 9, balancier sur les cycles impairs — a été RETIRÉ
+(LIST 7) : il contredisait pendule.ts, où un run fait 27 étapes réparties sur 255 étages en
+neuf bandes de triplets. Ce qui reste est ce qui n'était pas dans ce mapping : la loi du 9,
+la réserve de la source, le sceau, le Cube et sa portée, la table des muses.
+
+LIMITE : ces mécaniques sont celles de la Tour LIBRE. Sur une veillée, l'aura est une lecture
+des 64 feuilles et ni le Cube ni le transfert n'ont de prise (labo/aura_veillee.py, spec §9)."""
 import hashlib, json, math, sys, os
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")  # Windows : console cp1252
 from aura_voxel_lab import (avatar_params, voxelize, base_aggregators, transfer, total,
                             AGG, MIRROR, CAP, GRID, aura)
 
-# ---------- 1. Pendule-9 → donjons ----------
-def digital_root(n): return 1 + (n - 1) % 9            # 10→1, 18→9, 19→1 ...
-def swing(cycle): return "aller" if cycle % 2 == 0 else "retour"   # 9→8..1 puis 9→1..8
-BALANCIER = True   # cycles impairs renversés : pos = 9 − dr (8..1 puis 9) (vrai retour du pendule)
-def position(floor):                                     # étage 1..255 → position 1..9
-    dr = digital_root(floor)
-    if BALANCIER and cycle_of(floor) % 2 == 1 and dr != 9: return 9 - dr
-    return dr
-def cycle_of(floor): return (floor - 1) // 9             # 0..28
+# ---------- 1. Un run vient de l'atelier ----------
+def etapes_atelier(chemin=None):
+    """Les 27 étapes exportées par atelier/scripts/exporter-run.ts (i, p, e, s, q)."""
+    chemin = chemin or os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_atelier.json")
+    return json.load(open(chemin, encoding="utf-8"))
 
-def loot(seed, floor, pos):
-    """Loot déterministe par (seed, étage, position). Tier = position (8 riche … 1 vide/risque)."""
-    h = hashlib.sha256(f"{seed}:{floor}:{pos}".encode()).hexdigest()
+def bande_de(e): return min(8, e * 9 // 255)             # même formule que bandeDe (pendule.ts)
+def cost(e): return 1 + bande_de(e) // 3                 # difficulté par bande, bornée 1..3
+
+def loot(seed, e, pos):
+    """Loot déterministe par (graine, étage, position). La quantité est celle de l'atelier
+    (quantiteDon = p + 1 = pos, spec §10) ; le genre reste à genreDon, hors labo."""
+    h = hashlib.sha256(f"{seed}:{e}:{pos}".encode()).hexdigest()
     return {"tier": pos, "id": h[:12], "relique": int(h[12:14], 16) < 8, "glyphe": h[14:16]}
-
-def cost(floor): return 1 + floor // 64                  # difficulté progressive (Azure Dreams)
 
 def seal_sign(seal, floor, pos, aggs):
     """Sceau du pendule-9 : chaîne de hash (fingerprint de la run)."""
@@ -72,21 +74,29 @@ def cube_de_saturne(state, portee="agregateurs"):
     return True
 
 # ---------- Run ----------
-def new_run(seed, height=1.0, weight=1.0):
+def new_run(seed, height=1.0, weight=1.0, etapes=None):
     p = avatar_params(seed, height, weight)
-    return {"seed": seed, "avatar": p, "aggs": base_aggregators(), "floor": 0,
-            "seal": "genesis", "log": [], "cube_used": False}
+    return {"seed": seed, "avatar": p, "aggs": base_aggregators(), "etapes": etapes or etapes_atelier(),
+            "i": 0, "seal": "genesis", "log": [], "cube_used": False}
 
 def enter_floor(st):
-    st["floor"] += 1; f = st["floor"]; pos = position(f); a = st["aggs"]
+    """Une étape de plus, prise dans le run de l'atelier. Rend None quand le run est fini."""
+    if st["i"] >= len(st["etapes"]): return None
+    et = st["etapes"][st["i"]]; st["i"] += 1
+    pos = et["p"] + 1; e = et["e"]; a = st["aggs"]
     if pos == 9:
         redistribute_source_9(a); L = {"tier": 9, "id": "source", "relique": False, "glyphe": "09"}
     else:
-        transfer(a, pos, cost(f)); L = loot(st["seed"], f, pos)
-    st["seal"] = seal_sign(st["seal"], f, pos, a)
-    st["log"].append({"floor": f, "cycle": cycle_of(f), "swing": swing(cycle_of(f)), "pos": pos,
+        transfer(a, pos, cost(e)); L = loot(st["seed"], e, pos)
+    st["seal"] = seal_sign(st["seal"], e, pos, a)
+    st["log"].append({"i": et["i"], "floor": e, "bande": bande_de(e), "pos": pos,
                       "agg": AGG.get(pos, "source"), "loot": L, "source_9": a.get("source_9", 0)})
     return st["log"][-1]
+
+def jouer(st):
+    """Le run entier."""
+    while enter_floor(st) is not None: pass
+    return st
 
 # ---------- 3. Renderer ----------
 def export_voxels(parts, path):
@@ -110,9 +120,6 @@ def ascii_front(parts, aggs):
         rows.append(row)
     return "\n".join(rows)
 
-# AVERTISSEMENT : ce mapping étage→position (racine digitale + balancier) est une esquisse
-# parallèle à atelier/src/lib/eidos/pendule.ts (bandes × triplets) ; les deux ne sont pas encore unifiés.
-
 # ---------- 4. Muses ↔ modes d'aura (LIST 4, spec §12) ----------
 # La table inventée (Calliope=s, Uranie=p, Thalie=d, Melpomène=f) était FAUSSE : ces muses ne
 # tiennent pas ces rangs dans signatures.ts. Le labo ne recopie plus les muses, il relit
@@ -135,9 +142,7 @@ def mode_de_bande(m):
 # ---------- LAB TEST ----------
 def lab_test():
     R = {}
-    R["K10_tour_255_28_cycles"] = position(255) == 3 and cycle_of(255) == 28 and position(9) == 9 and position(10) == 8 and position(18) == 9 and position(19) == 1
-    s1 = new_run(3); s2 = new_run(3)
-    for _ in range(40): enter_floor(s1); enter_floor(s2)
+    s1, s2 = jouer(new_run(3)), jouer(new_run(3))
     R["K11_run_deterministe"] = s1["seal"] == s2["seal"] and s1["log"] == s2["log"]
     R["K12_invariant_source_9"] = total(s1["aggs"]) == total(new_run(3)["aggs"])
     R["K13_pas_de_negatif"] = all(0 <= s1["aggs"][k]["actuel"] <= CAP for k in AGG)
@@ -149,15 +154,11 @@ def lab_test():
     parts = voxelize(s1["avatar"]); export_voxels(parts, chemin)
     back = json.load(open(chemin))
     R["K16_export_json_roundtrip"] = {k: set(map(tuple, v)) for k, v in back["parts"].items()} == parts
-    s3 = new_run(3)
-    for _ in range(255): enter_floor(s3)
-    R["K17_255_etages_sans_crash"] = s3["floor"] == 255 and total(s3["aggs"]) == total(new_run(3)["aggs"])
-    # K18 — hypothèse « biais de drainage » FALSIFIÉE : l'asymétrie finale vient de la queue
-    # (255 = 28·9 + 3), pas de l'ordre de visite. Après 252 étages tout est plein et source_9 = 0.
-    s4 = new_run(3)
-    for _ in range(252): enter_floor(s4)
-    plein = all(s4["aggs"][k]["actuel"] == CAP for k in AGG) and s4["aggs"].get("source_9", 0) == 0
-    R["K18_queue_explique_asymetrie"] = plein and s3["aggs"]["source_9"] == 3 * cost(255)
+    # K17 — le run suit l'atelier, jamais un compteur d'étages du labo : 27 étapes, coût par bande.
+    s3 = jouer(new_run(3))
+    R["K17_run_de_latelier"] = len(s3["log"]) == len(s3["etapes"]) == 27 and \
+        [x["floor"] for x in s3["log"]] == [et["e"] for et in s3["etapes"]] and \
+        all(1 <= cost(x["floor"]) <= 3 for x in s3["log"]) and s3["log"][0]["floor"] == 0
     # K37/K38 — LIST 4 : la table des muses vient de l'atelier, jamais du labo ; le mode se déduit
     # du rang, du plus simple (Thalie, la ville) au plus complexe (Uranie, le sommet).
     m = muses()
@@ -166,11 +167,9 @@ def lab_test():
     modes = [mode_de_rang(x["rang"]) for x in m]
     R["K38_modes_monotones"] = modes[0] == "s" and modes[8] == "f" and set(modes) == set(MODES) and \
         [MODES.index(x) for x in modes] == sorted(MODES.index(x) for x in modes)
-
     # K27/K28 — le Cube et l'ancrage (§8) : sur un run ancré, le Cube restaure les 8 mais graine et
     # trace ne bougent pas ; viser autre chose que les agrégateurs est refusé.
-    s5 = new_run(3)
-    for _ in range(27): enter_floor(s5)
+    s5 = jouer(new_run(3))
     ancrer(s5, "00" * 32, "11" * 32, 0); g, t = s5["ancre"]["graine"], s5["ancre"]["trace"]
     cube_de_saturne(s5)
     R["K27_cube_sans_toucher_ancrage"] = (s5["ancre"]["graine"], s5["ancre"]["trace"]) == (g, t) and \
@@ -182,11 +181,11 @@ def lab_test():
 if __name__ == "__main__":
     R, s1, parts, s3 = lab_test()
     for k, ok in R.items(): print(("PASS " if ok else "FAIL "), k)
-    print("\n--- 12 premiers étages (seed 3) ---")
+    print("\n--- 12 premières étapes du run de l'atelier (graine 3) ---")
     for e in s1["log"][:12]:
-        print(f"étage {e['floor']:>3} cycle {e['cycle']} {e['swing']:<6} pos {e['pos']} {e['agg']:<8} "
+        print(f"étape {e['i']:>2} étage {e['floor']:>3} bande {e['bande']} pos {e['pos']} {e['agg']:<8} "
               f"loot t{e['loot']['tier']} {e['loot']['id']} relique={e['loot']['relique']} src9={e['source_9']}")
-    print("\nagrégateurs après 255 étages :", {AGG[k]: s3["aggs"][k]["actuel"] for k in AGG}, "source_9 =", s3["aggs"].get("source_9"))
+    print("\nagrégateurs après le run :", {AGG[k]: s3["aggs"][k]["actuel"] for k in AGG}, "source_9 =", s3["aggs"].get("source_9"))
     print("sceau final :", s3["seal"][:16])
     print("\n--- rendu ASCII (seed 3, après Cube) ---")
     print(ascii_front(parts, s1["aggs"]))

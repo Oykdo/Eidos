@@ -27,7 +27,7 @@ jobs:
         with: { python-version: "${{ matrix.python }}" }
       - name: K1–K9 aura / avatar (grille alignée sur voxels.ts)
         run: python labo/aura_voxel_lab.py
-      - name: K10–K18, K27–K28, K37–K38 run, Cube, muses
+      - name: K11–K17, K27–K28, K37–K38 run de l'atelier, Cube, muses
         run: python labo/pendule9_run.py
       - name: K19–K26 unification
         run: python labo/unification.py

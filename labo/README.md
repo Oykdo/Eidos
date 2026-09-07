@@ -3,7 +3,7 @@
 Laboratoire hors chaîne. Figures, pas preuves. Bibliothèque standard.
 
     python3 labo/aura_voxel_lab.py    # K1–K9   avatar 16×32×16, aura graduelle, 8 agrégateurs
-    python3 labo/pendule9_run.py      # K10–K18 run de 255 étages, sceau ; K27–K28 Cube et ancrage
+    python3 labo/pendule9_run.py      # K11–K17 Tour libre sur le run de l'atelier ; K27–K28 Cube ; K37–K38 muses
     python3 labo/unification.py       # K19–K26 contrat avec atelier/src/lib/eidos/pendule.ts
     python3 labo/aura_veillee.py      # K29–K36 aura d'une veillée : fixture du bot et veillée vraiment jouée
     node --experimental-strip-types atelier/scripts/exporter-run.ts labo 0 labo   # export réel → labo/run_atelier.json

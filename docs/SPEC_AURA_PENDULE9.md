@@ -133,3 +133,12 @@ Les modes restent sans effet de jeu — ils nomment, ils ne font rien. Ce n'est 
 `empreinte_corps()` reprend l'indexation d'`empreinteVoxels` : `i = x + N·(y + H·z)`, bits en petit-boutiste, hex par octet. Un corps a donc une empreinte comme un objet, sans être un objet. Contrôles : K8bis (grille = `VOXEL_N`, `2·VOXEL_N`, `VOXEL_N` ; tout voxel dans les bornes), K8ter (empreinte de la bonne taille, déterministe, distincte entre deux graines).
 
 Reste ouvert : le rendu. Un corps voxel à l'écran serait une scène `@react-three/fiber` comme le coffre — chantier de jeu, pas de labo.
+
+## 14. Un seul pendule (LIST 7)
+`pendule9_run.py` portait un second pendule : 255 étages parcourus un par un, position par racine digitale, cycles de neuf, balancier sur les cycles impairs. C'était une esquisse d'avant l'unification, et elle **contredisait** `pendule.ts`, où un run fait 27 étapes réparties sur 255 étages en neuf bandes de triplets. Deux mappings, deux vérités : retiré.
+
+Ce qui disparaît : `digital_root`, `position`, `cycle_of`, `swing`, `BALANCIER`, le coût `1 + étage // 64`, et avec eux K10 (« 255 = 28 cycles + 3 ») et K18 (la queue) — deux contrôles qui ne mesuraient que la fiction. K23 change de sens : il n'y a plus deux chemins à faire coïncider, seulement le cran de l'atelier qui décide l'agrégateur.
+
+Ce qui reste, parce que ce n'était pas dans le mapping : la loi du 9, la réserve de la source, le sceau, le Cube et sa portée, la table des muses, l'avatar. Un run se prend maintenant dans `labo/run_atelier.json` (`enter_floor` consomme une étape, `jouer` le run entier) et le coût vient de la bande, borné 1..3, comme dans `unification.py`. K17 le vérifie : 27 étapes, les étages du log sont ceux de l'export, l'étape 0 est l'étage 0.
+
+Effet de bord agréable : le sceau final de `pendule9_run` et celui d'`unification` coïncident désormais — même run, même lecture.

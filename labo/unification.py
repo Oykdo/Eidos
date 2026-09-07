@@ -16,7 +16,7 @@ import hashlib, json, sys, os
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")  # Windows : console cp1252
 sys.path.insert(0, os.path.dirname(__file__))
 from aura_voxel_lab import base_aggregators, transfer, total, AGG, CAP
-from pendule9_run import redistribute_source_9, seal_sign, cube_de_saturne, position, digital_root, cost as cost_dr
+from pendule9_run import redistribute_source_9, seal_sign, cube_de_saturne
 
 ETAPES, CRANS, ETAGES = 27, 9, 255
 
@@ -63,13 +63,10 @@ def lab_test():
     R["K20_deterministe"] = st1["seal"] == st2["seal"]
     R["K21_invariant"] = total(st1["aggs"]) == total(base_aggregators())
     R["K22_source_vide_a_9"] = all(x["source_9"] == 0 for x in st1["log"] if x["pos"] == 9)
-    # équivalence de sémantique : une suite de positions issue de la racine digitale, injectée comme crans,
-    # touche les mêmes agrégateurs que pendule9_run.position()
-    seq = [position(f) for f in range(1, 28)]
-    run_dr = [{"i": i, "p": pos - 1, "e": min(254, i * 9), "s": {"x": 0, "y": pos - 1}} for i, pos in enumerate(seq)]
-    run_dr[0]["e"] = 0
-    st_dr = appliquer_aura(run_dr, 3)
-    R["K23_equivalence_agregateurs"] = [x["agg"] for x in st_dr["log"]] == [AGG.get(p, "source") for p in seq]
+    # K23 — un seul chemin depuis LIST 7 : le cran de l'atelier décide l'agrégateur, ici comme dans
+    # pendule9_run (plus de mapping parallèle par racine digitale à faire coïncider).
+    st_p = appliquer_aura(run, 3)
+    R["K23_agregateur_du_cran"] = [x["agg"] for x in st_p["log"]] == [AGG.get(et["p"] + 1, "source") for et in run]
     bad = json.loads(json.dumps(run)); bad[5]["s"]["y"] = (bad[5]["p"] + 1) % 9
     try: valider_run(bad); R["K24_refus_spawn_incoherent"] = False
     except ValueError: R["K24_refus_spawn_incoherent"] = True
