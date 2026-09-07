@@ -458,8 +458,10 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
      depuis un carnet ou un export `serialiserVeillee`. Deuxième fixture `labo/veillee_jouee.json`,
      non régénérable par construction. Reste : `exporter-run.ts` fige toujours choix et objet porté
      (une ascension jouée se relirait par `parserAscension`, même schéma).
-  7. Le mapping « racine digitale + balancier » de `pendule9_run.py` reste un chemin parallèle à
-     `pendule.ts` ; à retirer quand 1–6 seront tranchés, `unification.py` suffit alors.
+  7. FAIT (2026-09-07, spec §14) — le mapping racine digitale + balancier est retiré : il
+     contredisait `pendule.ts` (27 étapes sur 9 bandes, pas 255 étages en file). `pendule9_run.py`
+     consomme désormais `labo/run_atelier.json` ; K10 et K18 supprimés (ils ne mesuraient que la
+     fiction), K17 et K23 réécrits. Un seul pendule.
   8. Spinor : `spinor.ts` existe côté atelier (SU(2)/SO(3)) et pourrait porter l'orientation des
      modes p/d au lieu d'une nouvelle table.
   10. Donner le don : `don()` (genre + quantité) n'est appelé par aucune scène ; l'arrivée d'étage

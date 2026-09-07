@@ -56,7 +56,7 @@ federation.json     racines + graines publiques des 7 validateurs, t0, créneau 
 chaine-eidos.dat    la chaîne du testnet (écrite par la CI, jamais à la main)
 etat.json           état publié (soldes, sorties, artefacts, invariant)
 mempool.json        demandes robinet / envoi
-labo/               laboratoire pendule-9 hors chaîne (aura, avatar, agrégateurs) — figures, pas preuves (41 contrôles)
+labo/               laboratoire pendule-9 hors chaîne (aura, avatar, agrégateurs) — figures, pas preuves (44 contrôles)
 veillees/           preuves de veillée déposées (index.json + un fichier par preuve), écrites par veillees.yml
 atelier/            interface web (TanStack Start, React), rejoue la spec en TS ;
                     scripts/deposer-veillee.ts = le juge des preuves dans la CI (logique dans lib/eidos/depot.ts)
