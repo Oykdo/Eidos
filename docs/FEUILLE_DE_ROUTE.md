@@ -373,6 +373,13 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   pointeur, 30 images/s, dpr ≤ 2, pause hors écran, image fixe en mouvement réduit ;
   `lib/accueil/orbites.ts` pur (4 contrôles), `components/accueil/FondOrbital.tsx`
   ; puis PR 5 (gardiens C3, Guide « Jouer »), PR 6 [OUVERT] Godot/Rust.
+- **Guide étoffé (2026-09-07)** : trois onglets nouveaux dans le Guide — « Le cœur » (la chaîne :
+  loi d'émission, signatures par hachage, adresses, rejeu, fédération, robinet et envois,
+  reliques et sceaux, ancrage), « Mécaniques » (six lois, objets, Tour, hôtes, élixirs,
+  secrets, capsules, fouilles, pendule, veillée, sac, preuve et classement) et « Lore »
+  (muses et danses, quatre âges, Chambre de Genèse, tria prima, fantômes, figures et
+  preuves) ; page Veillée dans « Jouer », dix mots, deux limites. Chaque phrase cite une
+  règle du code ; « époque » reste banni de l'interface (i18n.test.ts), on dit « cycle ».
 - **Veillée libre (2026-09-07)** : `Veillee.ancre` vaut `null` — les salles du jour,
   l'arbre (graine `… ‖ "libre"`), aucune pièce ; comme l'ascension libre, une lecture :
   `exporterVeillee` et `jugerVeillee` la refusent, `lectureVeillee` en donne les comptes.
