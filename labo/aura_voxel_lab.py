@@ -2,12 +2,18 @@
 """Pendule-9 — avatar voxelisé, aura graduelle de base, 8 agrégateurs, lab test (K1–K9).
 Figures, pas preuves : lecture hors carnet. Bibliothèque standard, déterministe par graine.
 Usage : python3 aura_voxel_lab.py
-LIMITE : aura scalaire radiale seulement ; les modes orbitaux s/p/d/f restent des conjectures [C]."""
+LIMITE : aura scalaire radiale seulement ; les modes s/p/d/f sont nommés dans pendule9_run.py
+mais n'ont aucun effet de jeu."""
 import math, json, hashlib, sys
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")  # Windows : console cp1252
 
-# ---------- [A] Avatar voxelisé ----------
-GRID = (16, 32, 16)  # W, H, D (unités : voxel)
+# ---------- [A] Avatar voxelisé (LIST 2, spec §13) ----------
+# L'avatar N'EST PAS un objet : pas de mot, pas d'âge, pas de teinte — donc pas sa place dans
+# voxels.ts, qui déconstruit un mot en occupance. Mais il ne s'invente pas une seconde convention :
+# même grille cubique en x/z que VOXEL_N (12), doublée en hauteur (le corps est debout), mêmes
+# entiers seulement, même indexation d'empreinte (i = x + N·(y + H·z)) que empreinteVoxels.
+VOXEL_N = 12          # doit rester égal à VOXEL_N de atelier/src/lib/eidos/voxels.ts (K8bis)
+GRID = (VOXEL_N, 2 * VOXEL_N, VOXEL_N)  # W, H, D — 12 × 24 × 12
 
 # Parties modifiables sans équipement.
 FACE_FEATURES = ("yeux", "nez", "bouche", "sourcils", "oreilles")
@@ -31,19 +37,30 @@ def voxelize(p):
                 for z in range(D):
                     if ((x + .5 - cx) / rx) ** 2 + ((z + .5 - cz) / rz) ** 2 <= 1 and y < H:
                         parts[part].add((x, y, z))
-    ellipsoid("jambe_g", 0, 12, 1.6 * ws, 1.6 * ws); parts["jambe_g"] = {(x - 2, y, z) for x, y, z in parts["jambe_g"]}
-    ellipsoid("jambe_d", 0, 12, 1.6 * ws, 1.6 * ws); parts["jambe_d"] = {(x + 2, y, z) for x, y, z in parts["jambe_d"]}
-    ellipsoid("torse", 12, 22, 3.5 * ws, 2.2 * ws)
-    ellipsoid("bras_g", 13, 21, 1.2 * ws, 1.2 * ws); parts["bras_g"] = {(x - 5, y, z) for x, y, z in parts["bras_g"]}
-    ellipsoid("bras_d", 13, 21, 1.2 * ws, 1.2 * ws); parts["bras_d"] = {(x + 5, y, z) for x, y, z in parts["bras_d"]}
-    ellipsoid("tete", 22, 27, 2.5, 2.5)
+    ellipsoid("jambe_g", 0, 9, 1.2 * ws, 1.2 * ws); parts["jambe_g"] = {(x - 2, y, z) for x, y, z in parts["jambe_g"]}
+    ellipsoid("jambe_d", 0, 9, 1.2 * ws, 1.2 * ws); parts["jambe_d"] = {(x + 2, y, z) for x, y, z in parts["jambe_d"]}
+    ellipsoid("torse", 9, 17, 2.6 * ws, 1.7 * ws)
+    ellipsoid("bras_g", 10, 16, 1.0 * ws, 1.0 * ws); parts["bras_g"] = {(x - 4, y, z) for x, y, z in parts["bras_g"]}
+    ellipsoid("bras_d", 10, 16, 1.0 * ws, 1.0 * ws); parts["bras_d"] = {(x + 4, y, z) for x, y, z in parts["bras_d"]}
+    ellipsoid("tete", 17, 21, 1.9, 1.9)
     # visage : sous-masque de la tête, motif déterminé par les features (aucun équipement requis)
-    f = p["face"]; ymid = int(24.5 * hs)
+    f = p["face"]; ymid = int(19 * hs)
     for i, (name, v) in enumerate(f.items()):
         dx = (v % 3) - 1; dy = (v // 3) % 2
         vox = (int(cx) + dx + (i - 2), ymid + dy, int(cz) + 1)
         if vox in parts["tete"]: parts["visage"].add(vox)
     return parts
+
+def empreinte_corps(parts):
+    """Même indexation qu'empreinteVoxels (voxels.ts) : i = x + N·(y + H·z), bits en petit-boutiste,
+    hex par octet. Un corps a une empreinte comme un objet, sans être un objet."""
+    W, H, D = GRID
+    bits = bytearray((W * H * D + 7) // 8)
+    for s_ in parts.values():
+        for x, y, z in s_:
+            i = x + W * (y + H * z)
+            bits[i >> 3] |= 1 << (i & 7)
+    return bits.hex()
 
 # ---------- [H] Aura graduelle ----------
 # A(r,t) = A_res + (A0 - A_res) * exp(-(r - r_b)^2 / 2σ^2) * exp(-Γ t)
@@ -88,6 +105,11 @@ def lab_test():
     R["K1_determinisme"] = v1 == v2
     n = lambda h, w: sum(len(s) for s in voxelize(avatar_params(1, h, w)).values())
     R["K2_monotonie_taille_poids"] = n(0.8, 1.0) < n(1.0, 1.0) < n(1.2, 1.0) and n(1.0, 0.8) < n(1.0, 1.3)
+    e1, e2 = empreinte_corps(v1), empreinte_corps(voxelize(avatar_params(1, 1.0, 1.0)))
+    R["K8ter_empreinte_corps"] = len(e1) == 2 * ((GRID[0] * GRID[1] * GRID[2] + 7) // 8) and e1 != e2 and \
+        e1 == empreinte_corps(v2)
+    R["K8bis_grille_alignee_sur_voxels_ts"] = GRID[0] == GRID[2] == VOXEL_N and GRID[1] == 2 * VOXEL_N and \
+        all(0 <= c < d for s_ in v1.values() for vox in s_ for c, d in zip(vox, GRID))
     R["K3_visage_sans_equipement"] = len(v1["visage"]) > 0 and v1["visage"] <= v1["tete"]
     R["K4_plancher_residuel"] = all(aura(r, t) >= 1.0 - 1e-9 for r in (0.5, 3, 8, 30) for t in (0, 10, 1e6))
     R["K5_gradualite_radiale"] = all(aura(r, 0) > aura(r + 1, 0) for r in range(3, 20))

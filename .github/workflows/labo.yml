@@ -4,9 +4,9 @@ name: labo
 on:
   push:
     branches: [main]
-    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json"]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/scripts/exporter-signatures.ts", "atelier/src/lib/eidos/signatures.ts", "atelier/src/lib/eidos/voxels.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json"]
   pull_request:
-    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json"]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/scripts/exporter-signatures.ts", "atelier/src/lib/eidos/signatures.ts", "atelier/src/lib/eidos/voxels.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json"]
   workflow_dispatch:
 concurrency:
   group: labo-${{ github.ref }}
@@ -25,9 +25,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "${{ matrix.python }}" }
-      - name: K1–K9 aura / avatar
+      - name: K1–K9 aura / avatar (grille alignée sur voxels.ts)
         run: python labo/aura_voxel_lab.py
-      - name: K10–K18 run 255 étages
+      - name: K10–K18, K27–K28, K37–K38 run, Cube, muses
         run: python labo/pendule9_run.py
       - name: K19–K26 unification
         run: python labo/unification.py
@@ -59,6 +59,10 @@ jobs:
         run: python labo/unification.py run_atelier.json
       - name: hygiène — la fixture réelle est identique à l'export
         run: cmp run_atelier.json labo/run_atelier.json
+      - name: hygiène — la table des muses vient de signatures.ts
+        run: |
+          node --experimental-strip-types atelier/scripts/exporter-signatures.ts > muses.json
+          cmp muses.json labo/muses.json
       - name: exporter une veillée réelle (bot gourmand, graine 7)
         run: node --experimental-strip-types atelier/scripts/exporter-veillee.ts 7 > veillee_atelier.json
       - name: le labo lit la veillée

@@ -229,8 +229,8 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `vecteurs.py` | 204 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 9 familles) | parité |
 | `qr.py` | 428 | encodeur QR, bibliothèque standard, niveau H, versions 1–10 | 5 |
 | `relique.py` | 236 | gardien des reliques : sceller, animer | 3 |
-| `labo/aura_voxel_lab.py` | 109 | labo pendule-9 : avatar voxelisé, aura graduelle, 8 agrégateurs — figures, pas preuves | 9 |
-| `labo/pendule9_run.py` | 171 | labo : run de 255 étages, sceau, Cube de Saturne et ancrage | 11 |
+| `labo/aura_voxel_lab.py` | 132 | labo pendule-9 : avatar voxelisé (grille de `voxels.ts`), aura graduelle, 8 agrégateurs | 11 |
+| `labo/pendule9_run.py` | 194 | labo : run de 255 étages, sceau, Cube et ancrage, muses lues de `signatures.ts` | 13 |
 | `labo/unification.py` | 98 | labo : contrat avec `pendule.ts`, fixtures synthétique et réelle (`exporter-run.ts`), don | 9 |
 | `labo/aura_veillee.py` | 98 | labo : l'aura d'une veillée, lecture des 64 feuilles sur 8 positions (bot et veillée jouée) | 8 |
 | `consensus.py` | 204 | difficulté PoW et travail cumulé — historique | 6 |
