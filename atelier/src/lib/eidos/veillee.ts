@@ -28,6 +28,12 @@
  * ‖ mot ‖ message précédent), le premier « précédent » étant la graine du
  * jour : une chaîne, donc un ordre ; un indice, donc un budget.
  *
+ * Une veillée peut aussi être **libre** : le jour et ses salles, l'arbre et
+ * ses feuilles, mais aucune pièce — comme une ascension libre, c'est une
+ * lecture. Elle ne s'exporte pas, le juge la refuse, le classement l'ignore ;
+ * l'arbre dérive du maître et du bloc du jour seulement. Le coffre d'atelier
+ * y joue ; un coffre sans pièce aussi.
+ *
  * Ce que le juge établit sans rejouer : la tête du jour et celle de la veille
  * (XMSS contre federation.json), la pièce (Merkle contre utxo_root), chaque
  * geste (WOTS+ contre la racine de l'arbre, indices 0, 1, 2… sans trou), le
@@ -169,9 +175,10 @@ export function graineDuJour(idBlocHex: string): Uint8Array {
   return sha256d(concat(TAG_VEILLEE, fromHex(idBlocHex)));
 }
 
-/** La graine de l'arbre : le coffre, le bloc du jour, la pièce d'ancrage. Secrète comme le maître. */
-export function graineArbre(maitre: string, idBlocHex: string, piece: Pick<SortieMin, "txid" | "rang">): Uint8Array {
-  return sha256d(concat(TAG_ARBRE, utf8(maitre), fromHex(idBlocHex), fromHex(piece.txid), u32(piece.rang)));
+/** La graine de l'arbre : le coffre, le bloc du jour, la pièce d'ancrage — ou « libre ». Secrète comme le maître. */
+export function graineArbre(maitre: string, idBlocHex: string, piece: Pick<SortieMin, "txid" | "rang"> | null): Uint8Array {
+  const ancre = piece ? concat(fromHex(piece.txid), u32(piece.rang)) : utf8("libre");
+  return sha256d(concat(TAG_ARBRE, utf8(maitre), fromHex(idBlocHex), ancre));
 }
 
 // ---------------------------------------------------------------------------
@@ -194,16 +201,22 @@ export type GesteSigne = Geste & { i: number; msg: string; sig: SignatureHex };
 
 export type Fin = "sommet" | "epuise" | "porte" | "abandon";
 
+/** Ce qui fait compter une veillée : une pièce non dépensée, prouvée contre une tête du même jour. */
+export type AncreVeillee = {
+  /** la tête du même jour contre laquelle la pièce est prouvée (hauteur ≥ tete) */
+  teteAncre: TeteReseau;
+  piece: SortieMin;
+  preuve: PreuvePortable;
+};
+
 export type Veillee = {
   v: 1;
   spec: typeof SPEC_VEILLEE;
   jour: number;
   tete: TeteReseau;
   veille: TeteReseau;
-  /** la tête du même jour contre laquelle la pièce est prouvée (hauteur ≥ tete) */
-  teteAncre: TeteReseau;
-  piece: SortieMin;
-  preuve: PreuvePortable;
+  /** null : veillée libre — une lecture, rien ne s'exporte, rien ne se juge */
+  ancre: AncreVeillee | null;
   racine: string;
   grainePub: string;
   hauteur: number;
@@ -265,33 +278,36 @@ export function ancreDuJour(
   return { ok: true };
 }
 
-/** Ouvre la veillée du jour : la tête du jour et celle de la veille, la pièce et sa preuve
- *  contre `teteAncre` (une tête du même jour, par défaut le bloc du jour), l'arbre. */
+/** Ouvre la veillée du jour : la tête du jour et celle de la veille, l'arbre, et l'ancre —
+ *  la pièce et sa preuve contre `teteAncre` (une tête du même jour, par défaut le bloc du
+ *  jour) — ou `null` : une veillée libre, une lecture. */
 export function ouvrirVeillee(
   arbre: ArbreFeuilles,
   tete: TeteReseau,
   veille: TeteReseau,
-  piece: SortieMin,
-  preuve: PreuvePortable,
-  teteAncre: TeteReseau = tete,
+  ancre: { piece: SortieMin; preuve: PreuvePortable; teteAncre?: TeteReseau } | null,
 ): Veillee | { erreur: string } {
   if (arbre.hauteur !== HAUTEUR_VEILLEE) return { erreur: `arbre de hauteur ${HAUTEUR_VEILLEE} attendu` };
   const j = estPremierDuJour(tete, veille);
   if (!j.ok) return { erreur: j.motif };
-  const an = ancreDuJour(tete, teteAncre);
-  if (!an.ok) return { erreur: an.motif };
-  if (hexOf(feuilleSortie(piece)) !== preuve.feuille) return { erreur: "la feuille ne correspond pas à la pièce" };
-  if (!verifierPreuve(preuve)) return { erreur: "chemin rompu" };
-  if (preuve.racine !== teteAncre.utxoRoot) return { erreur: "pièce étrangère à la tête d'ancrage" };
+  let ancree: AncreVeillee | null = null;
+  if (ancre) {
+    const teteAncre = ancre.teteAncre ?? tete;
+    const an = ancreDuJour(tete, teteAncre);
+    if (!an.ok) return { erreur: an.motif };
+    if (hexOf(feuilleSortie(ancre.piece)) !== ancre.preuve.feuille) return { erreur: "la feuille ne correspond pas à la pièce" };
+    if (!verifierPreuve(ancre.preuve)) return { erreur: "chemin rompu" };
+    if (ancre.preuve.racine !== teteAncre.utxoRoot) return { erreur: "pièce étrangère à la tête d'ancrage" };
+    const { txid, rang, adresse, montant } = ancre.piece;
+    ancree = { teteAncre, piece: { txid, rang, adresse, montant }, preuve: ancre.preuve };
+  }
   return {
     v: 1,
     spec: SPEC_VEILLEE,
     jour: j.jour,
     tete,
     veille,
-    teteAncre,
-    piece: { txid: piece.txid, rang: piece.rang, adresse: piece.adresse, montant: piece.montant },
-    preuve,
+    ancre: ancree,
     racine: hexOf(arbre.racine),
     grainePub: hexOf(arbre.grainePub),
     hauteur: arbre.hauteur,
@@ -358,13 +374,14 @@ export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeille
   const j = estPremierDuJour(v.tete, v.veille);
   if (!j.ok) return { ok: false, motif: j.motif };
   if (j.jour !== v.jour) return { ok: false, motif: "jour déclaré ≠ jour du bloc" };
-  const va = verifierTeteReseau(v.teteAncre, fed);
+  if (!v.ancre) return { ok: false, motif: "veillée libre : une lecture, rien à juger" };
+  const va = verifierTeteReseau(v.ancre.teteAncre, fed);
   if (!va.ok) return { ok: false, motif: `tête d'ancrage refusée (${va.motif})` };
-  const an = ancreDuJour(v.tete, v.teteAncre);
+  const an = ancreDuJour(v.tete, v.ancre.teteAncre);
   if (!an.ok) return { ok: false, motif: an.motif };
-  if (hexOf(feuilleSortie(v.piece)) !== v.preuve.feuille) return { ok: false, motif: "la feuille ne correspond pas à la pièce" };
-  if (!verifierPreuve(v.preuve)) return { ok: false, motif: "chemin rompu" };
-  if (v.preuve.racine !== v.teteAncre.utxoRoot) return { ok: false, motif: "pièce étrangère à la tête d'ancrage" };
+  if (hexOf(feuilleSortie(v.ancre.piece)) !== v.ancre.preuve.feuille) return { ok: false, motif: "la feuille ne correspond pas à la pièce" };
+  if (!verifierPreuve(v.ancre.preuve)) return { ok: false, motif: "chemin rompu" };
+  if (v.ancre.preuve.racine !== v.ancre.teteAncre.utxoRoot) return { ok: false, motif: "pièce étrangère à la tête d'ancrage" };
   if (!/^[0-9a-f]{64}$/.test(v.racine) || !/^[0-9a-f]{64}$/.test(v.grainePub)) {
     return { ok: false, motif: "racine ou graine publique mal formée" };
   }
@@ -425,8 +442,26 @@ export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeille
 }
 
 /** Lecture : monter loin d'abord, faire beaucoup ensuite. 27 × 64 + 38 au plus. */
-export function scoreVeillee(verdict: Extract<VerdictVeillee, { ok: true }>): number {
+export function scoreVeillee(verdict: Pick<Extract<VerdictVeillee, { ok: true }>, "salles" | "butin">): number {
   return verdict.salles * FEUILLES + verdict.butin;
+}
+
+/** Les comptes d'une veillée, sans rien vérifier : ce qu'on lit, ancrée ou libre. */
+export function lectureVeillee(v: Pick<Veillee, "gestes" | "hauteur" | "ancre" | "fin">): {
+  salles: number;
+  feuilles: number;
+  butin: number;
+  libre: boolean;
+  fin: Fin | null;
+} {
+  const franchis = v.gestes.filter((g) => g.g === "franchir").length;
+  return {
+    salles: franchis + 1,
+    feuilles: v.gestes.length,
+    butin: v.gestes.length - franchis,
+    libre: v.ancre === null,
+    fin: v.fin,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -434,6 +469,7 @@ export function scoreVeillee(verdict: Extract<VerdictVeillee, { ok: true }>): nu
 // ---------------------------------------------------------------------------
 export function exporterVeillee(v: Veillee): Veillee | { erreur: string } {
   if (v.fin === null) return { erreur: "veillée en cours" };
+  if (!v.ancre) return { erreur: "veillée libre : une lecture, rien à exporter" };
   return v;
 }
 
@@ -465,23 +501,25 @@ export function parserVeillee(raw: string): Veillee | { erreur: string } {
     return { erreur: "JSON invalide" };
   }
   if (!o || o.v !== 1 || o.spec !== SPEC_VEILLEE) return { erreur: "pas une veillée eidos-veillee/1" };
-  if (!teteBienFormee(o.tete) || !teteBienFormee(o.veille) || !teteBienFormee(o.teteAncre)) {
-    return { erreur: "tête mal formée" };
-  }
-  const p = o.piece as Record<string, unknown> | undefined;
-  if (
-    !p ||
-    typeof p.txid !== "string" ||
-    !HEX32.test(p.txid) ||
-    typeof p.rang !== "number" ||
-    typeof p.adresse !== "string" ||
-    typeof p.montant !== "number"
-  ) {
-    return { erreur: "pièce mal formée" };
-  }
-  const pr = o.preuve as Record<string, unknown> | undefined;
-  if (!pr || pr.v !== 1 || typeof pr.feuille !== "string" || typeof pr.racine !== "string" || !Array.isArray(pr.freres)) {
-    return { erreur: "preuve mal formée" };
+  if (!teteBienFormee(o.tete) || !teteBienFormee(o.veille)) return { erreur: "tête mal formée" };
+  if (o.ancre !== null) {
+    const a = o.ancre as Record<string, unknown> | undefined;
+    if (!a || typeof a !== "object" || !teteBienFormee(a.teteAncre)) return { erreur: "ancre mal formée" };
+    const p = a.piece as Record<string, unknown> | undefined;
+    if (
+      !p ||
+      typeof p.txid !== "string" ||
+      !HEX32.test(p.txid) ||
+      typeof p.rang !== "number" ||
+      typeof p.adresse !== "string" ||
+      typeof p.montant !== "number"
+    ) {
+      return { erreur: "pièce mal formée" };
+    }
+    const pr = a.preuve as Record<string, unknown> | undefined;
+    if (!pr || pr.v !== 1 || typeof pr.feuille !== "string" || typeof pr.racine !== "string" || !Array.isArray(pr.freres)) {
+      return { erreur: "preuve mal formée" };
+    }
   }
   if (typeof o.jour !== "number" || typeof o.racine !== "string" || typeof o.grainePub !== "string" || typeof o.hauteur !== "number") {
     return { erreur: "jour, racine, graine publique ou hauteur absents" };

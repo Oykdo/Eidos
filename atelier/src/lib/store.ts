@@ -171,7 +171,8 @@ type Etat = {
   chaineOccupe: boolean;
   federation: FederationPublique | null;
   suivreChaine: () => Promise<void>;
-  ouvrirVeillee: (ref: string) => void;
+  /** ref null : une veillée libre, sans pièce — une lecture */
+  ouvrirVeillee: (ref: string | null) => void;
   veilleeParler: () => void;
   veilleeCreuser: (x: number, y: number) => void;
   veilleeAlcove: () => void;
@@ -753,28 +754,37 @@ export const useCoffre = create<Etat>((set, get) => ({
       set({ erreur: t("veillee.err.chaine"), flash: null });
       return;
     }
-    if (!reseau || !reseau.verdict.ok) {
-      set({ erreur: t("veillee.err.tete"), flash: null });
-      return;
-    }
     const jour = tetesDeLaVeillee(chaine.tetes);
     if (!jour) {
       set({ erreur: t("veillee.err.jour"), flash: null });
       return;
     }
-    const piece = reseau.sorties.find((s) => `${s.txid}:${s.rang}` === ref);
-    const p = piece ? preuveReseau(reseau.sorties, ref) : null;
-    if (!piece || !p || !coffre.sorties.some((s) => s.adresse === piece.adresse)) {
-      set({ erreur: t("veillee.err.piece"), flash: null });
-      return;
+    let ancre: Parameters<typeof ouvrirVeilleeDansCoffre>[3] = null;
+    if (ref !== null) {
+      if (!reseau || !reseau.verdict.ok) {
+        set({ erreur: t("veillee.err.tete"), flash: null });
+        return;
+      }
+      const piece = reseau.sorties.find((s) => `${s.txid}:${s.rang}` === ref);
+      const p = piece ? preuveReseau(reseau.sorties, ref) : null;
+      if (!piece || !p || !coffre.sorties.some((s) => s.adresse === piece.adresse)) {
+        set({ erreur: t("veillee.err.piece"), flash: null });
+        return;
+      }
+      ancre = { piece, preuve: serialiserPreuve(p), teteAncre: reseau.tete };
     }
-    const r = ouvrirVeilleeDansCoffre(coffre, jour.tete, jour.veille, piece, serialiserPreuve(p), reseau.tete);
+    const r = ouvrirVeilleeDansCoffre(coffre, jour.tete, jour.veille, ancre);
     if (!r.ok) {
       set({ erreur: `${t(`veillee.err.${r.code}` as Msg)} — ${r.motif}`, flash: null });
       return;
     }
     persister(r.coffre);
-    set({ coffre: r.coffre, erreur: null, flash: t("veillee.flash.ouverte", { h: jour.tete.hauteur }), derniereVeillee: null });
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: t(ancre ? "veillee.flash.ouverte" : "veillee.flash.ouverteLibre", { h: jour.tete.hauteur }),
+      derniereVeillee: null,
+    });
   },
 
   veilleeParler: () => apresGeste(parlerDansCoffre(get().coffre, get().monde, reserverLocal), set),

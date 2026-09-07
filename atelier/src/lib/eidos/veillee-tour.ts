@@ -21,7 +21,9 @@
  * depuis le maître du coffre à la demande, jamais stocké.
  *
  * Le coffre d'atelier a une graine publique : sa veillée est une démonstration,
- * elle se joue et ne s'exporte pas.
+ * elle se joue et ne s'exporte pas. Une veillée **libre** (sans pièce) se joue
+ * dans tout coffre, atelier compris : les mêmes salles, le même arbre de
+ * feuilles, mais une lecture — rien ne s'exporte, rien ne se juge.
  *
  * LIMITE : la réserve d'indice hors jauge est un registre de session
  * (`Map` par racine) ; le store la fera passer par localStorage. Entre deux
@@ -70,7 +72,7 @@ export const ARG_ALCOVE = DALLE_N * DALLE_N;
 
 export type RefusVeillee = {
   ok: false;
-  code: "aucune" | "finie" | "vide" | "reserve" | "atelier" | "acte" | "ascension";
+  code: "aucune" | "finie" | "vide" | "reserve" | "atelier" | "libre" | "acte" | "ascension";
   motif: string;
   /** le refus de l'acte lui-même, quand c'est lui qui refuse */
   acte?: Honorer | FouilleOk | FouilleKo | AlcoveOk | AlcoveKo | PrendreOk | PrendreKo;
@@ -93,7 +95,7 @@ const arbres = new Map<string, ArbreFeuilles>();
 export function arbreDuCoffre(c: Pick<Coffre, "maitre">, v: Veillee): ArbreFeuilles | null {
   const hit = arbres.get(v.racine);
   if (hit) return hit;
-  const a = construireArbre(graineArbre(c.maitre, v.tete.idBloc, v.piece));
+  const a = construireArbre(graineArbre(c.maitre, v.tete.idBloc, v.ancre?.piece ?? null));
   if (hexOf(a.racine) !== v.racine) return null;
   arbres.set(v.racine, a);
   return a;
@@ -131,22 +133,23 @@ export function enVeillee(c: Pick<Coffre, "tour">): boolean {
 /**
  * Ouvre la veillée du jour dans le coffre : l'arbre depuis le maître, la preuve
  * de veillée, et l'ascension commencée avec la graine du jour (la même pour tous).
+ * `ancre` null : une veillée libre — les mêmes salles, aucune pièce, une lecture.
  */
 export function ouvrirVeilleeDansCoffre(
   c: Coffre,
   tete: TeteReseau,
   veille: TeteReseau,
-  piece: SortieMin,
-  preuve: PreuvePortable,
-  teteAncre: TeteReseau = tete,
+  ancre: { piece: SortieMin; preuve: PreuvePortable; teteAncre?: TeteReseau } | null,
 ): { ok: true; coffre: Coffre; v: Veillee } | RefusVeillee {
   if (enVeillee(c)) return { ok: false, code: "finie", motif: "une veillée est déjà en cours dans ce coffre" };
-  const arbre = construireArbre(graineArbre(c.maitre, tete.idBloc, piece));
-  const v = ouvrirVeillee(arbre, tete, veille, piece, preuve, teteAncre);
+  const arbre = construireArbre(graineArbre(c.maitre, tete.idBloc, ancre?.piece ?? null));
+  const v = ouvrirVeillee(arbre, tete, veille, ancre);
   if ("erreur" in v) return { ok: false, code: "acte", motif: v.erreur };
   arbres.set(v.racine, arbre);
-  const ancre: Ancre = { tete: teteAncre, piece: v.piece, preuve };
-  const base = commencerDansCoffre(c, ancre, graineDuJour(tete.idBloc));
+  const ancreAscension: Ancre | null = v.ancre
+    ? { tete: v.ancre.teteAncre, piece: v.ancre.piece, preuve: v.ancre.preuve }
+    : null;
+  const base = commencerDansCoffre(c, ancreAscension, graineDuJour(tete.idBloc));
   const t = tourDe(base);
   return { ok: true, v, coffre: { ...base, tour: { ...t, veillee: { v, indiceReserve: 0 } } } };
 }
@@ -293,11 +296,12 @@ export function effacerVeilleeDansCoffre(c: Coffre): Coffre {
   return { ...c, tour: { ...t, veillee: null } };
 }
 
-/** La preuve exportable : finie, et d'un coffre personnel (l'atelier joue, il n'exporte pas). */
+/** La preuve exportable : finie, ancrée, et d'un coffre personnel (l'atelier joue, il n'exporte pas). */
 export function exporterVeilleeDuCoffre(c: Pick<Coffre, "tour" | "nature">): Veillee | RefusVeillee {
   const w = veilleeDe(c);
   if (!w) return { ok: false, code: "aucune", motif: "aucune veillée" };
   if (w.v.fin === null) return { ok: false, code: "finie", motif: "veillée en cours" };
+  if (!w.v.ancre) return { ok: false, code: "libre", motif: "veillée libre : une lecture, rien à exporter" };
   if (c.nature === "atelier") return { ok: false, code: "atelier", motif: "coffre d'atelier : une démonstration, rien à exporter" };
   return w.v;
 }

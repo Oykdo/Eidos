@@ -19,6 +19,8 @@
 | **la veillée** | un jour | l'ascension du jour, 27 salles identiques pour tous (§4), ancrée sur le premier bloc du jour et sur une pièce ; trois blocs du poste du jour = trois moments où l'on peut s'arrêter pour compter | une preuve `eidos-veillee/1` : jugée sans rejeu, classée, relue comme un fantôme (§6) |
 | **l'âge** | des semaines | les sceaux d'âge (reliques du monde) ouvrent les quartiers ; les pouvoirs des muses (`CAP_METROIDVANIA`) rouvrent ce qu'on a vu ; l'âge du bloc d'ancrage date chaque preuve | un coffre qui monte plus haut, des preuves d'âges différents, des fantômes en écho |
 
+**Libre ou ancrée.** Comme l'ascension, une veillée peut être **libre** : les mêmes salles du jour, le même arbre de soixante-quatre feuilles, aucune pièce — une lecture, qui ne s'exporte pas et que le juge refuse. C'est ainsi que le coffre d'atelier, ou un coffre sans pièce, joue. Ce qui compte est ancré ; ce qui est libre ne vaut rien, et se joue quand même.
+
 **Ce qu'on ne fait pas.** Une IP à côté d'Eidos (C4), des points de vie déguisés, un aléa client, un serveur de classement, un verrou de machine, un objet plus fort qu'un autre.
 
 ## 2. La clé comme vie
@@ -112,8 +114,9 @@ Entre les deux, la stratégie : 26 feuilles de franchir sont dues ; 38 sont à p
 ```
 Veillee {
   v: 1, spec: "eidos-veillee/1", jour,
-  tete, veille, teteAncre en-têtes étendus + signature XMSS (temoin.TeteReseau)
-  piece, preuve           sortie non dépensée à teteAncre.utxo_root (même jour), preuve Merkle
+  tete, veille            en-têtes étendus + signature XMSS (temoin.TeteReseau)
+  ancre                   null (veillée libre : une lecture) ou { teteAncre, piece, preuve } :
+                          une tête du même jour, une sortie non dépensée à son utxo_root, la preuve Merkle
   racine, grainePub, hauteur = 6
   gestes[]                { i, g, etape, etage, arg, mot, msg, sig: { indice, wots, chemin } }
   fin                     sommet | epuise | porte | abandon
