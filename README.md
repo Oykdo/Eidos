@@ -57,7 +57,7 @@ Testnet only: the eidôlon has no value.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 checks of the frozen genesis
 python3 noeud.py --verifier      # replays the whole testnet chain, must end with « aucun refus »
-cd atelier && npm ci && npm test # 30 script tests and 408 Eidos tests, vectors shared with Python
+cd atelier && npm ci && npm test # 30 script tests and 409 Eidos tests, vectors shared with Python
 ```
 
 The Guide page of the atelier explains the core, the mechanics and the world in plain words; `CLAUDE.md` says what must never change; `docs/FEUILLE_DE_ROUTE.md` records every decision.
@@ -242,7 +242,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `veillees/` | — | deposited vigil proofs (`index.json`, one `eidos-veillee/1` file per proof), judged in every browser, never by a server | — |
 | `docs/` | — | specifications, the vigil bible, the roadmap, the lore; banner generator | 2 |
-| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 408 Eidos tests | 408 |
+| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 409 Eidos tests | 409 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (faucet and transfer issues), `veillees.yml` (vigil proofs deposited by issue), `courriel.yml` (mailbox, when a mailbox is declared), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor; Node 22 for the atelier.
 

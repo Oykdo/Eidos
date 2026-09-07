@@ -491,6 +491,19 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   claim (tête XMSS + pièce Merkle, celui d'`ancrage.ts`), la mesure de la rafale rétroactive par le
   bot (décide la fenêtre d'un jour, §5), et seulement ensuite une scène.
 
+### Menu de l'écosystème — deux rangs au lieu de neuf onglets — FAIT (2026-09-07)
+- `navigation.ts` : chaque registre a une page par défaut (`defaut`) ; `registreDe` et `sousOnglets`
+  ajoutés. La liste reste unique — ajouter une page ne touche ni `Nav.tsx` ni `Ecosysteme.tsx`.
+- `Nav.tsx` : deux rangs. En tête les trois registres (Vérifier, Lire, Jouer) et le Guide ; dessous,
+  les pages du seul registre courant. Sur le Guide, pas de second rang (il n'a pas de registre).
+  Neuf onglets à plat + Guide → quatre en tête, deux à quatre en dessous.
+- `Ecosysteme.tsx` : les registres se replient (`<details>` natif — pas d'état React, clavier et
+  « mouvement réduit » suivent tout seuls). Seul le registre de la page courante est ouvert ; les
+  autres tiennent en une ligne qui liste les noms de leurs pages.
+- `navigation.test.ts` : +1 contrôle (le `defaut` est bien une page du registre, `sousOnglets` ne
+  rend que les pages du registre, le Guide n'a ni registre ni sous-onglets, quatre entrées en tête).
+- Reste : le contrôle visuel dans un navigateur (l'auteur, `/` et `/guide`, console ouverte).
+
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
 signée, **veillée** : trois têtes à cheval sur minuit UTC, relique, **glyphes** : adresse 27 + 4, condensat 43, bourrage refusé),

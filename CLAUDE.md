@@ -169,7 +169,7 @@ python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 408 suites Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 409 suites Eidos
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 ```
 

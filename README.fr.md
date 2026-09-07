@@ -57,7 +57,7 @@ Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 contrôles de la genèse gelée
 python3 noeud.py --verifier      # rejoue toute la chaîne du réseau d'essai, doit finir par « aucun refus »
-cd atelier && npm ci && npm test # 30 tests de scripts et 408 tests Eidos, vecteurs partagés avec Python
+cd atelier && npm ci && npm test # 30 tests de scripts et 409 tests Eidos, vecteurs partagés avec Python
 ```
 
 La page Guide de l'atelier explique le cœur, les mécaniques et le monde en mots simples ; `CLAUDE.md` dit ce qui ne doit jamais changer ; `docs/FEUILLE_DE_ROUTE.md` garde chaque décision.
@@ -242,7 +242,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `etat.json`, `mempool.json` | — | état publié ; demandes de robinet et d'envoi | — |
 | `veillees/` | — | preuves de veillée déposées (`index.json`, un fichier `eidos-veillee/1` par preuve), jugées dans chaque navigateur, jamais par un serveur | — |
 | `docs/` | — | spécifications, la bible de la veillée, la feuille de route, le lore ; générateur des bannières | 2 |
-| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 408 tests Eidos | 408 |
+| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 409 tests Eidos | 409 |
 
 CI (`.github/workflows/`) : `tests.yml` (3 OS × 2 Python, empreintes, hygiène, `parite`), `chaine.yml` (forge horaire), `robinet.yml` (issues de robinet et d'envoi), `veillees.yml` (preuves de veillée déposées par issue), `courriel.yml` (boîte aux lettres, quand une boîte est déclarée), `pages.yml` (atelier), `init.yml`. Python 3.9 est le plancher ; Node 22 pour l'atelier.
 

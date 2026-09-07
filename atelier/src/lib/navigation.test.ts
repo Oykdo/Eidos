@@ -3,7 +3,15 @@ import { existsSync } from "node:fs";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { EN, FR } from "./i18n.ts";
-import { GROUPES, GUIDE, fichierRoute, groupeDe, pages } from "./navigation.ts";
+import {
+  GROUPES,
+  GUIDE,
+  fichierRoute,
+  groupeDe,
+  pages,
+  registreDe,
+  sousOnglets,
+} from "./navigation.ts";
 
 describe("navigation — une liste, trois conditions", () => {
   it("chaque page a sa route dans src/routes", () => {
@@ -38,5 +46,24 @@ describe("navigation — une liste, trois conditions", () => {
     for (const g of GROUPES) {
       assert.ok(g.label in FR && g.label in EN, g.label);
     }
+  });
+
+  it("chaque registre ouvre une de ses pages, et n'affiche que les siennes en sous-onglets", () => {
+    for (const g of GROUPES) {
+      assert.ok(
+        g.items.some((it) => it.to === g.defaut),
+        `${g.id} : defaut ${g.defaut} n'est pas une de ses pages`,
+      );
+      for (const it of g.items) {
+        assert.deepEqual(sousOnglets(it.id), g.items);
+        assert.equal(registreDe(it.id)?.id, g.id);
+      }
+    }
+    // le Guide n'appartient à aucun registre : pas de second rang sur sa page
+    assert.equal(registreDe(GUIDE.id), null);
+    assert.deepEqual(sousOnglets(GUIDE.id), []);
+    // deux rangs au plus : 3 registres + Guide en tête, jamais les neuf pages à plat
+    assert.equal(GROUPES.length + 1, 4);
+    assert.ok(Math.max(...GROUPES.map((g) => g.items.length)) <= 4);
   });
 });
