@@ -37,7 +37,7 @@ verify_genesis.py   32 contrôles d'intégrité de la genèse
 wots.py             WOTS+ w=16 (RFC 8391), arbre L, adresses, empreintes (5 contrôles)
 utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (15 contrôles)
 federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
-vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (6 familles)
+vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (9 familles)
 noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, reliques, etat.json (5 + 3 + 4 + 4 contrôles)
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
@@ -62,7 +62,7 @@ pas étendre le chemin PoW.
 
 Dans `atelier/src/lib/eidos/` : `eonis.ts`, `lamport.ts`, `merkle.ts`, `carnet.ts`,
 `chaine.ts`, `temoin.ts`, `wallet.ts`, `coinselect.ts`, `glyphs.ts`, `portable.ts`,
-`envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts` — chacun avec son `.test.ts` ;
+`envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts`, `veillee.ts`, `fantomes.ts` — chacun avec son `.test.ts` ;
 `vecteurs.test.ts` relit `vecteurs.json`. `lamport.ts` garde Lamport en démonstration mais dérive adresses,
 empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 
@@ -496,9 +496,32 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
 - Racine `index.html` : n'est plus un portefeuille ; explique que Pages doit
   publier le workflow (Source : GitHub Actions) et redirige vers le dépôt.
 
+### La Veillée — roguelike XMSS, PR 1 FAITE (2026-09-07), voir docs/BIBLE_VEILLEE.md
+Prompt révisé `docs/PROMPT_ROGUELIKE_XMSS.md` (l'IP fixe ce qui est déjà écrit dans le
+dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible).
+- `veillee.ts` : **la clé comme vie** — arbre XMSS de hauteur 6 (64 feuilles WOTS+,
+  port de `federation.CleValidateur`, parité à l'octet sur le vecteur `xmss`, vérifié
+  par `xmss.verifierMss` inchangé) ; un geste (franchir, parler, ouvrir, prendre) =
+  une feuille, message chaîné `sha256d("eidos-veillee/1/geste" ‖ racine ‖ i ‖ étape ‖
+  étage ‖ geste ‖ arg ‖ mot ‖ précédent)`, étape et étage lus dans le pendule, jamais
+  déclarés ; 26 franchir = sommet, 64 gestes = épuisé, porte / abandon ; export
+  `eidos-veillee/1` jugé sans rejeu (deux têtes XMSS, pièce Merkle, chaque feuille,
+  parcours recalculé, fin cohérente) ; score = salles × 64 + butin (lecture).
+  **Le jour** : premier bloc du jour civil UTC, prouvé par la tête de la veille
+  (`estPremierDuJour`) ; graine du parcours `sha256d("eidos-veillee/1" ‖ id_bloc)`
+  la même pour tous, graine de l'arbre `…/arbre ‖ maître ‖ id_bloc ‖ txid ‖ rang`
+  au coffre. 7 contrôles.
+- `fantomes.ts` : nom de salle = nom d'ère de l'œuf des trois figures imaginaires de
+  la coupe (C1) ; fantômes = six tournures des œufs légendaires de la réserve (écho,
+  revenue, dernière, ombre, qui s'efface, murmure) sur la dernière salle (C2). 3 contrôles.
+- `vecteurs.py` : famille `veillee` (trois têtes signées à cheval sur minuit).
+- Reste : PR 2 (jauge `tour.veillee`, gestes reliés à la Tour, en-têtes de
+  `chaine-eidos.dat` lus côté atelier, page Veillée, huit répliques), PR 3 (arbre à
+  l'écran, classement statique, fantômes), PR 4 (gardiens C3), PR 5 [OUVERT] Godot/Rust.
+
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
-`vecteurs.json` : 8 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
-signée, relique, **glyphes** : adresse 27 + 4, condensat 43, bourrage refusé),
+`vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
+signée, **veillée** : trois têtes à cheval sur minuit UTC, relique, **glyphes** : adresse 27 + 4, condensat 43, bourrage refusé),
 écrit par `vecteurs.py --generer`, relu par `vecteurs.py` et par
 `vecteurs.test.ts`, `xmss.test.ts`, `merkle.test.ts`, `temoin.test.ts`,
 `trophee.test.ts`, `relique-qr.test.ts`. Job CI **`parite`** (tests.yml) :

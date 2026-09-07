@@ -8,6 +8,8 @@ empreinte, signature WOTS+ complete ; une transaction (core, txid, sighash,
 temoin, ser_tx) ; une feuille XMSS de hauteur 4 avec sa signature de bloc ;
 la racine UTXO d'un carnet de 3 sorties ; une tete signee (en-tete etendu +
 signature XMSS) avec le carnet qu'elle engage, pour le temoin de l'atelier.
+Depuis la veillee : trois tetes signees a cheval sur minuit UTC, pour prouver
+« premier bloc du jour » avec deux tetes (veillee.ts).
 Les deux implementations lisent le meme vecteurs.json : si l'une derive,
 la parite casse ici avant de casser la chaine.
 
@@ -114,6 +116,36 @@ def calculer():
         "sorties": [{"txid": tx.hex(), "rang": r, "adresse": a.hex(), "montant": m}
                     for (tx, r), (a, m) in sorted(ch.carnet.utxo.items())],
     }
+    # veillee : trois blocs federes a cheval sur minuit UTC (2025-08-31), chaque
+    # tete signee ; la veillee du jour s'ancre sur le PREMIER bloc du jour, ce
+    # qui se prouve avec deux tetes (la veille, le jour) sans rejouer (veillee.ts)
+    minuit = 1756598400                       # 2025-08-31T00:00:00Z
+    t0v = minuit - F.CRENEAU
+    clesv = F.cles_de_test(7, hauteur=4)
+    fedv = F.Federation.depuis_cles(clesv, t0v, hauteur=4)
+    chv = F.ChaineFederee(fedv)
+    pv = U.Portefeuille("vecteur-veillee")
+    tetes = []
+    for h in range(3):
+        blk = F.forger(chv, clesv, [U.coinbase(h, pv.nouvelle_adresse())], t0v + h * F.CRENEAU)
+        chv.valider(blk, maintenant=t0v + h * F.CRENEAU)
+        t = chv.tete_signee
+        idx, ots, chemin = t["sig"]
+        tetes.append({
+            "hauteur": t["hauteur"], "prev": t["prev"].hex(), "merkle": t["merkle"].hex(),
+            "ts": t["ts"], "utxo_root": t["utxo_root"].hex(), "id_bloc": t["id_bloc"].hex(),
+            "validateur": t["validateur"], "indice": idx,
+            "signature": ots.hex(), "chemin": [c.hex() for c in chemin]})
+    assert tetes[0]["ts"] // 86400 < tetes[1]["ts"] // 86400 == tetes[2]["ts"] // 86400
+    v["veillee"] = {
+        "federation": {"hauteur_mss": 4, "racines": [c.racine.hex() for c in clesv],
+                       "graines_publiques": [c.graine_pub.hex() for c in clesv]},
+        "minuit": minuit, "jour": minuit // 86400,
+        "veille": tetes[0], "premier_du_jour": tetes[1], "second_du_jour": tetes[2],
+        "sorties_au_premier": [{"txid": tx.hex(), "rang": r, "adresse": a.hex(), "montant": m}
+                               for (tx, r), (a, m) in sorted(chv.carnet.utxo.items())
+                               if m > 0][:2],
+    }
     # relique : graine connue -> adresse, id, charge utile du QR (relique.py)
     import relique as RQ
     g = sha256(b"relique/test")
@@ -136,7 +168,7 @@ def calculer():
 
 def verifier(v):
     attendu = calculer()
-    ecarts = [c for c in ("parametres", "wots", "tx", "xmss", "carnet", "tete", "relique", "glyphes")
+    ecarts = [c for c in ("parametres", "wots", "tx", "xmss", "carnet", "tete", "veillee", "relique", "glyphes")
               if v.get(c) != attendu[c]]
     if ecarts:
         raise SystemExit(f"ECHEC : vecteurs divergents pour {', '.join(ecarts)}")
