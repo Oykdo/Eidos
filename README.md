@@ -149,12 +149,13 @@ Details: [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 | Read | **Map** | Relics of the world by age and by muse; trophy of a seal, judged without replay |
 | | **Signs** | Readings of the same 64 glyphs |
 | Play | **Tower** | 255 floors, nine muses as hosts, elixirs, capsules and bestiary, secrets, doors by seal |
+| | **Vigil** | The daily roguelike: 64 WOTS+ leaves as life, 27 rooms from the day's first block, proof judged without replay |
 | | **Relics** | The relic scene and "Relic found" |
 | | **Guide** | Verify / Read / Play, the five words, the limits |
 
 **The Tower and the pendulum.** Exploration is free; at the end of each room the pendulum reads what the vault did there (honoured the host, opened an alcove, captured an occupant, or nothing) and chooses the **route** — 27 stops across nine bands — and the arrival cell, never the content of a floor, which stays public and fixed. A free run is a reading and counts for nothing. A run that counts is **anchored**: its seed is `SHA-256d("eidos-ascension/1" ‖ id_bloc ‖ txid ‖ rank)` — a signed head and a proven, unspent coin, never the vault, the machine or the browser. The finished ascension is exported and judged without replay. No browser fingerprint, no machine lock, no client proof of work: what counts is anchored, what is free is worth nothing ([`docs/SPEC_SYBIL.md`](docs/SPEC_SYBIL.md)).
 
-**The Vigil (La Veillée).** A roguelike where the key is the life: a run enters with an XMSS tree of 64 WOTS+ leaves, every gesture that counts (crossing a room, talking to the host, digging, capturing) burns one leaf, and an empty tree ends the climb — permadeath as a theorem, not a rule. The day's vigil is the same for everyone: its route derives from the **first block of the UTC day**, proven by two signed heads without replay; it counts because it is anchored on an unspent coin. The finished run exports as `eidos-veillee/1` and is judged by anyone (heads, coin, every leaf in order, the route recomputed). Rooms are named after the era of their egg; other players' runs come back as ghosts. Design bible: [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md) — core library in this repository, page and leaderboard next.
+**The Vigil (La Veillée).** A roguelike where the key is the life: a run enters with an XMSS tree of 64 WOTS+ leaves, every gesture that counts (crossing a room, talking to the host, digging, capturing) burns one leaf, and an empty tree ends the climb — permadeath as a theorem, not a rule. The day's vigil is the same for everyone: its route derives from the **first block of the UTC day**, proven by two signed heads without replay; it counts because it is anchored on an unspent coin. The finished run exports as `eidos-veillee/1` and is judged by anyone (heads, coin, every leaf in order, the route recomputed). Rooms are named after the era of their egg; other players' runs come back as ghosts. Design bible: [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md) — core library and Vigil page in this repository, leaderboard and ghosts next.
 
 **Figures are not proofs.** The map, the signs, the relic scene and the artefacts are readings; only the ledger, the chain and the signatures commit.
 
@@ -175,7 +176,7 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `noeud.py` | 1151 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 3 + 4 + 5 + 2 |
 | `robinet.py` | 420 | faucet queue fed by issues and email, per-author brake | 14 |
 | `courriel.py` | 321 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
-| `vecteurs.py` | 203 | shared vectors Python ↔ TS (`vecteurs.json`, 9 families) | parity |
+| `vecteurs.py` | 206 | shared vectors Python ↔ TS (`vecteurs.json`, 9 families) | parity |
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
 | `consensus.py` | 204 | PoW difficulty and cumulative work — historical | 6 |
@@ -185,7 +186,7 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `chaine-eidos.dat` | — | the testnet chain, written by the CI | — |
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `docs/` | — | specifications: relics, tower, pendulum, Sybil, vault audit, vigil bible; banner generator | 2 |
-| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 338 Eidos tests | 338 |
+| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 350 Eidos tests | 350 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (issues), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor.
 

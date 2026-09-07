@@ -125,10 +125,12 @@ def calculer():
     fedv = F.Federation.depuis_cles(clesv, t0v, hauteur=4)
     chv = F.ChaineFederee(fedv)
     pv = U.Portefeuille("vecteur-veillee")
-    tetes = []
+    tetes, sorties_v = [], []
     for h in range(3):
         blk = F.forger(chv, clesv, [U.coinbase(h, pv.nouvelle_adresse())], t0v + h * F.CRENEAU)
         chv.valider(blk, maintenant=t0v + h * F.CRENEAU)
+        sorties_v.append([{"txid": tx.hex(), "rang": r, "adresse": a.hex(), "montant": m}
+                          for (tx, r), (a, m) in sorted(chv.carnet.utxo.items())])
         t = chv.tete_signee
         idx, ots, chemin = t["sig"]
         tetes.append({
@@ -142,9 +144,8 @@ def calculer():
                        "graines_publiques": [c.graine_pub.hex() for c in clesv]},
         "minuit": minuit, "jour": minuit // 86400,
         "veille": tetes[0], "premier_du_jour": tetes[1], "second_du_jour": tetes[2],
-        "sorties_au_premier": [{"txid": tx.hex(), "rang": r, "adresse": a.hex(), "montant": m}
-                               for (tx, r), (a, m) in sorted(chv.carnet.utxo.items())
-                               if m > 0][:2],
+        "sorties_au_premier": sorties_v[1],
+        "sorties_au_second": sorties_v[2],
     }
     # relique : graine connue -> adresse, id, charge utile du QR (relique.py)
     import relique as RQ

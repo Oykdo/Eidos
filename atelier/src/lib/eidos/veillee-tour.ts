@@ -138,13 +138,14 @@ export function ouvrirVeilleeDansCoffre(
   veille: TeteReseau,
   piece: SortieMin,
   preuve: PreuvePortable,
+  teteAncre: TeteReseau = tete,
 ): { ok: true; coffre: Coffre; v: Veillee } | RefusVeillee {
   if (enVeillee(c)) return { ok: false, code: "finie", motif: "une veillée est déjà en cours dans ce coffre" };
   const arbre = construireArbre(graineArbre(c.maitre, tete.idBloc, piece));
-  const v = ouvrirVeillee(arbre, tete, veille, piece, preuve);
+  const v = ouvrirVeillee(arbre, tete, veille, piece, preuve, teteAncre);
   if ("erreur" in v) return { ok: false, code: "acte", motif: v.erreur };
   arbres.set(v.racine, arbre);
-  const ancre: Ancre = { tete, piece: v.piece, preuve };
+  const ancre: Ancre = { tete: teteAncre, piece: v.piece, preuve };
   const base = commencerDansCoffre(c, ancre, graineDuJour(tete.idBloc));
   const t = tourDe(base);
   return { ok: true, v, coffre: { ...base, tour: { ...t, veillee: { v, indiceReserve: 0 } } } };

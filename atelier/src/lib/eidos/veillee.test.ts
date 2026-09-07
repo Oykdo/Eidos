@@ -48,6 +48,7 @@ const VEC = JSON.parse(readFileSync(new URL("../../../../vecteurs.json", import.
     premier_du_jour: TeteBrute;
     second_du_jour: TeteBrute;
     sorties_au_premier: { txid: string; rang: number; adresse: string; montant: number }[];
+    sorties_au_second: { txid: string; rang: number; adresse: string; montant: number }[];
   };
 };
 
@@ -140,6 +141,22 @@ describe("le jour : le premier bloc, prouvé par deux têtes", () => {
     assert.equal(v.jour, VEC.veillee.jour);
     assert.equal(feuillesRestantes(v), FEUILLES);
     assert.equal(parcoursDe(v).etage, 0);
+  });
+
+  it("l'ancre : une tête du même jour, au plus tôt le bloc du jour ; la pièce prouvée contre elle", () => {
+    const p2 = serialiser(preuveReseau(VEC.veillee.sorties_au_second, `${piece.txid}:${piece.rang}`)!);
+    const v = ouvrirVeillee(arbre, jour, veille, piece, p2, second);
+    assert.ok(!("erreur" in v), "erreur" in v ? v.erreur : "");
+    if ("erreur" in v) return;
+    assert.equal(v.teteAncre.idBloc, second.idBloc);
+    const fini = arreterVeillee(v, "abandon");
+    const j = jugerVeillee(fini, fed);
+    assert.ok(j.ok, j.ok ? "" : j.motif);
+    assert.match((ouvrirVeillee(arbre, jour, veille, piece, preuveJour, second) as { erreur: string }).erreur, /ancrage/);
+    assert.match((ouvrirVeillee(arbre, jour, veille, piece, preuveJour, veille) as { erreur: string }).erreur, /du jour|précède/);
+    const relue = parserVeillee(serialiserVeillee(fini));
+    assert.ok(!("erreur" in relue));
+    assert.match((jugerVeillee({ ...fini, teteAncre: veille }, fed) as { motif: string }).motif, /du jour|précède|étrangère/);
   });
 });
 
