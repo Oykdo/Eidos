@@ -24,6 +24,13 @@ function court(h: string): string {
   return `${h.slice(0, 8)}…${h.slice(-4)}`;
 }
 
+/** Une issue préremplie : le titre dit « veillée », le corps reste au joueur (le fichier s'y glisse). */
+const ISSUE_VEILLEE_URL =
+  "https://github.com/Oykdo/Eidos/issues/new?title=" +
+  encodeURIComponent("veillée") +
+  "&body=" +
+  encodeURIComponent("Ma preuve de veillée est jointe ci-dessous (glisser le fichier .json ici).\n");
+
 /** La Veillée : l'arbre de feuilles, la salle du jour, les gestes, la preuve. */
 export function VeilleeView() {
   const { t, locale } = useI18n();
@@ -266,6 +273,12 @@ export function VeilleeView() {
                     <div className="mt-2">
                       <p className="font-mono text-[12px] text-cuivre">{t("veillee.exportee")}</p>
                       {fichier ? <p className="mt-1 font-mono text-[11px] text-sourd">{t("veillee.export.fichier", { f: fichier })}</p> : null}
+                      <p className="mt-1 font-mono text-[11px] text-sourd">{t("veillee.export.issue")}</p>
+                      <Button asChild variant="discret" className="mt-1 w-auto">
+                        <a href={ISSUE_VEILLEE_URL} target="_blank" rel="noreferrer">
+                          {t("veillee.export.issueBouton")}
+                        </a>
+                      </Button>
                       <textarea readOnly value={derniere} rows={3} className="mt-1 w-full rounded-sm bg-carte p-2 font-mono text-[10px] text-sourd" />
                       <Button type="button" variant="discret" className="mt-1 w-auto" onClick={() => void navigator.clipboard?.writeText(derniere)}>
                         {t("relique.qr.copier")}
