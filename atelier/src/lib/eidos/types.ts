@@ -139,6 +139,8 @@ export type Tour = {
   porte: number | null;
   /** jours civils où Thalie a donné une capsule (une par poste du jour honoré) */
   capsules: number[];
+  /** la veillée en cours ou finie (veillee-tour.ts) ; null hors veillée */
+  veillee: import("./veillee-tour.ts").VeilleeDuCoffre | null;
 };
 
 export type Coffre = {

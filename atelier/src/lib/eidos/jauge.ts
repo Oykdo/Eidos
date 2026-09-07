@@ -12,6 +12,7 @@
  */
 
 import { estNomAge } from "./relique.ts";
+import { parserVeillee, serialiserVeillee } from "./veillee.ts";
 import { DALLE_N, ETAGES, etageDe } from "./tour.ts";
 import type { Coffre, ElixirBu, Espece, NomAge, Tour } from "./types.ts";
 
@@ -33,7 +34,25 @@ export function tourVide(): Tour {
     porte: null,
     capsules: [],
     ascension: null,
+    veillee: null,
   };
+}
+
+/** La veillée se relit par son propre parseur ; l'indice réservé ne descend jamais sous les gestes. */
+function veillee(x: unknown): Tour["veillee"] {
+  if (!x || typeof x !== "object") return null;
+  const o = x as Record<string, unknown>;
+  if (!o.v || typeof o.v !== "object") return null;
+  let v;
+  try {
+    v = parserVeillee(serialiserVeillee(o.v as never));
+  } catch {
+    return null;
+  }
+  if ("erreur" in v) return null;
+  const reserve = entier(o.indiceReserve, 0, 1 << v.hauteur);
+  if (reserve === null) return null;
+  return { v, indiceReserve: Math.max(reserve, v.gestes.length) };
 }
 
 /** L'ascension se relit avec tolérance ; une forme absurde revient à null. */
@@ -192,6 +211,7 @@ export function normaliserTour(x: unknown): Tour {
     porte: entier(t.porte, 0, 0xffffffff),
     capsules: jours(t.capsules),
     ascension: ascension(t.ascension),
+    veillee: veillee(t.veillee),
   };
 }
 
