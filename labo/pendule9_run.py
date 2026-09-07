@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pendule-9 — laboratoire : avatar voxelisé, aura graduelle, 8 agrégateurs, run de 255 étages.
 Figures, pas preuves : rien ici n'engage le carnet ni la chaîne. Bibliothèque standard.
-Usage : python3 pendule9_run.py   (K10–K18)
+Usage : python3 pendule9_run.py   (K10–K18, K27–K28)
 
 HANDOVER appliqué — étapes 1→4.
 1. base_aggregators() branché sur le générateur de donjon pendule-9 (spawn = agrégateur touché).
@@ -43,12 +43,31 @@ def redistribute_source_9(aggs):
         aggs[low]["actuel"] += 1; aggs["source_9"] -= 1
     return aggs
 
-# ---------- Cube de Saturne ----------
-def cube_de_saturne(state):
-    """Une seule utilisation. Restaure actuel := résiduel sur les 8, SANS signer le sceau."""
+# ---------- Cube de Saturne (docs/SPEC_AURA_PENDULE9.md §8) ----------
+PORTEES_CUBE = ("agregateurs",)   # tout le reste — graine, trace, tête, pièce, étapes — est hors de portée
+
+class Rejet(ValueError): pass
+
+def ancrer(state, id_bloc_hex, txid_hex, rang):
+    """Figure de l'ancrage réel (ancrage.ts) : graine = sha256d('eidos-ascension/1' ‖ id_bloc ‖ txid ‖ rang),
+    trace = empreinte des étapes seules. Les agrégateurs n'entrent JAMAIS dans la trace."""
+    d = lambda b: hashlib.sha256(hashlib.sha256(b).digest()).digest()
+    graine = d(b"eidos-ascension/1" + bytes.fromhex(id_bloc_hex) + bytes.fromhex(txid_hex) + rang.to_bytes(4, "big"))
+    state["ancre"] = {"graine": graine.hex(), "trace": trace_de(state["log"])}
+    return state
+
+def trace_de(log):
+    return hashlib.sha256(" ".join(f"{e['pos']}:{e['floor']}" for e in log).encode()).hexdigest()
+
+def cube_de_saturne(state, portee="agregateurs"):
+    """Une seule utilisation. Restaure actuel := résiduel sur les 8, SANS signer le sceau, SANS toucher
+    l'ancrage : graine, trace, tête et pièce restent ce qu'elles sont. Un run libre ou ancré, même règle."""
+    if portee not in PORTEES_CUBE:
+        raise Rejet(f"le Cube touche {PORTEES_CUBE[0]} au lieu de {portee}")
     if state["cube_used"]: return False
     for k in AGG: state["aggs"][k]["actuel"] = state["aggs"][k]["residuel"]
     state["cube_used"] = True                            # le sceau reste identique : retour à p sans passer par p'
+    if "ancre" in state: state["ancre"]["cube"] = True   # lecture exportée, jamais dans la trace
     return True
 
 # ---------- Run ----------
@@ -126,6 +145,16 @@ def lab_test():
     for _ in range(252): enter_floor(s4)
     plein = all(s4["aggs"][k]["actuel"] == CAP for k in AGG) and s4["aggs"].get("source_9", 0) == 0
     R["K18_queue_explique_asymetrie"] = plein and s3["aggs"]["source_9"] == 3 * cost(255)
+    # K27/K28 — le Cube et l'ancrage (§8) : sur un run ancré, le Cube restaure les 8 mais graine et
+    # trace ne bougent pas ; viser autre chose que les agrégateurs est refusé.
+    s5 = new_run(3)
+    for _ in range(27): enter_floor(s5)
+    ancrer(s5, "00" * 32, "11" * 32, 0); g, t = s5["ancre"]["graine"], s5["ancre"]["trace"]
+    cube_de_saturne(s5)
+    R["K27_cube_sans_toucher_ancrage"] = (s5["ancre"]["graine"], s5["ancre"]["trace"]) == (g, t) and \
+        trace_de(s5["log"]) == t and s5["ancre"].get("cube") is True and all(s5["aggs"][k]["actuel"] == CAP for k in AGG)
+    try: cube_de_saturne(new_run(3), portee="graine"); R["K28_cube_hors_portee_refuse"] = False
+    except Rejet: R["K28_cube_hors_portee_refuse"] = True
     return R, s1, parts, s3
 
 if __name__ == "__main__":

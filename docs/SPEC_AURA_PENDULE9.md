@@ -77,3 +77,14 @@ Kill criteria : fixture valide (K19), déterminisme (K20), invariant (K21), sour
 **GitHub Actions — `.github/workflows/labo.yml` :** matrice 3 OS × Python 3.9/3.12 sur K1–K25, hygiène (fixture identique au dépôt, stdlib seulement), et un job `parite-atelier` qui s'active dès qu'`atelier/scripts/exporter-run.ts` existe : export d'un vrai run TS → lecture par `unification.py`. Groupe de concurrence propre, `contents: read`, déclenché seulement sur `labo/**`.
 
 **Pont réel :** `atelier/scripts/exporter-run.ts` (`node --experimental-strip-types`, args maitre n ville, choix fixes, portMot 0) ; fixture réelle `labo/run_atelier.json`, comparée à l'octet dans le job `parite-atelier`. La LIST des zones non branchées est dans `docs/FEUILLE_DE_ROUTE.md`.
+
+## 8. Cube de Saturne et ancrage — ce que le Cube peut toucher (K27–K28)
+Règle du dépôt : *ce qui compte est ancré, ce qui est libre ne vaut rien* (`ancrage.ts`). Un run ancré a pour graine `sha256d("eidos-ascension/1" ‖ id_bloc ‖ txid ‖ rang)` et pour trace `traceDe(étapes)` — une empreinte des seules étapes `(p, e, s)`. **Les 8 agrégateurs, l'aura et le Cube n'entrent pas dans la trace.** C'est ce qui rend le Cube compatible avec l'invariant sans rien lui coûter.
+
+Décision :
+- Le Cube restaure `actuel := résiduel` sur les 8 agrégateurs. C'est sa seule portée (`PORTEES_CUBE`). Une seule utilisation par run.
+- Il ne touche **jamais** la graine, la trace, la tête signée, la pièce, ni une étape déjà jouée : « remonter le temps » = revenir à l'aura d'avant la perte, pas rejouer un étage. Viser autre chose lève `Rejet` (K28).
+- Sur un run ancré, graine et trace sont identiques avant et après le Cube (K27) ; son usage est exporté comme lecture (`ancre.cube = true`), jamais comme preuve.
+- Conséquence assumée : un juge (`jugerAscension`) ne peut pas distinguer un run avec Cube d'un run sans. Un titre « sans Cube » exigerait que l'usage devienne un choix du pendule (4ᵉ `CHOIX`), donc un `TAG_PENDULE` versionné — reporté, LIST 9.
+
+Falsification cheap faite : `ancrer()` en Python reproduit la dérivation de `graineAncree` à l'octet (même tag, même ordre, `rang` sur 4 octets gros-boutiste) ; le lien réel par vecteur partagé (`vecteurs.json`) reste à faire si le labo devait un jour juger.
