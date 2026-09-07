@@ -12,9 +12,13 @@
  */
 
 import { sha256d, utf8 } from "../src/lib/eidos/hash.ts";
-import { CHOIX, graineRun, run, type Choix } from "../src/lib/eidos/pendule.ts";
+import { CHOIX, graineRun, quantiteDon, run, type Choix } from "../src/lib/eidos/pendule.ts";
 
 const [maitre = "labo", n = "0", ville = "labo"] = process.argv.slice(2);
 const graine = graineRun(maitre, Number(n), sha256d(utf8(`ville/${ville}`)));
-const etapes = run(graine, (i) => CHOIX[i % CHOIX.length] as Choix, () => 0);
+const etapes = run(
+  graine,
+  (i) => CHOIX[i % CHOIX.length] as Choix,
+  () => 0,
+).map((et) => ({ ...et, q: quantiteDon(et.s) }));
 process.stdout.write(JSON.stringify(etapes) + "\n");

@@ -456,8 +456,13 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
      `pendule.ts` ; à retirer quand 1–6 seront tranchés, `unification.py` suffit alors.
   8. Spinor : `spinor.ts` existe côté atelier (SU(2)/SO(3)) et pourrait porter l'orientation des
      modes p/d au lieu d'une nouvelle table.
+  10. Donner le don : `don()` (genre + quantité) n'est appelé par aucune scène ; l'arrivée d'étage
+     ne distribue rien encore — chantier de jeu (`veillee-tour.ts`, hôtes, sac de 27 places).
   9. Titre « sans Cube » : impossible tant que le Cube n'est pas un `CHOIX` du pendule (la trace ne
      le voit pas) ; exige un `TAG_PENDULE` versionné.
+- **LIST 1 tranchée (2026-09-07, spec §10, K35)** : `quantiteDon(s) = s.y + 1` dans `pendule.ts`,
+  `don()` = genre (hachage, inchangé) + quantité (position) ; test TS (+1), `q` dans l'export,
+  K35 côté labo. Phase 0 inchangée.
 - **LIST 5 tranchée (2026-09-07, spec §9, K29–K34)** : l'aura d'une veillée est une projection des
   64 feuilles (8 × 8) sur les 8 positions du pendule, jamais croissante, sans Cube ni transfert ;
   `atelier/scripts/exporter-veillee.ts` (bot gourmand, sans signatures) → `labo/veillee_atelier.json`,

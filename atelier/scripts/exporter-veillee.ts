@@ -56,7 +56,8 @@ for (let tour = 0; tour <= ETAPES && !finie(); tour++) {
   const s = spawnIci(c, etage);
   if (s) applique(creuserDansCoffre(c, s.x, s.y, reserver));
   if (finie()) break;
-  if (aUneAlcove(etage) && !tourDe(c).alcoves.includes(etage)) applique(ouvrirAlcoveDansCoffre(c, reserver));
+  if (aUneAlcove(etage) && !tourDe(c).alcoves.includes(etage))
+    applique(ouvrirAlcoveDansCoffre(c, reserver));
   if (finie()) break;
   const choix: Choix = CHOIX[Math.floor(alea() * CHOIX.length)]!;
   const f = franchirDansCoffre(c, [], choix, reserver);
@@ -66,5 +67,14 @@ for (let tour = 0; tour <= ETAPES && !finie(); tour++) {
 if (!finie()) c = abandonnerVeilleeDansCoffre(c);
 const v = veilleeDe(c)!.v;
 const parcours = parcoursDe(v).etapes;
-const gestes = v.gestes.map(({ i, g, etape, etage, arg, mot }) => ({ i, g, etape, etage, arg, mot }));
-process.stdout.write(JSON.stringify({ jour: v.jour, hauteur: v.hauteur, fin: v.fin, gestes, parcours }) + "\n");
+const gestes = v.gestes.map(({ i, g, etape, etage, arg, mot }) => ({
+  i,
+  g,
+  etape,
+  etage,
+  arg,
+  mot,
+}));
+process.stdout.write(
+  JSON.stringify({ jour: v.jour, hauteur: v.hauteur, fin: v.fin, gestes, parcours }) + "\n",
+);

@@ -57,7 +57,7 @@ Testnet only: the eidôlon has no value.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 checks of the frozen genesis
 python3 noeud.py --verifier      # replays the whole testnet chain, must end with « aucun refus »
-cd atelier && npm ci && npm test # 30 script tests and 407 Eidos tests, vectors shared with Python
+cd atelier && npm ci && npm test # 30 script tests and 408 Eidos tests, vectors shared with Python
 ```
 
 The Guide page of the atelier explains the core, the mechanics and the world in plain words; `CLAUDE.md` says what must never change; `docs/FEUILLE_DE_ROUTE.md` records every decision.
@@ -231,7 +231,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
 | `labo/aura_voxel_lab.py` | 109 | pendulum-9 lab: voxel avatar, graded aura, 8 aggregators — figures, not proofs | 9 |
 | `labo/pendule9_run.py` | 171 | lab: 255-floor run, seal, Saturn Cube and anchoring | 11 |
-| `labo/unification.py` | 94 | lab: contract with `pendule.ts`, synthetic and real fixtures (`exporter-run.ts`) | 8 |
+| `labo/unification.py` | 98 | lab: contract with `pendule.ts`, synthetic and real fixtures (`exporter-run.ts`), gift | 9 |
 | `labo/aura_veillee.py` | 75 | lab: a vigil's aura, reading of the 64 leaves over 8 positions (`exporter-veillee.ts`) | 6 |
 | `consensus.py` | 204 | PoW difficulty and cumulative work — historical | 6 |
 | `store.py` | 278 | PoW chain on disk — historical | — |
@@ -241,7 +241,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `veillees/` | — | deposited vigil proofs (`index.json`, one `eidos-veillee/1` file per proof), judged in every browser, never by a server | — |
 | `docs/` | — | specifications, the vigil bible, the roadmap, the lore; banner generator | 2 |
-| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 407 Eidos tests | 407 |
+| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 408 Eidos tests | 408 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (faucet and transfer issues), `veillees.yml` (vigil proofs deposited by issue), `courriel.yml` (mailbox, when a mailbox is declared), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor; Node 22 for the atelier.
 

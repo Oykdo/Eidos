@@ -57,7 +57,7 @@ Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 contrôles de la genèse gelée
 python3 noeud.py --verifier      # rejoue toute la chaîne du réseau d'essai, doit finir par « aucun refus »
-cd atelier && npm ci && npm test # 30 tests de scripts et 407 tests Eidos, vecteurs partagés avec Python
+cd atelier && npm ci && npm test # 30 tests de scripts et 408 tests Eidos, vecteurs partagés avec Python
 ```
 
 La page Guide de l'atelier explique le cœur, les mécaniques et le monde en mots simples ; `CLAUDE.md` dit ce qui ne doit jamais changer ; `docs/FEUILLE_DE_ROUTE.md` garde chaque décision.
@@ -231,7 +231,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `relique.py` | 236 | gardien des reliques : sceller, animer | 3 |
 | `labo/aura_voxel_lab.py` | 109 | labo pendule-9 : avatar voxelisé, aura graduelle, 8 agrégateurs — figures, pas preuves | 9 |
 | `labo/pendule9_run.py` | 171 | labo : run de 255 étages, sceau, Cube de Saturne et ancrage | 11 |
-| `labo/unification.py` | 94 | labo : contrat avec `pendule.ts`, fixtures synthétique et réelle (`exporter-run.ts`) | 8 |
+| `labo/unification.py` | 98 | labo : contrat avec `pendule.ts`, fixtures synthétique et réelle (`exporter-run.ts`), don | 9 |
 | `labo/aura_veillee.py` | 75 | labo : l'aura d'une veillée, lecture des 64 feuilles sur 8 positions (`exporter-veillee.ts`) | 6 |
 | `consensus.py` | 204 | difficulté PoW et travail cumulé — historique | 6 |
 | `store.py` | 278 | chaîne PoW sur disque — historique | — |
@@ -241,7 +241,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `etat.json`, `mempool.json` | — | état publié ; demandes de robinet et d'envoi | — |
 | `veillees/` | — | preuves de veillée déposées (`index.json`, un fichier `eidos-veillee/1` par preuve), jugées dans chaque navigateur, jamais par un serveur | — |
 | `docs/` | — | spécifications, la bible de la veillée, la feuille de route, le lore ; générateur des bannières | 2 |
-| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 407 tests Eidos | 407 |
+| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 408 tests Eidos | 408 |
 
 CI (`.github/workflows/`) : `tests.yml` (3 OS × 2 Python, empreintes, hygiène, `parite`), `chaine.yml` (forge horaire), `robinet.yml` (issues de robinet et d'envoi), `veillees.yml` (preuves de veillée déposées par issue), `courriel.yml` (boîte aux lettres, quand une boîte est déclarée), `pages.yml` (atelier), `init.yml`. Python 3.9 est le plancher ; Node 22 pour l'atelier.
 

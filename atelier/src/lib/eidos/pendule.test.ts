@@ -13,6 +13,9 @@ import {
   rangBande,
   run,
   transition,
+  don,
+  genreDon,
+  quantiteDon,
 } from "./pendule.ts";
 import { SEUILS, repetition, simuler } from "./pendule-phase0.ts";
 import { ETAGES, biomeDe } from "./tour.ts";
@@ -86,6 +89,21 @@ describe("pendule-9 — parcours, jamais contenu", () => {
     assert.ok(r.gemmesParLigneMax <= SEUILS.gemmesParLigneMax, `gemmes ${r.gemmesParLigneMax}`);
     assert.ok(r.verdict.ok);
     assert.equal(repetition(run(graine, () => "monter", () => 1), run(graine, () => "monter", () => 1)), 1);
+  });
+
+  it("le don : le genre au hachage, la quantité à la position — jamais au maître ni au run", () => {
+    for (let y = 0; y < CRANS; y++) {
+      assert.equal(quantiteDon({ x: 4, y }), y + 1);
+      for (let x = 0; x < CRANS; x++) assert.equal(quantiteDon({ x, y }), quantiteDon({ x: 0, y }));
+    }
+    const etapes = run(graine, () => "monter", () => 0);
+    for (const et of etapes) {
+      const d = don(et.e, et.s, "a", 0);
+      assert.equal(d.genre, genreDon(et.e, et.s, "a", 0));
+      assert.equal(d.quantite, et.p + 1);
+      assert.equal(don(et.e, et.s, "b", 7).quantite, d.quantite);
+      assert.ok(d.quantite >= 1 && d.quantite <= CRANS);
+    }
   });
 });
 

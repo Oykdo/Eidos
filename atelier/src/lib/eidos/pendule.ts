@@ -121,6 +121,24 @@ export function genreDon(e: number, s: Spawn, maitre: string, n: number): GenreD
   return GENRES_DON[h[0]! % GENRES_DON.length]!;
 }
 
+/**
+ * La quantité du don : la position du pendule, et rien d'autre (labo, LIST 1).
+ * Le genre est au hachage (genreDon) ; la quantité est lisible sur la dalle :
+ * ligne d'arrivée y = p ⇒ p + 1 unités, 1 (Uranie) … 9 (Terre, la source).
+ * Ni maître, ni run, ni coffre n'entrent ici : deux joueurs sur la même case
+ * reçoivent le même nombre. Figure : le carnet n'en sait rien.
+ */
+export function quantiteDon(s: Spawn): number {
+  return s.y + 1;
+}
+
+export type Don = { genre: GenreDon; quantite: number };
+
+/** Le don d'arrivée complet : genre par hachage, quantité par position. */
+export function don(e: number, s: Spawn, maitre: string, n: number): Don {
+  return { genre: genreDon(e, s, maitre, n), quantite: quantiteDon(s) };
+}
+
 /** Un run entier : 27 étapes pour des choix et un objet porté donnés. */
 export function run(
   graine: Uint8Array,
