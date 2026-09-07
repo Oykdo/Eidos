@@ -16,7 +16,9 @@ import { aUneAlcove } from "@/lib/eidos/secrets.ts";
 import { biomeDe } from "@/lib/eidos/tour.ts";
 import { FEUILLES, feuillesRestantes, jugerVeillee, lectureVeillee, scoreVeillee } from "@/lib/eidos/veillee.ts";
 import { REPLIQUES_VEILLEE } from "@/lib/eidos/veillee-lexique.ts";
-import { veilleeDe } from "@/lib/eidos/veillee-tour.ts";
+import { SAC_PLACES, veilleeDe } from "@/lib/eidos/veillee-tour.ts";
+import { fantomesDeSalle, nomDeFichier } from "@/lib/eidos/classement.ts";
+import { ArbreFeuilles } from "@/components/veillee/ArbreFeuilles";
 
 function court(h: string): string {
   return `${h.slice(0, 8)}…${h.slice(-4)}`;
@@ -43,6 +45,10 @@ export function VeilleeView() {
   const effacer = useCoffre((s) => s.veilleeAbandonner);
   const nouvelle = useCoffre((s) => s.veilleeEffacer);
   const derniere = useCoffre((s) => s.derniereVeillee);
+  const classement = useCoffre((s) => s.classement);
+  const classementRefus = useCoffre((s) => s.classementRefus);
+  const classementOccupe = useCoffre((s) => s.classementOccupe);
+  const lireClassement = useCoffre((s) => s.lireClassement);
   const erreur = useCoffre((s) => s.erreur);
   const flash = useCoffre((s) => s.flash);
   const [ref, setRef] = useState("");
@@ -70,6 +76,12 @@ export function VeilleeView() {
         )
       : null;
   const feuilles = w ? feuillesRestantes(w.v) : FEUILLES;
+  const hauteurCourante = reseau?.tete.hauteur ?? w?.v.tete.hauteur ?? 0;
+  const fantomesIci = useMemo(
+    () => (w && classement ? fantomesDeSalle(classement.classees, etage, hauteurCourante, locale) : []),
+    [w, classement, etage, hauteurCourante, locale],
+  );
+  const fichier = w && w.v.fin !== null && w.v.ancre ? nomDeFichier(w.v) : null;
 
   return (
     <Shell actuel="veillee">
@@ -162,7 +174,22 @@ export function VeilleeView() {
                 <span className={w.v.ancre ? "text-or" : "text-sourd"}>{w.v.ancre ? t("veillee.ancree") : t("veillee.libre")}</span>
               </p>
               <p className="mt-1 font-mono text-[12px] text-or">{nomDeSalle(etage, locale)}</p>
+              <p className="mt-1 font-mono text-[12px] text-sourd">
+                {t("veillee.sac", { n: w.sac.length, max: SAC_PLACES })}
+                {w.sac.length > 0 ? ` · ${w.sac.map((o) => o.nom).join(", ")}` : ""}
+              </p>
               <p className="mt-1 font-mono text-[12px] italic text-sourd">« {REPLIQUES_VEILLEE[biome.id][locale]} »</p>
+              <div className="mt-3">
+                <ArbreFeuilles v={w.v} langue={locale} />
+              </div>
+              {classement ? (
+                <p className="mt-2 font-mono text-[12px] text-sourd">
+                  {t("veillee.fantomes.salle")} :{" "}
+                  {fantomesIci.length === 0
+                    ? t("veillee.fantomes.aucun")
+                    : fantomesIci.map((f) => t("veillee.fantomes.un", { nom: f.fantome.nom, n: f.feuilles })).join(" · ")}
+                </p>
+              ) : null}
               {w.v.fin === null ? (
                 <>
                   <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">{t("veillee.gestes")}</p>
@@ -238,6 +265,7 @@ export function VeilleeView() {
                   {derniere ? (
                     <div className="mt-2">
                       <p className="font-mono text-[12px] text-cuivre">{t("veillee.exportee")}</p>
+                      {fichier ? <p className="mt-1 font-mono text-[11px] text-sourd">{t("veillee.export.fichier", { f: fichier })}</p> : null}
                       <textarea readOnly value={derniere} rows={3} className="mt-1 w-full rounded-sm bg-carte p-2 font-mono text-[10px] text-sourd" />
                       <Button type="button" variant="discret" className="mt-1 w-auto" onClick={() => void navigator.clipboard?.writeText(derniere)}>
                         {t("relique.qr.copier")}
@@ -253,6 +281,50 @@ export function VeilleeView() {
               )}
             </>
           )}
+        </div>
+
+        {/* Le classement : des preuves relues, jamais un serveur */}
+        <div className="mt-4 rounded-md bg-fond p-3">
+          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">{t("veillee.classement.titre")}</p>
+          <p className="mt-1 font-mono text-[12px] leading-relaxed text-sourd text-pretty">{t("veillee.classement.lede")}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <Button type="button" variant="discret" className="w-auto" disabled={classementOccupe || !federation} title={!federation ? t("veillee.err.classement") : undefined} onClick={() => void lireClassement()}>
+              {t("veillee.classement.lire")}
+            </Button>
+          </div>
+          {classement ? (
+            classement.classees.length === 0 && classement.refusees.length === 0 && classementRefus.length === 0 ? (
+              <p className="mt-2 font-mono text-[12px] text-sourd">{t("veillee.classement.vide")}</p>
+            ) : (
+              <>
+                <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.1em] text-sourd">{t("veillee.classement.colonnes")}</p>
+                <ol className="mt-1 flex flex-col gap-[2px]">
+                  {classement.classees.map((c) => (
+                    <li key={`${c.jour}:${c.piece}`} className="font-mono text-[12px] text-encre">
+                      <span className="text-or">{c.rang}</span> · {c.fantome.nom} · {c.salles} · {c.butin} · {c.score} · {c.feuilles} · {c.jour} · {court(c.piece)}
+                    </li>
+                  ))}
+                </ol>
+                {classement.refusees.length > 0 || classementRefus.length > 0 ? (
+                  <div className="mt-2">
+                    <p className="font-mono text-[11px] text-cuivre">{t("veillee.classement.refus")}</p>
+                    <ul className="mt-1 flex flex-col gap-[2px]">
+                      {classementRefus.map((r) => (
+                        <li key={`f:${r.fichier}`} className="font-mono text-[11px] text-sourd">
+                          {r.fichier} — {r.motif}
+                        </li>
+                      ))}
+                      {classement.refusees.map((r) => (
+                        <li key={`r:${r.n}`} className="font-mono text-[11px] text-sourd">
+                          {r.piece ? court(r.piece) : "—"} · {r.jour} — {r.motif}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
+            )
+          ) : null}
         </div>
 
         {erreur ? <p className="mt-3 font-mono text-[12px] text-cuivre">{erreur}</p> : null}

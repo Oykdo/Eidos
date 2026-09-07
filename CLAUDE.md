@@ -62,7 +62,7 @@ pas étendre le chemin PoW.
 
 Dans `atelier/src/lib/eidos/` : `eonis.ts`, `lamport.ts`, `merkle.ts`, `carnet.ts`,
 `chaine.ts`, `temoin.ts`, `wallet.ts`, `coinselect.ts`, `glyphs.ts`, `portable.ts`,
-`envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts`, `veillee.ts`, `veillee-tour.ts`, `chaine-reseau.ts`, `fantomes.ts` — chacun avec son `.test.ts` ;
+`envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts`, `veillee.ts`, `veillee-tour.ts`, `chaine-reseau.ts`, `fantomes.ts`, `classement.ts`, `arbre-vue.ts`, `feuille-son.ts`, `veillee-bot.ts` — chacun avec son `.test.ts` ;
 `vecteurs.test.ts` relit `vecteurs.json`. `lamport.ts` garde Lamport en démonstration mais dérive adresses,
 empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 
@@ -229,7 +229,7 @@ L'historique détaillé (décisions, limites, reliquats de chaque chantier) est 
 - Refonte du hub — FAIT
 - La Tour — hôtes, secrets, élixirs, capsules, bestiaire (FAIT 2026-09, fourni par une session parallèle, fusionné le 2026-09-04)
 - Accueil, écosystème et robinet à deux canaux — FAIT (2026-09-06)
-- La Veillée — roguelike XMSS, PR 1 et PR 2 FAITES (2026-09-07 : jauge, gestes reliés à la Tour, en-têtes de chaîne côté atelier, page Veillée), voir docs/BIBLE_VEILLEE.md
+- La Veillée — roguelike XMSS, PR 1 à 3 FAITES (2026-09-07 : jauge, gestes reliés à la Tour, sac et extraction, en-têtes de chaîne côté atelier, page Veillée, arbre à l'écran, son, classement et fantômes, bot de mesure), voir docs/BIBLE_VEILLEE.md ; prochain chantier : PR 4, fond orbital de l'accueil
 - P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 - P5 — État MSS persistant — FAIT (septembre 2026)
 

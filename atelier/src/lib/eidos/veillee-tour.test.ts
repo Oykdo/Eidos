@@ -3,12 +3,15 @@ import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
 import { ascensionDe } from "./ascension.ts";
 import { spawnIci } from "./fouilles.ts";
+import { normaliserObjets } from "./inventaire.ts";
 import { normaliserTour, tourDe } from "./jauge.ts";
 import { preuveReseau, serialiser } from "./merkle.ts";
 import { parserFederation, parserTeteReseau } from "./temoin.ts";
-import type { Coffre } from "./types.ts";
+import { DALLE_N, dalleDe } from "./tour.ts";
+import type { Coffre, ObjetPorte } from "./types.ts";
 import { FEUILLES, FRANCHIR_AU_SOMMET, jugerVeillee, lectureVeillee, parcoursDe } from "./veillee.ts";
 import {
+  SAC_PLACES,
   abandonnerVeilleeDansCoffre,
   capturerDansCoffre,
   creuserDansCoffre,
@@ -18,6 +21,7 @@ import {
   ouvrirVeilleeDansCoffre,
   oublierReserves,
   parlerDansCoffre,
+  sacPlein,
   veilleeDe,
 } from "./veillee-tour.ts";
 import { coffreAtelier, coffreNeuf } from "./wallet.ts";
@@ -175,6 +179,114 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
     assert.deepEqual(etagesLibre, etagesAncree);
     const perso = ouvrir(coffreNeuf("vide"), false);
     assert.equal((exporterVeilleeDuCoffre(abandonnerVeilleeDansCoffre(perso)) as { code: string }).code, "libre");
+  });
+
+  it("le sac : un don va au sac, pas au coffre ; le sommet le verse ; une porte le verse", () => {
+    let c = ouvrir(coffreAtelier("vide"));
+    const avant = (c.objets ?? []).length;
+    const p = parlerDansCoffre(c, []);
+    assert.ok(p.ok, p.ok ? "" : p.motif);
+    c = p.coffre;
+    assert.equal(p.ajoutes.length, 1);
+    assert.equal(veilleeDe(c)!.sac.length, 1);
+    assert.equal((c.objets ?? []).length, avant, "le don n'est pas au coffre");
+    let verses: number | null = null;
+    for (let k = 0; k < FRANCHIR_AU_SOMMET; k++) {
+      const r = franchirDansCoffre(c, [], "monter");
+      assert.ok(r.ok, r.ok ? "" : r.motif);
+      c = r.coffre;
+      if (r.fin === "sommet") verses = r.verses.length;
+    }
+    assert.equal(veilleeDe(c)!.v.fin, "sommet");
+    assert.ok(verses !== null && verses >= 1, "le sommet verse le sac");
+    assert.equal(veilleeDe(c)!.sac.length, 0);
+    assert.equal((c.objets ?? []).length, avant + verses!, "les objets du sac sont au coffre");
+    // une porte fermée verse aussi
+    let d = ouvrir(coffreNeuf("vide"));
+    const avantD = (d.objets ?? []).length;
+    d = (parlerDansCoffre(d, []) as { coffre: Coffre }).coffre;
+    assert.equal(veilleeDe(d)!.sac.length, 1);
+    let fin: string | null = null;
+    let versesPorte = 0;
+    while (fin === null) {
+      const r = franchirDansCoffre(d, [], "monter") as { ok: true; coffre: Coffre; fin: string | null; verses: ObjetPorte[] };
+      d = r.coffre;
+      fin = r.fin;
+      if (fin === "porte") versesPorte = r.verses.length;
+    }
+    assert.equal(fin, "porte");
+    // le don de Thalie, plus les élixirs d'écho que le parcours a pu donner en route
+    assert.ok(versesPorte >= 1, "la porte verse le sac");
+    assert.equal((d.objets ?? []).length, avantD + versesPorte);
+    assert.equal(veilleeDe(d)!.sac.length, 0);
+    // s'effacer verse
+    let e = ouvrir(coffreNeuf("vide"));
+    e = (parlerDansCoffre(e, []) as { coffre: Coffre }).coffre;
+    const efface = abandonnerVeilleeDansCoffre(e);
+    assert.equal(veilleeDe(efface)!.v.fin, "abandon");
+    assert.equal(veilleeDe(efface)!.sac.length, 0);
+    assert.equal((efface.objets ?? []).length, (e.objets ?? []).length + 1);
+  });
+
+  it("le sac : l'arbre épuisé le perd — les gestes restent dans la preuve, pas les objets", () => {
+    let c = ouvrir(coffreAtelier("vide"));
+    const avant = (c.objets ?? []).length;
+    let franchis = 0;
+    let perdus: number | null = null;
+    while (perdus === null) {
+      const etage = tourDe(c).etage;
+      const dalle = dalleDe(etage);
+      const s = spawnIci(c, etage)!;
+      const cases: [number, number][] = [[s.x, s.y]];
+      for (let y = 0; y < DALLE_N && cases.length < 3; y++) {
+        for (let x = 0; x < DALLE_N && cases.length < 3; x++) {
+          if (dalle[y]![x] && !(x === s.x && y === s.y)) cases.push([x, y]);
+        }
+      }
+      for (const [x, y] of cases) {
+        const r = creuserDansCoffre(c, x, y);
+        assert.ok(r.ok, r.ok ? "" : r.motif);
+        c = r.coffre;
+        if (r.fin === "epuise") {
+          perdus = r.perdus.length;
+          break;
+        }
+      }
+      if (perdus !== null) break;
+      assert.ok(franchis < FRANCHIR_AU_SOMMET - 1, "le sommet ne doit pas être atteint");
+      const f = franchirDansCoffre(c, [], "monter");
+      assert.ok(f.ok, f.ok ? "" : f.motif);
+      c = f.coffre;
+      franchis += 1;
+      if (f.fin === "epuise") perdus = f.perdus.length;
+    }
+    assert.equal(veilleeDe(c)!.v.fin, "epuise");
+    assert.ok(perdus > 0, "il y avait du butin dans le sac");
+    assert.equal(veilleeDe(c)!.sac.length, 0);
+    assert.equal((c.objets ?? []).length, avant, "rien n'est entré au coffre");
+    assert.equal(veilleeDe(c)!.v.gestes.length, FEUILLES);
+    assert.equal(lectureVeillee(veilleeDe(c)!.v).butin, FEUILLES - franchis);
+  });
+
+  it("le sac : plein, les gestes de butin sont refusés, franchir reste possible ; la jauge le relit", () => {
+    const c = ouvrir(coffreAtelier("vide"));
+    const w = veilleeDe(c)!;
+    const sac = normaliserObjets(
+      Array.from({ length: SAC_PLACES }, (_, k) => ({ mot: 1000 + k, archetype: "terre", age: "Kali", nonce: k, hauteur: 0 })),
+    );
+    assert.equal(sac.length, SAC_PLACES);
+    const plein: Coffre = { ...c, tour: { ...tourDe(c), veillee: { ...w, sac } } };
+    assert.ok(sacPlein(veilleeDe(plein)!));
+    assert.equal((parlerDansCoffre(plein, []) as { code: string }).code, "sac");
+    const s = spawnIci(plein, 0)!;
+    assert.equal((creuserDansCoffre(plein, s.x, s.y) as { code: string }).code, "sac");
+    const f = franchirDansCoffre(plein, [], "monter");
+    assert.ok(f.ok, f.ok ? "" : f.motif);
+    assert.equal(veilleeDe(f.coffre)!.sac.length, SAC_PLACES);
+    // relecture : le sac revient, une forme absurde revient vide
+    const t = normaliserTour(JSON.parse(JSON.stringify(plein.tour)));
+    assert.equal(t.veillee!.sac.length, SAC_PLACES);
+    assert.equal(normaliserTour({ ...plein.tour, veillee: { ...w, sac: "non" } }).veillee!.sac.length, 0);
   });
 
   it("réserve d'indice : une jauge relue d'avant un geste ne resigne pas la feuille", () => {

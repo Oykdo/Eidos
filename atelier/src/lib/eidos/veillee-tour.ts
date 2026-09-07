@@ -11,6 +11,15 @@
  * elle coûte sa feuille. Une porte fermée n'est pas franchie : la veillée
  * s'arrête en `porte` sans feuille.
  *
+ * **Le sac.** Ce qu'une veillée rapporte — dons, trouvailles, coffrets,
+ * captures, élixirs d'écho — n'entre pas au coffre au geste : il va dans un
+ * sac de vingt-sept places (une par salle), noté dans la jauge. Le sommet, une
+ * porte fermée ou l'effacement volontaire **versent** le sac au coffre ;
+ * l'arbre épuisé **le perd** : les gestes restent dans la preuve, les objets
+ * ne reviennent pas. C'est le dilemme de la parcimonie : brûler la dernière
+ * feuille coûte le butin. Un sac plein refuse les gestes de butin, jamais
+ * franchir. Ce qu'on porte vient du coffre ; ce qu'on trouve va au sac.
+ *
  * Le parcours est celui de l'ascension (jauge `tour.ascension`), commencée
  * avec la **graine du jour** : même étage, même case pour tous. La veillée
  * (`tour.veillee`) porte la preuve et l'**indice réservé** : avant de signer
@@ -26,8 +35,9 @@
  * feuilles, mais une lecture — rien ne s'exporte, rien ne se juge.
  *
  * LIMITE : la réserve d'indice hors jauge est un registre de session
- * (`Map` par racine) ; le store la fera passer par localStorage. Entre deux
+ * (`Map` par racine) ; le store la fait passer par localStorage. Entre deux
  * appareils, seul le juge tranche (deux gestes d'indice égal = run refusé).
+ * Effacer une veillée en cours (sans l'abandonner) perd son sac.
  */
 
 import {
@@ -41,12 +51,12 @@ import { hexOf } from "./hash.ts";
 import { honorerDansCoffre, type Honorer } from "./hotes.ts";
 import { tourDe } from "./jauge.ts";
 import type { PreuvePortable, SortieMin } from "./merkle.ts";
-import { CHOIX, type Choix } from "./pendule.ts";
+import { CHOIX, ETAPES, type Choix } from "./pendule.ts";
 import { agesScelles, sceauxDuCoffre, type EntreeMonde } from "./sceaux.ts";
 import { ouvrirAlcove, type AlcoveKo, type AlcoveOk } from "./secrets.ts";
 import type { TeteReseau } from "./temoin.ts";
 import { DALLE_N } from "./tour.ts";
-import type { Coffre } from "./types.ts";
+import type { Coffre, ObjetPorte } from "./types.ts";
 import {
   arreterVeillee,
   construireArbre,
@@ -65,14 +75,19 @@ export type VeilleeDuCoffre = {
   v: Veillee;
   /** premier indice de feuille jamais signé : écrit avant de rendre la signature */
   indiceReserve: number;
+  /** le butin de la veillée, en attente du versement (sommet, porte, effacement) */
+  sac: ObjetPorte[];
 };
+
+/** Une place par salle. */
+export const SAC_PLACES = ETAPES;
 
 /** L'alcôve n'a pas de case : son argument est hors de la dalle. */
 export const ARG_ALCOVE = DALLE_N * DALLE_N;
 
 export type RefusVeillee = {
   ok: false;
-  code: "aucune" | "finie" | "vide" | "reserve" | "atelier" | "libre" | "acte" | "ascension";
+  code: "aucune" | "finie" | "vide" | "reserve" | "atelier" | "libre" | "sac" | "acte" | "ascension";
   motif: string;
   /** le refus de l'acte lui-même, quand c'est lui qui refuse */
   acte?: Honorer | FouilleOk | FouilleKo | AlcoveOk | AlcoveKo | PrendreOk | PrendreKo;
@@ -84,6 +99,12 @@ export type GesteOk = {
   geste: GesteId;
   feuilles: number;
   fin: Veillee["fin"];
+  /** objets entrés au sac par ce geste */
+  ajoutes: ObjetPorte[];
+  /** objets versés au coffre si ce geste a fini la veillée (sommet, porte) */
+  verses: ObjetPorte[];
+  /** objets perdus si ce geste a épuisé l'arbre */
+  perdus: ObjetPorte[];
 };
 
 // ---------------------------------------------------------------------------
@@ -130,6 +151,10 @@ export function enVeillee(c: Pick<Coffre, "tour">): boolean {
   return w !== null && w.v.fin === null;
 }
 
+export function sacPlein(w: Pick<VeilleeDuCoffre, "sac">): boolean {
+  return w.sac.length >= SAC_PLACES;
+}
+
 /**
  * Ouvre la veillée du jour dans le coffre : l'arbre depuis le maître, la preuve
  * de veillée, et l'ascension commencée avec la graine du jour (la même pour tous).
@@ -151,17 +176,60 @@ export function ouvrirVeilleeDansCoffre(
     : null;
   const base = commencerDansCoffre(c, ancreAscension, graineDuJour(tete.idBloc));
   const t = tourDe(base);
-  return { ok: true, v, coffre: { ...base, tour: { ...t, veillee: { v, indiceReserve: 0 } } } };
+  return { ok: true, v, coffre: { ...base, tour: { ...t, veillee: { v, indiceReserve: 0, sac: [] } } } };
+}
+
+// ---------------------------------------------------------------------------
+// Le sac
+// ---------------------------------------------------------------------------
+/** Ce que l'acte a ajouté au coffre passe au sac ; le coffre garde ce qu'il avait. */
+function auSac(avant: Coffre, apres: Coffre, sac: readonly ObjetPorte[]): { coffre: Coffre; sac: ObjetPorte[]; ajoutes: ObjetPorte[] } {
+  const anciens = new Set(avant.objets ?? []);
+  const ajoutes = (apres.objets ?? []).filter((o) => !anciens.has(o));
+  if (ajoutes.length === 0) return { coffre: apres, sac: [...sac], ajoutes };
+  return {
+    coffre: { ...apres, objets: (apres.objets ?? []).filter((o) => anciens.has(o)) },
+    sac: [...sac, ...ajoutes],
+    ajoutes,
+  };
+}
+
+/** Le sac entre au coffre. */
+function verser(c: Coffre, w: VeilleeDuCoffre): { coffre: Coffre; verses: ObjetPorte[] } {
+  const t = tourDe(c);
+  return {
+    coffre: { ...c, objets: [...(c.objets ?? []), ...w.sac], tour: { ...t, veillee: { ...w, sac: [] } } },
+    verses: w.sac,
+  };
+}
+
+/** Le sac est perdu : les gestes restent dans la preuve, les objets ne reviennent pas. */
+function perdre(c: Coffre, w: VeilleeDuCoffre): { coffre: Coffre; perdus: ObjetPorte[] } {
+  const t = tourDe(c);
+  return { coffre: { ...c, tour: { ...t, veillee: { ...w, sac: [] } } }, perdus: w.sac };
+}
+
+/** À la fin d'une veillée : sommet et porte versent, épuisé perd, en cours ne fait rien. */
+function clore(c: Coffre): { coffre: Coffre; verses: ObjetPorte[]; perdus: ObjetPorte[] } {
+  const w = veilleeDe(c);
+  if (!w || w.v.fin === null) return { coffre: c, verses: [], perdus: [] };
+  if (w.v.fin === "epuise") {
+    const p = perdre(c, w);
+    return { coffre: p.coffre, verses: [], perdus: p.perdus };
+  }
+  const v = verser(c, w);
+  return { coffre: v.coffre, verses: v.verses, perdus: [] };
 }
 
 // ---------------------------------------------------------------------------
 // Signer un geste, après l'acte
 // ---------------------------------------------------------------------------
-function pret(c: Coffre): { w: VeilleeDuCoffre; arbre: ArbreFeuilles } | RefusVeillee {
+function pret(c: Coffre, butin: boolean): { w: VeilleeDuCoffre; arbre: ArbreFeuilles } | RefusVeillee {
   const w = veilleeDe(c);
   if (!w) return { ok: false, code: "aucune", motif: "aucune veillée dans ce coffre" };
   if (w.v.fin !== null) return { ok: false, code: "finie", motif: `veillée finie (${w.v.fin})` };
   if (feuillesRestantes(w.v) <= 0) return { ok: false, code: "vide", motif: "arbre vide : plus une feuille" };
+  if (butin && sacPlein(w)) return { ok: false, code: "sac", motif: `sac plein (${SAC_PLACES} places) : franchir, ou s'effacer` };
   const arbre = arbreDuCoffre(c, w.v);
   if (!arbre) return { ok: false, code: "reserve", motif: "l'arbre du coffre n'est pas celui de la veillée" };
   return { w, arbre };
@@ -185,47 +253,61 @@ function signer(
   const v = signerGeste(w.v, arbre, geste);
   if ("erreur" in v) return { ok: false, code: v.erreur === "vide" ? "vide" : "acte", motif: `signature refusée (${v.erreur})` };
   const t = tourDe(c);
-  return { coffre: { ...c, tour: { ...t, veillee: { v, indiceReserve: i + 1 } } }, v };
+  return { coffre: { ...c, tour: { ...t, veillee: { ...w, v, indiceReserve: i + 1 } } }, v };
 }
 
-function rendu(coffre: Coffre, v: Veillee, geste: GesteId): GesteOk {
-  return { ok: true, coffre, geste, feuilles: feuillesRestantes(v), fin: v.fin };
+/** Acte fait, objets au sac, feuille signée, fin close s'il y a lieu. */
+function geste(
+  c: Coffre,
+  p: { w: VeilleeDuCoffre; arbre: ArbreFeuilles },
+  apres: Coffre,
+  g: { g: GesteId; arg: number; mot?: number },
+  reserver: Reserver,
+): GesteOk | RefusVeillee {
+  const s0 = auSac(c, apres, p.w.sac);
+  const s = signer(s0.coffre, { ...p.w, sac: s0.sac }, p.arbre, g, reserver);
+  if ("ok" in s) return s;
+  const fin = clore(s.coffre);
+  return {
+    ok: true,
+    coffre: fin.coffre,
+    geste: g.g,
+    feuilles: feuillesRestantes(s.v),
+    fin: s.v.fin,
+    ajoutes: s0.ajoutes,
+    verses: fin.verses,
+    perdus: fin.perdus,
+  };
 }
 
 /** Parler : honorer l'hôte de la salle courante, puis brûler une feuille. */
 export function parlerDansCoffre(c: Coffre, monde: readonly EntreeMonde[] | null, reserver: Reserver = reserverEnSession): GesteOk | RefusVeillee {
-  const p = pret(c);
+  const p = pret(c, true);
   if ("ok" in p) return p;
   const etage = tourDe(c).etage;
   const ages = agesScelles(sceauxDuCoffre(monde, c), c);
   const h = honorerDansCoffre(c, etage, { ages });
   if (!h.ok) return { ok: false, code: "acte", motif: `l'hôte ne s'honore pas (${h.code})`, acte: h };
-  const s = signer(h.coffre, p.w, p.arbre, { g: "parler", arg: etage }, reserver);
-  if ("ok" in s) return s;
-  return rendu(s.coffre, s.v, "parler");
+  return geste(c, p, h.coffre, { g: "parler", arg: etage }, reserver);
 }
 
 /** Creuser la case (x, y) de la salle courante, puis brûler une feuille. */
 export function creuserDansCoffre(c: Coffre, x: number, y: number, reserver: Reserver = reserverEnSession): GesteOk | RefusVeillee {
-  const p = pret(c);
+  const p = pret(c, true);
   if ("ok" in p) return p;
   const etage = tourDe(c).etage;
   const f = fouillerCaseDansCoffre(c, etage, x, y);
   if (!f.ok) return { ok: false, code: "acte", motif: `la case ne se creuse pas (${f.code})`, acte: f };
-  const s = signer(f.coffre, p.w, p.arbre, { g: "ouvrir", arg: x * DALLE_N + y }, reserver);
-  if ("ok" in s) return s;
-  return rendu(s.coffre, s.v, "ouvrir");
+  return geste(c, p, f.coffre, { g: "ouvrir", arg: x * DALLE_N + y }, reserver);
 }
 
 /** Ouvrir l'alcôve de la salle courante, puis brûler une feuille. */
 export function ouvrirAlcoveDansCoffre(c: Coffre, reserver: Reserver = reserverEnSession): GesteOk | RefusVeillee {
-  const p = pret(c);
+  const p = pret(c, true);
   if ("ok" in p) return p;
   const a = ouvrirAlcove(c, tourDe(c).etage);
   if (!a.ok) return { ok: false, code: "acte", motif: `pas d'alcôve à ouvrir (${a.code})`, acte: a };
-  const s = signer(a.coffre, p.w, p.arbre, { g: "ouvrir", arg: ARG_ALCOVE }, reserver);
-  if ("ok" in s) return s;
-  return rendu(s.coffre, s.v, "ouvrir");
+  return geste(c, p, a.coffre, { g: "ouvrir", arg: ARG_ALCOVE }, reserver);
 }
 
 /**
@@ -233,21 +315,22 @@ export function ouvrirAlcoveDansCoffre(c: Coffre, reserver: Reserver = reserverE
  * brise a eu lieu : elle coûte sa feuille ; une capsule ou un occupant absents, non.
  */
 export function capturerDansCoffre(c: Coffre, k: number, i: number, reserver: Reserver = reserverEnSession): (GesteOk & { prise: PrendreOk | PrendreKo }) | RefusVeillee {
-  const p = pret(c);
+  const p = pret(c, true);
   if ("ok" in p) return p;
   const r = prendreDansCoffre(c, tourDe(c).etage, k, i);
   if (!r.ok && (r.code === "capsule" || r.code === "occupant" || r.code === "pris")) {
     return { ok: false, code: "acte", motif: `rien à prendre (${r.code})`, acte: r };
   }
-  const s = signer(r.coffre, p.w, p.arbre, { g: "prendre", arg: k }, reserver);
-  if ("ok" in s) return s;
-  return { ...rendu(s.coffre, s.v, "prendre"), prise: r };
+  const g = geste(c, p, r.coffre, { g: "prendre", arg: k }, reserver);
+  if (!g.ok) return g;
+  return { ...g, prise: r };
 }
 
 /**
  * Franchir : la fin de salle du pendule (choix décidé ou lu), puis la feuille.
- * Une porte fermée n'est pas franchie : la veillée s'arrête en `porte`, rien n'est brûlé.
- * La 26ᵉ feuille de franchir est le sommet : l'ascension est close avec elle.
+ * Une porte fermée n'est pas franchie : la veillée s'arrête en `porte`, rien n'est
+ * brûlé, le sac est versé. La 26ᵉ feuille de franchir est le sommet : l'ascension
+ * est close avec elle et le sac versé.
  */
 export function franchirDansCoffre(
   c: Coffre,
@@ -255,7 +338,7 @@ export function franchirDansCoffre(
   decision: Choix | null = null,
   reserver: Reserver = reserverEnSession,
 ): (GesteOk & { etage: number }) | RefusVeillee {
-  const p = pret(c);
+  const p = pret(c, false);
   if ("ok" in p) return p;
   const avant = tourDe(c);
   const mot = avant.porte ?? 0;
@@ -264,12 +347,24 @@ export function franchirDansCoffre(
   if (r.fin === "porte") {
     const t = tourDe(r.coffre);
     const v = arreterVeillee(p.w.v, "porte");
-    return { ok: true, coffre: { ...r.coffre, tour: { ...t, veillee: { ...p.w, v } } }, geste: "franchir", feuilles: feuillesRestantes(v), fin: "porte", etage: r.etage };
+    const fin = clore({ ...r.coffre, tour: { ...t, veillee: { ...p.w, v } } });
+    return {
+      ok: true,
+      coffre: fin.coffre,
+      geste: "franchir",
+      feuilles: feuillesRestantes(v),
+      fin: "porte",
+      etage: r.etage,
+      ajoutes: [],
+      verses: fin.verses,
+      perdus: [],
+    };
   }
   if (r.fin === "sommet") {
     return { ok: false, code: "ascension", motif: "la dernière salle n'a pas de fin à signer" };
   }
-  const s = signer(r.coffre, p.w, p.arbre, { g: "franchir", arg: CHOIX.indexOf(r.choix), mot }, reserver);
+  const s0 = auSac(c, r.coffre, p.w.sac);
+  const s = signer(s0.coffre, { ...p.w, sac: s0.sac }, p.arbre, { g: "franchir", arg: CHOIX.indexOf(r.choix), mot }, reserver);
   if ("ok" in s) return s;
   let coffre = s.coffre;
   const parcours = parcoursDe(s.v);
@@ -280,15 +375,26 @@ export function franchirDansCoffre(
     const clos = finDeSalleDansCoffre(coffre, monde, null);
     if (clos.ok) coffre = clos.coffre;
   }
-  return { ...rendu(coffre, s.v, "franchir"), etage: r.etage };
+  const fin = clore(coffre);
+  return {
+    ok: true,
+    coffre: fin.coffre,
+    geste: "franchir",
+    feuilles: feuillesRestantes(s.v),
+    fin: s.v.fin,
+    etage: r.etage,
+    ajoutes: s0.ajoutes,
+    verses: fin.verses,
+    perdus: fin.perdus,
+  };
 }
 
-/** S'effacer : la veillée s'arrête en `abandon`, exportable telle quelle. */
+/** S'effacer : la veillée s'arrête en `abandon`, le sac est versé, la preuve exportable telle quelle. */
 export function abandonnerVeilleeDansCoffre(c: Coffre): Coffre {
   const w = veilleeDe(c);
   if (!w || w.v.fin !== null) return c;
   const t = tourDe(c);
-  return { ...c, tour: { ...t, veillee: { ...w, v: arreterVeillee(w.v, "abandon") } } };
+  return clore({ ...c, tour: { ...t, veillee: { ...w, v: arreterVeillee(w.v, "abandon") } } }).coffre;
 }
 
 export function effacerVeilleeDansCoffre(c: Coffre): Coffre {
