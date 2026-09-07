@@ -45,7 +45,11 @@ Multiplier les machines ne rapporte rien (même pièce, même coffre). Il faut m
 - Pas une valeur entre joueurs. Le jour où un objet de coffre doit s'échanger, c'est une transaction, et c'est une autre spec.
 
 ## 7. Contrôles et port
-`labo/coffre_horaire.py` : tier borné et exact sur les 256 octets (K39), probabilités exactes (K40), distribution réelle plausible à 4σ (K41), déterminisme (K42), une pièce un bloc (K43), sac borné (K44), objets = tier (K45), têtes réelles espacées d'au moins une heure et contiguës (K46). `labo/coffre_vecteurs.json` : 9 vecteurs (3 têtes × 3 pièces) pour le port TS à l'octet — chantier suivant : `atelier/src/lib/eidos/coffre-horaire.ts` + famille `coffre` dans `vecteurs.json`, puis seulement une scène.
+`labo/coffre_horaire.py` : tier borné et exact sur les 256 octets (K39), probabilités exactes (K40), distribution réelle plausible à 4σ (K41), déterminisme (K42), une pièce un bloc (K43), sac borné (K44), objets = tier (K45), têtes réelles espacées d'au moins une heure et contiguës (K46). `labo/coffre_vecteurs.json` : 9 vecteurs (3 têtes × 3 pièces) pour le port.
+
+**Port TS — FAIT.** `atelier/src/lib/eidos/coffre-horaire.ts` rejoue graine, tier et contenu à l'octet ; la famille `coffre` de `vecteurs.json` (trois claims, écrite par `vecteurs.py`) casse la parité ici avant qu'elle ne casse ailleurs, contrôlée par `vecteurs.test.ts`. `coffre-horaire.test.ts` : tier sur les 256 octets, probabilités lues à la main, déterminisme, une pièce un bloc, sac borné.
+
+**Page — FAITE, en lecture seule.** `/coffre-horaire`, registre **Jouer** (`navigation.ts`, sous-onglet après la Veillée). Pour la tête suivie et chaque pièce du coffre, elle montre le coffre que cette pièce ouvrirait : graine, tier, chance, contenu. Sans tête suivie elle le dit et n'invente aucune heure ; sans pièce, pas de coffre. **Rien n'est réclamé** : réclamer touche l'inventaire et le carnet, c'est la PR suivante (`reclamer` existe déjà côté module, avec sa clé `(pièce, bloc)`).
 
 ## 8. Décisions prises ici, à renverser si tu veux
 1. Neuf tiers géométriques plutôt qu'une table : zéro constante, vérifiable à l'œil.

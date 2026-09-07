@@ -5,6 +5,7 @@ import { fromHex, hexOf, sha256 } from "./hash.ts";
 import { graineDe, adresseDe, signerEntrees, sighash } from "./lamport.ts";
 import { serTx } from "./envoi.ts";
 import { encoderAdresse, encoderGlyphes, verifierAdresse } from "./glyphs.ts";
+import { SAC_COFFRE, SPEC_COFFRE, TIERS, coffreDe } from "./coffre-horaire.ts";
 import {
   TYPE_LTREE,
   TYPE_OTS,
@@ -43,6 +44,19 @@ type Vecteurs = {
     temoin_0: { graine_publique: string; signature: string };
     ser_tx_longueur: number;
     ser_tx_sha256: string;
+  };
+  coffre: {
+    tag: string;
+    sac_places: number;
+    tiers: number;
+    claims: {
+      id_bloc: string;
+      txid: string;
+      rang: number;
+      graine: string;
+      tier: number;
+      objets: { genre: string; age: string; nonce: number }[];
+    }[];
   };
   glyphes: {
     adresse: string;
@@ -125,5 +139,23 @@ describe("vecteurs.json = vecteurs.py", () => {
     assert.ok(pk);
     const feuille = arbreL(pk, gp, adrs(TYPE_LTREE, { a: s.indice }));
     assert.equal(hexOf(feuille), V.xmss.feuille_0);
+  });
+
+  it("coffre horaire : graine, tier et contenu identiques à labo/coffre_horaire.py", () => {
+    const c = V.coffre;
+    assert.equal(c.tag, SPEC_COFFRE);
+    assert.equal(c.sac_places, SAC_COFFRE);
+    assert.equal(c.tiers, TIERS);
+    assert.ok(c.claims.length >= 3);
+    for (const cl of c.claims) {
+      const mien = coffreDe(cl.id_bloc, { txid: cl.txid, rang: cl.rang });
+      assert.equal(mien.graine, cl.graine);
+      assert.equal(mien.tier, cl.tier);
+      assert.equal(mien.objets.length, cl.objets.length);
+      assert.deepEqual(
+        mien.objets.map((o) => ({ genre: o.genre as string, age: o.age as string, nonce: o.nonce })),
+        cl.objets,
+      );
+    }
   });
 });

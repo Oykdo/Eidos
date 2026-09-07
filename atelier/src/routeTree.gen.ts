@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArbreRouteImport } from './routes/arbre'
+import { Route as CoffreHoraireRouteImport } from './routes/coffre-horaire'
 import { Route as GlyphesRouteImport } from './routes/glyphes'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as JournalRouteImport } from './routes/journal'
@@ -28,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
 const ArbreRoute = ArbreRouteImport.update({
   id: '/arbre',
   path: '/arbre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoffreHoraireRoute = CoffreHoraireRouteImport.update({
+  id: '/coffre-horaire',
+  path: '/coffre-horaire',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GlyphesRoute = GlyphesRouteImport.update({
@@ -74,6 +80,7 @@ const VeilleeRoute = VeilleeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/coffre-horaire': typeof CoffreHoraireRoute
   '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/coffre-horaire': typeof CoffreHoraireRoute
   '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/coffre-horaire': typeof CoffreHoraireRoute
   '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
   '/journal': typeof JournalRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/arbre'
+    | '/coffre-horaire'
     | '/glyphes'
     | '/guide'
     | '/journal'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/arbre'
+    | '/coffre-horaire'
     | '/glyphes'
     | '/guide'
     | '/journal'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/arbre'
+    | '/coffre-horaire'
     | '/glyphes'
     | '/guide'
     | '/journal'
@@ -150,6 +162,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArbreRoute: typeof ArbreRoute
+  CoffreHoraireRoute: typeof CoffreHoraireRoute
   GlyphesRoute: typeof GlyphesRoute
   GuideRoute: typeof GuideRoute
   JournalRoute: typeof JournalRoute
@@ -174,6 +187,13 @@ declare module '@tanstack/react-router' {
       path: '/arbre'
       fullPath: '/arbre'
       preLoaderRoute: typeof ArbreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coffre-horaire': {
+      id: '/coffre-horaire'
+      path: '/coffre-horaire'
+      fullPath: '/coffre-horaire'
+      preLoaderRoute: typeof CoffreHoraireRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/glyphes': {
@@ -238,6 +258,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArbreRoute: ArbreRoute,
+  CoffreHoraireRoute: CoffreHoraireRoute,
   GlyphesRoute: GlyphesRoute,
   GuideRoute: GuideRoute,
   JournalRoute: JournalRoute,

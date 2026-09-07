@@ -172,7 +172,7 @@ Details: [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 
 ## 9. The atelier
 
-`atelier/` is the web interface (TanStack Start, React, three.js), 18 runtime dependencies. It replays the specification in TypeScript (`atelier/src/lib/eidos/`), and `vecteurs.json` — written by `vecteurs.py`, read by both sides, nine families — keeps Python and TypeScript identical to the byte (CI job `parite`).
+`atelier/` is the web interface (TanStack Start, React, three.js), 18 runtime dependencies. It replays the specification in TypeScript (`atelier/src/lib/eidos/`), and `vecteurs.json` — written by `vecteurs.py`, read by both sides, ten families — keeps Python and TypeScript identical to the byte (CI job `parite`).
 
 | Register | Page | Role |
 |---|---|---|
@@ -226,7 +226,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `noeud.py` | 1151 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 3 + 4 + 5 + 2 |
 | `robinet.py` | 420 | faucet queue fed by issues and email, per-author brake | 14 |
 | `courriel.py` | 321 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
-| `vecteurs.py` | 204 | shared vectors Python ↔ TS (`vecteurs.json`, 9 families) | parity |
+| `vecteurs.py` | 217 | shared vectors Python ↔ TS (`vecteurs.json`, 10 families) | parity |
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
 | `labo/aura_voxel_lab.py` | 132 | pendulum-9 lab: voxel avatar (grid of `voxels.ts`), graded aura, 8 aggregators | 11 |

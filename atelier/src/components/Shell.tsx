@@ -8,6 +8,7 @@ const SOUS: Record<NavId, Msg> = {
   coffre: "sous.coffre",
   tour: "sous.tour",
   veillee: "sous.veillee",
+  coffreHoraire: "sous.coffreHoraire",
   journal: "sous.journal",
   temoin: "sous.temoin",
   arbre: "sous.arbre",
