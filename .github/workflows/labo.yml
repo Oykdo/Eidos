@@ -4,9 +4,9 @@ name: labo
 on:
   push:
     branches: [main]
-    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts"]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json"]
   pull_request:
-    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts"]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/scripts/exporter-veillee.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts", "atelier/src/lib/eidos/veillee.ts", "atelier/src/lib/eidos/veillee-tour.ts", "atelier/src/lib/eidos/veillee-bot.ts", "vecteurs.json"]
   workflow_dispatch:
 concurrency:
   group: labo-${{ github.ref }}
@@ -29,8 +29,10 @@ jobs:
         run: python labo/aura_voxel_lab.py
       - name: K10–K18 run 255 étages
         run: python labo/pendule9_run.py
-      - name: K19–K25 unification
+      - name: K19–K26 unification
         run: python labo/unification.py
+      - name: K29–K34 aura de la veillée (lecture de la jauge)
+        run: python labo/aura_veillee.py
       - name: hygiène — la fixture régénérée est identique au dépôt
         shell: bash
         run: git diff --exit-code -- labo/run_fixture.json
@@ -57,3 +59,9 @@ jobs:
         run: python labo/unification.py run_atelier.json
       - name: hygiène — la fixture réelle est identique à l'export
         run: cmp run_atelier.json labo/run_atelier.json
+      - name: exporter une veillée réelle (bot gourmand, graine 7)
+        run: node --experimental-strip-types atelier/scripts/exporter-veillee.ts 7 > veillee_atelier.json
+      - name: le labo lit la veillée
+        run: python labo/aura_veillee.py veillee_atelier.json
+      - name: hygiène — la veillée réelle est identique à l'export
+        run: cmp veillee_atelier.json labo/veillee_atelier.json
