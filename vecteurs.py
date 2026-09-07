@@ -164,12 +164,25 @@ def calculer():
         "bourrage_refuse": " ".join(U.addr_encode(a0).split("  |  ")[0].split(" ")[:26] + ["✚✚✚"])
                            + "  |  " + U.addr_encode(a0).split("  |  ")[1],
     }
+    # coffre horaire : graine, tier et contenu d'un coffre (docs/SPEC_COFFRE_HORAIRE.md)
+    # Trois claims a partir de la tete du vecteur et de sorties connues du carnet.
+    sys.path.insert(0, os.path.join(HERE, "labo"))
+    import coffre_horaire as CH
+    idb = v["tete"]["tete_signee"]["id_bloc"]
+    idj = v["veillee"]["premier_du_jour"]["id_bloc"]
+    so = v["tete"]["sorties"]
+    claims = [(idb, so[0]["txid"], so[0]["rang"]), (idb, so[-1]["txid"], so[-1]["rang"]),
+              (idj, so[0]["txid"], so[0]["rang"])]
+    v["coffre"] = {
+        "tag": CH.TAG.decode(), "sac_places": CH.SAC_PLACES, "tiers": CH.TIERS,
+        "claims": [{"id_bloc": b, "txid": t, "rang": r, **CH.coffre(b, t, r)} for b, t, r in claims],
+    }
     return v
 
 
 def verifier(v):
     attendu = calculer()
-    ecarts = [c for c in ("parametres", "wots", "tx", "xmss", "carnet", "tete", "veillee", "relique", "glyphes")
+    ecarts = [c for c in ("parametres", "wots", "tx", "xmss", "carnet", "tete", "veillee", "relique", "glyphes", "coffre")
               if v.get(c) != attendu[c]]
     if ecarts:
         raise SystemExit(f"ECHEC : vecteurs divergents pour {', '.join(ecarts)}")

@@ -12,6 +12,7 @@ export type NavId =
   | "coffre"
   | "tour"
   | "veillee"
+  | "coffreHoraire"
   | "journal"
   | "temoin"
   | "arbre"
@@ -24,6 +25,7 @@ export type Chemin =
   | "/"
   | "/tour"
   | "/veillee"
+  | "/coffre-horaire"
   | "/journal"
   | "/temoin"
   | "/arbre"
@@ -73,6 +75,7 @@ export const GROUPES: Groupe[] = [
     items: [
       { to: "/tour", id: "tour", label: "nav.tour", lede: "eco.tour" },
       { to: "/veillee", id: "veillee", label: "nav.veillee", lede: "eco.veillee" },
+      { to: "/coffre-horaire", id: "coffreHoraire", label: "nav.coffreHoraire", lede: "eco.coffreHoraire" },
       { to: "/reliques", id: "reliques", label: "nav.reliques", lede: "eco.reliques" },
     ],
   },

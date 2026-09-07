@@ -270,5 +270,59 @@
   "condensat": "ab530a13e45914982b79f9b7e3fba994cfd1f3fb22f71cea1afbf02b460c6d1d",
   "condensat_encode": "\u263d\u263d\u263d \u271a\u25cb\u25cb \u00b7\u271a\u00b7 \u00b7\u263d\u263d \u00b7\u25cb\u00b7 \u271a\u271a\u263d \u25cb\u00b7\u25cb \u25cb\u263d\u25cb \u00b7\u25cb\u25cb \u00b7\u263d\u25cb \u263d\u00b7\u00b7 \u263d\u263d\u271a \u25cb\u271a\u263d \u25cb\u271a\u271a \u263d\u25cb\u263d \u271a\u25cb\u271a \u271a\u263d\u00b7 \u271a\u271a\u271a \u263d\u271a\u263d \u263d\u263d\u25cb \u263d\u25cb\u25cb \u00b7\u271a\u00b7 \u271a\u271a\u271a \u25cb\u00b7\u25cb \u271a\u271a\u00b7 \u271a\u271a\u271a \u263d\u271a\u00b7 \u263d\u00b7\u263d \u271a\u271a\u25cb \u271a\u00b7\u25cb \u271a\u00b7\u271a \u263d\u263d\u263d \u00b7\u25cb\u263d \u263d\u271a\u271a \u263d\u271a\u271a \u271a\u00b7\u00b7 \u00b7\u263d\u263d \u271a\u25cb\u00b7 \u25cb\u263d\u00b7 \u00b7\u271a\u00b7 \u25cb\u263d\u271a \u25cb\u00b7\u25cb \u271a\u25cb\u00b7",
   "bourrage_refuse": "\u263d\u271a\u271a \u271a\u271a\u271a \u263d\u271a\u263d \u263d\u271a\u25cb \u271a\u263d\u271a \u263d\u00b7\u00b7 \u00b7\u271a\u00b7 \u25cb\u25cb\u00b7 \u00b7\u00b7\u263d \u263d\u00b7\u263d \u263d\u25cb\u00b7 \u25cb\u271a\u25cb \u00b7\u00b7\u263d \u25cb\u00b7\u263d \u25cb\u271a\u271a \u263d\u25cb\u263d \u263d\u25cb\u00b7 \u25cb\u25cb\u263d \u263d\u271a\u25cb \u25cb\u00b7\u00b7 \u25cb\u00b7\u25cb \u263d\u263d\u263d \u00b7\u263d\u25cb \u00b7\u00b7\u25cb \u271a\u00b7\u263d \u271a\u25cb\u00b7 \u271a\u271a\u271a  |  \u263d\u25cb\u271a \u25cb\u271a\u25cb \u25cb\u25cb\u263d \u00b7\u263d\u271a"
+ },
+ "coffre": {
+  "tag": "eidos-coffre/1",
+  "sac_places": 27,
+  "tiers": 9,
+  "claims": [
+   {
+    "id_bloc": "31a68674bf8b3ed90bcf4e110fdab1f7273b66a486817fd26683b220af9c51bc",
+    "txid": "17b5470bfe2f0c3aec87f5a5c5d21b5da558194100d1e7a3955053cbe4bef847",
+    "rang": 0,
+    "graine": "729444f4fd906c4f459d860a8f34b602aefd7ec00a868aab3861630abe374a78",
+    "tier": 2,
+    "objets": [
+     {
+      "genre": "lair",
+      "age": "Kali",
+      "nonce": 3830801907
+     },
+     {
+      "genre": "gemme",
+      "age": "Kali",
+      "nonce": 2290238129
+     }
+    ]
+   },
+   {
+    "id_bloc": "31a68674bf8b3ed90bcf4e110fdab1f7273b66a486817fd26683b220af9c51bc",
+    "txid": "bb4488e547f34b9a299acaa1d816508503f852e8bbba2d1b7d43f5ee4a4e1533",
+    "rang": 0,
+    "graine": "d092a544883fca6d3645026ec8e73346753f60a359201d1899bac3e691dadfaa",
+    "tier": 1,
+    "objets": [
+     {
+      "genre": "pierre",
+      "age": "Kali",
+      "nonce": 3057021976
+     }
+    ]
+   },
+   {
+    "id_bloc": "5ba92bf63da945d99f5ca574b0a48c1a5beeb80ecae9c21d1f47376d4272820c",
+    "txid": "17b5470bfe2f0c3aec87f5a5c5d21b5da558194100d1e7a3955053cbe4bef847",
+    "rang": 0,
+    "graine": "8570dbf4d02740ff4f5dbbd56b07ca2b56c606602fd3686c2123e5023d09eab4",
+    "tier": 1,
+    "objets": [
+     {
+      "genre": "gemme",
+      "age": "Kali",
+      "nonce": 1144328856
+     }
+    ]
+   }
+  ]
  }
 }

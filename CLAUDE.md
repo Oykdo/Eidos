@@ -43,7 +43,7 @@ verify_genesis.py   32 contrôles d'intégrité de la genèse
 wots.py             WOTS+ w=16 (RFC 8391), arbre L, adresses, empreintes (5 contrôles)
 utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (15 contrôles)
 federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
-vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (9 familles)
+vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (10 familles)
 noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, reliques, etat.json (5 + 3 + 4 + 4 contrôles)
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
@@ -72,7 +72,7 @@ pas étendre le chemin PoW.
 
 Dans `atelier/src/lib/eidos/` : `eonis.ts`, `lamport.ts`, `merkle.ts`, `carnet.ts`,
 `chaine.ts`, `temoin.ts`, `wallet.ts`, `coinselect.ts`, `glyphs.ts`, `portable.ts`,
-`envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts`, `veillee.ts`, `veillee-tour.ts`, `chaine-reseau.ts`, `fantomes.ts`, `classement.ts`, `arbre-vue.ts`, `feuille-son.ts`, `veillee-bot.ts` — chacun avec son `.test.ts` ;
+`envoi.ts`, `coffre-horaire.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts`, `veillee.ts`, `veillee-tour.ts`, `chaine-reseau.ts`, `fantomes.ts`, `classement.ts`, `arbre-vue.ts`, `feuille-son.ts`, `veillee-bot.ts` — chacun avec son `.test.ts` ;
 `vecteurs.test.ts` relit `vecteurs.json`. `lamport.ts` garde Lamport en démonstration mais dérive adresses,
 empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 La veillée : `veillee.ts` (arbre, jour, gestes, juge), `veillee-tour.ts` (gestes reliés aux actes, sac),

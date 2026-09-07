@@ -172,7 +172,7 @@ Détail : [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 
 ## 9. L'atelier
 
-`atelier/` est l'interface web (TanStack Start, React, three.js), 18 dépendances d'exécution. Elle rejoue la spécification en TypeScript (`atelier/src/lib/eidos/`), et `vecteurs.json` — écrit par `vecteurs.py`, relu des deux côtés, neuf familles — garde Python et TypeScript identiques à l'octet (job CI `parite`).
+`atelier/` est l'interface web (TanStack Start, React, three.js), 18 dépendances d'exécution. Elle rejoue la spécification en TypeScript (`atelier/src/lib/eidos/`), et `vecteurs.json` — écrit par `vecteurs.py`, relu des deux côtés, dix familles — garde Python et TypeScript identiques à l'octet (job CI `parite`).
 
 | Registre | Page | Rôle |
 |---|---|---|
@@ -226,7 +226,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `noeud.py` | 1151 | nœud du testnet : rejeu, forge, robinet, envois, `--depuis`, reliques, `etat.json` | 5 + 3 + 4 + 5 + 2 |
 | `robinet.py` | 420 | file du robinet alimentée par issues et courriels, frein par auteur | 14 |
 | `courriel.py` | 321 | second canal du robinet : boîte IMAP, même filtre, frein par expéditeur | 6 |
-| `vecteurs.py` | 204 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 9 familles) | parité |
+| `vecteurs.py` | 217 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 10 familles) | parité |
 | `qr.py` | 428 | encodeur QR, bibliothèque standard, niveau H, versions 1–10 | 5 |
 | `relique.py` | 236 | gardien des reliques : sceller, animer | 3 |
 | `labo/aura_voxel_lab.py` | 132 | labo pendule-9 : avatar voxelisé (grille de `voxels.ts`), aura graduelle, 8 agrégateurs | 11 |

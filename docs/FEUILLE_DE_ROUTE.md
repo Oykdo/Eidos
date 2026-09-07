@@ -487,9 +487,13 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   (1/2 … 1/256, 1/256 ; neuf tiers, neuf muses), t objets de tier t (genres de `GENRES_DON`, âge par
   tier), sac de 27, une pièce un bloc. `labo/coffre_horaire.py` rejoue les 24 têtes réelles × 25
   pièces (K39–K46) ; `labo/coffre_vecteurs.json` pour le port.
-- Reste : `coffre-horaire.ts` + famille `coffre` dans `vecteurs.json` (port à l'octet), le juge du
-  claim (tête XMSS + pièce Merkle, celui d'`ancrage.ts`), la mesure de la rafale rétroactive par le
-  bot (décide la fenêtre d'un jour, §5), et seulement ensuite une scène.
+- PR 2 FAITE (2026-09-07) : port `coffre-horaire.ts` (+4 contrôles) et famille `coffre` de
+  `vecteurs.json` (10ᵉ famille, écrite par `vecteurs.py`, relue par `vecteurs.test.ts`) ; page
+  `/coffre-horaire` dans le registre **Jouer**, en lecture seule (tête suivie + pièces du coffre →
+  graine, tier, chance, contenu). Route, Shell, i18n FR/EN, `navigation.test.ts` vert.
+- Reste : réclamer pour de vrai (inventaire + carnet ; `reclamer` est déjà là, avec la clé
+  `(pièce, bloc)`), le juge du claim (tête XMSS + pièce Merkle, celui d'`ancrage.ts`), la mesure de
+  la rafale rétroactive par le bot (décide la fenêtre d'un jour, §5), puis une scène.
 
 ### Menu de l'écosystème — deux rangs au lieu de neuf onglets — FAIT (2026-09-07)
 - `navigation.ts` : chaque registre a une page par défaut (`defaut`) ; `registreDe` et `sousOnglets`
