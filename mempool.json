@@ -6,8 +6,11 @@
    "adresse": "47b1910e588a49fdf29489d1f5a9c2b45b8bfcd0",
    "issue": 7,
    "montant_atomes": 100000000,
-   "etat": "en_attente",
-   "auteur": "Oykdo"
+   "etat": "servie",
+   "auteur": "Oykdo",
+   "bloc": 13,
+   "txid": "a7168dd3a64f5343e03a4a134d5c1ba6a371d2ee26ee4f5cf741c10cae132dcf",
+   "artefact": "uranie"
   }
  ]
 }
