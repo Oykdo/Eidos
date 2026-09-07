@@ -8,13 +8,16 @@ import { useCoffre } from "@/lib/store.ts";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 import { proposerCarnet } from "@/lib/eidos/sauver.ts";
 
-type Chemin = "/" | "/journal" | "/temoin" | "/glyphes" | "/arbre" | "/signatures" | "/tour" | "/reliques";
-type OngletGuide = "verifier" | "lire" | "jouer" | "mots" | "limites";
+type Chemin = "/" | "/journal" | "/temoin" | "/glyphes" | "/arbre" | "/signatures" | "/tour" | "/veillee" | "/reliques";
+type OngletGuide = "verifier" | "lire" | "jouer" | "coeur" | "meca" | "lore" | "mots" | "limites";
 
 const ONGLET_GUIDE: { id: OngletGuide; label: Msg }[] = [
   { id: "verifier", label: "nav.groupe.verifier" },
   { id: "lire", label: "nav.groupe.lire" },
   { id: "jouer", label: "nav.groupe.jouer" },
+  { id: "coeur", label: "guide.coeur" },
+  { id: "meca", label: "guide.meca" },
+  { id: "lore", label: "guide.lore" },
   { id: "mots", label: "guide.mots" },
   { id: "limites", label: "guide.08" },
 ];
@@ -43,9 +46,35 @@ function Carte({ titre, lede, children }: { titre: string; lede: string; childre
   );
 }
 
-const MOTS: Msg[] = ["guide.mot.piece", "guide.mot.artefact", "guide.mot.relique", "guide.mot.sceau", "guide.mot.objet"];
+const MOTS: Msg[] = [
+  "guide.mot.piece",
+  "guide.mot.artefact",
+  "guide.mot.relique",
+  "guide.mot.sceau",
+  "guide.mot.objet",
+  "guide.mot.feuille",
+  "guide.mot.sac",
+  "guide.mot.veillee",
+  "guide.mot.preuve",
+  "guide.mot.fantome",
+];
 const PAS: Msg[] = ["guide.pas1", "guide.pas2", "guide.pas3"];
-const LIMITES: Msg[] = ["guide.08a", "guide.08b", "guide.08c", "guide.08d"];
+/** Les blocs des trois onglets longs : la clé « guide.<cle>t » est le titre, « guide.<cle>p » le texte. */
+const COEUR: string[] = ['coeur.01', 'coeur.02', 'coeur.03', 'coeur.04', 'coeur.05', 'coeur.06', 'coeur.07', 'coeur.08'];
+const MECA: string[] = ['meca.01', 'meca.02', 'meca.03', 'meca.04', 'meca.05', 'meca.06', 'meca.07', 'meca.08', 'meca.09', 'meca.10', 'meca.11', 'meca.12'];
+const LORE: string[] = ['lore.01', 'lore.02', 'lore.03', 'lore.04', 'lore.05', 'lore.06'];
+
+function Blocs({ cles }: { cles: string[] }) {
+  const { t } = useI18n();
+  return (
+    <>
+      {cles.map((c) => (
+        <Page key={c} titre={t(`guide.${c}t` as Msg)} texte={t(`guide.${c}p` as Msg)} />
+      ))}
+    </>
+  );
+}
+const LIMITES: Msg[] = ["guide.08a", "guide.08b", "guide.08c", "guide.08d", "guide.08e", "guide.08f"];
 
 export function Guide() {
   const { t } = useI18n();
@@ -102,7 +131,31 @@ export function Guide() {
         <Carte titre={t("nav.groupe.jouer")} lede={t("guide.jouer")}>
           <Page titre={t("nav.reliques")} texte={t("guide.05p")} to="/reliques" bouton={t("guide.05b")} />
           <Page titre={t("nav.tour")} texte={t("guide.10p")} to="/tour" bouton={t("guide.10b")} />
+          <Page titre={t("nav.veillee")} texte={t("guide.11p")} to="/veillee" bouton={t("guide.11b")} />
           <Page titre={t("guide.09")} texte={t("guide.09p")} />
+        </Carte>
+      ) : null}
+
+      {onglet === "coeur" ? (
+        <Carte titre={t("guide.coeur")} lede={t("guide.coeurLede")}>
+          <Blocs cles={COEUR} />
+          <Page titre={t("nav.temoin")} texte={t("guide.03p")} to="/temoin" bouton={t("nav.temoin")} />
+        </Carte>
+      ) : null}
+
+      {onglet === "meca" ? (
+        <Carte titre={t("guide.meca")} lede={t("guide.mecaLede")}>
+          <Blocs cles={MECA} />
+          <Page titre={t("nav.tour")} texte={t("guide.10p")} to="/tour" bouton={t("guide.10b")} />
+          <Page titre={t("nav.veillee")} texte={t("guide.11p")} to="/veillee" bouton={t("guide.11b")} />
+        </Carte>
+      ) : null}
+
+      {onglet === "lore" ? (
+        <Carte titre={t("guide.lore")} lede={t("guide.loreLede")}>
+          <Blocs cles={LORE} />
+          <Page titre={t("nav.glyphes")} texte={t("guide.06p")} to="/glyphes" bouton={t("guide.06b")} />
+          <Page titre={t("nav.signatures")} texte={t("guide.07p")} to="/signatures" bouton={t("guide.07b")} />
         </Carte>
       ) : null}
 

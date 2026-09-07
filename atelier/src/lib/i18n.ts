@@ -192,14 +192,19 @@ export const FR = {
   "guide.lire":
     "La carte et les muses montrent les mêmes figures autrement. Une lecture n'est pas une preuve.",
   "guide.jouer":
-    "La Tour et les reliques restent sur cet appareil. Seul le sceau parle au réseau.",
-  "guide.mots": "Cinq mots",
-  "guide.motsLede": "Ces cinq mots reviennent partout. Le reste de l'atelier les emploie tels quels.",
+    "La Tour, la veillée et les reliques restent sur cet appareil. Seuls le sceau et la preuve d'une veillée ancrée parlent au réseau.",
+  "guide.mots": "Dix mots",
+  "guide.motsLede": "Ces dix mots reviennent partout. Le reste de l'atelier les emploie tels quels.",
   "guide.mot.piece": "pièce — une sortie du carnet. C'est ce que vous dépensez. Une pièce se prouve.",
   "guide.mot.artefact": "artefact — une pièce lue en muse. Même objet, autre regard.",
   "guide.mot.relique": "relique — une pièce scellée. Sa graine tient dans un QR.",
   "guide.mot.sceau": "sceau — une relique récupérée. Il ouvre un quartier de la Tour.",
   "guide.mot.objet": "objet — un mot de 32 bits. Il ne grandit pas.",
+  "guide.mot.feuille": "feuille — une clé qui signe une fois. Un geste la brûle ; elle ne repousse pas.",
+  "guide.mot.sac": "sac — le butin d'une veillée, en attente. Le sommet le verse au coffre, la dernière feuille le perd.",
+  "guide.mot.veillee": "veillée — les vingt-sept salles du jour, les mêmes pour tous. Libre, une lecture ; ancrée sur une pièce, ce qui compte.",
+  "guide.mot.preuve": "preuve — les gestes signés d'une veillée. Quiconque la juge sans rejouer la chaîne.",
+  "guide.mot.fantome": "fantôme — la preuve d'un autre, relue. Une tournure et sa dernière salle, rien de plus.",
   "guide.01": "Coffre",
   "guide.01p":
     "Créez votre coffre. Le secret reste dans ce navigateur. L'appareil demande alors eidos.carnet : gardez-le. Papier : 32 grilles × 64 signes, trois cartons (Sel, Mercure, Soufre). Deux suffisent.",
@@ -231,6 +236,8 @@ export const FR = {
   "guide.08b": "La graine du coffre est en clair dans ce navigateur. Enregistrez eidos.carnet.",
   "guide.08c": "Une signature ne sert qu'une fois. Après l'envoi, elle est brûlée.",
   "guide.08d": "Au plus 3 pièces par envoi.",
+  "guide.08e": "Une veillée libre ne compte pour rien. Une veillée ancrée coûte une pièce par jour, et ne prouve pas que la pièce est à vous.",
+  "guide.08f": "Ouvrir une veillée construit un arbre de soixante-quatre clés : la page se fige une seconde ou deux.",
   "guide.09": "Objets",
   "guide.09p":
     "Un coffre, une racine. Chaque objet tient en 32 bits. Il ne grandit pas : la puissance ne s'accumule pas.",
@@ -238,6 +245,93 @@ export const FR = {
   "guide.10p":
     "255 coupes. Une porte s'ouvre avec un sceau. Vous grimpez avec ce que vous avez trouvé, pas avec ce que vous achetez.",
   "guide.10b": "Monter",
+  "guide.11p":
+    "Soixante-quatre feuilles pour vie. Chaque geste qui compte — parler, creuser, prendre, franchir — en brûle une ; l'arbre nu arrête la montée. Les vingt-sept salles du jour sont les mêmes pour tous. Ce que vous trouvez va dans un sac : le sommet, une porte ou l'effacement le versent au coffre, la dernière feuille le perd.",
+  "guide.11b": "Veiller",
+  "guide.coeur": "Le cœur",
+  "guide.coeurLede": "La chaîne sous l'atelier : ce qui est forgé, signé et rejoué. Rien ici n'est un choix de jeu ; tout se vérifie.",
+  "guide.meca": "Mécaniques",
+  "guide.mecaLede": "Ce qu'on fait dans la Tour et dans la veillée, règle par règle. Tout dérive d'une graine ; rien n'est tiré au sort ; rien ne devient plus fort.",
+  "guide.lore": "Lore",
+  "guide.loreLede": "Le monde, tel qu'il est écrit : neuf muses, quatre âges, la Chambre de Genèse. Une lecture, jamais une garantie.",
+  "guide.coeur.01t": "L'unité et la loi",
+  "guide.coeur.01p":
+    "Un eidôlon vaut 10⁸ atomes. La récompense d'un bloc suit un cosinus, jamais une division par deux : R(h) = a + (a/2)·cos(2π(h − h₀)/T), avec T = 1008 blocs et h₀ = 492. Un cycle de T blocs somme exactement a·T atomes, par répartition au plus fort reste. Quatre âges se suivent — Satya (a = 40, 832 cycles), Trétâ (30, 624), Dvâpara (20, 416), Kali (10, 208) — soit 62 899 200 eidôla sur 2 096 640 blocs. Le cosinus est calculé en Decimal par série, jamais en flottant : deux nœuds qui divergeraient d'un atome feraient deux chaînes.",
+  "guide.coeur.02t": "Des signatures faites de hachage",
+  "guide.coeur.02p":
+    "Aucune courbe elliptique nulle part. Une dépense est signée en WOTS+ (w = 16, RFC 8391) : une clé signe une fois, donc une adresse ne se dépense qu'une fois dans toute la chaîne. Les têtes de bloc sont signées en XMSS, un arbre de 4 096 feuilles par validateur, chaque indice servant une seule fois. Chaque maillon de hachage est tweaké par une graine publique et une adresse de hachage ; Python et TypeScript produisent les mêmes octets, et un fichier de vecteurs partagés le vérifie à chaque test.",
+  "guide.coeur.03t": "Une adresse se lit",
+  "guide.coeur.03p":
+    "Une adresse tient en 27 glyphes de charge et 4 de contrôle, six bits par glyphe. Un glyphe est un empilement de trois figures parmi quatre — · ○ ☽ ✚ — soit 64 empilements. Le bourrage du vingt-septième glyphe doit être nul, sinon l'adresse est refusée : on ne devine pas, on lit.",
+  "guide.coeur.04t": "Rien ne se croit, tout se rejoue",
+  "guide.coeur.04p":
+    "Le carnet des pièces n'est jamais enregistré : à chaque ouverture, le nœud rejoue toute la chaîne avec le même code qu'à la forge. Chaque bloc déclare la racine de Merkle du carnet après lui ; l'identifiant du bloc l'engage. Après chaque bloc, la somme des pièces égale l'émission cumulée, ou le nœud refuse de publier. Le Témoin de l'atelier fait la même chose sans rejouer : il tient la tête signée, recompose son identifiant, vérifie la signature XMSS et juge une pièce contre la racine.",
+  "guide.coeur.05t": "Sept validateurs, un bloc par heure",
+  "guide.coeur.05p":
+    "Le réseau d'essai est une fédération de sept validateurs, sans preuve de travail. Le proposant du créneau s est le validateur de rang (3·s) mod 7 : une rotation de pas trois, et un nombre de validateurs divisible par trois est refusé. Un créneau trop en avance est refusé, au plus six blocs sont forgés par exécution, et c'est un cron GitHub qui forge, une fois par heure. Personne ne forge depuis un poste pendant que le cron tourne.",
+  "guide.coeur.06t": "Le robinet et les envois",
+  "guide.coeur.06p":
+    "Le robinet verse un eidôlon par demande, par une issue GitHub ou un courriel qui contient une adresse en glyphes ; une demande servie par compte et par cycle de 1008 blocs, une seule en attente, dans un budget de a·T/8 par cycle. Un envoi est une transaction signée par l'atelier, collée dans une issue entre deux marqueurs ; le nœud la valide sur une copie du carnet, en inclut au plus huit par bloc, porte leurs frais dans la coinbase et fait expirer ce qui attend depuis plus d'un cycle. Le corps d'une issue n'entre jamais dans une commande.",
+  "guide.coeur.07t": "Reliques et sceaux",
+  "guide.coeur.07p":
+    "Une relique est une pièce scellée sur une adresse dont la graine n'existe que dans un code QR caché quelque part dans le monde. La récupérer, c'est la dépenser vers son coffre : une clé signe une fois, la relique se récupère une fois, sans serveur ni registre. Récupérée, elle devient un sceau de son âge, et la mise attendue d'un sceau est l'émission de l'âge divisée par un million : Kali 2,10, Dvâpara 8,39, Trétâ 18,87, Satya 33,55. Le nœud publie le statut de chaque relique déclarée ; c'est une lecture.",
+  "guide.coeur.08t": "Ce qui compte est ancré",
+  "guide.coeur.08p":
+    "Une armée de machines multiplie ce qui est gratuit : les coffres, les navigateurs, les runs. Elle ne multiplie pas les pièces. Un run qui compte a pour graine une tête signée et une pièce non dépensée, prouvée contre la racine du carnet : SHA-256d(« eidos-ascension/1 » ‖ id_bloc ‖ txid ‖ rang). Ni le coffre, ni la machine, ni le navigateur n'entrent dans la graine. Pas d'empreinte de navigateur, pas de verrou de machine, pas de preuve de travail côté client : ce qui est libre se joue et ne vaut rien, ce qui est ancré coûte une pièce.",
+  "guide.meca.01t": "Six lois, gelées",
+  "guide.meca.01p":
+    "Conservation, groupe, doxa, sceau, âges (« epoques » dans le code), résonance. Elles disent la même chose de six côtés : aucun point de vie, aucun niveau, aucune expérience, aucun tirage au sort, aucun objet qui mute, et un palier ne multiplie jamais la norme. Monter dans la Tour ne rend pas plus fort ; on y lit mieux. Tout ce qui semble un hasard dérive d'une graine et se rejoue à l'identique.",
+  "guide.meca.02t": "Les objets : un mot de 32 bits",
+  "guide.meca.02p":
+    "Un objet est un mot de 32 bits, lu comme un quaternion de norme fixe. Cent une formes de catalogue, vingt et un caractères (sept régimes × trois classes), quatre orbites, une rareté qui est une proximité à la forme, quatre axes de combat à somme 64 — fer, cuirasse, flux, souffle. Une pierre tourne un mot en un autre, une gemme s'enchâsse sans y toucher, un titre se lit dans le mot : même mot, même titre partout. Le coffre forge ses propres blocs, trois par jour, et chaque bloc tire un objet ; cette chaîne locale est une lecture, pas le réseau. La pierre philosophale est réservée aux dix premiers coffres. Un objet de la Tour ne se transfère jamais.",
+  "guide.meca.03t": "La Tour : 255 coupes, neuf bandes, quatre quartiers",
+  "guide.meca.03p":
+    "Chaque étage est une coupe de l'espace des rotations, avec une dalle de neuf cases sur neuf et un à trois occupants. Neuf bandes d'une trentaine d'étages portent les neuf muses, de Thalie au sol à Uranie au faîte. Quatre quartiers d'âge : Kali 0–63, Dvâpara 64–127, Trétâ 128–191, Satya 192–254 ; les portes 64, 128 et 192 ne s'ouvrent qu'au sceau du bon âge. Tout étage est public et fixe : deux coffres au même étage voient le même hôte, la même dalle, les mêmes occupants.",
+  "guide.meca.04t": "Les hôtes : une demande, un don",
+  "guide.meca.04p":
+    "Un hôte habite environ un étage sur sept ; la muse elle-même se tient au médian de sa bande, et chaque porte a son portier. Chacun demande quelque chose qui se lit dans votre coffre et donne un objet, une fois par coffre et par étage. Thalie accueille et donne un sel ; Clio demande une preuve d'inclusion ; Calliope, deux objets de même orbite, contre un mercure ; Terpsichore, une paire en résonance constructive, contre une gemme ; Melpomène, un objet de la classe du biome, contre un soufre ; Érato tourne une pièce avec votre pierre ; Euterpe, trois objets dont la résonance tient, contre un ticket d'antre ; Polymnie, un sceau de l'âge, et révèle les échos du quartier ; Uranie ne demande rien et lit la tête du réseau. Jamais d'arme ni de philosophale en don. Chaque réplique cite une règle vraie.",
+  "guide.meca.05t": "Les élixirs : la tria prima",
+  "guide.meca.05p":
+    "Sel, mercure, soufre : les trois étages d'un glyphe. Un élixir se boit à un étage et n'agit que là ; le mot bu est noté et ne se reboit jamais. Le sel fait lire neutre une résonance destructive. Le mercure accorde la parade d'office. Le soufre laisse une pierre tourner une pièce sans forgeronne, une fois. Aucun élixir ne touche les axes, la norme ni le mot ; aucun ne s'achète.",
+  "guide.meca.06t": "Les secrets : alcôves, échos, antres, observatoire",
+  "guide.meca.06p":
+    "Une alcôve est la croix centrale d'une dalle : treize étages en ont une, et un coffret. Deux étages de même orbite sont en écho, quarante-quatre paires ; les monter dans l'ordre donne un mercure. Un antre s'ouvre avec un ticket : un gardien y tient l'axe, et le duel se lit en trois temps sans points de vie — même orbite, puis la parade ḡ(A)·(A·B), puis la résonance d'ensemble du coffre. Repoussé, on redescend d'un étage et rien n'est perdu. L'étage 254 est l'observatoire : Uranie y lit la tête signée du réseau, la seule fenêtre de la Tour sur la chaîne.",
+  "guide.meca.07t": "Capsules et bestiaire",
+  "guide.meca.07p":
+    "Les occupants ne se tuent pas : on les lit, et on peut les prendre. Une capsule est un glyphe creux ··· ; Thalie en donne une par poste du jour honoré, une alcôve en cache, Érato en forge une d'une gemme et d'un sel. La prise se lit en trois temps : même orbite, prise nette ; capsule accordée par l'objet porté, prise fragile qui tient avec du sel ; sinon la capsule se brise. La capture devient un objet, l'étage perd son occupant pour ce coffre, et le bestiaire la range dans l'une des vingt et une cellules de la doxa. Vingt et une cellules remplies, Uranie ouvre la lecture des cent une formes. On n'élève pas, on ne fusionne pas, on ne vend pas.",
+  "guide.meca.08t": "Les fouilles : trois coups de bêche",
+  "guide.meca.08p":
+    "La dalle se creuse case par case, trois coups par étage et par coffre, une case une seule fois. Les trouvailles sont à des cases fixes et publiques — une case pleine sur huit, aucun étage sans — mais leur contenu dépend du coffre : les cases sont à tous, le butin à chacun. La case d'arrivée du pendule donne toujours, même sur un trou.",
+  "guide.meca.09t": "Le pendule et l'ascension",
+  "guide.meca.09p":
+    "Un cadran à neuf crans, un par astre. En fin de salle, le pendule lit ce que le coffre y a fait — honoré l'hôte : offrir ; ouvert, franchi ou pris : lire ; rien : monter — et vous décidez parmi trois destinations dont l'étage est annoncé, jamais la case. Une ascension traverse vingt-sept salles, trois par bande, depuis la porte de la ville ; le contenu d'un étage ne change jamais, seul le chemin est à vous. Une porte fermée arrête. Libre, l'ascension est une lecture ; ancrée sur un bloc et une pièce, elle compte, s'exporte et se juge sans rejeu.",
+  "guide.meca.10t": "La veillée : soixante-quatre feuilles pour vie",
+  "guide.meca.10p":
+    "Vous entrez avec un arbre de soixante-quatre clés à usage unique. Chaque geste qui compte en brûle une : franchir (vingt-six fois, obligatoires), parler, creuser, prendre. Lire est gratuit. La dernière feuille arrête la montée : c'est la mort permanente, non comme règle mais comme théorème — une clé réutilisée est une clé compromise, et le juge refuse tout run où un indice sert deux fois. Les vingt-sept salles du jour dérivent du premier bloc du jour, prouvé par la tête de la veille : les mêmes pour tous. Ancrée sur une pièce, la veillée compte ; libre, c'est une lecture.",
+  "guide.meca.11t": "Le sac et l'extraction",
+  "guide.meca.11p":
+    "Ce qu'une veillée rapporte va dans un sac de vingt-sept places, une par salle. Le sommet, une porte fermée ou l'effacement volontaire versent le sac au coffre ; l'arbre épuisé le perd, et les gestes restent dans la preuve sans les objets. Sac plein, plus de butin : il reste à franchir, ou à s'effacer. Ce qu'on porte vient du coffre ; ce qu'on trouve va au sac. Le coffre, lui, n'a pas de places : ce qui borne le butin est l'arbre.",
+  "guide.meca.12t": "La preuve, le classement, les fantômes",
+  "guide.meca.12p":
+    "Une veillée finie s'exporte en un fichier eidos-veillee/1 : deux têtes signées, la pièce et sa preuve, chaque geste signé par sa feuille. Quiconque la juge sans rejouer la chaîne : têtes, pièce, feuilles dans l'ordre, parcours recalculé, fin cohérente. Le classement se recalcule dans chaque navigateur depuis les preuves déposées dans le dépôt ; une pièce, une veillée par jour ; score = salles × 64 + butin. Les runs des autres reviennent en fantômes : une tournure et leur dernière salle, jamais un nom. Le juge ne sait pas à qui est la pièce : cela se prouve en la dépensant.",
+  "guide.lore.01t": "Neuf muses, neuf astres, neuf danses",
+  "guide.lore.01p":
+    "La Tour monte de la Terre aux étoiles fixes, et chaque bande est un astre et sa muse : ⊕ Thalie l'aubergiste, ☽ Clio l'archiviste, ☿ Calliope l'apothicaire, ♀ Terpsichore la maîtresse de danse, ☉ Melpomène la tragédienne, ♂ Érato la forgeronne, ♃ Euterpe la musicienne, ♄ Polymnie la gardienne des hymnes, ★ Uranie l'astronome. Chacune a trois familiers, vingt-sept répliques qui disent des règles vraies, et une danse — rebond, phases, vis sans fin, ronde, flamme, culbute, tempo, précession, nutation — qui anime les reliques.",
+  "guide.lore.02t": "Quatre âges",
+  "guide.lore.02p":
+    "Satya, Trétâ, Dvâpara, Kali : les quatre âges de l'émission portent les noms des yugas. Ils sont un calendrier et une géographie — les quartiers de la Tour, le métal d'un objet, l'âge d'une preuve, la mise d'un sceau — jamais une puissance. Un objet né sous Satya ne se reproduit plus après Satya : la rareté vient de l'histoire.",
+  "guide.lore.03t": "La Chambre de Genèse",
+  "guide.lore.03p":
+    "Avant le temps, une Singularité ; d'elle, neuf œufs. Huit portent un thème — Vide, Quantique, Temporel, Spatial, Entropique, Harmonique, Céleste, Spinoriel — et ouvrent chacun un cycle de huit ères : soixante-quatre manifestations, qui sont les soixante-quatre glyphes de l'alphabet. Le cycle d'un œuf est une bande de la Tour, de Thalie à Polymnie ; le neuvième œuf, L'Inconnu, n'appartient à aucun cycle : c'est Uranie, qui lit et ne donne rien. Les noms d'ère — l'Ère du Vide primordial, l'Ère des Chemins incertains, l'Ère du Champ unifié — nomment les salles de la veillée. Aucune statistique de l'histoire d'origine n'est passée : un œuf est une lecture d'un glyphe.",
+  "guide.lore.04t": "La tria prima et les œufs de Paracelse",
+  "guide.lore.04p":
+    "Les trois étages d'un glyphe sont sel, mercure et soufre : la tria prima. Les artefacts du robinet, ces pièces lues en muse, sont des œufs de Paracelse. La pierre philosophale existe, une par coffre parmi les dix premiers ; elle tourne, elle n'agrandit pas. Pas d'orbes, pas de talismans, pas de parchemins : aucun genre n'entre sans une règle qui le lise.",
+  "guide.lore.05t": "Les fantômes et leurs six tournures",
+  "guide.lore.05p":
+    "Un fantôme est la preuve d'un autre, relue dans la salle. Il n'a ni nom ni force ; il a la salle où il s'est arrêté et une tournure qui dit comment : Écho, quand son bloc est d'un autre âge ; revenue, au sommet ; Dernière, quand la dernière feuille a brûlé ; Ombre, devant une porte ; qui s'efface, par choix ; Murmure, en cours. Six tournures transposées d'une histoire plus ancienne, sans rien de sa puissance.",
+  "guide.lore.06t": "Figures et preuves",
+  "guide.lore.06p":
+    "L'atelier montre beaucoup de figures : une carte, des signes, une relique qui danse, un arbre qui se dépouille, un fantôme, un classement. Aucune n'est une garantie. Seuls le carnet, la chaîne et les signatures engagent ; tout le reste se lit, se recalcule, et peut se refuser. Quand un texte de l'atelier promet plus que le code, c'est le texte qui a tort.",
 
   "tour.titre": "Tour",
   "tour.lede":
@@ -963,14 +1057,19 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "guide.lire":
     "The map and the muses show the same figures another way. A reading is not a proof.",
   "guide.jouer":
-    "The Tower and relics stay on this device. Only the seal talks to the network.",
-  "guide.mots": "Five words",
-  "guide.motsLede": "These five words come back everywhere. The rest of the atelier uses them as they are.",
+    "The Tower, the vigil and the relics stay on this device. Only the seal and the proof of an anchored vigil talk to the network.",
+  "guide.mots": "Ten words",
+  "guide.motsLede": "These ten words come back everywhere. The rest of the atelier uses them as they are.",
   "guide.mot.piece": "coin — a ledger output. What you spend. A coin can be proven.",
   "guide.mot.artefact": "artefact — a coin read as a muse. Same object, another look.",
   "guide.mot.relique": "relic — a sealed coin. Its seed lives in a QR.",
   "guide.mot.sceau": "seal — a claimed relic. It opens a Tower quarter.",
   "guide.mot.objet": "object — a 32-bit word. It does not grow.",
+  "guide.mot.feuille": "leaf — a key that signs once. A gesture burns it; it does not grow back.",
+  "guide.mot.sac": "bag — a vigil's loot, waiting. The summit pours it into the vault, the last leaf loses it.",
+  "guide.mot.veillee": "vigil — the day's twenty-seven rooms, the same for everyone. Free, a reading; anchored on a coin, what counts.",
+  "guide.mot.preuve": "proof — the signed gestures of a vigil. Anyone judges it without replaying the chain.",
+  "guide.mot.fantome": "ghost — someone else's proof, re-read. An epithet and its last room, nothing more.",
   "guide.01": "Vault",
   "guide.01p":
     "Create your vault. The secret stays in this browser. The device then asks for eidos.carnet: keep it. Paper: 32 grids × 64 signs, three cards (Salt, Mercury, Sulfur). Two suffice.",
@@ -1002,6 +1101,8 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "guide.08b": "The vault seed is in the clear in this browser. Save eidos.carnet.",
   "guide.08c": "A signature is used once. After a send, it is burned.",
   "guide.08d": "At most 3 coins per send.",
+  "guide.08e": "A free vigil counts for nothing. An anchored vigil costs one coin per day, and does not prove the coin is yours.",
+  "guide.08f": "Opening a vigil builds a tree of sixty-four keys: the page freezes for a second or two.",
   "guide.09": "Items",
   "guide.09p":
     "One vault, one root. Each item fits in 32 bits. It does not grow: power does not pile up.",
@@ -1009,6 +1110,93 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "guide.10p":
     "255 slices. A gate opens with a seal. You climb with what you found, not with what you buy.",
   "guide.10b": "Climb",
+  "guide.11p":
+    "Sixty-four leaves as life. Every gesture that counts — talk, dig, capture, cross — burns one; a bare tree ends the climb. The day's twenty-seven rooms are the same for everyone. What you find goes into a bag: the summit, a door or fading away pour it into the vault, the last leaf loses it.",
+  "guide.11b": "Keep vigil",
+  "guide.coeur": "The core",
+  "guide.coeurLede": "The chain beneath the atelier: what is forged, signed and replayed. Nothing here is a game choice; everything checks out.",
+  "guide.meca": "Mechanics",
+  "guide.mecaLede": "What you do in the Tower and in the vigil, rule by rule. Everything derives from a seed; nothing is rolled; nothing grows stronger.",
+  "guide.lore": "Lore",
+  "guide.loreLede": "The world as it is written: nine muses, four ages, the Chamber of Genesis. A reading, never a guarantee.",
+  "guide.coeur.01t": "The unit and the law",
+  "guide.coeur.01p":
+    "One eidôlon is 10⁸ atoms. A block's reward follows a cosine, never a halving: R(h) = a + (a/2)·cos(2π(h − h₀)/T), with T = 1008 blocks and h₀ = 492. A cycle of T blocks sums to exactly a·T atoms, by largest-remainder rounding. Four ages follow one another — Satya (a = 40, 832 cycles), Tretā (30, 624), Dvāpara (20, 416), Kali (10, 208) — 62,899,200 eidôla over 2,096,640 blocks. The cosine is computed in Decimal by series, never in floating point: two nodes one atom apart would be two chains.",
+  "guide.coeur.02t": "Signatures made of hashing",
+  "guide.coeur.02p":
+    "No elliptic curve anywhere. A spend is signed with WOTS+ (w = 16, RFC 8391): a key signs once, so an address is spent once in the whole chain. Block heads are signed with XMSS, a tree of 4,096 leaves per validator, each index used exactly once. Every hash link is tweaked by a public seed and a hash address; Python and TypeScript produce the same bytes, and a shared vector file checks it at every test.",
+  "guide.coeur.03t": "An address can be read",
+  "guide.coeur.03p":
+    "An address is 27 payload glyphs and 4 check glyphs, six bits per glyph. A glyph is a stack of three figures out of four — · ○ ☽ ✚ — sixty-four stacks. The padding of the twenty-seventh glyph must be zero, or the address is refused: you do not guess, you read.",
+  "guide.coeur.04t": "Nothing is believed, everything is replayed",
+  "guide.coeur.04p":
+    "The coin ledger is never saved: at every start, the node replays the whole chain with the same code that forged it. Every block declares the Merkle root of the ledger after it; the block id commits to it. After every block, the sum of the coins equals the cumulative emission, or the node refuses to publish. The atelier's Witness does the same without replaying: it holds the signed head, recomputes its id, checks the XMSS signature and judges a coin against the root.",
+  "guide.coeur.05t": "Seven validators, one block an hour",
+  "guide.coeur.05p":
+    "The test network is a federation of seven validators, no proof of work. Slot s is proposed by the validator at rank (3·s) mod 7: a rotation of step three, and a validator count divisible by three is refused. A slot too far ahead is refused, at most six blocks are forged per run, and a GitHub cron does the forging, once an hour. Nobody forges from a desk while the cron runs.",
+  "guide.coeur.06t": "The faucet and the transfers",
+  "guide.coeur.06p":
+    "The faucet pays one eidôlon per request, through a GitHub issue or an email carrying an address in glyphs; one served request per account per cycle of 1,008 blocks, one pending at a time, within a budget of a·T/8 per cycle. A transfer is a transaction signed by the atelier, pasted in an issue between two markers; the node validates it on a copy of the ledger, includes at most eight per block, carries their fees into the coinbase and expires what has waited more than a cycle. An issue body never enters a command.",
+  "guide.coeur.07t": "Relics and seals",
+  "guide.coeur.07p":
+    "A relic is a coin sealed on an address whose seed exists only in a QR code hidden somewhere in the world. Claiming it means spending it to your vault: a key signs once, a relic is claimed once, with no server and no registry. Claimed, it becomes a seal of its age, and the expected stake of a seal is the age's emission divided by a million: Kali 2.10, Dvāpara 8.39, Tretā 18.87, Satya 33.55. The node publishes each declared relic's status; that is a reading.",
+  "guide.coeur.08t": "What counts is anchored",
+  "guide.coeur.08p":
+    "An army of machines multiplies what is free: vaults, browsers, runs. It does not multiply coins. A run that counts is seeded by a signed head and an unspent coin, proven against the ledger root: SHA-256d(\"eidos-ascension/1\" ‖ block id ‖ txid ‖ rank). Neither the vault, nor the machine, nor the browser enters the seed. No browser fingerprint, no machine lock, no client proof of work: what is free is played and worth nothing, what is anchored costs a coin.",
+  "guide.meca.01t": "Six laws, frozen",
+  "guide.meca.01p":
+    "Conservation, group, doxa, seal, ages (\"epoques\" in the code), resonance. They say the same thing from six sides: no hit points, no level, no experience, no dice, no item that mutates, and a tier never multiplies the norm. Climbing the Tower does not make you stronger; you read better. Everything that looks like chance derives from a seed and replays identically.",
+  "guide.meca.02t": "Items: a 32-bit word",
+  "guide.meca.02p":
+    "An item is a 32-bit word, read as a quaternion of fixed norm. One hundred and one catalogue shapes, twenty-one characters (seven regimes × three classes), four orbits, a rarity that is a closeness to the shape, four combat axes summing to 64 — iron, cuirass, flux, breath. A stone turns a word into another, a gem is set without touching it, a title is read from the word: same word, same title everywhere. The vault forges its own blocks, three a day, and each block draws an item; that local chain is a reading, not the network. The philosopher's stone is reserved to the first ten vaults. A Tower item is never transferred.",
+  "guide.meca.03t": "The Tower: 255 slices, nine bands, four quarters",
+  "guide.meca.03p":
+    "Every floor is a slice of rotation space, with a nine-by-nine slab and one to three occupants. Nine bands of about thirty floors carry the nine muses, from Thalia at ground level to Urania at the top. Four age quarters: Kali 0–63, Dvāpara 64–127, Tretā 128–191, Satya 192–254; the doors at 64, 128 and 192 open only to the seal of the right age. Every floor is public and fixed: two vaults on the same floor see the same host, the same slab, the same occupants.",
+  "guide.meca.04t": "The hosts: a demand, a gift",
+  "guide.meca.04p":
+    "A host lives on about one floor in seven; the muse herself stands at the middle of her band, and every door has its keeper. Each asks for something read in your vault and gives an item, once per vault per floor. Thalia welcomes you and gives salt; Clio asks for an inclusion proof; Calliope, two items of the same orbit, for mercury; Terpsichore, a pair in constructive resonance, for a gem; Melpomene, an item of the biome's class, for sulphur; Erato turns a piece with your stone; Euterpe, three items whose resonance holds, for a lair ticket; Polyhymnia, a seal of the age, and reveals the quarter's echoes; Urania asks nothing and reads the network head. Never a weapon nor the philosopher's stone as a gift. Every line quotes a true rule.",
+  "guide.meca.05t": "Elixirs: the tria prima",
+  "guide.meca.05p":
+    "Salt, mercury, sulphur: the three levels of a glyph. An elixir is drunk on a floor and acts only there; the word drunk is noted and never drunk again. Salt makes a destructive resonance read neutral. Mercury grants the parry outright. Sulphur lets a stone turn a piece without the smith, once. No elixir touches the axes, the norm or the word; none is for sale.",
+  "guide.meca.06t": "Secrets: alcoves, echoes, lairs, observatory",
+  "guide.meca.06p":
+    "An alcove is the central cross of a slab: thirteen floors have one, and a casket. Two floors of the same orbit echo each other, forty-four pairs; climbing both in order gives mercury. A lair opens with a ticket: a guardian holds the axis there, and the duel is read in three beats with no hit points — same orbit, then the parry ḡ(A)·(A·B), then the whole vault's resonance. Pushed back, you drop one floor and nothing is lost. Floor 254 is the observatory: Urania reads the network's signed head there, the Tower's only window on the chain.",
+  "guide.meca.07t": "Capsules and bestiary",
+  "guide.meca.07p":
+    "Occupants are not killed: they are read, and they can be taken. A capsule is a hollow glyph ···; Thalia gives one per honoured day's post, an alcove hides one, Erato forges one from a gem and salt. The catch is read in three beats: same orbit, a clean catch; a capsule tuned by the carried item, a fragile catch that holds with salt; otherwise the capsule breaks. The capture becomes an item, the floor loses its occupant for this vault, and the bestiary files it in one of the twenty-one cells of the doxa. Twenty-one cells filled, Urania opens the reading of the hundred and one shapes. No raising, no merging, no selling.",
+  "guide.meca.08t": "Digs: three strokes of the spade",
+  "guide.meca.08p":
+    "The slab is dug cell by cell, three strokes per floor per vault, a cell only once. Finds sit on fixed, public cells — one full cell in eight, no floor without — but their content depends on the vault: the cells belong to everyone, the loot to each. The pendulum's arrival cell always gives, even over a hole.",
+  "guide.meca.09t": "The pendulum and the ascent",
+  "guide.meca.09p":
+    "A dial with nine notches, one per star. At the end of a room, the pendulum reads what the vault did there — honoured the host: offer; opened, crossed or captured: read; nothing: climb — and you decide among three destinations whose floor is announced, never the cell. An ascent crosses twenty-seven rooms, three per band, from the city gate; a floor's content never changes, only the path is yours. A closed door stops it. Free, the ascent is a reading; anchored on a block and a coin, it counts, exports and is judged without replay.",
+  "guide.meca.10t": "The vigil: sixty-four leaves as life",
+  "guide.meca.10p":
+    "You enter with a tree of sixty-four one-time keys. Every gesture that counts burns one: cross (twenty-six times, mandatory), talk, dig, capture. Reading is free. The last leaf ends the climb: permadeath, not as a rule but as a theorem — a reused key is a compromised key, and the judge refuses any run where an index serves twice. The day's twenty-seven rooms derive from the day's first block, proven by the eve's head: the same for everyone. Anchored on a coin, the vigil counts; free, it is a reading.",
+  "guide.meca.11t": "The bag and the extraction",
+  "guide.meca.11p":
+    "What a vigil brings back goes into a bag of twenty-seven places, one per room. The summit, a closed door or fading away pour the bag into the vault; an exhausted tree loses it, and the gestures stay in the proof without the items. Bag full, no more loot: cross, or fade away. What you carry comes from the vault; what you find goes into the bag. The vault itself has no slots: what bounds the loot is the tree.",
+  "guide.meca.12t": "The proof, the leaderboard, the ghosts",
+  "guide.meca.12p":
+    "A finished vigil exports as an eidos-veillee/1 file: two signed heads, the coin and its proof, every gesture signed by its leaf. Anyone judges it without replaying the chain: heads, coin, leaves in order, path recomputed, consistent ending. The leaderboard is recomputed in every browser from the proofs deposited in the repository; one coin, one vigil per day; score = rooms × 64 + loot. Other players' runs come back as ghosts: an epithet and their last room, never a name. The judge does not know whose coin it is: that is proven by spending it.",
+  "guide.lore.01t": "Nine muses, nine stars, nine dances",
+  "guide.lore.01p":
+    "The Tower rises from the Earth to the fixed stars, and every band is a star and its muse: ⊕ Thalia the innkeeper, ☽ Clio the archivist, ☿ Calliope the apothecary, ♀ Terpsichore the dancing mistress, ☉ Melpomene the tragedienne, ♂ Erato the smith, ♃ Euterpe the musician, ♄ Polyhymnia the keeper of hymns, ★ Urania the astronomer. Each has three households, twenty-seven lines that state true rules, and a dance — bounce, phases, endless screw, round, flame, tumble, tempo, precession, nutation — that animates the relics.",
+  "guide.lore.02t": "Four ages",
+  "guide.lore.02p":
+    "Satya, Tretā, Dvāpara, Kali: the four ages of emission bear the names of the yugas. They are a calendar and a geography — the Tower's quarters, an item's metal, a proof's age, a seal's stake — never a power. An item born under Satya is never born again after Satya: rarity comes from history.",
+  "guide.lore.03t": "The Chamber of Genesis",
+  "guide.lore.03p":
+    "Before time, a Singularity; from it, nine eggs. Eight carry a theme — Void, Quantum, Temporal, Spatial, Entropic, Harmonic, Celestial, Spinorial — and each opens a cycle of eight eras: sixty-four manifestations, which are the sixty-four glyphs of the alphabet. An egg's cycle is a band of the Tower, from Thalia to Polyhymnia; the ninth egg, The Unknown, belongs to no cycle: it is Urania, who reads and gives nothing. The era names — the Era of Primordial Void, the Era of Uncertain Paths, the Era of the Unified Field — name the rooms of the vigil. No statistic of the source story came through: an egg is a reading of a glyph.",
+  "guide.lore.04t": "The tria prima and Paracelsus's eggs",
+  "guide.lore.04p":
+    "The three levels of a glyph are salt, mercury and sulphur: the tria prima. The faucet's artefacts, coins read as a muse, are Paracelsus's eggs. The philosopher's stone exists, one per vault among the first ten; it turns, it does not enlarge. No orbs, no talismans, no scrolls: no kind enters without a rule that reads it.",
+  "guide.lore.05t": "Ghosts and their six turns of phrase",
+  "guide.lore.05p":
+    "A ghost is someone else's proof, re-read in the room. It has no name and no strength; it has the room where it stopped and a phrase that says how: Echo, when its block is from another age; Reborn, at the summit; Last, when the last leaf burnt; Shadow, before a door; Fading, by choice; Whisper, still running. Six phrasings carried over from an older story, with none of its power.",
+  "guide.lore.06t": "Figures and proofs",
+  "guide.lore.06p":
+    "The atelier shows many figures: a map, signs, a dancing relic, a tree shedding its leaves, a ghost, a leaderboard. None is a guarantee. Only the ledger, the chain and the signatures commit; everything else is read, recomputed, and can be refused. When an atelier text promises more than the code, the text is wrong.",
 
   "tour.titre": "Tower",
   "tour.lede":
