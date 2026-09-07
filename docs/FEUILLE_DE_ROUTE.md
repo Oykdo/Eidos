@@ -481,6 +481,16 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   avec « ce qui compte est ancré » parce que la trace ne contient que `(p, e, s)`. `ancrer()` en
   Python reproduit `graineAncree` à l'octet, sans vecteur partagé pour l'instant.
 
+### Coffre horaire — PR 1 FAITE (2026-09-07), voir docs/SPEC_COFFRE_HORAIRE.md
+- Un coffre par bloc (l'horloge est la tête signée), réclamé avec une pièce prouvée : graine
+  `sha256d("eidos-coffre/1" ‖ id_bloc ‖ txid ‖ rang)`, tier = 1 + zéros de tête du premier octet
+  (1/2 … 1/256, 1/256 ; neuf tiers, neuf muses), t objets de tier t (genres de `GENRES_DON`, âge par
+  tier), sac de 27, une pièce un bloc. `labo/coffre_horaire.py` rejoue les 24 têtes réelles × 25
+  pièces (K39–K46) ; `labo/coffre_vecteurs.json` pour le port.
+- Reste : `coffre-horaire.ts` + famille `coffre` dans `vecteurs.json` (port à l'octet), le juge du
+  claim (tête XMSS + pièce Merkle, celui d'`ancrage.ts`), la mesure de la rafale rétroactive par le
+  bot (décide la fenêtre d'un jour, §5), et seulement ensuite une scène.
+
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
 signée, **veillée** : trois têtes à cheval sur minuit UTC, relique, **glyphes** : adresse 27 + 4, condensat 43, bourrage refusé),

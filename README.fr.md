@@ -233,6 +233,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `labo/pendule9_run.py` | 193 | labo : la Tour libre sur le run de l'atelier, sceau, Cube et ancrage, muses de `signatures.ts` | 11 |
 | `labo/unification.py` | 95 | labo : contrat avec `pendule.ts`, fixtures synthétique et réelle (`exporter-run.ts`), don | 9 |
 | `labo/aura_veillee.py` | 98 | labo : l'aura d'une veillée, lecture des 64 feuilles sur 8 positions (bot et veillée jouée) | 8 |
+| `labo/coffre_horaire.py` | 111 | labo : coffre horaire, un coffre par bloc, tirage rejoué sur les vraies têtes | 8 |
 | `consensus.py` | 204 | difficulté PoW et travail cumulé — historique | 6 |
 | `store.py` | 278 | chaîne PoW sur disque — historique | — |
 | `federation.json` | — | racines et graines publiques des 7 validateurs, t0, créneau | — |

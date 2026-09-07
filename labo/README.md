@@ -6,6 +6,7 @@ Laboratoire hors chaîne. Figures, pas preuves. Bibliothèque standard.
     python3 labo/pendule9_run.py      # K11–K17 Tour libre sur le run de l'atelier ; K27–K28 Cube ; K37–K38 muses
     python3 labo/unification.py       # K19–K26 contrat avec atelier/src/lib/eidos/pendule.ts
     python3 labo/aura_veillee.py      # K29–K36 aura d'une veillée : fixture du bot et veillée vraiment jouée
+    python3 labo/coffre_horaire.py    # K39–K46 coffre horaire : tirage sur chaine-eidos.dat × etat.json (docs/SPEC_COFFRE_HORAIRE.md)
     node --experimental-strip-types atelier/scripts/exporter-run.ts labo 0 labo   # export réel → labo/run_atelier.json
     node --experimental-strip-types atelier/scripts/exporter-veillee.ts 7         # veillée du bot → labo/veillee_atelier.json
     node --experimental-strip-types atelier/scripts/exporter-veillee.ts --depuis <carnet|veillée exportée>
