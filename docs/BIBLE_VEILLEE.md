@@ -17,7 +17,7 @@
 |---|---|---|---|
 | **la salle** | dix minutes | le pion sur la dalle 9 × 9 ; on parle à l'hôte, on creuse, on prend un occupant, on franchit — chaque acte coûte une feuille ; on lit l'étage avant d'y toucher, parce que lire est gratuit et signer ne l'est pas | des dons, des trouvailles, des captures (jauge) ; un geste signé de plus dans la preuve |
 | **la veillée** | un jour | l'ascension du jour, 27 salles identiques pour tous (§4), ancrée sur le premier bloc du jour et sur une pièce ; trois blocs du poste du jour = trois moments où l'on peut s'arrêter pour compter | une preuve `eidos-veillee/1` : jugée sans rejeu, classée, relue comme un fantôme (§6) |
-| **l'âge** | des semaines | les sceaux d'âge (reliques du monde) ouvrent les quartiers ; les pouvoirs des muses (`CAP_METROIDVANIA`) rouvrent ce qu'on a vu ; l'âge du bloc d'ancrage date chaque preuve | un coffre qui monte plus haut, des preuves d'âges différents, des fantômes en écho |
+| **l'âge** | des semaines | les sceaux d'âge (reliques du monde) ouvrent les quartiers ; les pouvoirs des muses (cap metroidvania, document retiré le 2026-09-07 : idée non retenue) rouvriraient ce qu'on a vu ; l'âge du bloc d'ancrage date chaque preuve | un coffre qui monte plus haut, des preuves d'âges différents, des fantômes en écho |
 
 **Libre ou ancrée.** Comme l'ascension, une veillée peut être **libre** : les mêmes salles du jour, le même arbre de soixante-quatre feuilles, aucune pièce — une lecture, qui ne s'exporte pas et que le juge refuse. C'est ainsi que le coffre d'atelier, ou un coffre sans pièce, joue. Ce qui compte est ancré ; ce qui est libre ne vaut rien, et se joue quand même.
 

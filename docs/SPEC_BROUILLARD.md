@@ -62,7 +62,7 @@ Le gardien **trouvé** (sa case percée), le duel en trois temps s'ouvre tel qu'
 Les antres sont les **étages focaux** de l'arbre de visite : les cases (étape, cran) où les histoires se refocalisent (§3.3 de l'étude). La brume y prend son sens :
 
 - l'**arrivée du pendule** fixe la case de naissance du faisceau ambre : le parcours choisi (le pendule, la décision de fin de salle) décide **d'où** l'on éclaire. Deux parcours différents entrent dans le même antre par deux barres différentes : la même nuit, deux manières de la percer ;
-- une case percée reste percée pour le coffre : revenir à un antre par une autre branche de l'arbre, avec une capture ou un soufre qu'on n'avait pas, rouvre le jeu. C'est le retour en arrière qui paie, la règle du cap metroidvania (`docs/CAP_METROIDVANIA.md` §3) ;
+- une case percée reste percée pour le coffre : revenir à un antre par une autre branche de l'arbre, avec une capture ou un soufre qu'on n'avait pas, rouvre le jeu. C'est le retour en arrière qui paie, la règle du cap metroidvania (cap metroidvania, document retiré le 2026-09-07) ;
 - hors ascension, la case de naissance est libre : l'exploration libre lit ; l'ascension ancrée subit son arrivée.
 
 ## 7. Rendu

@@ -54,7 +54,7 @@ Recommandation : ne pas ajouter de genre sans une règle qui le lise ; parchemin
 
 ### 4.2 L'avatar
 
-`avatar_generator`, `avatar_evolution`, galeries HTML : l'avatar d'Eidos est le **pion** du chantier « la salle » (`docs/CAP_METROIDVANIA.md` §3.1), une forme dérivée de la graine du coffre comme un objet, sans évolution par XP ; sa galerie est la Carte. T4 : ouvrir ce chantier avec la salle, pas avant.
+`avatar_generator`, `avatar_evolution`, galeries HTML : l'avatar d'Eidos est le **pion** du chantier « la salle » (cap metroidvania, document retiré le 2026-09-07), une forme dérivée de la graine du coffre comme un objet, sans évolution par XP ; sa galerie est la Carte. T4 : ouvrir ce chantier avec la salle, pas avant.
 
 ## 5. Ce qui n'entrera pas
 

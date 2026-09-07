@@ -5,7 +5,7 @@ demande plus d'inventer une identité, elle **fixe ce qui est déjà écrit** da
 dépôt et dans la réserve Eidolon, et liste ce qui reste à discuter. Marques :
 [FIXE] loi ou lore existant · [PROPOSÉ] à valider · [OUVERT] à trancher.
 **À lire avant :** `CLAUDE.md`, `docs/SPEC_TOUR.md`, `docs/SPEC_PENDULE.md`,
-`docs/LORE_CHAMBRE.md`, `docs/TRANSPOSITION_EIDOLON.md`, `docs/CAP_METROIDVANIA.md`,
+`docs/LORE_CHAMBRE.md`, `docs/TRANSPOSITION_EIDOLON.md`,
 `docs/SPEC_SYBIL.md`, `docs/ETUDE_ARBRE_VISITE.md`.
 
 ---
@@ -59,7 +59,7 @@ Le projet a une réserve : le dossier Eidolon (janvier 2026, hors dépôt : 90 m
 | **Reliques du monde** : une pièce scellée sur une adresse dont la graine n'existe que dans un QR caché dans le monde physique ; récupérée une fois, par construction ; devient **sceau d'âge**, exportable en **trophée** jugé sans rejeu | `HANDOVER_RELIQUES_QR.md` | `relique.py`, `relique-qr.ts`, `trophee.ts`, `reliques.json` | le pont entre le monde et la chaîne : la seule chose de la Tour qui soit une preuve |
 | **Le pendule-9** : cadran à neuf crans, transition gelée, table de vérité, arbre de visite de 243 nœuds (190 à 200 atteints), **caustiques** = étages où toutes les histoires convergent, TCL comme loi de lecture (un run court est un pari, un run long une mesure) | `SPEC_PENDULE.md`, `ETUDE_ARBRE_VISITE.md` | `pendule.ts`, `ascension.ts`, `ancrage.ts` | la structure du run ; le pendule choisit le chemin, l'auteur a écrit les salles |
 | **La brume des antres** : Earnshaw (neuf cases centrales jamais éclairées depuis le bord), coïncidence de deux faisceaux de couleurs différentes comme seule clé, gardien à la case de laplacien maximal | `SPEC_BROUILLARD.md` (B1–B5 ouverts) | non codé | le seul « puzzle » d'antre : la déduction, pas le hasard |
-| **Le cap metroidvania** : neuf pouvoirs, un par muse (la capsule, le flair, le pas, la ronde, le deuil, la forge, l'oreille, le regard, la lecture), qui **rouvrent** les salles déjà vues ; l'ascension est l'épreuve de maîtrise posée dessus | `CAP_METROIDVANIA.md` (M1–M4 à valider) | non codé | la progression persistante (jauge) sous le roguelike ; ta bible dit comment les deux s'emboîtent |
+| **Le cap metroidvania** : neuf pouvoirs, un par muse (la capsule, le flair, le pas, la ronde, le deuil, la forge, l'oreille, le regard, la lecture), qui **rouvrent** les salles déjà vues ; l'ascension est l'épreuve de maîtrise posée dessus | cap metroidvania, document retiré le 2026-09-07 ; M1–M4 non retenus | non codé | la progression persistante (jauge) sous le roguelike ; ta bible dit comment les deux s'emboîtent |
 | **Le forum du royaume** : objets ancrés = pièces colorées nées de chaque témoin d'une dépense réelle, portées rang à rang ; échange = une transaction à deux témoins ; identité Eidolon, négociation Cipher, échelle CardSwap (intégrité, possession, identité ; « certifié » n'existe pas) | `SPEC_FORUM.md` (F1–F7 ouverts) | non codé | le seul sens possible de « garder le loot » entre joueurs : un objet transférable **naît d'une dépense** |
 | **L'écosystème Logos** : Eidolon (coffre post-quantique, identité), Cipher (messagerie chiffrée), CardSwap (échelle de vérification) ; Eidos ne vérifie aucune courbe : un `vault_id` y est une étiquette | `SPEC_FORUM.md` §5 | ponts JSON côté Eidolon | le nom **Eidolon est pris** par le coffre : le jeu ne s'appelle pas ainsi |
 
@@ -87,7 +87,7 @@ Ce que tu dois produire ici n'est pas un débat : une décision par ligne, la fa
 - **Public** : joueurs de roguelikes exigeants et curieux de cryptographie ; positionnement face à Slay the Spire / Wordle / Dark Souls (fantômes) / Dark Forest (jeux à preuve).
 
 ## Axes obligatoires
-1. **Vision & pitch** : promesse en une phrase, boucle de dix minutes (la salle : le pion sur la dalle, creuser, prendre, honorer — `CAP_METROIDVANIA` §3.1), boucle d'un jour (la veillée), boucle d'un âge (les sceaux, les quartiers).
+1. **Vision & pitch** : promesse en une phrase, boucle de dix minutes (la salle : le pion sur la dalle, creuser, prendre, honorer — idée du cap metroidvania, document retiré le 2026-09-07), boucle d'un jour (la veillée), boucle d'un âge (les sceaux, les quartiers).
 2. **La clé comme vie** : N et h (justifie : N = 27 salles × gestes moyens ?), coût en feuilles par geste, pourquoi la jauge de feuilles remplace les PV, ce qu'on ressent à la dernière feuille ; **comment la racine de l'arbre est engagée** (C6).
 3. **Le loot** : lien objet ↔ racine de l'arbre, export signé, anti-rejeu et anti-farm, sens exact de « garder le loot » quand rien ne se re-signe — en distinguant **jauge** (dons, trouvailles, captures : libres, intransférables) et **ancré** (né d'une dépense, transférable par le forum, `SPEC_FORUM` §3.3).
 4. **La Tour du jour** : la graine d'ancrage [FIXE], le bloc du jour (C7), 27 salles = 9 segments × 3 étages choisis par le pendule, dilemmes (parler coûte une feuille et donne une réplique vraie ; ouvrir coûte une feuille pour un contenu dérivé de (étage, case, coffre), non aléatoire), trois décisions aux trois blocs, deux runs exemples avec dépense feuille par feuille **et le nom de chaque salle (C1)**.

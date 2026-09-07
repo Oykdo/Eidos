@@ -207,7 +207,7 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   d'arrivée du pendule donne toujours (même sur un trou) ; contenu (« trouve »,
   pierre une fois sur quatre) dérivé de (étage, case, coffre) : les cases sont
   à tous, le contenu à chacun. Occupants posés sur la dalle (`caseOccupant`,
-  même règle que la scène). 6 contrôles. Cap proposé : `docs/CAP_METROIDVANIA.md`.
+  même règle que la scène). 6 contrôles. Cap metroidvania proposé puis retiré (cap metroidvania, document retiré le 2026-09-07).
 - Fiche d'objet (2026-09-04) : `fiche.ts` (lecture pure d'un mot : forme du
   catalogue la plus proche, cellule, proximité = rareté continue, palier, orbite,
   ascendant force/faiblesse, axe à l'ancre, sceau, résonance avec le coffre ;
