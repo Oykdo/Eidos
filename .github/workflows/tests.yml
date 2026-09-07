@@ -51,6 +51,9 @@ jobs:
       - name: Envois (inclusion, double depense, malforme, expiration, 5 controles)
         run: python -c "import noeud as N; N._test_envois()"
 
+      - name: Paiements robinet cote forge (servie, doublon, conservation, 3 controles)
+        run: python -c "import noeud as N; N._test_paiements()"
+
       - name: Reprise --depuis (point de controle explicite, 4 controles)
         run: python -c "import noeud as N; N._test_depuis()"
 

@@ -170,7 +170,7 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `wots.py` | 284 | WOTS+ w = 16, L-tree, addresses, fingerprints | 5 |
 | `utxo.py` | 509 | witnesses, addresses, transactions, ledger, UTXO root, validation | 15 |
 | `federation.py` | 694 | XMSS, rotation, liveness, signed head, locked persistent counter | 18 |
-| `noeud.py` | 1098 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 4 + 5 + 2 |
+| `noeud.py` | 1151 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 3 + 4 + 5 + 2 |
 | `robinet.py` | 392 | faucet queue fed by issues and email, per-author brake | 11 |
 | `courriel.py` | 275 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
 | `vecteurs.py` | 171 | shared vectors Python ↔ TS (`vecteurs.json`, 8 families) | parity |

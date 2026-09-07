@@ -475,14 +475,16 @@ def sorties_tresor(ch, combien):
     return trouve
 
 
-def construire_paiements(ch, hauteur_bloc):
+def construire_paiements(ch, hauteur_bloc, f=None):
     """Une transaction par demande : le trésor verse, et rend la monnaie sur
     une adresse fraîche. Frais nuls.
 
     Refus si l'adresse a encore une sortie, ou si a·T/8 est atteint.
     La file n'est pas le carnet : on relit l'UTXO à chaque forge.
+    `f` : la file, lue sur le disque si absente (les contrôles la passent).
     """
-    f = charger_mempool()
+    if f is None:
+        f = charger_mempool()
     attente = [d for d in f["demandes"]
                if d.get("etat") == "en_attente"
                and d.get("type", "robinet") == "robinet"]
@@ -494,16 +496,17 @@ def construire_paiements(ch, hauteur_bloc):
     eligibles = []
     vus = set()
     for d in attente:
-        adr = d.get("adresse", "")
-        if not adr or adr in vus:
+        # `dest_hex`, jamais `adr` : le nom masquerait adr(graine) plus bas
+        dest_hex = d.get("adresse", "")
+        if not dest_hex or dest_hex in vus:
             d["etat"] = "refus"
             d["motif"] = "doublon"
             continue
-        vus.add(adr)
-        if verse_deja(ch, adr):
+        vus.add(dest_hex)
+        if verse_deja(ch, dest_hex):
             d["etat"] = "refus"
             d["motif"] = "sortie non dépensée"
-            print(f"  robinet refus {adr[:16]}… : sortie non dépensée")
+            print(f"  robinet refus {dest_hex[:16]}… : sortie non dépensée")
             continue
         if depense + MONTANT_ROBINET > budget:
             print(f"  robinet : budget d'époque atteint "
@@ -984,6 +987,56 @@ def _test_artefact():
     assert a["spec"] == "eidos-artefact/1"
     assert artefact_de_goutte((2).to_bytes(32, "big"), ad) is None
     print("ok : artefact robinet (lune / preuve / muet)")
+
+
+def _test_paiements():
+    """Contrôles robinet côté forge, en mémoire : le trésor sert une demande
+    en attente et rend la monnaie sur l'adresse de rendu du bloc. Régression du
+    2026-09-07 : une variable locale nommée `adr` masquait adr(graine) et faisait
+    planter chaque forge dès qu'une demande attendait (runs chaine #38–#44)."""
+    t0 = 1756540680
+    cles = F.cles_de_test(7, hauteur=4)
+    fed = F.Federation.depuis_cles(cles, t0, hauteur=4)
+    ch = F.ChaineFederee(fed)
+    for h in range(2):
+        blk = F.forger(ch, cles, [U.coinbase(h, adresse_du_bloc(h))], t0 + h * F.CRENEAU)
+        ch.valider(blk, maintenant=t0 + h * F.CRENEAU)
+    h = ch.carnet.hauteur + 1
+    joueur = U.Portefeuille("joueur-robinet")
+    dest = joueur.nouvelle_adresse().hex()
+    ok = 0
+
+    def file_(*ds):
+        return {"spec": "eidos-mempool/1", "demandes": list(ds)}
+
+    def demande(issue, adresse=dest):
+        return {"type": "robinet", "issue": issue, "etat": "en_attente", "adresse": adresse}
+
+    # 1. une demande servie : versement + rendu sur adr(graine_rendu(h, 0))
+    f = file_(demande(1))
+    txs, f2, modifie = construire_paiements(ch, h, f)
+    assert modifie and len(txs) == 1 and f2 is f, (modifie, len(txs))
+    tx = txs[0]
+    assert tx.outputs[0] == (bytes.fromhex(dest), MONTANT_ROBINET), tx.outputs
+    assert tx.outputs[1][0] == adr(graine_rendu(h, 0)), "rendu hors de l'adresse de rendu"
+    assert f["demandes"][0]["etat"] == "servie" and f["demandes"][0]["txid"] == tx.txid().hex()
+    assert f["demandes"][0]["bloc"] == h
+    print(f"robinet : demande servie, rendu sur l'adresse du bloc  : OK"); ok += 1
+
+    # 2. la même adresse deux fois dans la file : la seconde est un doublon
+    f = file_(demande(2), demande(3))
+    txs, _, _ = construire_paiements(ch, h, f)
+    assert len(txs) == 1 and f["demandes"][1]["etat"] == "refus"
+    assert f["demandes"][1]["motif"] == "doublon", f["demandes"][1]
+    print(f"robinet : doublon d'adresse refuse                   : OK"); ok += 1
+
+    # 3. le bloc forgé avec le paiement passe le carnet : conservation
+    blk = F.forger(ch, cles, [U.coinbase(h, adresse_du_bloc(h))] + txs, t0 + 2 * F.CRENEAU)
+    ch.valider(blk, maintenant=t0 + 2 * F.CRENEAU)
+    assert sum(m for _, m in ch.carnet.utxo.values()) == ch.carnet.emission_cumulee()
+    assert any(a == bytes.fromhex(dest) for a, _ in ch.carnet.utxo.values())
+    print(f"robinet : bloc forge avec le paiement, conservation  : OK"); ok += 1
+    print(f"ok : {ok} controles paiements robinet")
 
 
 def _test_envois():

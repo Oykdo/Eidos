@@ -38,7 +38,7 @@ wots.py             WOTS+ w=16 (RFC 8391), arbre L, adresses, empreintes (5 cont
 utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (15 contrôles)
 federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
 vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (6 familles)
-noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, reliques, etat.json (5 + 4 + 4 contrôles)
+noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, reliques, etat.json (5 + 3 + 4 + 4 contrôles)
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
 reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
@@ -140,6 +140,7 @@ python3 robinet.py --test      # 11
 python3 courriel.py --test     # 6
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
+python3 -c "import noeud as N; N._test_paiements()"   # 3
 python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 -c "import noeud as N; N._test_indice()"      # 2
 python3 -c "import noeud as N; N._test_reliques()"    # 4
