@@ -31,7 +31,7 @@ jobs:
         run: python labo/pendule9_run.py
       - name: K19–K26 unification
         run: python labo/unification.py
-      - name: K29–K34 aura de la veillée (lecture de la jauge)
+      - name: K29–K36 aura de la veillée (bot et veillée jouée)
         run: python labo/aura_veillee.py
       - name: hygiène — la fixture régénérée est identique au dépôt
         shell: bash
@@ -63,5 +63,10 @@ jobs:
         run: node --experimental-strip-types atelier/scripts/exporter-veillee.ts 7 > veillee_atelier.json
       - name: le labo lit la veillée
         run: python labo/aura_veillee.py veillee_atelier.json
-      - name: hygiène — la veillée réelle est identique à l'export
+      - name: hygiène — la veillée du bot est identique à l'export
         run: cmp veillee_atelier.json labo/veillee_atelier.json
+      - name: relire une veillée vraiment jouée (--depuis) et la comparer à sa lecture filée
+        run: |
+          node --experimental-strip-types atelier/scripts/exporter-veillee.ts --depuis labo/veillee_jouee_source.json > jouee.json
+          cmp jouee.json labo/veillee_jouee.json
+          python labo/aura_veillee.py labo/veillee_jouee.json

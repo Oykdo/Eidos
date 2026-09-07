@@ -108,3 +108,14 @@ Conséquences : la loi du 9 (transfert-miroir) et le Cube restent des mécanique
 Contrôles : `pendule.test.ts` (quantité = y + 1, indépendante de x, du maître et du run, bornée 1..9, genre inchangé) ; `exporter-run.ts` exporte `q`, et K35 vérifie que `q = p + 1 = tier` sur l'export réel. Les mesures de phase 0 sont inchangées par construction (elles ne lisent que le genre).
 
 Ce qui reste ouvert : rien ne *donne* encore ce don dans la Tour — `genreDon` n'est appelé que par phase 0. Brancher `don()` sur l'arrivée d'étage (`veillee-tour.ts` / hôtes) est un chantier de jeu, pas de labo : LIST 10.
+
+## 11. Lire un run vraiment joué (LIST 6, K36)
+La LIST disait « brancher `sauver.ts` pour exporter de vrais runs ». `sauver.ts` s'est révélé être autre chose : le sélecteur de fichier du navigateur pour `eidos.carnet`, pas un dépôt de runs. Un run joué vit ailleurs — dans le carnet (`coffre.tour.veillee.v`) ou dans le fichier qu'exporte la page Veillée (`serialiserVeillee`). Le chantier devient donc : **`exporter-veillee.ts --depuis <fichier>`**, qui accepte les deux formes et rend exactement le même JSON que le bot — gestes sans signatures, parcours rejoué.
+
+Deux fixtures, deux formes de run :
+- `labo/veillee_atelier.json` — bot gourmand, sommet, 46 feuilles. Régénérable, comparée à l'octet par la CI.
+- `labo/veillee_jouee.json` — une veillée vraiment jouée (parler, trois franchir, abandon), 4 feuilles, lue via `--depuis` depuis `labo/veillee_jouee_source.json`. **Non régénérable en CI** : un run joué ne se rejoue pas, c'est le propos. La CI vérifie qu'elle se relit à l'identique et que le labo la lit.
+
+K34 devient générique (restantes = 64 − gestes ; une étape de parcours par franchir, plus l'entrée) au lieu d'exiger le sommet — l'ancienne forme était taillée pour le bot. K36 le dit explicitement : deux formes de run, mêmes règles, l'une au sommet et l'autre abandonnée.
+
+`--depuis` ne vérifie rien : un fichier qui ne se parse pas est refusé, un fichier qui ment passe. `jugerVeillee` reste le seul juge, et aucune signature ne sort de l'atelier.
