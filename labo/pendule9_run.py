@@ -113,13 +113,24 @@ def ascii_front(parts, aggs):
 # AVERTISSEMENT : ce mapping étage→position (racine digitale + balancier) est une esquisse
 # parallèle à atelier/src/lib/eidos/pendule.ts (bandes × triplets) ; les deux ne sont pas encore unifiés.
 
-# ---------- 4. GDD [C] Muses ↔ modes orbitaux ----------
-MUSES = [  # non testé — table de design
-    {"muse": "Calliope", "mode": "s", "ℓ": 0, "effet": "aura sphérique de base"},
-    {"muse": "Uranie",   "mode": "p", "ℓ": 1, "effet": "aura directionnelle (charge / projectile)"},
-    {"muse": "Thalie",   "mode": "d", "ℓ": 2, "effet": "trèfle 4 lobes = 4 paires-miroir actives"},
-    {"muse": "Melpomène","mode": "f", "ℓ": 3, "effet": "forme complexe, endgame (étages 192+)"},
-]
+# ---------- 4. Muses ↔ modes d'aura (LIST 4, spec §12) ----------
+# La table inventée (Calliope=s, Uranie=p, Thalie=d, Melpomène=f) était FAUSSE : ces muses ne
+# tiennent pas ces rangs dans signatures.ts. Le labo ne recopie plus les muses, il relit
+# labo/muses.json (exporté par atelier/scripts/exporter-signatures.ts, source signatures.ts).
+# Le mode se déduit du rang de bande, il ne s'invente pas :
+#     ℓ = (8 − rang) · 4 // 9   →  Thalie/Clio/Calliope : s ; Terpsichore/Melpomène : p ;
+#                                  Érato/Euterpe : d ; Polymnie/Uranie : f   (3 + 2 + 2 + 2 = 9)
+# Descente d'Uranie (rang 0, sommet, forme la plus complexe) à Thalie (rang 8, la ville, sphérique).
+MODES = ("s", "p", "d", "f")
+
+def muses():
+    return json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "muses.json"), encoding="utf-8"))
+
+def mode_de_rang(rang):
+    return MODES[min(len(MODES) - 1, ((8 - rang) * len(MODES)) // 9)]
+
+def mode_de_bande(m):
+    return {x["bande"]: mode_de_rang(x["rang"]) for x in m}
 
 # ---------- LAB TEST ----------
 def lab_test():
@@ -147,6 +158,15 @@ def lab_test():
     for _ in range(252): enter_floor(s4)
     plein = all(s4["aggs"][k]["actuel"] == CAP for k in AGG) and s4["aggs"].get("source_9", 0) == 0
     R["K18_queue_explique_asymetrie"] = plein and s3["aggs"]["source_9"] == 3 * cost(255)
+    # K37/K38 — LIST 4 : la table des muses vient de l'atelier, jamais du labo ; le mode se déduit
+    # du rang, du plus simple (Thalie, la ville) au plus complexe (Uranie, le sommet).
+    m = muses()
+    R["K37_muses_de_latelier"] = len(m) == 9 and [x["bande"] for x in m] == list(range(9)) and \
+        sorted(x["rang"] for x in m) == list(range(9)) and m[0]["muse"] == "Thalie" and m[8]["muse"] == "Uranie"
+    modes = [mode_de_rang(x["rang"]) for x in m]
+    R["K38_modes_monotones"] = modes[0] == "s" and modes[8] == "f" and set(modes) == set(MODES) and \
+        [MODES.index(x) for x in modes] == sorted(MODES.index(x) for x in modes)
+
     # K27/K28 — le Cube et l'ancrage (§8) : sur un run ancré, le Cube restaure les 8 mais graine et
     # trace ne bougent pas ; viser autre chose que les agrégateurs est refusé.
     s5 = new_run(3)
@@ -170,4 +190,5 @@ if __name__ == "__main__":
     print("sceau final :", s3["seal"][:16])
     print("\n--- rendu ASCII (seed 3, après Cube) ---")
     print(ascii_front(parts, s1["aggs"]))
-    print("\nMuses [C] :", json.dumps(MUSES, ensure_ascii=False))
+    m = muses()
+    print("\nMuses ↔ modes :", " ".join(f"{x['muse']}:{mode_de_rang(x['rang'])}" for x in m))

@@ -229,8 +229,8 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `vecteurs.py` | 204 | shared vectors Python ↔ TS (`vecteurs.json`, 9 families) | parity |
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
-| `labo/aura_voxel_lab.py` | 109 | pendulum-9 lab: voxel avatar, graded aura, 8 aggregators — figures, not proofs | 9 |
-| `labo/pendule9_run.py` | 171 | lab: 255-floor run, seal, Saturn Cube and anchoring | 11 |
+| `labo/aura_voxel_lab.py` | 132 | pendulum-9 lab: voxel avatar (grid of `voxels.ts`), graded aura, 8 aggregators | 11 |
+| `labo/pendule9_run.py` | 194 | lab: 255-floor run, seal, Cube and anchoring, muses read from `signatures.ts` | 13 |
 | `labo/unification.py` | 98 | lab: contract with `pendule.ts`, synthetic and real fixtures (`exporter-run.ts`), gift | 9 |
 | `labo/aura_veillee.py` | 98 | lab: a vigil's aura, reading of the 64 leaves over 8 positions (bot and played vigil) | 8 |
 | `consensus.py` | 204 | PoW difficulty and cumulative work — historical | 6 |

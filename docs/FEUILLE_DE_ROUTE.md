@@ -440,14 +440,17 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
 - **Reste — zones non branchées (LIST) :**
   1. Loot : `tier = position` du labo n'est pas relié à `genreDon` (`pendule.ts`) — décider si le
      tier module le genre, la quantité, ou seulement la lecture.
-  2. Avatar : `labo/aura_voxel_lab.py` (corps 16×32×16) et `voxels.ts` (objets, VOXEL_N = 12) sont
-     deux voxelisations sans lien — port TS du corps ou abandon du corps Python au profit d'une
-     scène `@react-three/fiber` (le coffre 3D en est le modèle).
+  2. FAIT (2026-09-07, spec §13) — l'avatar n'est pas un objet (pas de mot, pas d'âge, pas de teinte)
+     et n'entre pas dans `voxels.ts`, mais adopte sa convention : grille 12 × 24 × 12 (`VOXEL_N`,
+     `2·VOXEL_N`), entiers seulement, `empreinte_corps` indexée comme `empreinteVoxels` (K8bis, K8ter).
+     Reste : le rendu à l'écran, scène `@react-three/fiber` — chantier de jeu.
   3. Cube de Saturne : « restaure sans signer le sceau » est une figure Python ; le sceau réel est
      `ancrage.ts` (graine `eidos-ascension/1`). Spécifier ce que le Cube peut toucher sans rompre
      « ce qui compte est ancré ».
-  4. Muses ↔ modes orbitaux s/p/d/f : table [C] (`MUSES` dans `pendule9_run.py`) sans effet de jeu ;
-     à relier à `SIGNATURES` et à la muse de bande (`rangBande`).
+  4. FAIT (2026-09-07, spec §12, K37–K38) — la table inventée était fausse ; le labo relit
+     `labo/muses.json` (`exporter-signatures.ts` ← `signatures.ts` + `rangBande`, parité à l'octet
+     en CI) et déduit le mode du rang : `ℓ = (8 − rang)·4 // 9`, s en bas, f au sommet. Les modes
+     nomment, ils ne font rien : leur donner un effet reste un chantier de jeu.
   5. Aura ↔ Veillée : la jauge (`jauge.ts`, `veillee.ts`) ignore les 8 agrégateurs ; décider si
      l'aura est une lecture de la jauge ou un système parallèle.
   6. FAIT (2026-09-07, spec §11, K36) — `sauver.ts` n'était pas la bonne porte (c'est le sélecteur

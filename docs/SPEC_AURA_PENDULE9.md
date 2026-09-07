@@ -119,3 +119,17 @@ Deux fixtures, deux formes de run :
 K34 devient générique (restantes = 64 − gestes ; une étape de parcours par franchir, plus l'entrée) au lieu d'exiger le sommet — l'ancienne forme était taillée pour le bot. K36 le dit explicitement : deux formes de run, mêmes règles, l'une au sommet et l'autre abandonnée.
 
 `--depuis` ne vérifie rien : un fichier qui ne se parse pas est refusé, un fichier qui ment passe. `jugerVeillee` reste le seul juge, et aucune signature ne sort de l'atelier.
+
+## 12. Les muses ne s'inventent pas (LIST 4, K37–K38)
+La table `MUSES` du labo était **fausse** : elle donnait Calliope à s, Uranie à p, Thalie à d, Melpomène à f, alors que `signatures.ts` fixe neuf muses, une par astre, dans une descente d'Uranie (rang 0, le sommet) à Thalie (rang 8, la ville). Corrigé de la seule manière qui tienne : le labo **ne recopie plus** les muses, il relit `labo/muses.json`, exporté par `atelier/scripts/exporter-signatures.ts` depuis `signatures.ts` et `rangBande` — la CI compare à l'octet, la table ne peut plus diverger.
+
+Le mode d'aura se déduit du rang, il ne s'attribue pas : `ℓ = (8 − rang) · 4 // 9`, soit Thalie/Clio/Calliope en **s**, Terpsichore/Melpomène en **p**, Érato/Euterpe en **d**, Polymnie/Uranie en **f** (3 + 2 + 2 + 2 = 9). Du plus simple en bas au plus complexe au sommet. K37 : la table vient bien de l'atelier, neuf bandes, neuf rangs, Thalie en 0, Uranie en 8. K38 : les modes couvrent s→f et ne redescendent jamais.
+
+Les modes restent sans effet de jeu — ils nomment, ils ne font rien. Ce n'est plus une conjecture inventée, c'est une lecture d'une table réelle.
+
+## 13. L'avatar n'est pas un objet, mais partage la convention (LIST 2)
+`voxels.ts` déconstruit un **mot** en occupance : un objet a un mot, un âge, une teinte. L'avatar n'en a aucun — il n'a pas sa place dans `voxels.ts` et n'y entrera pas. En revanche il n'a aucune raison d'inventer une seconde convention de grille : le corps passe de 16 × 32 × 16 à **12 × 24 × 12**, c'est-à-dire `VOXEL_N` en x et z (identique à `voxels.ts`) et le double en hauteur, parce qu'un corps est debout. Entiers seulement, comme là-bas.
+
+`empreinte_corps()` reprend l'indexation d'`empreinteVoxels` : `i = x + N·(y + H·z)`, bits en petit-boutiste, hex par octet. Un corps a donc une empreinte comme un objet, sans être un objet. Contrôles : K8bis (grille = `VOXEL_N`, `2·VOXEL_N`, `VOXEL_N` ; tout voxel dans les bornes), K8ter (empreinte de la bonne taille, déterministe, distincte entre deux graines).
+
+Reste ouvert : le rendu. Un corps voxel à l'écran serait une scène `@react-three/fiber` comme le coffre — chantier de jeu, pas de labo.
