@@ -4,9 +4,9 @@ name: labo
 on:
   push:
     branches: [main]
-    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml"]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts"]
   pull_request:
-    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml"]
+    paths: ["labo/**", "docs/SPEC_AURA_PENDULE9.md", ".github/workflows/labo.yml", "atelier/scripts/exporter-run.ts", "atelier/src/lib/eidos/pendule.ts", "atelier/src/lib/eidos/tour.ts"]
   workflow_dispatch:
 concurrency:
   group: labo-${{ github.ref }}
@@ -39,24 +39,21 @@ jobs:
         run: |
           ! grep -rEn "^(import|from) (numpy|scipy|pandas|requests)" labo/ || (echo "dépendance hors stdlib" && exit 1)
   parite-atelier:
-    # Parité réelle pendule.ts → labo : exporte un run depuis l'atelier et le fait lire par unification.py.
-    # Ne s'exécute que si le script d'export existe (chantier suivant : atelier/scripts/exporter-run.ts).
+    # Parité réelle pendule.ts → labo : l'atelier exporte un run, le labo le lit,
+    # et l'export doit être identique à l'octet à labo/run_atelier.json (fixture réelle).
     runs-on: ubuntu-latest
     needs: kill-criteria
     steps:
       - uses: actions/checkout@v4
-      - id: export
-        shell: bash
-        run: |
-          if [ -f atelier/scripts/exporter-run.ts ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "::notice::exporter-run.ts absent — parité réelle sautée (fixture synthétique seulement)"; fi
-      - if: steps.export.outputs.present == 'true'
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with: { node-version: "22", cache: npm, cache-dependency-path: atelier/package-lock.json }
-      - if: steps.export.outputs.present == 'true'
-        working-directory: atelier
-        run: npm ci && npx tsx scripts/exporter-run.ts > ../run_atelier.json
-      - if: steps.export.outputs.present == 'true'
-        uses: actions/setup-python@v5
+      - working-directory: atelier
+        run: npm ci --no-audit --no-fund
+      - name: exporter un run réel
+        run: node --experimental-strip-types atelier/scripts/exporter-run.ts labo 0 labo > run_atelier.json
+      - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - if: steps.export.outputs.present == 'true'
+      - name: le labo lit l'export
         run: python labo/unification.py run_atelier.json
+      - name: hygiène — la fixture réelle est identique à l'export
+        run: cmp run_atelier.json labo/run_atelier.json
