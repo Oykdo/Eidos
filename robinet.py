@@ -51,7 +51,7 @@ INDEX = {c: i for i, c in enumerate(FIGURES)}
 GROUPE = re.compile("^[" + FIGURES + "]{3}$")
 
 MONTANT_ATOMES = 100_000_000                  # 1 eidolon par demande
-MAX_FILE = 200                                # garde-fou
+MAX_FILE = 200                                # demandes EN ATTENTE, au plus
 T_EPOQUE = 1008
 BUDGET_RATIO = 8
 SERVIES_PAR_AUTEUR_PAR_EPOQUE = 1             # frein par compte GitHub
@@ -104,7 +104,20 @@ def charger_file():
 
 
 def ecrire_file(f):
-    json.dump(f, open(MEMPOOL, "w"), indent=1, ensure_ascii=False)
+    """UTF-8 explicite (un poste Windows ecrirait en cp1252) et remplacement
+    atomique : la file n'est jamais lue a moitie ecrite."""
+    tmp = MEMPOOL + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(f, fh, indent=1, ensure_ascii=False)
+    os.replace(tmp, MEMPOOL)
+
+
+def en_attente_total(f):
+    """Ce que MAX_FILE borne : les demandes en attente, tous types. Les
+    servies et refusees restent dans la file (le frein par auteur les lit)
+    et ne comptent pas — sinon 200 demandes servies fermeraient le robinet
+    pour tout le monde, a jamais."""
+    return sum(1 for d in f["demandes"] if d.get("etat") == "en_attente")
 
 
 def charger_etat():
@@ -197,8 +210,10 @@ def extraire_transaction(texte: str) -> str:
     lignes = texte.splitlines()
     motif = B64
     if DEBUT in texte and FIN in texte:
-        d = next(i for i, l in enumerate(lignes) if DEBUT in l)
-        f = next(i for i, l in enumerate(lignes) if FIN in l and i > d)
+        d = next((i for i, l in enumerate(lignes) if DEBUT in l), None)
+        f = next((i for i, l in enumerate(lignes) if FIN in l and i > d), None)
+        if d is None or f is None:
+            raise ValueError("marqueurs mal ordonnes : FIN doit suivre EIDOS")
         lignes = lignes[d + 1:f]
         motif = B64_DELIMITE
     morceaux = [l.strip() for l in lignes if motif.match(l.strip())]
@@ -245,7 +260,7 @@ def ajouter_envoi():
     if deja_par_ref(f, ref):
         print(f"message deja en file : {ref}")
         return
-    if len(f["demandes"]) >= MAX_FILE:
+    if en_attente_total(f) >= MAX_FILE:
         refus("file pleine")
     if any(d.get("donnees") == donnees for d in f["demandes"]):
         print("transaction deja en file")
@@ -282,7 +297,7 @@ def ajouter():
     if deja_par_ref(f, ref):
         print(f"message deja en file : {ref}")
         return
-    if len(f["demandes"]) >= MAX_FILE:
+    if en_attente_total(f) >= MAX_FILE:
         refus("file pleine")
     if any(d.get("adresse") == adresse and d.get("etat") == "en_attente"
            for d in f["demandes"]):
@@ -364,7 +379,20 @@ def _tests():
     assert not auteur_autorise(file, "bob", 900)        # en attente
     assert not auteur_autorise(file, "carol", 900)      # servie bloc 3, meme epoque 0
     assert auteur_autorise(file, "dave", 900) and auteur_autorise(file, None, 900)
-    print("ok : 11 controles robinet")
+    # marqueurs mal ordonnes : refus propre (ValueError), jamais une StopIteration
+    try:
+        extraire_transaction(FIN + "\n" + DEBUT + "\n"); raise AssertionError("aurait du echouer")
+    except ValueError:
+        pass
+    # MAX_FILE borne les demandes en attente : 200 servies ne ferment pas le robinet
+    pleine = {"demandes": [{"type": "robinet", "etat": "servie", "bloc": i} for i in range(MAX_FILE)]}
+    assert en_attente_total(pleine) == 0
+    pleine["demandes"].extend({"type": "robinet", "etat": "en_attente"} for _ in range(MAX_FILE))
+    assert en_attente_total(pleine) == MAX_FILE
+    # une reference de message n'est jamais inscrite deux fois, quel que soit le canal
+    file = {"demandes": [{"type": "robinet", "etat": "servie", "ref": "abcd"}]}
+    assert deja_par_ref(file, "abcd") and not deja_par_ref(file, "efgh") and not deja_par_ref(file, None)
+    print("ok : 14 controles robinet")
 
 
 if __name__ == "__main__":

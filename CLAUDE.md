@@ -42,7 +42,7 @@ noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, 
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
 reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
-robinet.py          file mempool.json alimentée par issues GitHub et courriels, frein par auteur (11 contrôles)
+robinet.py          file mempool.json alimentée par issues GitHub et courriels, frein par auteur (14 contrôles)
 courriel.py         second canal du robinet : boîte IMAP relevée par courriel.yml, même filtre (6 contrôles)
 consensus.py        difficulté PoW et travail cumulé — chemin HISTORIQUE
 store.py            chaîne PoW sur disque (chaine.dat) — chemin HISTORIQUE
@@ -109,8 +109,11 @@ empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
   Il transite par `EIDOS_ISSUE_BODY` et `robinet.py` ne retient que ce qui passe
   le filtre de figures + somme de contrôle (ou base64 sur lignes entières pour
   `envoi`). `courriel.py` passe par le même chemin (`EIDOS_CANAL`, `EIDOS_CANAL_REF`),
-  marque tout message lu qu'il soit accepté ou non, et n'écrit jamais les
-  identifiants IMAP ailleurs que dans l'environnement du run.
+  marque tout message lu qu'il soit accepté ou non, saute un message qui lève,
+  refuse un message sans expéditeur, ne publie l'expéditeur que sous empreinte
+  (`courriel:<16 hex>`), vérifie le certificat IMAP et n'écrit jamais les
+  identifiants ailleurs que dans l'environnement du run. `MAX_FILE` borne les
+  demandes en attente, jamais la file entière.
 - **Aucun état local versionné** hors `chaine-eidos.dat`, `etat.json`,
   `mempool.json` (job `hygiene`). Pas de `chaine.dat`, pas de `portefeuille.json`.
 - **Figures ≠ preuves.** L'Arbre, les Signes, les reliques, les artefacts sont
@@ -136,7 +139,7 @@ python3 eonis.py               # 6
 python3 wots.py                # 5
 python3 utxo.py                # 15
 python3 vecteurs.py            # parité Python ↔ TS (vecteurs.json)
-python3 robinet.py --test      # 11
+python3 robinet.py --test      # 14
 python3 courriel.py --test     # 6
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
@@ -480,7 +483,13 @@ d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
   publie `robinet_canaux` (issue, courriel depuis `EIDOS_ROBINET_COURRIEL`).
   `courriel.yml` : cron à la minute 37, seulement si la variable de dépôt
   `EIDOS_ROBINET_COURRIEL` est posée ; secrets `EIDOS_IMAP_HOTE`,
-  `EIDOS_IMAP_UTILISATEUR`, `EIDOS_IMAP_MOT_DE_PASSE`. Décision D1 (2026-09-06) :
+  `EIDOS_IMAP_UTILISATEUR`, `EIDOS_IMAP_MOT_DE_PASSE`. Relecture (2026-09-06, quatre
+  lentilles, sceptiques non joués faute de quota, constats vérifiés à la main) :
+  expéditeur sous empreinte, refus sans expéditeur, TLS vérifié + délai + UID,
+  octet nul retiré, message fautif sauté, marqueurs inversés = `ValueError`,
+  `MAX_FILE` sur les demandes en attente, `ecrire_file` UTF-8 atomique,
+  `lireRobinet`/`chargerReseau` ignorent une lecture d'un coffre changé,
+  flash quand des pièces locales sont retirées. Décision D1 (2026-09-06) :
   un autre canal que GitHub ; le courriel est le seul qui ne coûte ni serveur
   ni compte nouveau au joueur, et son frein par expéditeur est assumé plus
   faible (`docs/SPEC_SYBIL.md` §3bis). Sans boîte déclarée, rien ne change.

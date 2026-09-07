@@ -171,8 +171,8 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `utxo.py` | 509 | witnesses, addresses, transactions, ledger, UTXO root, validation | 15 |
 | `federation.py` | 694 | XMSS, rotation, liveness, signed head, locked persistent counter | 18 |
 | `noeud.py` | 1151 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 3 + 4 + 5 + 2 |
-| `robinet.py` | 392 | faucet queue fed by issues and email, per-author brake | 11 |
-| `courriel.py` | 275 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
+| `robinet.py` | 420 | faucet queue fed by issues and email, per-author brake | 14 |
+| `courriel.py` | 321 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
 | `vecteurs.py` | 171 | shared vectors Python ↔ TS (`vecteurs.json`, 8 families) | parity |
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
@@ -195,7 +195,7 @@ python3 eonis.py               # 6
 python3 wots.py                # 5
 python3 utxo.py                # 15
 python3 vecteurs.py            # Python ↔ TS parity
-python3 robinet.py --test      # 11
+python3 robinet.py --test      # 14
 python3 courriel.py --test     # 6
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5

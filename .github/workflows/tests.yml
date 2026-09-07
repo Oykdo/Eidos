@@ -39,7 +39,7 @@ jobs:
       - name: Vecteurs partages Python <-> TS
         run: python vecteurs.py
 
-      - name: Robinet (file, carnet, budget, frein par auteur, 11 controles)
+      - name: Robinet (file, carnet, budget, frein par auteur, marqueurs, 14 controles)
         run: python robinet.py --test
 
       - name: Robinet par courriel (analyse, canal, frein par expediteur, 6 controles)

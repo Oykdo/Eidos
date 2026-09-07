@@ -272,6 +272,7 @@ export const useCoffre = create<Etat>((set, get) => ({
 
   lireRobinet: async () => {
     const { coffre } = get();
+    const maitre = coffre.maitre;
     const adresses = new Set<string>();
     for (let i = 0; i < coffre.n + 8; i++) adresses.add(adresseDe(coffre.maitre, i));
     try {
@@ -281,6 +282,7 @@ export const useCoffre = create<Etat>((set, get) => ({
       ]);
       const etat: unknown = re.ok ? await re.json() : null;
       const mempool: unknown = rm.ok ? await rm.json() : null;
+      if (get().coffre.maitre !== maitre) return; // le coffre a changé pendant la lecture
       set({
         canaux: etat ? parserCanaux(etat) : get().canaux,
         reseauHauteur: etat ? parserEtat(etat).hauteur : get().reseauHauteur,
@@ -301,16 +303,24 @@ export const useCoffre = create<Etat>((set, get) => ({
     set({ robinetOccupe: true });
     try {
       const etat = await lireEtat();
+      if (get().coffre.maitre !== coffre.maitre) return; // le coffre a changé pendant la lecture
       const next = chargerTestnet(coffre, etat);
       if (next.sorties.length === 0) {
         set({ erreur: null, flash: t("robinet.chargeVide"), reseauHauteur: etat.hauteur });
         return;
       }
+      // les pièces du réseau remplacent les pièces locales : seul le carnet
+      // du nœud fait foi, et on le dit quand quelque chose disparaît
+      const refs = new Set(next.sorties.map((s) => s.ref));
+      const retirees = coffre.sorties.filter((s) => !refs.has(s.ref)).length;
       persister(next);
       set({
         coffre: next,
         erreur: null,
-        flash: t("robinet.charge", { n: next.sorties.length }),
+        flash:
+          retirees > 0
+            ? t("robinet.chargeRemplace", { n: next.sorties.length, m: retirees })
+            : t("robinet.charge", { n: next.sorties.length }),
         reseauHauteur: etat.hauteur,
       });
     } catch {

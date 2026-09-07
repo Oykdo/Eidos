@@ -25,6 +25,9 @@ jobs:
   relever:
     if: github.ref == 'refs/heads/main' && vars.EIDOS_ROBINET_COURRIEL != ''
     runs-on: ubuntu-latest
+    # un serveur IMAP muet ne tient pas le groupe « chaine » : le nœud forge
+    # à la minute 7, ce relevé doit avoir rendu la main bien avant
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
