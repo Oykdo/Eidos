@@ -137,7 +137,7 @@ Taille : un geste = 2 144 + 6 × 32 octets de signature ≈ 2,4 Ko ; 64 gestes �
 3. chaque geste, dans l'ordre : indice = rang (une feuille par geste, sans trou), message recalculé (chaîne intacte), signature WOTS+ vérifiée contre la racine de l'arbre, étape et étage égaux à ceux du pendule recalculé ;
 4. la fin cohérente avec les comptes (sommet ⇔ 26 franchir ; épuisé ⇔ 64 gestes).
 
-**Classement** : une page statique (PR 3) lit des preuves déposées (fichiers dans un dossier du dépôt ou liens), les juge dans le navigateur, et classe par **score = salles × 64 + butin** (`scoreVeillee`), une preuve par pièce et par jour (la première jugée valide l'emporte : l'ordre du dépôt est public). Aucun serveur ne fait foi ; un lecteur qui doute rejuge.
+**Classement** : une page statique (PR 3) lit des preuves déposées dans `veillees/` (un fichier par preuve, `index.json` en liste), les juge dans le navigateur, et classe par **score = salles × 64 + butin** (`scoreVeillee`), une preuve par pièce et par jour (la première déposée l'emporte : l'ordre du dépôt est public). Aucun serveur ne fait foi ; un lecteur qui doute rejuge. **Dépôt** (2026-09-07) : une issue intitulée « veillée » avec le fichier joint (ou un gist, ou un dépôt brut) ; le juge tourne dans la CI (`veillees.yml`, `depot.ts`), refuse une preuve dont une tête n'est pas dans la chaîne publiée (le « murmure » est arrêté là), et committe le fichier ; l'issue reçoit le verdict. Une preuve ne tient pas dans le corps d'une issue (65 536 caractères) : elle est jointe.
 
 **Triche, et ce qui l'arrête :**
 

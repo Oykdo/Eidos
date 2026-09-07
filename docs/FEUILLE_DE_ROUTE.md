@@ -373,6 +373,16 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   pointeur, 30 images/s, dpr ≤ 2, pause hors écran, image fixe en mouvement réduit ;
   `lib/accueil/orbites.ts` pur (4 contrôles), `components/accueil/FondOrbital.tsx`
   ; puis PR 5 (gardiens C3, Guide « Jouer »), PR 6 [OUVERT] Godot/Rust.
+- **Dépôt des preuves par issue (2026-09-07)** : `depot.ts` (extraction du corps : JSON
+  collé ou adresse d'un des trois hôtes autorisés ; vérification : lisible, ancrée, finie,
+  nouvelle dans l'index, têtes dans la chaîne publiée — le « murmure » est refusé là —,
+  jugée ; preuve resérialisée, index complété, message au déposant ; 5 contrôles),
+  `atelier/scripts/deposer-veillee.ts` (entrée par l'environnement, téléchargement
+  plafonné à deux mégaoctets et trente secondes, codes 0 / 2 / 1),
+  `.github/workflows/veillees.yml` (issue « veillée », groupe de concurrence `chaine`,
+  commit « veillées : dépôt #N », verdict en commentaire, issue fermée). Page Veillée :
+  bouton « Déposer par issue » vers une issue préremplie. README de `veillees/` et
+  bible §5 à jour. Simulé en local avec une preuve de deux gestes collée dans le corps.
 - **Guide étoffé (2026-09-07)** : trois onglets nouveaux dans le Guide — « Le cœur » (la chaîne :
   loi d'émission, signatures par hachage, adresses, rejeu, fédération, robinet et envois,
   reliques et sceaux, ancrage), « Mécaniques » (six lois, objets, Tour, hôtes, élixirs,

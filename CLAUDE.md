@@ -52,7 +52,8 @@ etat.json           état publié (soldes, sorties, artefacts, invariant)
 mempool.json        demandes robinet / envoi
 atelier/            interface web (TanStack Start, React), rejoue la spec en TS
 .github/workflows/  tests.yml (3 OS × 2 Python + empreintes), chaine.yml (cron
-                    horaire), robinet.yml (issues), courriel.yml (boîte IMAP, minute 37,
+                    horaire), robinet.yml (issues), veillees.yml (issues « veillée » : le juge
+                    TypeScript dépose les preuves dans veillees/), courriel.yml (boîte IMAP, minute 37,
                     seulement si la variable EIDOS_ROBINET_COURRIEL est posée), pages.yml, init.yml
 ```
 
@@ -106,6 +107,8 @@ empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 - **Sérialisation canonique** : `Tx.core()` retrouvé à l'octet près après
   désérialisation, sinon `ValueError`.
 - **Le corps d'une issue ou d'un courriel n'est jamais interpolé dans une commande.**
+  Vaut aussi pour `veillees.yml` : `depot.ts` ne retient du corps qu'un JSON qui se
+  parse ou l'adresse d'un des trois hôtes autorisés, téléchargée avec un plafond.
   Il transite par `EIDOS_ISSUE_BODY` et `robinet.py` ne retient que ce qui passe
   le filtre de figures + somme de contrôle (ou base64 sur lignes entières pour
   `envoi`). `courriel.py` passe par le même chemin (`EIDOS_CANAL`, `EIDOS_CANAL_REF`),

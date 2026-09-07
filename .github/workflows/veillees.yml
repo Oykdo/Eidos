@@ -1,0 +1,80 @@
+name: veillees
+
+# Une issue dont le titre commence par « veillée » (ou « veillee ») porte une
+# preuve eidos-veillee/1 : collée si elle tient, sinon jointe (glisser le
+# fichier dans l'issue) ou publiée dans un gist ou un dépôt brut. Le juge
+# TypeScript de l'atelier (atelier/scripts/deposer-veillee.ts, logique dans
+# src/lib/eidos/depot.ts) la lit, vérifie ses têtes contre la chaîne publiée,
+# la juge sans rejouer, et la dépose dans veillees/ si elle passe. Aucun
+# serveur ne fait foi : le classement se recalcule chez chacun.
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: chaine
+  cancel-in-progress: false
+
+jobs:
+  deposer:
+    if: startsWith(github.event.issue.title, 'veillée') || startsWith(github.event.issue.title, 'veillee') || startsWith(github.event.issue.title, 'Veillée') || startsWith(github.event.issue.title, 'Veillee')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: atelier/package-lock.json
+
+      - name: Atelier - dependances
+        run: npm ci
+        working-directory: atelier
+
+      # Le corps de l'issue n'est JAMAIS interpole dans une commande : il
+      # arrive par l'environnement, et depot.ts n'en retient qu'un JSON qui se
+      # parse ou une adresse d'un hote autorise.
+      - name: Juger et deposer la preuve
+        id: juger
+        working-directory: atelier
+        env:
+          EIDOS_ISSUE_BODY: ${{ github.event.issue.body }}
+          EIDOS_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          EIDOS_MESSAGE: ${{ runner.temp }}/message.txt
+        run: |
+          set +e
+          node --experimental-strip-types scripts/deposer-veillee.ts
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Publier le depot
+        if: steps.juger.outputs.code == '0'
+        run: |
+          git config user.name  "eidos-noeud"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add veillees
+          if git diff --cached --quiet; then
+            echo "rien a publier"
+            exit 0
+          fi
+          git commit -m "veillées : dépôt #${{ github.event.issue.number }}"
+          git push
+
+      - name: Repondre et fermer
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          MSG: ${{ runner.temp }}/message.txt
+        run: |
+          if [ -s "$MSG" ]; then
+            gh issue comment "$NUM" --body-file "$MSG"
+          else
+            gh issue comment "$NUM" --body "Erreur d'execution du juge : rien n'a ete depose. Rouvrez une issue plus tard."
+          fi
+          gh issue close "$NUM"
