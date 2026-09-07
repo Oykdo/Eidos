@@ -185,8 +185,9 @@ Details: [`atelier/README.md`](atelier/README.md).
 | `reliques.json` | — | declared relics: id, address, age, hint — never a seed | — |
 | `chaine-eidos.dat` | — | the testnet chain, written by the CI | — |
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
+| `veillees/` | — | deposited vigil proofs (`index.json`, one `eidos-veillee/1` file per proof), judged in every browser, never by a server | — |
 | `docs/` | — | specifications: relics, tower, pendulum, Sybil, vault audit, vigil bible; banner generator | 2 |
-| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 352 Eidos tests | 352 |
+| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 387 Eidos tests | 387 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (issues), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor.
 

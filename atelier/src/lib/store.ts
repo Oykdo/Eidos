@@ -49,6 +49,8 @@ import { fouillerCaseDansCoffre } from "./eidos/fouilles.ts";
 import { suivreChaine, tetesDeLaVeillee } from "./eidos/chaine-reseau.ts";
 import { FEDERATION_URL, parserFederation, type FederationPublique, type TeteReseau } from "./eidos/temoin.ts";
 import { serialiserVeillee } from "./eidos/veillee.ts";
+import { classer, lireVeillees, type Classement, type RefusLecture } from "./eidos/classement.ts";
+import { jouerRetour, motifRetour } from "./eidos/feuille-son.ts";
 import {
   abandonnerVeilleeDansCoffre,
   capturerDansCoffre,
@@ -67,7 +69,7 @@ import {
 } from "./eidos/veillee-tour.ts";
 import { preuveReseau, serialiser as serialiserPreuve } from "./eidos/merkle.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
-import { t, type Msg } from "./i18n.ts";
+import { getLocale, t, type Msg } from "./i18n.ts";
 import { estPsnxEtranger } from "./eidos/portable.ts";
 import { exporterCarnet, ouvrirFichier } from "./eidos/carnet.ts";
 import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
@@ -85,7 +87,7 @@ import {
   prendreDansCoffre,
 } from "./eidos/capsules.ts";
 import { accorderDansCoffre, offrirDansCoffre } from "./eidos/bestiaire.ts";
-import { ETAGES } from "./eidos/tour.ts";
+import { ETAGES, biomeDe } from "./eidos/tour.ts";
 
 const KEY = "eidos-coffre-v2";
 const KEY_TEMOIN = "eidos-temoin-v1";
@@ -181,6 +183,11 @@ type Etat = {
   veilleeAbandonner: () => void;
   veilleeEffacer: () => void;
   derniereVeillee: string | null;
+  /** Le classement : les preuves de veillees/ relues et jugées ici ; jamais persisté. */
+  classement: Classement | null;
+  classementRefus: RefusLecture[];
+  classementOccupe: boolean;
+  lireClassement: () => Promise<void>;
 };
 
 function persister(c: Coffre) {
@@ -224,12 +231,13 @@ function apresGeste(
     const ex = exporterVeilleeDuCoffre(r.coffre);
     if (!("ok" in ex)) derniereVeillee = serialiserVeillee(ex);
   }
-  set({
-    coffre: r.coffre,
-    erreur: null,
-    flash: r.fin ? t(`veillee.fin.${r.fin}` as Msg) : t("veillee.flash.feuille", { n: r.feuilles }),
-    derniereVeillee,
-  });
+  let flash = r.fin ? t(`veillee.fin.${r.fin}` as Msg) : t("veillee.flash.feuille", { n: r.feuilles });
+  if (r.ajoutes.length > 0 && !r.fin) flash += ` · ${t("veillee.sac.ajoute", { n: r.ajoutes.length })}`;
+  if (r.verses.length > 0) flash += ` ${t("veillee.sac.verse", { n: r.verses.length })}`;
+  if (r.perdus.length > 0) flash += ` ${t("veillee.sac.perdu", { n: r.perdus.length })}`;
+  set({ coffre: r.coffre, erreur: null, flash, derniereVeillee });
+  // le retour de la feuille : un son sec, la dernière = silence ; une porte fermée ne brûle rien, rien ne sonne
+  if (r.fin !== "porte") jouerRetour(motifRetour(r.feuilles, r.fin, biomeDe(r.coffre.tour.etage).id));
 }
 
 function persisterTemoin(t: Temoin) {
@@ -266,6 +274,9 @@ export const useCoffre = create<Etat>((set, get) => ({
   chaineOccupe: false,
   federation: null,
   derniereVeillee: null,
+  classement: null,
+  classementRefus: [],
+  classementOccupe: false,
   demandeReseau: null,
   canaux: null,
   demandeStatut: null,
@@ -808,6 +819,29 @@ export const useCoffre = create<Etat>((set, get) => ({
     const next = effacerVeilleeDansCoffre(get().coffre);
     persister(next);
     set({ coffre: next, erreur: null, flash: null, derniereVeillee: null });
+  },
+
+  lireClassement: async () => {
+    const { federation, reseau } = get();
+    if (!federation) {
+      set({ erreur: t("veillee.err.classement"), flash: null });
+      return;
+    }
+    set({ classementOccupe: true });
+    const lu = await lireVeillees();
+    if ("erreur" in lu) {
+      set({ classementOccupe: false, erreur: lu.erreur, flash: null });
+      return;
+    }
+    // classer est synchrone (jusqu'à 64 signatures par preuve) : après l'attente réseau, jamais dans un rendu
+    const cl = classer(lu.preuves, federation, { hauteurCourante: reseau?.tete.hauteur, langue: getLocale() });
+    set({
+      classement: cl,
+      classementRefus: lu.refus,
+      classementOccupe: false,
+      erreur: null,
+      flash: t("veillee.classement.lu", { n: cl.classees.length, r: cl.refusees.length + lu.refus.length }),
+    });
   },
 
   abandonnerAscension: () => {

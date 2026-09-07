@@ -334,15 +334,56 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   d'arrivée, ouvrir l'alcôve, prendre, franchir vers les trois destinations,
   s'effacer), fin, verdict jugé sans rejeu, fantôme, preuve exportée. Store : réserve
   d'indice dans localStorage (`eidos-veillee-reserve-v1`) écrite avant la signature,
-  repli session ; chaîne et fédération lues jamais persistées. `npm test` : 352.
-- Reste : PR 3 (arbre à l'écran, son et haptique, classement statique, fantômes dans
-  la salle ; bot xorshift sur mille veillées avant), PR 4 (gardiens C3, Guide
-  « Jouer »), PR 5 [OUVERT] Godot/Rust.
+  repli session ; chaîne et fédération lues jamais persistées. `npm test` : 387 après la PR 3.
+- **PR 3 FAITE (2026-09-07)**, quatre lots construits en parallèle et relus chacun par
+  un relecteur adversarial (constats corrigés dans les fichiers) :
+  `arbre-vue.ts` (géométrie pure de l'arbre de 2^h feuilles, états brûlée / dernière /
+  vive, chemin d'authentification, geste d'une feuille ; 6 contrôles) et
+  `components/veillee/ArbreFeuilles.tsx` (SVG inline, feuilles cliquables, chemin de la
+  dernière allumé une seconde, veillée mal formée rendue en une ligne) ;
+  `classement.ts` (jugement de chaque preuve dans le navigateur, une pièce par jour,
+  première déposée classée, refus et doublons rendus avec motif, pièce non canonique
+  refusée avant jugement, fantômes d'une salle avec les feuilles qu'ils avaient en
+  arrivant, `lireVeillees` depuis `veillees/index.json` avec nom de fichier
+  `<jour>-<txid8>-<rang>.json` vérifié contre la preuve ; 9 contrôles) et
+  `veillees/README.md` + `index.json` (dépôt par PR) ; `feuille-son.ts` (motif pur :
+  son sec / silence à 0, vibration courte sous 10 feuilles et longue à 0 ou à une fin,
+  une hauteur par muse de 880 à 392 Hz ; `jouerRetour` WebAudio + vibrate qui ne lève
+  jamais ; 10 contrôles) ; `veillee-bot.ts` (bot xorshift, trois politiques avare /
+  gourmand / mesuré sur le jour du vecteur, table gelée, `npm run veillee-bot [runs]` ;
+  7 contrôles, ~65 s). Intégration : page Veillée (arbre, fantômes de la salle,
+  classement, nom du fichier à déposer), store (`lireClassement`, son après chaque
+  geste sauf porte fermée, jamais persisté).
+  **Mesures du bot (4 runs par politique, graine 7)** : avare 26 feuilles / 0 butin,
+  gourmand 46–48 feuilles / 20–22 butin avec 10–18 refus de sac plein, mesuré 30–45 /
+  4–19 ; aucun run épuisé ni effacé : avec le sac de 27 places et sans capsule ni bêches
+  hors case d'arrivée, **aucun des deux seuils de §2.4 n'est atteignable par ce bot** —
+  le verdict est une lecture, rien n'est falsifié. Pour falsifier vraiment : un bot qui
+  creuse les cases pleines (jusqu'à trois bêches par étage), s'efface parfois, et un
+  coffre à capsules — chantier à part. Coût mesuré : `construireArbre` 1,3–1,6 s sur ce
+  poste (la bible disait 0,3 s : corrigée) ; ouvrir une veillée fige la page ce temps.
+  Déni noté (bible §5) : ancrer sur la pièce d'autrui prend sa place du jour ; parade =
+  le sceau final, non codé.
+- Reste : **PR 4 — fond orbital de
+  l'accueil (décision du 2026-09-07, plein écran)** : Canvas 2D fixe derrière les
+  cartes, l'orbite = le limaçon de l'émission `R(θ) = a + (a/2)·cos θ` de l'âge courant,
+  neuf astres-muses en glyphes sur neuf orbites avec le mouvement de leur danse,
+  phase = `2π(h−h₀)/T` de la tête suivie (une lecture), parallaxe de 2–3° vers le
+  pointeur, survol = muse et réplique, clic = la page de la muse ; aucune trace du
+  pointeur, 30 images/s, dpr ≤ 2, pause hors écran, image fixe en mouvement réduit ;
+  `lib/accueil/orbites.ts` pur (4 contrôles), `components/accueil/FondOrbital.tsx`
+  ; puis PR 5 (gardiens C3, Guide « Jouer »), PR 6 [OUVERT] Godot/Rust.
 - **Veillée libre (2026-09-07)** : `Veillee.ancre` vaut `null` — les salles du jour,
   l'arbre (graine `… ‖ "libre"`), aucune pièce ; comme l'ascension libre, une lecture :
   `exporterVeillee` et `jugerVeillee` la refusent, `lectureVeillee` en donne les comptes.
   Le coffre d'atelier, ou tout coffre sans pièce sur le réseau, y joue ; bouton
   « Veillée libre » sur la page. +2 contrôles.
+- **Le sac (2026-09-07, décision d'auteur, bible §3.1)** : `tour.veillee.sac`, vingt-sept
+  places ; dons, trouvailles, coffrets, captures et élixirs d'écho y vont au geste (ce
+  que l'acte a ajouté au coffre passe au sac) ; sommet, porte fermée et effacement le
+  versent au coffre, l'arbre épuisé le perd ; sac plein = gestes de butin refusés,
+  franchir toujours possible. `GesteOk` porte `ajoutes`, `verses`, `perdus`. Le coffre
+  n'a pas de places : ce qui borne le butin est l'arbre. +3 contrôles.
 
 ### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 `vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête

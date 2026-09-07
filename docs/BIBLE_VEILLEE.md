@@ -30,7 +30,7 @@
 Le joueur entre avec un **arbre XMSS de hauteur 6 : 64 feuilles WOTS+**, exactement la construction de la clé d'un validateur (`federation.CleValidateur`, portée dans `veillee.construireArbre`, vérifiée par `xmss.verifierMss` sans changement). Le test de parité rejoue le vecteur `xmss` de `vecteurs.json` (hauteur 4) : racine, feuille 0 et signature identiques à l'octet entre Python et TypeScript.
 
 - **Pourquoi 64.** 27 salles exigent 26 gestes « franchir » (fin de salle, obligatoire). Reste **38 feuilles** pour parler, ouvrir, prendre : 1,4 par salle en moyenne. C'est la parcimonie voulue : on ne fait pas tout dans une salle, on choisit. 64 est aussi le nombre des œufs et des glyphes [FIXE] : l'arbre se dépouille sur l'alphabet.
-- **Pourquoi la hauteur et pas N libre.** Un arbre XMSS a 2^h feuilles ; h = 6 tient en ~0,3 s dans un navigateur (64 clés × 67 chaînes × 15 maillons) ; h = 7 doublerait le budget et tuerait le dilemme.
+- **Pourquoi la hauteur et pas N libre.** Un arbre XMSS a 2^h feuilles ; h = 6 se construit en une à deux secondes sur un poste ordinaire (64 clés × 67 chaînes × 15 maillons ; mesuré 1,3–1,6 s en Node sur ce poste, une fois par veillée) ; h = 7 doublerait le budget, le temps, et tuerait le dilemme.
 - **Graine de l'arbre** : `SHA-256d("eidos-veillee/1/arbre" ‖ maître ‖ id_bloc ‖ txid ‖ rang)`. Elle est **au coffre** (le maître est le secret du coffre) et **au jour** (bloc + pièce d'ancrage). Même coffre, même bloc, même pièce ⇒ même arbre : c'est ce qui rend « deux appareils » lisible (§7).
 - **Racine engagée** : chaque message signé contient la racine de l'arbre ; l'export porte racine et graine publique ; le juge vérifie chaque feuille contre elles. L'arbre est donc une **preuve**, pas une figure — la condition posée en C6 est remplie. (L'Arbre d'origine retiré en H2 était une lecture qu'on présentait comme une garantie ; celui-ci est une garantie qu'on présente comme un arbre.)
 
@@ -68,7 +68,13 @@ Deux natures, déjà distinguées par `SPEC_SYBIL` et `SPEC_FORUM` §3.3 [FIXE],
 | se prouve | non : c'est une lecture du coffre | oui : intégrité (recalcul), possession (tête signée) |
 | ce que la veillée y ajoute | **le geste qui l'a produit est signé** : la preuve dit « ce coffre a ouvert la case (3, 4) de l'étage 41 au 12ᵉ geste » — pas ce qu'il y a trouvé | rien ; la veillée ne fait naître aucune pièce |
 
-**« Garder le loot » quand rien ne se re-signe** veut dire exactement ceci : la preuve survit à l'arbre. L'arbre nu ne fait pas disparaître les gestes signés ; le coffre garde ses objets de jauge comme après toute exploration ; et **le seul loot qui compte est celui qu'on rend à la chaîne** : la pièce d'ancrage dépensée vers une adresse fraîche du coffre est le sceau final d'une veillée qui compte (règle de `SPEC_SYBIL` §2, inchangée). Anti-rejeu et anti-farm en découlent sans code neuf : une pièce n'ancre qu'une veillée par jour (elle est engagée dans la graine de l'arbre et la dédoublonne au classement), et rejouer avec le même arbre reproduit exactement les mêmes signatures.
+### 3.1 Le sac et l'extraction (décision d'auteur, 2026-09-07)
+
+Ce qu'une veillée rapporte — dons, trouvailles, coffrets, captures, élixirs d'écho — n'entre pas au coffre au geste : il va dans un **sac de vingt-sept places** (une par salle), noté dans la jauge (`tour.veillee.sac`). Le **sommet**, une **porte** fermée et l'**effacement** volontaire versent le sac au coffre ; l'**arbre épuisé le perd** : les gestes restent dans la preuve, les objets ne reviennent pas. Un sac plein refuse les gestes de butin, jamais franchir. Ce qu'on porte vient du coffre ; ce qu'on trouve va au sac. C'est ce qui fait de la dernière feuille un vrai dilemme : brûler tout l'arbre coûte le butin, s'effacer à temps le garde. Aucune valeur en jeu : le sac est une jauge, rien ne touche la chaîne. Le coffre lui-même n'a pas de places : ajouter des « slots » au coffre n'augmenterait rien, ce qui borne le butin est l'arbre.
+
+**Falsification** : avec le bot « mesuré » (§2.4), si moins d'un run sur cinq s'efface volontairement avant l'épuisement, le sac ne crée pas de dilemme → réduire ses places à 9 ; si plus de deux runs sur trois s'effacent avant la salle 14, il en crée trop → passer à 40.
+
+**« Garder le loot » quand rien ne se re-signe** veut dire exactement ceci : la preuve survit à l'arbre, et le sac ne survit qu'au retour. L'arbre nu ne fait pas disparaître les gestes signés ; le coffre garde ce qu'il avait ; et **le seul loot qui compte est celui qu'on rend à la chaîne** : la pièce d'ancrage dépensée vers une adresse fraîche du coffre est le sceau final d'une veillée qui compte (règle de `SPEC_SYBIL` §2, inchangée). Anti-rejeu et anti-farm en découlent sans code neuf : une pièce n'ancre qu'une veillée par jour (elle est engagée dans la graine de l'arbre et la dédoublonne au classement), et rejouer avec le même arbre reproduit exactement les mêmes signatures.
 
 **Lien objet ↔ racine** : le don de fin de salle dépend de (étage, case, coffre) [FIXE] ; la veillée n'y touche pas. Ce qui est neuf : la racine de l'arbre, engagée dans chaque geste, **date** le loot de jauge — un objet reçu au geste 12 de la veillée du jour J est lisible comme tel dans le Journal (PR 2). Une lecture, pas une preuve de l'objet.
 
@@ -144,6 +150,7 @@ Taille : un geste = 2 144 + 6 × 32 octets de signature ≈ 2,4 Ko ; 64 gestes �
 | jouer le jour sur un autre bloc | deux têtes signées prouvent « premier du jour » ; le second bloc est refusé (vecteur) |
 | précalculer la veillée dès minuit | oui, c'est permis : la Tour est publique, le Wordle aussi ; ce qui n'est pas précalculable est la pièce |
 | prêter son arbre | l'arbre dérive du maître du coffre et de la pièce : le prêter, c'est prêter le coffre |
+| ancrer sur la pièce d'autrui (`etat.json` est public) et déposer le premier | possible : la place (jour, pièce) est prise, c'est un déni, pas un gain ; parade prévue et non codée : le **sceau final** (la dépense de la pièce vers une adresse fraîche) départage deux preuves sur la même pièce — celle dont le signataire a pu dépenser l'emporte |
 
 ## 6. Les fantômes (C2)
 

@@ -12,6 +12,7 @@
  */
 
 import { estNomAge } from "./relique.ts";
+import { normaliserObjets } from "./inventaire.ts";
 import { parserVeillee, serialiserVeillee } from "./veillee.ts";
 import { DALLE_N, ETAGES, etageDe } from "./tour.ts";
 import type { Coffre, ElixirBu, Espece, NomAge, Tour } from "./types.ts";
@@ -52,7 +53,9 @@ function veillee(x: unknown): Tour["veillee"] {
   if ("erreur" in v) return null;
   const reserve = entier(o.indiceReserve, 0, 1 << v.hauteur);
   if (reserve === null) return null;
-  return { v, indiceReserve: Math.max(reserve, v.gestes.length) };
+  // le sac : vingt-sept places (veillee-tour.SAC_PLACES), des objets comme les autres
+  const sac = normaliserObjets(o.sac).slice(0, 27);
+  return { v, indiceReserve: Math.max(reserve, v.gestes.length), sac };
 }
 
 /** L'ascension se relit avec tolérance ; une forme absurde revient à null. */
