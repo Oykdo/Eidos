@@ -364,15 +364,35 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   poste (la bible disait 0,3 s : corrigée) ; ouvrir une veillée fige la page ce temps.
   Déni noté (bible §5) : ancrer sur la pièce d'autrui prend sa place du jour ; parade =
   le sceau final, non codé.
-- Reste : **PR 4 — fond orbital de
-  l'accueil (décision du 2026-09-07, plein écran)** : Canvas 2D fixe derrière les
-  cartes, l'orbite = le limaçon de l'émission `R(θ) = a + (a/2)·cos θ` de l'âge courant,
-  neuf astres-muses en glyphes sur neuf orbites avec le mouvement de leur danse,
-  phase = `2π(h−h₀)/T` de la tête suivie (une lecture), parallaxe de 2–3° vers le
-  pointeur, survol = muse et réplique, clic = la page de la muse ; aucune trace du
-  pointeur, 30 images/s, dpr ≤ 2, pause hors écran, image fixe en mouvement réduit ;
-  `lib/accueil/orbites.ts` pur (4 contrôles), `components/accueil/FondOrbital.tsx`
-  ; puis PR 5 (gardiens C3, Guide « Jouer »), PR 6 [OUVERT] Godot/Rust.
+- **PR 4 — fond orbital de l'accueil, FAITE (2026-09-07, plein écran)**, deux lots
+  construits en parallèle contre un contrat d'API fixe, chacun relu par un relecteur
+  adversarial. `lib/accueil/orbites.ts` (pur, 11 contrôles) : le limaçon de la loi
+  d'émission `R/a = 1 + cos θ/2` (tracé en unités de `a` : la forme de la loi et la
+  phase, pas le montant — décision gelée par un contrôle, à changer par une échelle
+  `a/40` si l'auteur veut que l'âge se lise), neuf orbites emboîtées (fractions 0,18 →
+  0,86 du demi-côté, Thalie au centre, Uranie au bord), période de révolution
+  `11,3 s × (2 + rang)`, angle initial en spirale, la danse de chaque muse
+  (`reliques/danse.ts`) comme modulation normalisée (`AMPLITUDE_DANSE = 3 %`), phase de
+  l'époque `2π·((h mod T) − h₀ mod T)/T` réduite en entiers avant la conversion (exacte
+  au-delà de 2⁵³), inclinaison ≤ 3° vers le pointeur, `astreSous` à 18 px, `PAGE_DE_MUSE`
+  (Thalie → Tour, Uranie → Témoin, Clio → Journal, Calliope → Glyphes, Terpsichore →
+  Veillée, Melpomène → Reliques, Érato → Coffre, Euterpe → Signes, Polymnie → Carte) ;
+  vue illisible → tout au centre, jamais NaN ; scène pure, aucune trace du pointeur.
+  `components/accueil/FondOrbital.tsx` + `fond-orbital.ts` (4 contrôles : lissage à
+  10 % par image, normalisation, cadence ≤ 30 images/s, étiquette dans la vue) : canevas
+  `fixed inset-0 z-0`, dpr ≤ 2, boucle rAF arrêtée onglet caché, image fixe en
+  mouvement réduit, pointeur dans des `useRef` seulement (survol lu seulement quand le
+  canevas est la cible, parallaxe partout sauf au toucher), étiquette fixe z-30 (muse en
+  or, réplique de `veillee-lexique.ts`), clic = `onAstre(PAGE_DE_MUSE)` ; glyphes 16 px,
+  anneaux à 20 % de `sourd`, limaçon à 30 %, disque or du réseau. Intégration :
+  `routes/index.tsx` (fond en premier enfant du Shell, cartes enveloppées en
+  `relative z-10 pointer-events-none [&>*]:pointer-events-auto` : le corps porte le
+  fond `--color-fond`, un `z-index` négatif serait recouvert). Contrôle visuel dans un
+  navigateur : à faire par l'auteur (`/`, console ouverte).
+- Reste : PR 5 (gardiens C3 : séparateurs primordiaux aux portes), P6 (hygiène : note
+  CVE-2012-2459, `historique/` ; `localcontext()` attend une réinitialisation du
+  testnet), le bot qui falsifie vraiment (bêches, effacement, capsules) et l'arbre en
+  Web Worker, la parade du sceau final au classement ; PR 6 [OUVERT] Godot/Rust.
 - **Dépôt des preuves par issue (2026-09-07)** : `depot.ts` (extraction du corps : JSON
   collé ou adresse d'un des trois hôtes autorisés ; vérification : lisible, ancrée, finie,
   nouvelle dans l'index, têtes dans la chaîne publiée — le « murmure » est refusé là —,

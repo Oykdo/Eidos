@@ -232,7 +232,8 @@ L'historique détaillé (décisions, limites, reliquats de chaque chantier) est 
 - Refonte du hub — FAIT
 - La Tour — hôtes, secrets, élixirs, capsules, bestiaire (FAIT 2026-09, fourni par une session parallèle, fusionné le 2026-09-04)
 - Accueil, écosystème et robinet à deux canaux — FAIT (2026-09-06)
-- La Veillée — roguelike XMSS, PR 1 à 3 FAITES (2026-09-07 : jauge, gestes reliés à la Tour, sac et extraction, en-têtes de chaîne côté atelier, page Veillée, arbre à l'écran, son, classement et fantômes, bot de mesure), voir docs/BIBLE_VEILLEE.md ; prochain chantier : PR 4, fond orbital de l'accueil
+- La Veillée — roguelike XMSS, PR 1 à 3 FAITES (2026-09-07 : jauge, gestes reliés à la Tour, sac et extraction, en-têtes de chaîne côté atelier, page Veillée, arbre à l'écran, son, classement et fantômes, bot de mesure), voir docs/BIBLE_VEILLEE.md ; dépôt des preuves par issue (`veillees.yml`, `depot.ts`) ; Guide étoffé (cœur, mécaniques, lore)
+- Fond orbital de l'accueil — FAIT (2026-09-07) : `lib/accueil/orbites.ts` (11 contrôles), `components/accueil/FondOrbital.tsx` + `fond-orbital.ts` (4), la loi d'émission en limaçon, neuf astres-muses dansants, phase de l'époque lue dans la tête suivie, parallaxe et clic vers la page de la muse ; aucune trace du pointeur
 - P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 - P5 — État MSS persistant — FAIT (septembre 2026)
 

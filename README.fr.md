@@ -142,7 +142,7 @@ Détail : [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 
 | Registre | Page | Rôle |
 |---|---|---|
-| Vérifier | **Coffre** | Solde, envoyer, sauver `eidos.carnet` |
+| Vérifier | **Coffre** | Solde, envoyer, sauver `eidos.carnet` — derrière, le fond orbital : la loi d'émission en limaçon, neuf astres-muses avec leurs danses, la phase de l'époque lue dans la tête suivie, une parallaxe vers le pointeur, un clic vers la page de chaque muse ; une lecture, rien n'est gardé |
 | | **Journal** | Genèse, chaîne, preuve Merkle |
 | | **Témoin** | Seconde mémoire : la tête signée, pas les clés. Juge une sortie publiée |
 | | **Glyphes** | 64 empilements, bourrage refusé |
