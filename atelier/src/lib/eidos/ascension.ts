@@ -90,9 +90,10 @@ export function enCours(c: Pick<Coffre, "tour">): boolean {
   return a !== null && a.fin === null;
 }
 
-/** Commence à la porte de la ville. `ancre` fige la tête et la pièce (ce qui compte). */
-export function commencerDansCoffre(c: Coffre, ancre: Ancre | null): Coffre {
-  const graine = ancre ? graineAncree(ancre.tete.idBloc, ancre.piece) : graineLibre(c);
+/** Commence à la porte de la ville. `ancre` fige la tête et la pièce (ce qui compte).
+ *  `graine` explicite : la veillée (veillee-tour.ts) passe la graine du jour, la même pour tous. */
+export function commencerDansCoffre(c: Coffre, ancre: Ancre | null, graine?: Uint8Array): Coffre {
+  graine ??= ancre ? graineAncree(ancre.tete.idBloc, ancre.piece) : graineLibre(c);
   const p = penduleInitial(graine);
   const h0 = sha256d(concat(TAG_PENDULE, graine, u8(0), u8(0), u8(p)));
   const base = arriverDansCoffre(c, 0).coffre;
