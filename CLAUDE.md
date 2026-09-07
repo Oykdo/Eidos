@@ -12,6 +12,12 @@ Chaîne prototype à émission bornée sans halving, consensus fédéré, signat
 post-quantiques par hachage pur (aucune courbe elliptique). Unité : l'eidôlon
 (EIDL), 1 eidôlon = 10⁸ atomes. Réseau d'essai uniquement, sans valeur.
 
+Trois couches partagent la règle « rien ne se croit, tout se rejoue » : la
+**chaîne** (Python, bibliothèque standard), l'**atelier** (TypeScript, rejoue la
+spec à l'octet), le **jeu** (la Tour, la Veillée — jauge hors feuille, sauf les
+sceaux et les preuves exportées). Un joueur commence par le Guide de l'atelier ;
+un développeur par ce fichier, puis `docs/FEUILLE_DE_ROUTE.md`.
+
 Les cinq propositions, dans l'ordre où elles contraignent le code :
 
 1. **La récompense ne se divise jamais.** `R(h) = a + (a/2)·cos(2π(h−h₀)/T)`,
@@ -50,7 +56,9 @@ federation.json     racines + graines publiques des 7 validateurs, t0, créneau 
 chaine-eidos.dat    la chaîne du testnet (écrite par la CI, jamais à la main)
 etat.json           état publié (soldes, sorties, artefacts, invariant)
 mempool.json        demandes robinet / envoi
-atelier/            interface web (TanStack Start, React), rejoue la spec en TS
+veillees/           preuves de veillée déposées (index.json + un fichier par preuve), écrites par veillees.yml
+atelier/            interface web (TanStack Start, React), rejoue la spec en TS ;
+                    scripts/deposer-veillee.ts = le juge des preuves dans la CI (logique dans lib/eidos/depot.ts)
 .github/workflows/  tests.yml (3 OS × 2 Python + empreintes), chaine.yml (cron
                     horaire), robinet.yml (issues), veillees.yml (issues « veillée » : le juge
                     TypeScript dépose les preuves dans veillees/), courriel.yml (boîte IMAP, minute 37,
@@ -66,6 +74,11 @@ Dans `atelier/src/lib/eidos/` : `eonis.ts`, `lamport.ts`, `merkle.ts`, `carnet.t
 `envoi.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts`, `veillee.ts`, `veillee-tour.ts`, `chaine-reseau.ts`, `fantomes.ts`, `classement.ts`, `arbre-vue.ts`, `feuille-son.ts`, `veillee-bot.ts` — chacun avec son `.test.ts` ;
 `vecteurs.test.ts` relit `vecteurs.json`. `lamport.ts` garde Lamport en démonstration mais dérive adresses,
 empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
+La veillée : `veillee.ts` (arbre, jour, gestes, juge), `veillee-tour.ts` (gestes reliés aux actes, sac),
+`chaine-reseau.ts` (en-têtes de `chaine-eidos.dat`), `classement.ts`, `arbre-vue.ts`, `feuille-son.ts`,
+`veillee-bot.ts`, `depot.ts`, `fantomes.ts`, `veillee-lexique.ts`. L'accueil : `lib/accueil/orbites.ts`
+et `components/accueil/FondOrbital.tsx`. `npm test` énumère ses fichiers dans `package.json` :
+un `.test.ts` nouveau s'y ajoute à la main.
 
 ## 3. Invariants — ne jamais casser
 
@@ -155,7 +168,8 @@ python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm test         # node --test, tous les .test.ts (liste dans package.json)
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 407 suites Eidos
+npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 ```
 
 Règles :
@@ -271,18 +285,32 @@ L'historique détaillé (décisions, limites, reliquats de chaque chantier) est 
   (`coinbase 12 au lieu de 11`).
 - README : tableau des fichiers avec nombre de lignes et de contrôles, à
   maintenir à chaque PR.
-- Ne jamais écrire dans `chaine-eidos.dat`, `etat.json`, `mempool.json` depuis
-  un poste local : ces fichiers appartiennent aux workflows `chaine` et `robinet`
-  (groupe de concurrence `chaine`).
+- Ne jamais écrire dans `chaine-eidos.dat`, `etat.json`, `mempool.json` ni
+  `veillees/` depuis un poste local : ces fichiers appartiennent aux workflows
+  `chaine`, `robinet` et `veillees` (un seul groupe de concurrence, `chaine`).
+- Textes de l'interface (`i18n.ts`) : FR et EN ont les mêmes clés, aucune valeur
+  vide, et les mots « époque », « epoch », « aeon » y sont bannis (`i18n.test.ts`) :
+  on dit « cycle » pour les 1008 blocs. Chaque phrase du Guide et des hôtes cite
+  une règle vraie du code ; quand un texte promet plus que le code, c'est le texte
+  qui a tort.
+- Un chantier = une branche + une PR (`gh pr create`), fusionnée en rebase quand
+  la CI est verte ; jamais de commit direct sur `main` sauf correctif urgent de la
+  CI. Le cron `chaine` et le robinet committent aussi sur `main` : `git fetch` puis
+  rebase avant de pousser.
+- Un lot livré par un agent est relu par un relecteur adversarial (gardien Eidos,
+  correction, intégration) qui corrige dans les fichiers du lot ; l'intégration
+  (page, store, i18n, package.json, docs) reste à la main.
 
 ## 9. Prompt de démarrage de session
 
 ```
 Lis CLAUDE.md, puis lance dans l'ordre verify_genesis.py, utxo.py,
-federation.py, robinet.py --test et noeud.py --verifier. Confirme que tout
-passe et donne-moi le nombre de blocs revalidés. Ensuite ouvre le chantier
-P<N> de la feuille de route (docs/FEUILLE_DE_ROUTE.md) : propose d'abord un plan en cinq lignes maximum
-avec la liste des fichiers touchés et des contrôles ajoutés, attends mon
-accord, puis implémente. Aucune modification de eonis.py ni de genesis.json
-sans me le signaler explicitement avant.
+federation.py, robinet.py --test, noeud.py --verifier, et dans atelier/
+npm run typecheck && npm test. Confirme que tout passe et donne-moi le nombre
+de blocs revalidés et de suites vertes. Ensuite ouvre le prochain chantier de
+docs/FEUILLE_DE_ROUTE.md (section « Reste ») sur une branche : propose d'abord
+un plan en cinq lignes maximum avec la liste des fichiers touchés et des
+contrôles ajoutés, attends mon accord, puis implémente, ouvre la PR et
+fusionne-la quand la CI est verte. Aucune modification de eonis.py ni de
+genesis.json sans me le signaler explicitement avant.
 ```
