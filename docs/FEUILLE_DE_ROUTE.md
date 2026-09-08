@@ -423,7 +423,7 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   n'a pas de places : ce qui borne le butin est l'arbre. +3 contrôles.
 
 ### Labo pendule-9 — aura, avatar voxelisé, 8 agrégateurs — PR 1 FAITE (2026-09-07), voir docs/SPEC_AURA_PENDULE9.md
-- `labo/` (Python stdlib, figures pas preuves) : `aura_voxel_lab.py` (avatar 16×32×16, visage /
+- `labo/` (Python stdlib, figures pas preuves) : `aura_voxel_lab.py` (avatar 12×24×12 depuis §13, visage /
   taille / poids sans équipement ; aura gaussienne radiale × e^(−Γt) avec plancher résiduel ;
   8 agrégateurs aux positions 1..8, 9 = source, loi du 9 ; K1–K9), `pendule9_run.py`
   (255 étages par racine digitale + balancier, sceau en chaîne de hash, Cube de Saturne ;
@@ -468,6 +468,18 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
      ne distribue rien encore — chantier de jeu (`veillee-tour.ts`, hôtes, sac de 27 places).
   9. Titre « sans Cube » : impossible tant que le Cube n'est pas un `CHOIX` du pendule (la trace ne
      le voit pas) ; exige un `TAG_PENDULE` versionné.
+- **Spec de l'aura graduelle (2026-09-08)** : `docs/SPEC_AURA_GRADUELLE.md`, écrite par un agent
+  de recherche puis relue par un contradicteur (19 corrections dans le texte). Dix décisions
+  D1–D10 à prendre par l'auteur : l'aura est une lecture à forme unique et deux sources jamais
+  simultanées (feuilles d'une veillée, cap 8 ; loi du 9 d'une ascension, cap 9 — LIST 5 et 3
+  reçoivent là leur réponse proposée, le Cube restant au labo), la loi de la lampe en entiers sur
+  la dalle (`rayon(a, cap) = (3a + cap − 1) // cap`, foyer = case d'arrivée, octants), le geste
+  et l'étape comme seul temps, les modes s/p/d/f comme résolution angulaire (1, 2, 4, 8 secteurs),
+  le rendu par trame de Bayer et couleur d'instance, neuf interdits, K48–K56, chantier en trois
+  lots (labo → `aura.ts` pur → rendu dalle). Deux objections du relecteur, laissées à l'auteur :
+  D4 (le rayon de la lampe d'un antre lu dans l'aura serait un malus, donc un effet ; il propose
+  R = 3 fixe et l'aura qui teinte) et D7 (révéler les trouvailles sous l'aura ferait ×2,5 en Tour
+  libre : une puissance par construction). Rien n'est codé.
 - **LIST 1 tranchée (2026-09-07, spec §10, K35)** : `quantiteDon(s) = s.y + 1` dans `pendule.ts`,
   `don()` = genre (hachage, inchangé) + quantité (position) ; test TS (+1), `q` dans l'export,
   K35 côté labo. Phase 0 inchangée.
