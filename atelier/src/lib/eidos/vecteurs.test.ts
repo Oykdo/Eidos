@@ -55,7 +55,7 @@ type Vecteurs = {
       rang: number;
       graine: string;
       tier: number;
-      objets: { genre: string; age: string; nonce: number }[];
+      objets: { graine: string; age: string }[];
     }[];
   };
   glyphes: {
@@ -151,11 +151,9 @@ describe("vecteurs.json = vecteurs.py", () => {
       const mien = coffreDe(cl.id_bloc, { txid: cl.txid, rang: cl.rang });
       assert.equal(mien.graine, cl.graine);
       assert.equal(mien.tier, cl.tier);
+      // les objets sont des ObjetPorte dérivés ici ; le labo n'en donne que la graine et l'âge
       assert.equal(mien.objets.length, cl.objets.length);
-      assert.deepEqual(
-        mien.objets.map((o) => ({ genre: o.genre as string, age: o.age as string, nonce: o.nonce })),
-        cl.objets,
-      );
+      assert.deepEqual(mien.objets.map((o) => o.age as string), cl.objets.map((o) => o.age));
     }
   });
 });

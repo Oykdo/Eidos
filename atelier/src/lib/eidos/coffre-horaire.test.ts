@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { hexOf } from "./hash.ts";
+import { parserFederation, parserTeteReseau } from "./temoin.ts";
+import { preuveReseau, serialiser } from "./merkle.ts";
+import { tourVide } from "./jauge.ts";
+import { coffreAtelier } from "./wallet.ts";
 import {
-  GENRES_COFFRE,
+  AGES_COFFRE,
+  jugerClaim,
+  reclamerDansCoffre,
   PROBA_TIER,
   SAC_COFFRE,
   TIERS,
@@ -45,7 +52,10 @@ describe("coffre horaire — le tirage, jamais le juge", () => {
     assert.deepEqual(a, b);
     assert.equal(a.graine, hexOf(graineCoffre(BLOC, PIECE)));
     assert.equal(a.objets.length, a.tier);
-    for (const o of a.objets) assert.ok(GENRES_COFFRE.includes(o.genre));
+    for (const o of a.objets) {
+      assert.equal(o.age, AGES_COFFRE[a.tier - 1]);
+      assert.ok(o.mot >= 0 && Number.isInteger(o.mot));
+    }
     assert.notEqual(coffreDe(BLOC, { ...PIECE, rang: 1 }).graine, a.graine);
   });
 
@@ -63,5 +73,39 @@ describe("coffre horaire — le tirage, jamais le juge", () => {
     if ("erreur" in plein) return;
     assert.equal(plein.pris.length, 0);
     assert.equal(plein.perdus, plein.coffre.objets.length);
+  });
+
+  it("réclamer pour de vrai : le juge exige la tête et la preuve, le carnet garde la clé", () => {
+    const VEC = JSON.parse(readFileSync(new URL("../../../../vecteurs.json", import.meta.url), "utf8")) as {
+      tete: { tete_signee: Record<string, unknown>; federation: Record<string, unknown>; sorties: { txid: string; rang: number; adresse: string; montant: number }[] };
+    };
+    const tete = parserTeteReseau({ tete_signee: VEC.tete.tete_signee });
+    const fed = parserFederation(VEC.tete.federation);
+    assert.ok(!("erreur" in tete) && !("erreur" in fed));
+    if ("erreur" in tete || "erreur" in fed) return;
+    const piece = VEC.tete.sorties[0]!;
+    const p = preuveReseau(VEC.tete.sorties, `${piece.txid}:${piece.rang}`);
+    assert.ok(p);
+    const preuve = serialiser(p);
+    const claim = { tete, piece, preuve };
+
+    // preuve étrangère : refusée avant même de regarder la signature
+    const fausse = { ...preuve, racine: "00".repeat(32) };
+    assert.equal(jugerClaim({ ...claim, preuve: fausse }, fed, new Set()).ok, false);
+    // tête dont la racine est substituée : id_bloc ne se recompose plus
+    const substituee = { ...tete, utxoRoot: "00".repeat(32) };
+    assert.equal(jugerClaim({ ...claim, tete: substituee }, fed, new Set()).ok, false);
+
+    const c = { ...coffreAtelier("vide"), tour: tourVide() };
+    const r = reclamerDansCoffre(c, claim, fed);
+    assert.ok(r.ok, r.ok ? "" : r.motif);
+    if (!r.ok) return;
+    assert.equal(r.coffre.objets.length, c.objets.length + r.pris.length);
+    assert.equal(r.pris.length, r.tier);
+    assert.deepEqual(r.coffre.tour.coffres, [cleClaim(tete.idBloc, piece)]);
+
+    // une pièce, un bloc : la seconde fois est refusée, et le coffre n'a pas bougé
+    const encore = reclamerDansCoffre(r.coffre, claim, fed);
+    assert.equal(encore.ok, false);
   });
 });

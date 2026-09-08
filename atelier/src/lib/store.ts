@@ -68,6 +68,7 @@ import {
   type Reserver,
 } from "./eidos/veillee-tour.ts";
 import { preuveReseau, serialiser as serialiserPreuve } from "./eidos/merkle.ts";
+import { reclamerDansCoffre } from "./eidos/coffre-horaire.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { getLocale, t, type Msg } from "./i18n.ts";
 import { estPsnxEtranger } from "./eidos/portable.ts";
@@ -76,7 +77,7 @@ import { spinorDepuisOctets, type SpinorPublic } from "./eidos/spinor.ts";
 import { tirerDansCoffre, normaliserObjets, signatureDe } from "./eidos/inventaire.ts";
 import { craftDansCoffre, divinDansCoffre, type NomArme } from "./eidos/equipement.ts";
 import { peutMiner } from "./eidos/poste.ts";
-import { normaliserTour } from "./eidos/jauge.ts";
+import { normaliserTour, tourDe} from "./eidos/jauge.ts";
 import { honorerDansCoffre, tournerDansLaTour } from "./eidos/hotes.ts";
 import { boireDansCoffre } from "./eidos/elixirs.ts";
 import { arriverDansCoffre, franchirAntre, ouvrirAlcove } from "./eidos/secrets.ts";
@@ -175,6 +176,7 @@ type Etat = {
   suivreChaine: () => Promise<void>;
   /** ref null : une veillée libre, sans pièce — une lecture */
   ouvrirVeillee: (ref: string | null) => void;
+  reclamerCoffreHoraire: (ref: string) => void;
   veilleeParler: () => void;
   veilleeCreuser: (x: number, y: number) => void;
   veilleeAlcove: () => void;
@@ -756,6 +758,44 @@ export const useCoffre = create<Etat>((set, get) => ({
       chaineOccupe: false,
       erreur: null,
       flash: t("veillee.chaine.hauteur", { h: r.hauteur }),
+    });
+  },
+
+  /**
+   * Réclamer le coffre de l'heure : le juge (coffre-horaire.ts) demande la tête signée, la pièce
+   * et son chemin Merkle ; ici on ne fait qu'assembler ces trois-là depuis le réseau suivi.
+   * Une pièce, un bloc, un coffre — la clé est notée dans `tour.coffres`, le carnet la garde.
+   */
+  reclamerCoffreHoraire: (ref) => {
+    const { coffre, reseau, federation } = get();
+    if (!reseau || !reseau.verdict.ok) {
+      set({ erreur: t("coffreh.err.tete"), flash: null });
+      return;
+    }
+    if (!federation) {
+      set({ erreur: t("coffreh.err.federation"), flash: null });
+      return;
+    }
+    const piece = reseau.sorties.find((s) => `${s.txid}:${s.rang}` === ref);
+    const p = piece ? preuveReseau(reseau.sorties, ref) : null;
+    if (!piece || !p || !coffre.sorties.some((s) => s.adresse === piece.adresse)) {
+      set({ erreur: t("coffreh.err.piece"), flash: null });
+      return;
+    }
+    const r = reclamerDansCoffre(
+      { ...coffre, tour: tourDe(coffre) },
+      { tete: reseau.tete, piece, preuve: serialiserPreuve(p) },
+      federation,
+    );
+    if (!r.ok) {
+      set({ erreur: `${t("coffreh.err.refus")} — ${r.motif}`, flash: null });
+      return;
+    }
+    persister(r.coffre);
+    set({
+      coffre: r.coffre,
+      erreur: null,
+      flash: t("coffreh.flash.reclame", { t: r.tier, n: r.pris.length, p: r.perdus }),
     });
   },
 

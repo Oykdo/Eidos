@@ -175,6 +175,9 @@ def calculer():
               (idj, so[0]["txid"], so[0]["rang"])]
     v["coffre"] = {
         "tag": CH.TAG.decode(), "sac_places": CH.SAC_PLACES, "tiers": CH.TIERS,
+        # graine, tier, et pour chaque objet sa graine et son age : un objet de coffre est un
+        # ObjetPorte derive cote atelier (objetDepuisGraine + habille) et le labo n'a pas de
+        # mots. La parite porte sur ce qui vient de la chaine.
         "claims": [{"id_bloc": b, "txid": t, "rang": r, **CH.coffre(b, t, r)} for b, t, r in claims],
     }
     return v

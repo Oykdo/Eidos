@@ -6,12 +6,18 @@ ascension. Bibliothèque standard. Rejoue le tirage sur les VRAIES têtes du tes
     graine  = sha256d("eidos-coffre/1" ‖ id_bloc(32) ‖ txid(32) ‖ rang(4, gros-boutiste))
     tier    = 1 + zéros de tête du premier octet de la graine       ∈ 1..9
               P(tier = t) = 2^−t pour t = 1..8, P(tier = 9) = 2^−8   (somme = 1, exactement)
-    objets  = tier objets ; l'objet j : h_j = sha256d(graine ‖ j(1)) ; genre = GENRES[h_j[0] mod 8] ;
-              âge par tier (1–3 Kali, 4–5 Dvâpara, 6–7 Trétâ, 8–9 Satya) ; nonce = h_j[1..4]
+    objets  = tier objets ; l'objet j part de h_j = sha256d(graine ‖ j(1)) et d'un âge par tier
+              (1–3 Kali, 4–5 Dvâpara, 6–7 Trétâ, 8–9 Satya). Le labo s'arrête là : un objet est
+              un ObjetPorte (mot, archétype, genre, emplacement), dérivé côté atelier par
+              objetDepuisGraine + habille, comme un tirage de bloc. Le labo n'a pas de mots.
     règle   = une pièce, un bloc, un coffre ; le sac a 27 places, le surplus est perdu.
 
 Usage : python3 labo/coffre_horaire.py           (rejoue chaine-eidos.dat × etat.json.sorties)
         python3 labo/coffre_horaire.py --vecteurs  (écrit labo/coffre_vecteurs.json pour le port TS)
+MESURE DE LA RAFALE (spec §5) : `rafale()` compte ce qu'une pièce neuve récolte en réclamant
+d'un coup tous les blocs passés, et le compare à une fenêtre d'un jour (24 blocs). C'est cette
+mesure qui décide d'adopter la fenêtre ou non — voir la conclusion imprimée par ce module.
+
 LIMITE : le juge hors ligne d'un claim (tête XMSS + pièce Merkle contre utxo_root_h) est celui de
 l'ascension (ancrage.ts) ; ici on ne rejoue que le tirage. Une pièce peut réclamer les blocs passés
 d'un coup : seule la taille du sac borne cette rafale — limite assumée, voir spec §4."""
@@ -21,7 +27,6 @@ ICI = os.path.dirname(os.path.abspath(__file__)); RACINE = os.path.dirname(ICI)
 sys.path.insert(0, RACINE); sys.path.insert(0, ICI)
 
 TAG = b"eidos-coffre/1"
-GENRES = ("elixir", "elixir", "pierre", "gemme", "lair", "elixir", "pierre", "gemme")  # = GENRES_DON (pendule.ts)
 AGES = ("Kali", "Kali", "Kali", "Dvapara", "Dvapara", "Treta", "Treta", "Satya", "Satya")
 SAC_PLACES, TIERS = 27, 9
 PROBA = [2 ** -t for t in range(1, 9)] + [2 ** -8]
@@ -37,10 +42,8 @@ def tier_de(graine):
 
 def coffre(id_bloc_hex, txid_hex, rang):
     g = graine_coffre(id_bloc_hex, txid_hex, rang); t = tier_de(g)
-    objets = []
-    for j in range(t):
-        h = sha256d(g + bytes([j]))
-        objets.append({"genre": GENRES[h[0] % 8], "age": AGES[t - 1], "nonce": int.from_bytes(h[1:5], "big")})
+    # une graine par objet ; l'objet lui-meme est derive cote atelier (voir en-tete)
+    objets = [{"graine": sha256d(g + bytes([j])).hex(), "age": AGES[t - 1]} for j in range(t)]
     return {"graine": g.hex(), "tier": t, "objets": objets}
 
 class Rejet(ValueError): pass
@@ -69,6 +72,17 @@ def pieces_reelles():
     e = json.load(open(os.path.join(RACINE, "etat.json"), encoding="utf-8"))
     return [{"txid": k.split(":")[0], "rang": int(k.split(":")[1]), **v} for k, v in e["sorties"].items()]
 
+FENETRE_JOUR = 24   # blocs : un coffre de hauteur h ne se réclamerait qu'avec une tête ≤ h + 23
+
+def rafale(tetes, txid, rang=0, fenetre=None):
+    """Ce qu'une pièce récolte en réclamant les blocs passés d'un coup. `fenetre` = None : tout
+    l'historique ; sinon les `fenetre` derniers blocs. Le sac (27) borne toujours la prise."""
+    choisies = tetes if fenetre is None else tetes[-fenetre:]
+    tires = [coffre(t["id_bloc"], txid, rang)["tier"] for t in choisies]
+    offerts = sum(tires)
+    return {"blocs": len(choisies), "offerts": offerts, "pris": min(offerts, SAC_PLACES),
+            "perdus": max(0, offerts - SAC_PLACES), "meilleur": max(tires) if tires else 0}
+
 # ---------- LAB TEST ----------
 def lab_test(tetes, pieces):
     R = {}; n = 0; comptes = [0] * TIERS; deja = set()
@@ -94,6 +108,13 @@ def lab_test(tetes, pieces):
     for t in tetes: perdus += reclamer(sac, deja, t["id_bloc"], pieces[0]["txid"], pieces[0]["rang"])[1]
     R["K44_sac_borne_27"] = len(sac) <= SAC_PLACES and perdus == max(0, sum(coffre(t["id_bloc"], pieces[0]["txid"], pieces[0]["rang"])["tier"] for t in tetes) - SAC_PLACES)
     R["K45_objets_egal_tier"] = all(len(coffre(t["id_bloc"], p["txid"], p["rang"])["objets"]) == coffre(t["id_bloc"], p["txid"], p["rang"])["tier"] for t in tetes[:3] for p in pieces[:3])
+    # K47 — la rafale rétroactive : mesurée, pas supposée. Le sac plafonne la prise à 27 dans les
+    # deux cas dès que l'historique dépasse ~14 blocs ; la fenêtre d'un jour ne change donc RIEN
+    # à ce qu'une pièce neuve emporte. Elle n'est pas adoptée (spec §5).
+    r_tout = [rafale(tetes, p["txid"], p["rang"]) for p in pieces]
+    r_jour = [rafale(tetes, p["txid"], p["rang"], FENETRE_JOUR) for p in pieces]
+    R["K47_fenetre_sans_effet_sur_la_prise"] = len(tetes) > FENETRE_JOUR and \
+        all(a["pris"] == b["pris"] == SAC_PLACES for a, b in zip(r_tout, r_jour))
     R["K46_tetes_reelles_heure_par_heure"] = len(tetes) >= 2 and all(b["ts"] - a["ts"] >= 3600 and b["hauteur"] == a["hauteur"] + 1 for a, b in zip(tetes, tetes[1:]))
     return R, n, comptes
 
@@ -108,4 +129,9 @@ if __name__ == "__main__":
     for k, ok in R.items(): print(("PASS " if ok else "FAIL "), k)
     print(f"{len(tetes)} têtes réelles × {len(pieces)} pièces = {n} coffres ; tiers 1..9 :", comptes,
           "| attendus :", [round(n * p, 1) for p in PROBA])
+    a = rafale(tetes, pieces[0]["txid"], pieces[0]["rang"])
+    b = rafale(tetes, pieces[0]["txid"], pieces[0]["rang"], FENETRE_JOUR)
+    print(f"rafale d'une pièce neuve — tout l'historique ({a['blocs']} blocs) : {a['offerts']} objets offerts, "
+          f"{a['pris']} pris, {a['perdus']} perdus ; fenêtre d'un jour ({b['blocs']} blocs) : "
+          f"{b['offerts']} offerts, {b['pris']} pris. Le sac plafonne les deux : la fenêtre ne change rien.")
     sys.exit(0 if all(R.values()) else 1)

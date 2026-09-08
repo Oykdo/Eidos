@@ -233,7 +233,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `labo/pendule9_run.py` | 193 | lab: free Tower over the atelier's run, seal, Cube and anchoring, muses from `signatures.ts` | 11 |
 | `labo/unification.py` | 95 | lab: contract with `pendule.ts`, synthetic and real fixtures (`exporter-run.ts`), gift | 9 |
 | `labo/aura_veillee.py` | 98 | lab: a vigil's aura, reading of the 64 leaves over 8 positions (bot and played vigil) | 8 |
-| `labo/coffre_horaire.py` | 111 | lab: hourly chest, one per block, draw replayed over the real heads | 8 |
+| `labo/coffre_horaire.py` | 137 | lab: hourly chest, one per block, draw replayed over the real heads, burst measured | 9 |
 | `consensus.py` | 204 | PoW difficulty and cumulative work — historical | 6 |
 | `store.py` | 278 | PoW chain on disk — historical | — |
 | `federation.json` | — | roots and public seeds of the 7 validators, t0, slot | — |

@@ -284,14 +284,12 @@
     "tier": 2,
     "objets": [
      {
-      "genre": "lair",
-      "age": "Kali",
-      "nonce": 3830801907
+      "graine": "1ce45565f39bb05a40455689dabd20f53ac0b08ebdcfd269e6123571bc078748",
+      "age": "Kali"
      },
      {
-      "genre": "gemme",
-      "age": "Kali",
-      "nonce": 2290238129
+      "graine": "8b888242b1d813f622e6f3cc01b108fe23ef12be8f1196354e12d6e495ec1321",
+      "age": "Kali"
      }
     ]
    },
@@ -303,9 +301,8 @@
     "tier": 1,
     "objets": [
      {
-      "genre": "pierre",
-      "age": "Kali",
-      "nonce": 3057021976
+      "graine": "b6b6367418ed5dd7fa1178ad0c845af0ce00710cd3a4b06458cd7da28d44c854",
+      "age": "Kali"
      }
     ]
    },
@@ -317,9 +314,8 @@
     "tier": 1,
     "objets": [
      {
-      "genre": "gemme",
-      "age": "Kali",
-      "nonce": 1144328856
+      "graine": "cf4435129829e8072863018ab65ddc672b8e0174a5e203fbe6bffe269df330e2",
+      "age": "Kali"
      }
     ]
    }

@@ -491,9 +491,16 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
   `vecteurs.json` (10ᵉ famille, écrite par `vecteurs.py`, relue par `vecteurs.test.ts`) ; page
   `/coffre-horaire` dans le registre **Jouer**, en lecture seule (tête suivie + pièces du coffre →
   graine, tier, chance, contenu). Route, Shell, i18n FR/EN, `navigation.test.ts` vert.
-- Reste : réclamer pour de vrai (inventaire + carnet ; `reclamer` est déjà là, avec la clé
-  `(pièce, bloc)`), le juge du claim (tête XMSS + pièce Merkle, celui d'`ancrage.ts`), la mesure de
-  la rafale rétroactive par le bot (décide la fenêtre d'un jour, §5), puis une scène.
+- PR 3 FAITE (2026-09-07) : réclamer pour de vrai (`reclamerDansCoffre`, `Tour.coffres`, bouton),
+  le juge (`jugerClaim` : déjà réclamé → racine → feuille → chemin Merkle → XMSS, testé contre la
+  vraie tête signée), et la mesure de la rafale (K47). Les objets d'un coffre sont désormais des
+  `ObjetPorte` (`objetDepuisGraine` + `habille`) au lieu d'une table de genres inventée ; le labo
+  s'arrête à la graine et à l'âge, la parité porte là.
+- **Fenêtre d'un jour : NON adoptée** (§5). Mesure sur 36 têtes réelles : tout l'historique offre
+  77 objets → 27 pris, 50 perdus ; la fenêtre en offre 53 → 27 pris. Le sac plafonne les deux :
+  c'est le sac qui borne la rafale, pas la fenêtre.
+- Reste : une scène (le coffre à l'écran, comme le coffre 3D), et l'échange d'un objet entre
+  joueurs — qui n'est pas un coffre mais une transaction, donc une autre spec.
 
 ### Menu de l'écosystème — deux rangs au lieu de neuf onglets — FAIT (2026-09-07)
 - `navigation.ts` : chaque registre a une page par défaut (`defaut`) ; `registreDe` et `sousOnglets`
