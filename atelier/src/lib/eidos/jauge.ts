@@ -34,6 +34,7 @@ export function tourVide(): Tour {
     liberee: null,
     porte: null,
     capsules: [],
+    coffres: [],
     ascension: null,
     veillee: null,
   };
@@ -213,9 +214,23 @@ export function normaliserTour(x: unknown): Tour {
     liberee: entier(t.liberee, 0, 0xffffffff),
     porte: entier(t.porte, 0, 0xffffffff),
     capsules: jours(t.capsules),
+    coffres: clesCoffres(t.coffres),
     ascension: ascension(t.ascension),
     veillee: veillee(t.veillee),
   };
+}
+
+/** Les clés de coffre horaire du carnet : `txid:rang@id_bloc`, dédupliquées, bornées. */
+function clesCoffres(xs: unknown): string[] {
+  if (!Array.isArray(xs)) return [];
+  const out: string[] = [];
+  for (const x of xs) {
+    if (typeof x !== "string") continue;
+    if (!/^[0-9a-f]{64}:\d{1,10}@[0-9a-f]{64}$/.test(x)) continue;
+    if (!out.includes(x)) out.push(x);
+    if (out.length >= 4096) break;
+  }
+  return out;
 }
 
 export function tourDe(c: Pick<Coffre, "tour">): Tour {

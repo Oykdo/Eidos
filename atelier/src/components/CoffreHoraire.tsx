@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { useI18n } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store";
-import { coffreDe, PROBA_TIER, SAC_COFFRE, TIERS } from "@/lib/eidos/coffre-horaire.ts";
+import { cleClaim, coffreDe, PROBA_TIER, SAC_COFFRE, TIERS } from "@/lib/eidos/coffre-horaire.ts";
+import { tourDe } from "@/lib/eidos/jauge.ts";
 
 /**
  * Le coffre de l'heure — une LECTURE (docs/SPEC_COFFRE_HORAIRE.md).
@@ -26,9 +27,18 @@ export function CoffreHoraire() {
     return reseau.sorties.filter((s) => adresses.has(s.adresse));
   }, [tete, reseau, coffre.sorties]);
 
+  const reclamerCoffreHoraire = useCoffre((s) => s.reclamerCoffreHoraire);
+  const deja = useMemo(() => new Set(tourDe(coffre).coffres), [coffre]);
   const coffres = useMemo(
-    () => (tete ? miennes.map((p) => ({ piece: p, c: coffreDe(tete.idBloc, p) })) : []),
-    [tete, miennes],
+    () =>
+      tete
+        ? miennes.map((p) => ({
+            piece: p,
+            c: coffreDe(tete.idBloc, p, tete.hauteur),
+            pris: deja.has(cleClaim(tete.idBloc, p)),
+          }))
+        : [],
+    [tete, miennes, deja],
   );
 
   return (
@@ -53,7 +63,7 @@ export function CoffreHoraire() {
             </p>
           ) : (
             <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {coffres.map(({ piece, c }) => (
+              {coffres.map(({ piece, c, pris }) => (
                 <li
                   key={`${piece.txid}:${piece.rang}`}
                   className="rounded-md bg-creux px-3 py-2.5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)]"
@@ -69,15 +79,26 @@ export function CoffreHoraire() {
                     {c.graine.slice(0, 12)}…
                   </p>
                   <ul className="mt-1.5 flex flex-wrap gap-1">
-                    {c.objets.map((o, i) => (
+                    {c.objets.map((o) => (
                       <li
-                        key={i}
+                        key={o.mot}
                         className="rounded-sm px-1.5 py-0.5 font-mono text-[10.5px] text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.16)]"
                       >
                         {o.genre} · {o.age}
                       </li>
                     ))}
                   </ul>
+                  {pris ? (
+                    <p className="mt-2 font-mono text-[11px] text-sourd/70">{t("coffreh.deja")}</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => reclamerCoffreHoraire(`${piece.txid}:${piece.rang}`)}
+                      className="mt-2 h-7 rounded-sm px-2.5 font-mono text-[11px] tracking-wide text-encre shadow-[0_0_0_1px_rgb(198_203_209_/_0.3)] hover:bg-or hover:text-or-fg"
+                    >
+                      {t("coffreh.reclamer")}
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

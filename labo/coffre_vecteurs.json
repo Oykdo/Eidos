@@ -7,29 +7,24 @@
 "tier": 5,
 "objets": [
 {
-"genre": "gemme",
-"age": "Dvapara",
-"nonce": 1759080572
+"graine": "2768d9707c24aa5b8fa68158eac88af7c57388b2da6ed1c8cd6fd586eb6f3879",
+"age": "Dvapara"
 },
 {
-"genre": "gemme",
-"age": "Dvapara",
-"nonce": 1604646302
+"graine": "335fa4f59e8c6dc09e393d570ac1198c6d07724d6c2d9a746196bcbf91917893",
+"age": "Dvapara"
 },
 {
-"genre": "elixir",
-"age": "Dvapara",
-"nonce": 791542629
+"graine": "982f2dfb65ad2078713c46846915b2ee1b10439c46271e9b6c934e799f923bc2",
+"age": "Dvapara"
 },
 {
-"genre": "gemme",
-"age": "Dvapara",
-"nonce": 3559939253
+"graine": "03d4305cb5d63797e08a5a12016647274f0aa912de3942eefbc9bde2a9853c6d",
+"age": "Dvapara"
 },
 {
-"genre": "pierre",
-"age": "Dvapara",
-"nonce": 2635998048
+"graine": "9e9d1e23600a60cf38b88f8a4b4a1b02b85f18650b1b133b6464de4f3c609560",
+"age": "Dvapara"
 }
 ]
 },
@@ -41,9 +36,8 @@
 "tier": 1,
 "objets": [
 {
-"genre": "pierre",
-"age": "Kali",
-"nonce": 178260995
+"graine": "160aa00c03a94bc25c0d17ae3b83b099bb51378c703437745df816d6d6635010",
+"age": "Kali"
 }
 ]
 },
@@ -55,9 +49,8 @@
 "tier": 1,
 "objets": [
 {
-"genre": "lair",
-"age": "Kali",
-"nonce": 3138223534
+"graine": "1cbb0d7daea659737872aa41a101e25b2727b0cbe4b4a147d6d19120664a8516",
+"age": "Kali"
 }
 ]
 },
@@ -69,19 +62,16 @@
 "tier": 3,
 "objets": [
 {
-"genre": "gemme",
-"age": "Kali",
-"nonce": 2292022040
+"graine": "a7889d7b18a91aa3df3bcc4f5580bb71c25bc5d9f1447430708b3e8c1c8c0bd6",
+"age": "Kali"
 },
 {
-"genre": "lair",
-"age": "Kali",
-"nonce": 3580433715
+"graine": "4cd56915332fa7d8a4cb3bf06d6b829930cdc68d9f16639727f989b603f4c077",
+"age": "Kali"
 },
 {
-"genre": "lair",
-"age": "Kali",
-"nonce": 2417939780
+"graine": "84901ed544226e42f77828685d10e780bb67910dfc39b72454f95379c87a7e42",
+"age": "Kali"
 }
 ]
 },
@@ -93,9 +83,8 @@
 "tier": 1,
 "objets": [
 {
-"genre": "gemme",
-"age": "Kali",
-"nonce": 156850829
+"graine": "fb09595a8d09beb5bdc482a5b107eda87ae6a0a2a30258668d11441690a5b9c5",
+"age": "Kali"
 }
 ]
 },
@@ -107,19 +96,16 @@
 "tier": 3,
 "objets": [
 {
-"genre": "elixir",
-"age": "Kali",
-"nonce": 829526726
+"graine": "10317192c6eb83b3a381930e14628ace0db084c87151c4d58321a54a5c75644d",
+"age": "Kali"
 },
 {
-"genre": "gemme",
-"age": "Kali",
-"nonce": 2437126224
+"graine": "739143985018be31b30aed607213a6131bd71fd4c9617e5ee1163942487da5df",
+"age": "Kali"
 },
 {
-"genre": "gemme",
-"age": "Kali",
-"nonce": 4149232214
+"graine": "c7f750425687e02b3724cbd9d3decab880892c26788aa4e554478093f11cd9bb",
+"age": "Kali"
 }
 ]
 },
@@ -131,9 +117,8 @@
 "tier": 1,
 "objets": [
 {
-"genre": "gemme",
-"age": "Kali",
-"nonce": 583045113
+"graine": "4f22c08ff925bfa12984e807e8c3f245d0d21fcd76867a0156896f9f85fdaa5e",
+"age": "Kali"
 }
 ]
 },
@@ -145,9 +130,8 @@
 "tier": 1,
 "objets": [
 {
-"genre": "pierre",
-"age": "Kali",
-"nonce": 794762861
+"graine": "c22f5f1e6d6fdb20d6074cd3dfd9459e5c0dcc29d01313f6081413c80ee1fe9f",
+"age": "Kali"
 }
 ]
 },
@@ -159,9 +143,8 @@
 "tier": 1,
 "objets": [
 {
-"genre": "elixir",
-"age": "Kali",
-"nonce": 1142214821
+"graine": "b04414d0a51c861f2b3c55a747d3ab2a39fe1bf08cce7753a4c474c395b793ee",
+"age": "Kali"
 }
 ]
 }
