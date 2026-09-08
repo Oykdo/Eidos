@@ -51,6 +51,8 @@ Multiplier les machines ne rapporte rien (même pièce, même coffre). Il faut m
 
 **Page — FAITE.** `/coffre-horaire`, registre **Jouer** (`navigation.ts`, sous-onglet après la Veillée). Pour la tête suivie et chaque pièce du coffre : graine, tier, chance, contenu, et un bouton **Réclamer**. Sans tête suivie elle le dit et n'invente aucune heure ; sans pièce, pas de coffre ; déjà réclamé, elle le montre.
 
+**La scène — FAITE (PR 4), par réemploi.** Le contenu d'un coffre s'affiche avec `VoxelIcon`, le même rendu que l'inventaire : puisqu'un objet de coffre est un `ObjetPorte` comme un autre (§4), il se dessine avec `voxelsDe` et `rgbJauge`, sans une ligne de rendu nouvelle. Pas de scène `three.js` dédiée : le coffre horaire n'est pas un lieu, c'est une lecture — la scène du coffre-fort (`CoffreScene`) reste la seule du dépôt.
+
 **Réclamer — FAIT (PR 3).** `reclamerDansCoffre(coffre, claim, fédération)` : juge, puis pose les objets dans `coffre.objets` et la clé `txid:rang@id_bloc` dans `coffre.tour.coffres` (nouveau champ de `Tour`, normalisé et borné par `jauge.ts`). Le coffre n'est pas modifié en cas de refus. `store.reclamerCoffreHoraire(ref)` assemble tête, pièce et chemin depuis le réseau suivi.
 
 **Le juge — FAIT (PR 3).** `jugerClaim` vérifie dans l'ordre où ça coûte le moins cher : déjà réclamé, puis la racine de la preuve = `utxoRoot` de la tête, puis la feuille = celle de cette pièce, puis le chemin Merkle, puis la signature XMSS (`verifierTeteReseau`). Rien de neuf n'est inventé : ce sont les vérifications de l'ascension. Testé contre la vraie tête signée de `vecteurs.json`, avec preuve étrangère et racine substituée refusées.

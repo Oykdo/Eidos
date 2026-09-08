@@ -499,8 +499,13 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
 - **Fenêtre d'un jour : NON adoptée** (§5). Mesure sur 36 têtes réelles : tout l'historique offre
   77 objets → 27 pris, 50 perdus ; la fenêtre en offre 53 → 27 pris. Le sac plafonne les deux :
   c'est le sac qui borne la rafale, pas la fenêtre.
-- Reste : une scène (le coffre à l'écran, comme le coffre 3D), et l'échange d'un objet entre
-  joueurs — qui n'est pas un coffre mais une transaction, donc une autre spec.
+- PR 4 FAITE (2026-09-08) : la scène, par réemploi — le contenu s'affiche avec `VoxelIcon`
+  (`voxelsDe` + `rgbJauge`), aucun rendu nouveau, parce qu'un objet de coffre est un `ObjetPorte`.
+  Pas de scène `three.js` dédiée : le coffre horaire est une lecture, pas un lieu.
+- Reste : les trois décisions de `docs/SPEC_COFFRE_HORAIRE.md` §8, qui attendent un arbitrage
+  (tiers géométriques vs table ; claim hors run vs pendant ; contenu par tier vs par position),
+  et l'échange d'un objet entre joueurs — qui n'est pas un coffre mais une transaction, donc
+  une autre spec.
 
 ### Menu de l'écosystème — deux rangs au lieu de neuf onglets — FAIT (2026-09-07)
 - `navigation.ts` : chaque registre a une page par défaut (`defaut`) ; `registreDe` et `sousOnglets`
