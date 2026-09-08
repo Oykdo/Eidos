@@ -3,6 +3,7 @@ import { useI18n } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store";
 import { cleClaim, coffreDe, PROBA_TIER, SAC_COFFRE, TIERS } from "@/lib/eidos/coffre-horaire.ts";
 import { tourDe } from "@/lib/eidos/jauge.ts";
+import { VoxelIcon } from "@/components/inventaire/VoxelIcon";
 
 /**
  * Le coffre de l'heure — une LECTURE (docs/SPEC_COFFRE_HORAIRE.md).
@@ -78,13 +79,13 @@ export function CoffreHoraire() {
                     {t("coffreh.chance", { p: `1/${Math.round(1 / PROBA_TIER[c.tier - 1]!)}` })} ·{" "}
                     {c.graine.slice(0, 12)}…
                   </p>
-                  <ul className="mt-1.5 flex flex-wrap gap-1">
+                  <ul className="mt-2 flex flex-wrap gap-2">
                     {c.objets.map((o) => (
-                      <li
-                        key={o.mot}
-                        className="rounded-sm px-1.5 py-0.5 font-mono text-[10.5px] text-sourd shadow-[0_0_0_1px_rgb(198_203_209_/_0.16)]"
-                      >
-                        {o.genre} · {o.age}
+                      <li key={o.mot} className="flex w-[68px] flex-col items-center gap-0.5">
+                        <VoxelIcon objet={o} size={56} />
+                        <span className="w-full truncate text-center font-mono text-[9.5px] text-sourd">
+                          {o.genre} · {o.age}
+                        </span>
                       </li>
                     ))}
                   </ul>
