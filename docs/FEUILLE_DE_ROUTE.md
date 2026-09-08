@@ -505,8 +505,10 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
 - Décisions §8 arbitrées (2026-09-08) : tiers géométriques **gardés** (1), contenu = t objets avec
   âge par tier **gardé** (3) ; le claim pendant un run (2) reste ouvert, à rouvrir quand la Tour
   aura une raison de réclamer. **Chantier du coffre horaire clos.**
-- Reste au-delà : l'échange d'un objet entre joueurs — qui n'est pas un coffre mais une
-  transaction, donc une autre spec, avec la question de Sybil qui va avec.
+- Échange d'un objet entre joueurs — décidé (2026-09-08) qu'un objet doit pouvoir changer de
+  mains ; étude `docs/ETUDE_ECHANGE_OBJETS.md`. Reste à arrêter : l'option (2, l'objet est une
+  sortie et le consensus change ; ou 3, une pièce porte l'objet et rien ne change) et la règle du
+  trou (le premier lien gagne, ou le lien meurt avec la dépense). Aucune ligne de code avant.
 
 ### Menu de l'écosystème — deux rangs au lieu de neuf onglets — FAIT (2026-09-07)
 - `navigation.ts` : chaque registre a une page par défaut (`defaut`) ; `registreDe` et `sousOnglets`
