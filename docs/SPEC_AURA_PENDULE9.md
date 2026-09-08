@@ -1,9 +1,9 @@
 # Pendule-9 roguelike — Avatar voxelisé, Aura graduelle, 8 Agrégateurs
 Discipline carmeltazite : [A] axiome de design · [H] hypothèse testée en lab · [C] conjecture non testée.
-Manifeste : sha256(aura_voxel_lab.py)[:16] = `84db5bb463437c65`
+Manifeste : sha256(aura_voxel_lab.py)[:16] = `556146bf1e76f8ee` (2026-09-08 ; `84db5bb463437c65` à la première session)
 
 ## 1. Avatar voxelisé [A]
-- Grille 16 × 32 × 16 voxels. Parties : tête, **visage**, torse, bras G/D, jambes G/D.
+- Grille 12 × 24 × 12 voxels depuis §13 (16 × 32 × 16 à la première session). Parties : tête, **visage**, torse, bras G/D, jambes G/D.
 - **Modifiables sans équipement** : visage (5 traits : yeux, nez, bouche, sourcils, oreilles — dérivés d'un `sha256("face:"+seed)`, donc reproductibles), **taille** (×0.8–1.2, axe y), **poids** (×0.8–1.3, rayons xz du torse et des membres). Le visage est un sous-masque de la tête, jamais un objet.
 - L'équipement viendra plus tard comme couche de voxels *au-dessus* du corps ; il ne modifie jamais le visage.
 

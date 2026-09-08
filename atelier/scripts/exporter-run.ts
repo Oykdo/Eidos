@@ -7,8 +7,9 @@
  *
  * Choix et objet porté sont fixés (monter/lire/offrir en boucle, portMot = 0) :
  * un export est une lecture reproductible, jamais une partie. Figures, pas preuves.
- * LIMITE : aucune option pour rejouer des choix réels ; brancher la sauvegarde
- * (sauver.ts) quand le labo aura besoin de vrais runs.
+ * LIMITE : aucune option pour rejouer des choix réels ; une ascension jouée se
+ * relirait par parserAscension (même schéma), reste de la LIST 6 — sauver.ts n'est
+ * que le sélecteur de fichier du navigateur, pas une porte vers les runs.
  */
 
 import { sha256d, utf8 } from "../src/lib/eidos/hash.ts";
