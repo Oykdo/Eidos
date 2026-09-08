@@ -502,10 +502,11 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
 - PR 4 FAITE (2026-09-08) : la scène, par réemploi — le contenu s'affiche avec `VoxelIcon`
   (`voxelsDe` + `rgbJauge`), aucun rendu nouveau, parce qu'un objet de coffre est un `ObjetPorte`.
   Pas de scène `three.js` dédiée : le coffre horaire est une lecture, pas un lieu.
-- Reste : les trois décisions de `docs/SPEC_COFFRE_HORAIRE.md` §8, qui attendent un arbitrage
-  (tiers géométriques vs table ; claim hors run vs pendant ; contenu par tier vs par position),
-  et l'échange d'un objet entre joueurs — qui n'est pas un coffre mais une transaction, donc
-  une autre spec.
+- Décisions §8 arbitrées (2026-09-08) : tiers géométriques **gardés** (1), contenu = t objets avec
+  âge par tier **gardé** (3) ; le claim pendant un run (2) reste ouvert, à rouvrir quand la Tour
+  aura une raison de réclamer. **Chantier du coffre horaire clos.**
+- Reste au-delà : l'échange d'un objet entre joueurs — qui n'est pas un coffre mais une
+  transaction, donc une autre spec, avec la question de Sybil qui va avec.
 
 ### Menu de l'écosystème — deux rangs au lieu de neuf onglets — FAIT (2026-09-07)
 - `navigation.ts` : chaque registre a une page par défaut (`defaut`) ; `registreDe` et `sousOnglets`

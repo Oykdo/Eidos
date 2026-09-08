@@ -57,7 +57,9 @@ Multiplier les machines ne rapporte rien (même pièce, même coffre). Il faut m
 
 **Le juge — FAIT (PR 3).** `jugerClaim` vérifie dans l'ordre où ça coûte le moins cher : déjà réclamé, puis la racine de la preuve = `utxoRoot` de la tête, puis la feuille = celle de cette pièce, puis le chemin Merkle, puis la signature XMSS (`verifierTeteReseau`). Rien de neuf n'est inventé : ce sont les vérifications de l'ascension. Testé contre la vraie tête signée de `vecteurs.json`, avec preuve étrangère et racine substituée refusées.
 
-## 8. Décisions prises ici, à renverser si tu veux
-1. Neuf tiers géométriques plutôt qu'une table : zéro constante, vérifiable à l'œil.
-2. Le claim vaut hors run : un coffre se réclame avec une tête et une pièce, pas besoin d'être dans la Tour. Un claim *pendant* un run pourrait, plus tard, prendre la quantité de la position (`quantiteDon`) au lieu du tier — non fait.
-3. Contenu = t objets, genres de `GENRES_DON`, âge par tier : le plus court chemin vers des objets qui existent déjà dans l'atelier.
+## 8. Décisions
+1. **ARBITRÉE, gardée (2026-09-08).** Neuf tiers géométriques plutôt qu'une table : zéro constante à maintenir ou à publier, probabilités vérifiables à l'œil (K40 les lit sur les 256 octets). Une table calée sur les muses ou les bandes a été envisagée puis écartée.
+2. **OUVERTE.** Le claim vaut hors run : un coffre se réclame avec une tête et une pièce, sans être dans la Tour. Un claim *pendant* un run pourrait prendre la quantité de la position (`quantiteDon`) au lieu du tier — à rouvrir quand la Tour aura une raison de réclamer, pas avant : aujourd'hui l'exiger rendrait la page inutile hors ascension.
+3. **ARBITRÉE, gardée (2026-09-08).** Contenu = t objets, âge par tier. L'alternative — un seul objet dont la qualité monte avec le tier — retirerait au sac de 27 son rôle de plafond et invaliderait K44 et la mesure de la rafale (K47). Note : les genres ne viennent plus de `GENRES_DON` mais d'`objetDepuisGraine` + `habille` (§4, corrigé en PR 3) ; ce sont de vrais `ObjetPorte`.
+
+Le chantier du coffre horaire est clos, hors la décision 2. Ce qui reste au-delà : l'échange d'un objet entre joueurs, qui n'est pas un coffre mais une transaction — donc une autre spec, et la question de Sybil qui va avec.
