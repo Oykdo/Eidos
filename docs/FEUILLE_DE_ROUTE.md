@@ -508,7 +508,11 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
 - Échange d'un objet entre joueurs — décidé (2026-09-08) qu'un objet doit pouvoir changer de
   mains ; étude `docs/ETUDE_ECHANGE_OBJETS.md`. Reste à arrêter : l'option (2, l'objet est une
   sortie et le consensus change ; ou 3, une pièce porte l'objet et rien ne change) et la règle du
-  trou (le premier lien gagne, ou le lien meurt avec la dépense). Aucune ligne de code avant.
+  trou. Exigence d'auteur (2026-09-08) : survivre à N échanges ET à la duplication — ce qui
+  ÉCARTE (b) et (c), qui protègent la pièce et non l'objet, et appelle (d) la **lignée** :
+  origine = le claim, maillon_k lié à la transaction qui dépense la sortie précédente. La
+  duplication échoue parce qu'elle exigerait une double dépense. Aucune règle de consensus
+  nouvelle. Reste à trancher : la borne sur le nombre d'échanges (l'export grandit avec N).
 
 ### Menu de l'écosystème — deux rangs au lieu de neuf onglets — FAIT (2026-09-07)
 - `navigation.ts` : chaque registre a une page par défaut (`defaut`) ; `registreDe` et `sousOnglets`
