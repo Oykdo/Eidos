@@ -142,3 +142,15 @@ Ce qui disparaît : `digital_root`, `position`, `cycle_of`, `swing`, `BALANCIER`
 Ce qui reste, parce que ce n'était pas dans le mapping : la loi du 9, la réserve de la source, le sceau, le Cube et sa portée, la table des muses, l'avatar. Un run se prend maintenant dans `labo/run_atelier.json` (`enter_floor` consomme une étape, `jouer` le run entier) et le coût vient de la bande, borné 1..3, comme dans `unification.py`. K17 le vérifie : 27 étapes, les étages du log sont ceux de l'export, l'étape 0 est l'étage 0.
 
 Effet de bord agréable : le sceau final de `pendule9_run` et celui d'`unification` coïncident désormais — même run, même lecture.
+
+## 15. Le don est donné (LIST 10) — une chance, pas une pile
+`quantiteDon` existait sans que rien ne la dépense. Trois lectures possibles, une seule tient :
+- **quantité = nombre d'objets** : 27 étapes × jusqu'à 9 objets noieraient un sac de 27 places. Écartée.
+- **quantité = qualité** : cohérent, mais le tier des coffres fait déjà ça. Écartée.
+- **quantité = chance** : `quantiteDon(spawn) / 9`, de 1/9 sur Uranie à 9/9 sur Terre, la source. Un seul objet quand elle tombe. **Retenue.** Le hachage décide du genre (`genreDon`, inchangé), la position décide de la fréquence, le sac garde son rôle de plafond, et la case où l'on atterrit devient enfin lisible dans le jeu.
+
+`donDuPendule(coffre, étape, étage, spawn)` dans `secrets.ts` : graine `sha256d("eidos-don/1" ‖ maître/n ‖ étape ‖ étage ‖ spawn)`, tirage `g[0] mod 9 < quantité`, puis `objetDepuisGraine` + `habille` — un `ObjetPorte` comme les autres, âgé de son quartier. Appelé par `arriverDansCoffre`, en montant seulement.
+
+**Hors veillée seulement, et c'est une limite, pas un oubli.** Pendant une veillée le sac de 27 est déjà l'enjeu — « sac plein : franchir, ou s'effacer ». Le premier essai, don compris dans la veillée, a fait échouer le contrôle qui vérifie que l'arbre s'épuise avant le sac : le sac se remplissait le premier. Ajouter un don par étage ne serait pas une addition mais une refonte de l'économie d'une veillée, qui est jugée et déposée. Décision à part, non prise.
+
+Contrôles (`secrets.test.ts`) : déterminisme ; la source donne à chaque fois, Uranie environ une fois sur neuf sur 900 tirages ; un don est un objet complet ; au plus un don par étage franchi.

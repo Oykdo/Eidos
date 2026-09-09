@@ -11,6 +11,7 @@ import {
   OBSERVATOIRE,
   aUneAlcove,
   arriverDansCoffre,
+  donDuPendule,
   echosDuQuartier,
   enEcho,
   estObservatoire,
@@ -245,5 +246,37 @@ describe("secrets — alcôves, échos, antres, observatoire", () => {
     const c: Coffre = { ...c0, tour: { ...c0.tour, dons: [0, 42], portes: ["Dvapara"] } };
     assert.equal(lectureObservatoire(c).honores, 2);
     assert.deepEqual(lectureObservatoire(c).portes, ["Dvapara"]);
+  });
+
+  it("le don du pendule : une chance, pas une pile — quantité/9, un objet quand ça tombe", () => {
+    const c = { maitre: "m", n: 0, objets: [] as never[] };
+    // déterministe
+    const a = donDuPendule(c, 3, 42, { x: 4, y: 7 });
+    assert.deepEqual(donDuPendule(c, 3, 42, { x: 4, y: 7 }), a);
+    // Uranie (y = 0, quantité 1) donne rarement ; Terre (y = 8, quantité 9) donne toujours
+    let rares = 0;
+    let pleins = 0;
+    const N = 900;
+    for (let i = 0; i < N; i++) {
+      if (donDuPendule(c, i, 100 + (i % 200), { x: i % 9, y: 0 })) rares++;
+      if (donDuPendule(c, i, 100 + (i % 200), { x: i % 9, y: 8 })) pleins++;
+    }
+    assert.equal(pleins, N, "la source donne à chaque fois");
+    assert.ok(rares > N / 20 && rares < N / 4, `Uranie ≈ N/9, obtenu ${rares}`);
+    // un don est un objet du coffre, âgé de son quartier
+    const d = donDuPendule(c, 0, 42, { x: 0, y: 8 });
+    assert.ok(d);
+    if (!d) return;
+    assert.ok(d.mot >= 0 && d.hauteur === 42 && d.nom.length > 0);
+  });
+
+  it("une ascension entière ne peut pas noyer le sac : au plus un don par étage franchi", () => {
+    const c = { maitre: "m", n: 3, objets: [] as never[] };
+    let dons = 0;
+    for (let etape = 0; etape < 27; etape++) {
+      const d = donDuPendule(c, etape, 10 * etape + 1, { x: etape % 9, y: etape % 9 });
+      if (d) dons++;
+    }
+    assert.ok(dons <= 27, "un don par étape au maximum");
   });
 });
