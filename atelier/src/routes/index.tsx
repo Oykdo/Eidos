@@ -72,6 +72,7 @@ function Home() {
                 {t("coffre.eidolon")}
               </p>
             </section>
+            <Inventaire />
             <CoffreVue />
             {!personnel ? <Creer /> : null}
             <Sauvegarde />
@@ -84,7 +85,6 @@ function Home() {
 
         {onglet === "contenu" ? (
           <>
-            <Inventaire />
             <Bestiaire />
             {personnel ? <Envoi /> : null}
             <Sorties />

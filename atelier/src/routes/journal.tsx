@@ -7,12 +7,13 @@ import { Genese } from "@/components/Genese";
 import { Cles } from "@/components/Cles";
 import { Chaine } from "@/components/Chaine";
 import { Merkle } from "@/components/Merkle";
+import { Caracteres } from "@/components/chymie/Caracteres.tsx";
 import { useCoffre } from "@/lib/store";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 
 export const Route = createFileRoute("/journal")({ component: JournalPage });
 
-type OngletJournal = "atelier" | "genese" | "cles" | "chaine" | "preuve";
+type OngletJournal = "atelier" | "genese" | "cles" | "chaine" | "preuve" | "chymie";
 
 const ONGLET_JOURNAL: { id: OngletJournal; label: Msg }[] = [
   { id: "atelier", label: "atelier.titre" },
@@ -20,6 +21,7 @@ const ONGLET_JOURNAL: { id: OngletJournal; label: Msg }[] = [
   { id: "cles", label: "cles.titre" },
   { id: "chaine", label: "chaine.titre" },
   { id: "preuve", label: "onglet.preuve" },
+  { id: "chymie", label: "chymie.h" },
 ];
 
 function JournalPage() {
@@ -33,12 +35,18 @@ function JournalPage() {
 
   return (
     <Shell actuel="journal">
-      <Onglets items={ONGLET_JOURNAL} actuel={onglet} onChange={setOnglet} label={t("accueil.onglets")} />
+      <Onglets
+        items={ONGLET_JOURNAL}
+        actuel={onglet}
+        onChange={setOnglet}
+        label={t("accueil.onglets")}
+      />
       {onglet === "atelier" ? <Atelier /> : null}
       {onglet === "genese" ? <Genese /> : null}
       {onglet === "cles" ? <Cles /> : null}
       {onglet === "chaine" ? <Chaine /> : null}
       {onglet === "preuve" ? <Merkle /> : null}
+      {onglet === "chymie" ? <Caracteres /> : null}
     </Shell>
   );
 }
