@@ -38,6 +38,7 @@ import { tourDe } from "./jauge.ts";
 import { memeOrbiteLue, tientAxeElite, tientAxeSupreme } from "./lecture.ts";
 import { memeOrbite } from "./groupe.ts";
 import { objetDepuisGraine } from "./objets.ts";
+import { CRANS, quantiteDon, type Spawn } from "./pendule.ts";
 import { paireDe, qDeMot, type LecturePaire, type Membre } from "./resonance.ts";
 import { PORTES, QUARTIERS, quartierDe } from "./sceaux.ts";
 import type { SignatureId } from "./signatures.ts";
@@ -163,6 +164,44 @@ export function echosAccomplis(t: Tour, b: number): [number, number][] {
 
 export type Arrivee = { coffre: Coffre; echos: [number, number][]; dons: ObjetPorte[] };
 
+/** Le tag du don du pendule : une graine par (maître, run, étape, étage, spawn). */
+const TAG_DON = utf8("eidos-don/1");
+
+/**
+ * Le don d'arrivée du pendule (docs/SPEC_AURA_PENDULE9.md §10, §15).
+ *
+ * La position du pendule ne donne pas une pile d'objets — un `ObjetPorte` n'a ni quantité ni
+ * charges, et neuf objets par étage noieraient le sac de 27. Elle donne une **chance** :
+ * `quantiteDon(spawn) / 9`, de 1/9 sur Uranie à 9/9 sur Terre, la source. Quand elle tombe,
+ * c'est UN objet, du genre que `genreDon` a déjà fixé — le hachage décide du genre, la position
+ * décide de la fréquence, et rien d'autre ne change.
+ *
+ * Déterministe : même maître, même run, même étape, même étage, même spawn ⇒ même réponse.
+ */
+export function donDuPendule(
+  c: Pick<Coffre, "maitre" | "n" | "objets">,
+  etape: number,
+  etage: number,
+  spawn: Spawn,
+): ObjetPorte | null {
+  const g = sha256d(
+    concat(TAG_DON, utf8(`${c.maitre}/${c.n}`), u32(etape), u32(etage), u32(spawn.x), u32(spawn.y)),
+  );
+  // le premier octet tire la chance : g[0] mod 9 < quantité ⇒ un don, sinon rien
+  if (g[0]! % CRANS >= quantiteDon(spawn)) return null;
+  const o = objetDepuisGraine(g, quartierDe(etage));
+  return habille(
+    {
+      mot: o.mot,
+      archetype: o.archetype,
+      age: o.age,
+      nonce: ((g[8]! << 8) | g[9]!) & 65535,
+      hauteur: etage,
+    },
+    g[10]!,
+  );
+}
+
 /**
  * Arrive à l'étage. Monter garde `depuis` ; descendre le pose à l'arrivée.
  * La capture libérée ne vaut que pour un étage : elle est rendue.
@@ -183,6 +222,18 @@ export function arriverDansCoffre(c: Coffre, etage: number): Arrivee {
   const echos = monte ? echosAccomplis(next, e) : [];
   const dons: ObjetPorte[] = [];
   let objets = c.objets ?? [];
+  // Le don du pendule : en montant, dans une ascension, et HORS VEILLÉE.
+  // Pendant une veillée le sac de 27 est déjà l'enjeu — « sac plein : franchir, ou s'effacer ».
+  // Y ajouter un don par étage changerait l'économie d'une veillée, qui est jugée et déposée :
+  // ce n'est pas une addition, c'est une refonte, et elle demande une décision à part.
+  const asc = next.ascension;
+  if (monte && asc && asc.fin === null && !next.veillee) {
+    const d = donDuPendule(c, asc.etape, e, asc.spawn);
+    if (d) {
+      dons.push(d);
+      objets = [...objets, d];
+    }
+  }
   for (const [a, b] of echos) {
     const don = elixirDansCoffre(c, graineEcho(a, b, c), quartierDe(b), "mercure", biomeDe(b).id);
     dons.push(don);

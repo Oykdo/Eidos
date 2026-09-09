@@ -464,7 +464,10 @@ dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible
      fiction), K17 et K23 réécrits. Un seul pendule.
   8. Spinor : `spinor.ts` existe côté atelier (SU(2)/SO(3)) et pourrait porter l'orientation des
      modes p/d au lieu d'une nouvelle table.
-  10. Donner le don : `don()` (genre + quantité) n'est appelé par aucune scène ; l'arrivée d'étage
+  10. FAIT hors veillée (2026-09-08, spec §15) — `donDuPendule` dans `secrets.ts`, appelé par
+     `arriverDansCoffre` : la quantité du pendule est une CHANCE (quantité/9), pas une pile ;
+     un objet quand elle tombe. Reste : le cas de la veillée, où le sac de 27 est déjà l'enjeu —
+     refonte de l'économie, pas addition. Ancienne entrée : Donner le don : `don()` (genre + quantité) n'est appelé par aucune scène ; l'arrivée d'étage
      ne distribue rien encore — chantier de jeu (`veillee-tour.ts`, hôtes, sac de 27 places).
   9. Titre « sans Cube » : impossible tant que le Cube n'est pas un `CHOIX` du pendule (la trace ne
      le voit pas) ; exige un `TAG_PENDULE` versionné.
