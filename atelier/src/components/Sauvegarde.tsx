@@ -3,7 +3,6 @@ import { Download, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCoffre } from "@/lib/store.ts";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
-import { Caracteres } from "@/components/chymie/Caracteres.tsx";
 import { Papier } from "@/components/papier/Papier.tsx";
 import { proposerCarnet, type IssueSauver } from "@/lib/eidos/sauver.ts";
 
@@ -45,45 +44,44 @@ export function Sauvegarde() {
 
   return (
     <>
-    <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6 print:hidden">
-      <h2 className="font-mono text-base font-normal text-encre">{t("psnx.exporter")}</h2>
-      <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
-        {t("psnx.aide")}
-      </p>
-      <div className="flex flex-col gap-2">
-        <Button type="button" variant="or" onClick={() => void sauver()}>
-          <Download className="size-4" strokeWidth={1.75} />
-          {t("psnx.exporter")}
-        </Button>
-        <Button type="button" variant="discret" onClick={() => inputRef.current?.click()}>
-          <FolderOpen className="size-4" strokeWidth={1.75} />
-          {t("psnx.importer")}
-        </Button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".carnet,.eidos,.psnx,.json,application/json,application/octet-stream,text/plain"
-          className="sr-only"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) ouvrir(f);
-            e.target.value = "";
-          }}
-        />
-      </div>
-      <p className="mt-3 min-h-5 font-mono text-sm" role="status">
-        {statut ? <span className="text-cuivre">{statut}</span> : null}
-        {!statut && erreur ? <span className="text-fer">{erreur}</span> : null}
-        {!statut && !erreur && flash ? <span className="text-cuivre">{flash}</span> : null}
-        {psnx ? (
-          <span className="mt-1 block text-[11px] text-sourd">
-            {t("psnx.digest")} · {psnx.digest.slice(0, 16)}…
-          </span>
-        ) : null}
-      </p>
-    </section>
-    <Caracteres />
-    <Papier />
+      <section className="rounded-lg bg-carte p-5 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-6 print:hidden">
+        <h2 className="font-mono text-base font-normal text-encre">{t("psnx.exporter")}</h2>
+        <p className="mb-4 mt-1 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">
+          {t("psnx.aide")}
+        </p>
+        <div className="flex flex-col gap-2">
+          <Button type="button" variant="or" onClick={() => void sauver()}>
+            <Download className="size-4" strokeWidth={1.75} />
+            {t("psnx.exporter")}
+          </Button>
+          <Button type="button" variant="discret" onClick={() => inputRef.current?.click()}>
+            <FolderOpen className="size-4" strokeWidth={1.75} />
+            {t("psnx.importer")}
+          </Button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".carnet,.eidos,.psnx,.json,application/json,application/octet-stream,text/plain"
+            className="sr-only"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) ouvrir(f);
+              e.target.value = "";
+            }}
+          />
+        </div>
+        <p className="mt-3 min-h-5 font-mono text-sm" role="status">
+          {statut ? <span className="text-cuivre">{statut}</span> : null}
+          {!statut && erreur ? <span className="text-fer">{erreur}</span> : null}
+          {!statut && !erreur && flash ? <span className="text-cuivre">{flash}</span> : null}
+          {psnx ? (
+            <span className="mt-1 block text-[11px] text-sourd">
+              {t("psnx.digest")} · {psnx.digest.slice(0, 16)}…
+            </span>
+          ) : null}
+        </p>
+      </section>
+      <Papier />
     </>
   );
 }
