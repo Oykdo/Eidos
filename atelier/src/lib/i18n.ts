@@ -835,7 +835,7 @@ export const FR = {
   "sig.m.terre": "terre",
 
   "creer.titre": "Créer mon coffre",
-  "creer.lede": "Secret sur cet appareil. Puis eidos.carnet.",
+  "creer.lede": "Repart d'un coffre vide, sur cet appareil. Puis eidos.carnet.",
   "creer.bouton": "Créer mon coffre",
   "creer.fait": "Coffre créé.",
   "robinet.bouton": "Robinet · +1",
@@ -1722,7 +1722,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "sig.m.lune": "silver",
   "sig.m.terre": "earth",
   "creer.titre": "Create my vault",
-  "creer.lede": "Secret stays on this device. Then eidos.carnet.",
+  "creer.lede": "Starts from an empty vault, on this device. Then eidos.carnet.",
   "creer.bouton": "Create my vault",
   "creer.fait": "Vault created.",
   "robinet.bouton": "Tap · +1",
