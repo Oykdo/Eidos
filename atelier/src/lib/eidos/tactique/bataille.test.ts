@@ -45,6 +45,9 @@ import {
   DIV_DOS,
   DIV_REPRISE,
   GRILLE_N,
+  PA_DEPLACER,
+  PA_FRAPPER,
+  PA_PAR_TOUR,
   RejetTactique,
   type Acte,
   type Case,
@@ -203,8 +206,7 @@ function brute(b: Brute): Unite {
     pos: b.pos,
     precedente: null,
     tenue: b.tenue ?? TENUE_BASE + MULT_TENUE * ecu,
-    aFrappe: false,
-    aDeplace: false,
+    pa: PA_PAR_TOUR,
   };
 }
 
@@ -258,7 +260,7 @@ describe("bataille — ouverture", () => {
       etat.unites.map((u) => u.camp),
       ["coffre", "coffre", "indechiffre"],
     );
-    assert.ok(etat.unites.every((u) => !u.aFrappe && !u.aDeplace && u.precedente === null));
+    assert.ok(etat.unites.every((u) => u.pa === PA_PAR_TOUR && u.precedente === null));
     assert.equal(etat.tour, 1);
     assert.equal(etat.phase, "coffre");
     assert.equal(etat.feuilles, 12);
@@ -478,28 +480,64 @@ describe("bataille — les sept refus", () => {
     );
   });
 
-  it("doit échouer — jouer : deux déplacements dans le même tour", () => {
+  it("le double pas : deux déplacements dans le tour, et le troisième doit échouer", () => {
     const etat = poser([brute({ pos: MANEGE.g })], [brute({ pos: TRIO.centre })]);
     const un = jouer(etat, { geste: "deplacer", unite: 0, vers: MANEGE.dr });
-    assert.ok(un.unites[0]!.aDeplace);
+    assert.equal(un.unites[0]!.pa, PA_PAR_TOUR - PA_DEPLACER);
     assert.deepEqual(un.unites[0]!.precedente, MANEGE.g);
+    // Ce que les deux drapeaux interdisaient : repartir dans le même tour.
+    const deux = jouer(un, { geste: "deplacer", unite: 0, vers: MANEGE.g });
+    assert.equal(deux.unites[0]!.pa, 0);
+    assert.deepEqual(deux.unites[0]!.pos, MANEGE.g);
+    assert.deepEqual(deux.unites[0]!.precedente, MANEGE.dr);
     assert.throws(
-      () => jouer(un, { geste: "deplacer", unite: 0, vers: MANEGE.g }),
-      (e: unknown) => e instanceof RejetTactique && /déjà déplacée/.test(e.message),
+      () => jouer(deux, { geste: "deplacer", unite: 0, vers: MANEGE.dr }),
+      (e: unknown) => e instanceof RejetTactique && /0 PA au lieu de 1/.test(e.message),
+    );
+    assert.deepEqual(
+      actesPossibles(deux, 0).map((a) => a.geste),
+      ["passer"],
     );
   });
 
-  it("doit échouer — jouer : la cible est hors de portée, puis deux frappes dans le tour", () => {
+  it("doit échouer — jouer : la cible est hors de portée ; la double frappe coûte deux feuilles", () => {
     const loin = poser([brute({ pos: LOIN.a })], [brute({ pos: LOIN.b })]);
     assert.ok(portee(loin.unites[0]!) < LOIN.d, "la portée doit rester sous la diagonale");
     assert.throws(() => jouer(loin, { geste: "frapper", unite: 0, cible: 1 }), RejetTactique);
-    const pres = poser([brute({ pos: TRIO.ouest })], [brute({ pos: TRIO.centre })]);
-    const un = jouer(pres, { geste: "frapper", unite: 0, cible: 1 });
-    assert.ok(un.unites[0]!.aFrappe);
-    assert.throws(
-      () => jouer(un, { geste: "frapper", unite: 0, cible: 1 }),
-      (e: unknown) => e instanceof RejetTactique && /déjà frappé/.test(e.message),
+    // Une grosse tenue en face : deux coups ne suffisent pas à clore la bataille.
+    const pres = poser(
+      [brute({ pos: TRIO.ouest, lame: 8, ecu: 8, eperon: 8, arc: 40 })],
+      [brute({ pos: TRIO.centre, lame: 8, ecu: 40, eperon: 8, arc: 8 })],
     );
+    const un = jouer(pres, { geste: "frapper", unite: 0, cible: 1 });
+    assert.equal(un.unites[0]!.pa, PA_PAR_TOUR - PA_FRAPPER);
+    assert.equal(un.feuilles, pres.feuilles - 1);
+    const deux = jouer(un, { geste: "frapper", unite: 0, cible: 1 });
+    assert.equal(deux.unites[0]!.pa, 0);
+    assert.equal(deux.feuilles, pres.feuilles - 2, "un coup, une feuille : deux coups, deux");
+    assert.equal(deux.journal.length, 2);
+    assert.throws(
+      () => jouer(deux, { geste: "frapper", unite: 0, cible: 1 }),
+      (e: unknown) => e instanceof RejetTactique && /0 PA au lieu de 1/.test(e.message),
+    );
+  });
+
+  it("frapper puis se retirer : un coup, un pas, et la charge ne rejoue pas", () => {
+    const etat = poser(
+      [brute({ pos: TRIO.ouest, lame: 8, ecu: 8, eperon: 40, arc: 8 })],
+      [brute({ pos: TRIO.centre, lame: 8, ecu: 40, eperon: 8, arc: 8 })],
+    );
+    const frappe = jouer(etat, { geste: "frapper", unite: 0, cible: 1 });
+    assert.equal(frappe.journal[0]!.charge, 0, "on n'a pas bougé avant de frapper");
+    const couts = accessibles(frappe.obstacles, frappe.unites, frappe.unites[0]!, pas(frappe.unites[0]!));
+    const fuite = casesDe(couts).find(
+      (c) => !memeCase(c, TRIO.ouest) && distance(c, TRIO.centre) > distance(TRIO.ouest, TRIO.centre),
+    );
+    assert.ok(fuite !== undefined, "il doit rester une case en arrière");
+    const retiree = jouer(frappe, { geste: "deplacer", unite: 0, vers: fuite });
+    assert.equal(retiree.unites[0]!.pa, 0);
+    assert.equal(retiree.journal.length, 1, "se retirer n'ajoute aucun coup");
+    assert.equal(retiree.feuilles, etat.feuilles - 1, "se retirer ne signe rien");
   });
 
   it("doit échouer — jouer : plus une feuille, plus une frappe (état forgé)", () => {
@@ -582,7 +620,7 @@ describe("bataille — la feuille", () => {
     const etat = poser([brute({ pos: TRIO.ouest })], [brute({ pos: TRIO.centre })]);
     const apres = jouer(etat, { geste: "passer", unite: 0 });
     assert.equal(apres.feuilles, etat.feuilles);
-    assert.ok(apres.unites[0]!.aFrappe && apres.unites[0]!.aDeplace);
+    assert.equal(apres.unites[0]!.pa, 0);
     assert.deepEqual(
       actesPossibles(apres, 0).map((a) => a.geste),
       ["passer"],
@@ -651,11 +689,11 @@ describe("bataille — phases et télégraphie", () => {
     assert.equal(adverse.tour, 1);
     assert.equal(adverse.unites[0]!.tenue, tenueAvant + div(20, DIV_REPRISE));
     assert.equal(adverse.unites[1]!.tenue, joue.unites[1]!.tenue, "qui a agi ne reprend rien");
-    assert.ok(adverse.unites[1]!.aFrappe, "qui a passé garde ses drapeaux jusqu'à sa phase");
+    assert.equal(adverse.unites[1]!.pa, 0, "qui a passé garde ses PA à zéro jusqu'à sa phase");
     const retour = finDePhase(adverse);
     assert.equal(retour.phase, "coffre");
     assert.equal(retour.tour, 2);
-    assert.ok(!retour.unites[1]!.aFrappe && !retour.unites[1]!.aDeplace);
+    assert.equal(retour.unites[1]!.pa, PA_PAR_TOUR);
   });
 
   it("l'intention est une figure : annoncée, puis rendue fausse quand la cible s'écarte", () => {
@@ -841,7 +879,7 @@ describe("bataille — la riposte", () => {
     assert.equal(rendu.porte, COUP_BASE + 12 + rendu.accord + rendu.dos + rendu.allonge);
     assert.equal(apres.unites[0]!.tenue, avant - rendu.porte, "le riposté n'a pas encaissé");
     assert.equal(apres.feuilles, etat.feuilles - 1, "la riposte a coûté une feuille");
-    assert.equal(apres.unites[1]!.aFrappe, false, "la riposte a mangé la frappe du tour");
+    assert.equal(apres.unites[1]!.pa, PA_PAR_TOUR, "la riposte ne coûte aucun PA au riposteur");
     // Le riposteur garde son acte : il frappe encore quand vient sa phase.
     const sien = finDePhase(apres);
     assert.ok(actesPossibles(sien, 1).some((a) => a.geste === "frapper"));

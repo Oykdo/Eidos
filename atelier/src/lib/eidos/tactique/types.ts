@@ -8,10 +8,18 @@
  * de la bataille**. Aucune loi de `integrite.ts` n'est touchée : la norme du
  * mot est conservée, l'objet ne mute pas, un palier ne multiplie rien.
  *
+ * Un tour d'unité vaut **deux points d'action** (`PA_PAR_TOUR`). Se déplacer
+ * en coûte un, frapper en coûte un *et une feuille*, passer les rend tous.
+ * Les deux gestes se combinent librement : avancer puis frapper, frapper puis
+ * se retirer, avancer deux fois, frapper deux fois. Le prix est **plat pour
+ * toutes les unités** — `eperon` a déjà quatre prix (le pas, le rang de
+ * phase, la riposte, la charge), il n'en reçoit pas un cinquième.
+ *
  * Se déplacer, mesurer une portée, lire une intention : gratuit. **Frapper
  * signe** : un coup consomme une feuille de l'arbre XMSS de la veillée
  * (`veillee.ts`), dans l'ordre, sans retour. C'est la seule dépense — la
- * **riposte** n'en est pas une : personne ne la choisit, elle ne se signe pas.
+ * **riposte** n'en est pas une : personne ne la choisit, elle ne se signe pas,
+ * et elle ne coûte **aucun PA** au riposteur.
  *
  * Tout est entier. Aucun flottant, aucun `Math.random`, aucune date : deux
  * rejeux d'une même suite d'actes rendent le même état, à l'octet. C'est la
@@ -81,6 +89,30 @@ export const DIV_ALLONGE = 2;
  */
 export const CHARGE_PAR_CASE = 4;
 
+/**
+ * Points d'action d'une unité par tour. Deux, et plats : la même dotation
+ * pour un colosse et pour un coureur.
+ *
+ * Deux drapeaux (`aDeplace`, `aFrappe`) tenaient ce compte avant : ils
+ * autorisaient un déplacement **et** une frappe, jamais deux du même geste.
+ * Un compteur les remplace, et ce qu'il ouvre est ce qu'on cherchait — le
+ * **double pas** (approcher ou décrocher de `2·pas` en un tour, sans frapper)
+ * et la **double frappe** (deux coups, donc deux feuilles). La feuille est le
+ * frein : un tour à deux coups vaut deux tours d'arbre.
+ *
+ * Pourquoi pas trois, ni un par axe : trois PA rendraient le double pas *et*
+ * la frappe possibles dans le même tour, ce qui annule la zone de contrôle ;
+ * un PA acheté par un axe ferait de `eperon` un cinquième prix et rouvrirait
+ * le §9 ter de `SPEC_TACTIQUE.md`.
+ */
+export const PA_PAR_TOUR = 2;
+
+/** Ce que coûte un pas. Un geste, un point : aucune remise, aucun supplément. */
+export const PA_DEPLACER = 1;
+
+/** Ce que coûte un coup porté — en plus de la feuille signée. */
+export const PA_FRAPPER = 1;
+
 /** Deux camps. Les Indéchiffrés sont les mots qu'aucune forme ne range. */
 export const CAMPS = ["coffre", "indechiffre"] as const;
 export type Camp = (typeof CAMPS)[number];
@@ -92,8 +124,8 @@ export type Case = { readonly x: number; readonly y: number };
  * Une unité en bataille.
  *
  * `mot`, `archetype`, `age`, `classe`, `axes` sont l'identité : figés pour
- * toute la bataille et au-delà. `pos`, `tenue`, `aFrappe`, `aDeplace` sont
- * l'état éphémère : jeté à la fin.
+ * toute la bataille et au-delà. `pos`, `tenue`, `pa` sont l'état éphémère :
+ * jeté à la fin.
  */
 export type Unite = {
   readonly id: number;
@@ -115,11 +147,19 @@ export type Unite = {
   readonly elan: number;
   /** Éphémère. Part de `axes.ecu`, tombe à 0 : l'unité est retirée. */
   readonly tenue: number;
-  readonly aFrappe: boolean;
-  readonly aDeplace: boolean;
+  /**
+   * Points d'action restants dans le tour, `0..PA_PAR_TOUR`. Entre dans la
+   * trace : deux échiquiers qui ne diffèrent que par les PA sont deux états
+   * distincts, parce qu'ils n'offrent pas les mêmes suites.
+   */
+  readonly pa: number;
 };
 
-/** Un acte du joueur ou de l'IA. Seul `frapper` consomme une feuille. */
+/**
+ * Un acte du joueur ou de l'IA. `deplacer` et `frapper` coûtent chacun un PA ;
+ * seul `frapper` consomme en plus une feuille. `passer` rend le tour de
+ * l'unité : ses PA tombent à zéro, elle ne reprend pas.
+ */
 export type Acte =
   | { readonly geste: "deplacer"; readonly unite: number; readonly vers: Case }
   | { readonly geste: "frapper"; readonly unite: number; readonly cible: number }
