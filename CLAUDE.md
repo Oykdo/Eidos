@@ -44,7 +44,7 @@ wots.py             WOTS+ w=16 (RFC 8391), arbre L, adresses, empreintes (5 cont
 utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (15 contrôles)
 federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
 vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (10 familles)
-noeud.py            nœud du testnet : rejeu, forge, robinet, envois, --depuis, reliques, etat.json (5 + 3 + 4 + 4 contrôles)
+noeud.py            nœud du testnet : rejeu, forge, robinet groupé, envois, --depuis, reliques (1+5+5+4+2+5 contrôles)
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
 reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
@@ -87,6 +87,11 @@ zone de contrôle, parcours entier), `unite.ts` (pas, portée, tenue, points d'a
 `grille`, `unite`, `bataille` et `ia` ont chacun leur `.test.ts`. **`bataille.ts`
 n'importe rien d'`ia.ts`** : le moteur ne connaît aucune politique, `ouvrirBataille` et
 `finDePhase` rendent un état sans intentions, et c'est `annoncer` qui les y pose.
+`lignee.ts` porte l'échange d'objets : un objet est tenu par une sortie, changer de
+mains c'est **dépenser** cette sortie, et la duplication échoue parce que c'est une
+double dépense — pas par une règle neuve. Le module ne parle jamais au réseau : les
+deux questions qui l'exigent (ce txid est-il dans un bloc ? cette sortie est-elle
+vive ?) lui sont **passées** (`Regard`), comme la politique l'est au moteur.
 `npm test` énumère ses fichiers dans `package.json` :
 un `.test.ts` nouveau s'y ajoute à la main.
 
@@ -142,6 +147,22 @@ un `.test.ts` nouveau s'y ajoute à la main.
   demandes en attente, jamais la file entière.
 - **Aucun état local versionné** hors `chaine-eidos.dat`, `etat.json`,
   `mempool.json` (job `hygiene`). Pas de `chaine.dat`, pas de `portefeuille.json`.
+- **Deux corpus d'invariants, et il ne faut pas les confondre.** Les six lois
+  de `integrite.ts` — conservation, groupe, doxa, sceau, epoques, resonance —
+  sont des **conventions de conception** : 63 lignes, une seule vérification à
+  l'exécution, assurées par `integrite.test.ts`, et **aucune ne franchit la
+  frontière du TypeScript** (grep sur tout le Python : zéro ; aucune des onze
+  familles de `vecteurs.json` n'en est une). L'auteur peut les réviser. Les
+  invariants de cette section-ci, non : les casser scinde la chaîne. Ne jamais
+  invoquer « la loi » pour refuser une mécanique de jeu sans dire de quel
+  corpus on parle.
+- **Le robinet groupe ses versements.** Un témoin WOTS+ pèse 2 177 octets, une
+  sortie 28 : un témoin vaut 77 sorties. `construire_paiements` paie donc
+  plusieurs joueurs par transaction. `MAX_PAIEMENTS` (64) borne les **joueurs**
+  servis par bloc ; `MAX_RENDUS` (3) borne les **transactions**, donc les
+  sorties de rendu, donc l'étendue du balayage de `sorties_tresor` sur tout
+  l'historique — **ne jamais le baisser**, les pièces des blocs déjà forgés
+  deviendraient introuvables.
 - **Figures ≠ preuves.** L'Arbre, les Signes, les reliques, les artefacts sont
   des lectures ; seuls le carnet, la chaîne et les signatures engagent. Ne jamais
   présenter une figure comme une garantie dans le code, les tests ou les textes.
@@ -169,16 +190,16 @@ python3 robinet.py --test      # 14
 python3 courriel.py --test     # 6
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
-python3 -c "import noeud as N; N._test_paiements()"   # 3
+python3 -c "import noeud as N; N._test_paiements()"   # 5 (dont le groupement)
 python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 -c "import noeud as N; N._test_indice()"      # 2
-python3 -c "import noeud as N; N._test_reliques()"    # 4
+python3 -c "import noeud as N; N._test_reliques()"    # 5
 python3 qr.py --test           # 5
 python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 409 suites Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 566 tests Eidos
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 ```
 

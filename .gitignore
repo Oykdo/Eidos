@@ -60,6 +60,20 @@ docs/prive/
 # fichiers reçus d'une autre session, fusionnés à la main : jamais versionnés tels quels
 atelier/docs/expé/
 
+# planches et prototypes déposés à la racine : ce sont des références de travail
+# — une planche cryptographique à l'essai, un bandeau, une icône de travail —
+# et elles n'appartiennent pas au dépôt. Les images qui comptent vivent sous
+# `atelier/public/` ou `docs/` et sont ajoutées à la main.
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*.svg
+/*_prototype.*
+# ...sauf les deux marques, qui sont du dépôt et déjà versionnées.
+!/bandeau.svg
+!/icone.svg
+
 # références de travail déposées dans docs/ : captures d'écran, planches, photos.
 # Elles nourrissent la conception, elles n'appartiennent pas au dépôt — poids,
 # contenu de tiers, et rien qu'un texte ne puisse porter. Les specs, si.
