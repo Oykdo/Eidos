@@ -19,7 +19,13 @@ import {
   voisines,
   zoneDeControle,
 } from "./grille.ts";
-import { GRILLE_N, type Camp, type Case, type Unite } from "./types.ts";
+import {
+  GRILLE_N,
+  PA_PAR_TOUR,
+  type Camp,
+  type Case,
+  type Unite,
+} from "./types.ts";
 
 /** Axes d'essai : somme 64, quatre parts égales. On teste la grille, pas le mot. */
 const AXES: Combat = {
@@ -44,8 +50,7 @@ function u(id: number, camp: Camp, x: number, y: number, tenue = 8): Unite {
     axes: AXES,
     pos: { x, y },
     tenue,
-    aFrappe: false,
-    aDeplace: false,
+    pa: PA_PAR_TOUR,
   };
 }
 

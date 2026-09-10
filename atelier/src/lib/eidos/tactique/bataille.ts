@@ -33,11 +33,19 @@
  * c'est voulu, elle doit valoir davantage à qui frappe faible, sinon `eperon`
  * reste mort à l'extrême (mesuré : 5,85 % de victoires au tier le plus haut).
  *
- * Se déplacer, passer, lire une intention : gratuit. **Frapper signe** : un
- * coup consomme une feuille. Une **riposte** n'en consomme aucune — ce n'est
- * pas un acte, personne ne la choisit — et ne dépense pas la frappe du tour
- * du riposteur. À zéro feuille l'arbre est vide, la bataille est `epuise` —
- * une fin, pas un blocage.
+ * **Deux points d'action par unité et par tour** (`PA_PAR_TOUR`), plats pour
+ * toutes. Un pas en coûte un, un coup en coûte un, `passer` les rend tous.
+ * L'ordre est libre et les répétitions aussi : avancer puis frapper (avec la
+ * charge), **frapper puis se retirer** — ce que les deux drapeaux d'avant
+ * interdisaient à qui voulait aussi approcher —, avancer deux fois (`2·pas`
+ * en un tour, sans frapper), frapper deux fois (deux feuilles). Le prix ne
+ * dépend d'aucun axe : `eperon` en a déjà quatre.
+ *
+ * Se déplacer, passer, lire une intention : gratuit en feuilles. **Frapper
+ * signe** : un coup consomme une feuille. Une **riposte** ne consomme ni
+ * feuille ni PA — ce n'est pas un acte, personne ne la choisit. À zéro
+ * feuille l'arbre est vide, la bataille est `epuise` — une fin, pas un
+ * blocage.
  *
  * LIMITE mesurée — **l'extrémité d'un mot reste un malus, pas un sidegrade.**
  * Sur 330 144 duels du moteur (2 000 mots, huit distances d'engagement, trois
@@ -85,6 +93,8 @@ import {
   voisines,
 } from "./grille.ts";
 import {
+  aDesPa,
+  depenser,
   deplacer,
   encaisser,
   nouveauTour,
@@ -92,6 +102,7 @@ import {
   portee,
   poser,
   reprendre,
+  terminerTour,
   vivante,
 } from "./unite.ts";
 import {
@@ -103,6 +114,9 @@ import {
   DIV_ALLONGE,
   DIV_DOS,
   GRILLE_N,
+  PA_DEPLACER,
+  PA_FRAPPER,
+  PA_PAR_TOUR,
   RejetTactique,
   type Acte,
   type Camp,
@@ -200,8 +214,7 @@ export function ouvrirBataille(
         camp,
         precedente: null,
         elan: 0,
-        aFrappe: false,
-        aDeplace: false,
+        pa: PA_PAR_TOUR,
       };
       if (!dansGrille(u.pos))
         throw new RejetTactique(
@@ -299,8 +312,8 @@ export function resoudreCoup(etat: EtatBataille, attaquant: number, cible: numbe
  *   3. `d.eperon > a.eperon`, **strictement** : à égalité, personne ne rend
  *      rien. C'est là qu'`eperon` se paie.
  *
- * La riposte n'est pas un acte : elle ne consomme aucune feuille, elle ne
- * dépense pas la frappe du tour du riposteur, elle ne se refuse pas. Elle
+ * La riposte n'est pas un acte : elle ne consomme ni feuille ni point
+ * d'action du riposteur, et elle ne se refuse pas. Elle
  * entre au journal comme un `Coup` marqué `riposte`. **On ne riposte jamais
  * à une riposte** : `jouer` est le seul appelant, et il ne l'appelle que sur
  * le coup porté.
@@ -323,9 +336,10 @@ export function riposteDe(etat: EtatBataille, coup: Coup): Coup | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Ce que l'unité peut encore faire dans la phase. Une lecture : gratuite,
- * elle n'engage rien. Ordre canonique — déplacements par (y, x), frappes par
- * id de cible, puis `passer`, toujours possible pour qui est en lice.
+ * Ce que l'unité peut encore faire dans la phase, **avec les PA qui lui
+ * restent**. Une lecture : gratuite, elle n'engage rien. Ordre canonique —
+ * déplacements par (y, x), frappes par id de cible, puis `passer`, toujours
+ * possible pour qui est en lice, même sans un PA.
  */
 export function actesPossibles(etat: EtatBataille, unite: number): Acte[] {
   if (etat.fin !== null) return [];
@@ -333,13 +347,13 @@ export function actesPossibles(etat: EtatBataille, unite: number): Acte[] {
   if (u === undefined || u.camp !== etat.phase || !vivante(u)) return [];
   const vis = vivantesDe(etat);
   const out: Acte[] = [];
-  if (!u.aDeplace) {
+  if (aDesPa(u, PA_DEPLACER)) {
     const cases = casesDe(accessibles(etat.obstacles, vis, u, pas(u))).filter(
       (c) => !memeCase(c, u.pos),
     );
     for (const vers of cases) out.push({ geste: "deplacer", unite: u.id, vers });
   }
-  if (!u.aFrappe && (u.camp !== "coffre" || etat.feuilles > 0)) {
+  if (aDesPa(u, PA_FRAPPER) && (u.camp !== "coffre" || etat.feuilles > 0)) {
     for (const p of ciblesDe(vis, u, portee(u)))
       out.push({ geste: "frapper", unite: u.id, cible: p.id });
   }
@@ -357,9 +371,9 @@ export function jouer(etat: EtatBataille, acte: Acte): EtatBataille {
   if (!vivante(u)) throw new RejetTactique(`unité ${u.id} tenue 0 au lieu de 1 au moins`);
   const vis = vivantesDe(etat);
   if (acte.geste === "deplacer") {
-    if (u.aDeplace)
+    if (!aDesPa(u, PA_DEPLACER))
       throw new RejetTactique(
-        `unité ${u.id} déjà déplacée au lieu d'un déplacement par tour`,
+        `unité ${u.id} : ${u.pa} PA au lieu de ${PA_DEPLACER} pour se déplacer`,
       );
     const couts = accessibles(etat.obstacles, vis, u, pas(u));
     if (memeCase(acte.vers, u.pos) || !couts.has(cle(acte.vers)))
@@ -372,8 +386,10 @@ export function jouer(etat: EtatBataille, acte: Acte): EtatBataille {
     });
   }
   if (acte.geste === "frapper") {
-    if (u.aFrappe)
-      throw new RejetTactique(`unité ${u.id} a déjà frappé au lieu d'une frappe par tour`);
+    if (!aDesPa(u, PA_FRAPPER))
+      throw new RejetTactique(
+        `unité ${u.id} : ${u.pa} PA au lieu de ${PA_FRAPPER} pour frapper`,
+      );
     // L'arbre est celui du joueur : seuls ses coups brûlent une feuille.
     // Un Indéchiffré frappe sans rien signer — il n'a pas de clé.
     if (u.camp === "coffre" && etat.feuilles < 1)
@@ -387,7 +403,7 @@ export function jouer(etat: EtatBataille, acte: Acte): EtatBataille {
     const coup = resoudreCoup(etat, u.id, d.id);
     const unites = etat.unites.map((x) =>
       x.id === u.id
-        ? { ...x, aFrappe: true }
+        ? depenser(x, PA_FRAPPER)
         : x.id === d.id
           ? encaisser(x, coup.porte)
           : x,
@@ -410,18 +426,19 @@ export function jouer(etat: EtatBataille, acte: Acte): EtatBataille {
   }
   return avecFin({
     ...etat,
-    unites: remplacer(etat.unites, { ...u, aFrappe: true, aDeplace: true }),
+    unites: remplacer(etat.unites, terminerTour(u)),
   });
 }
 
 /**
  * La case quittée se note au moment du pas : c'est elle que le défenseur
- * surveille, et c'est d'elle que `estDeDos` tire le dos. Le **coût du chemin**
- * s'y note aussi — c'est l'élan, et c'est lui que la charge paie : contourner
- * un mur coûte les cases du détour, pas la distance à vol d'oiseau.
+ * surveille, et c'est d'elle que `estDeDos` tire le dos. Le **coût du
+ * chemin** s'y note aussi — c'est l'élan, et c'est lui que la charge paie :
+ * contourner un mur coûte les cases du détour, pas la distance à vol d'oiseau.
+ * Le point d'action se dépense ici, une fois le pas fait.
  */
 function marquerDeplacee(u: Unite, vers: Case, cout: number): Unite {
-  return { ...deplacer(u, vers, cout), precedente: u.pos, aDeplace: true };
+  return depenser(deplacer(u, vers, cout), PA_DEPLACER);
 }
 
 /** Rejoue une suite d'actes. Les passages de main ne sont pas des actes. */
@@ -466,9 +483,9 @@ export function ordreDePhase(etat: EtatBataille, camp: Camp = etat.phase): numbe
 }
 
 /**
- * Passe la main. Les unités du camp sortant qui n'ont rien fait de tout le tour
+ * Passe la main. Les unités du camp sortant qui gardent **tous** leurs PA
  * reprennent (`arc/DIV_REPRISE`, dans `unite.ts`) ; celles du camp entrant
- * retrouvent leurs deux gestes. Le tour avance quand la main revient au coffre.
+ * retrouvent `PA_PAR_TOUR`. Le tour avance quand la main revient au coffre.
  * Une bataille finie ne passe plus la main.
  */
 export function finDePhase(etat: EtatBataille): EtatBataille {
@@ -478,8 +495,7 @@ export function finDePhase(etat: EtatBataille): EtatBataille {
   const unites = etat.unites.map((u) => {
     // Le camp qui sort s'arrête : son élan retombe, une riposte n'est jamais
     // une charge. Celui qui n'a rien fait de tout le tour reprend.
-    if (u.camp === sortant)
-      return poser(vivante(u) && !u.aFrappe && !u.aDeplace ? reprendre(u) : u);
+    if (u.camp === sortant) return poser(vivante(u) ? reprendre(u) : u);
     if (u.camp === entrant) return nouveauTour(u);
     return u;
   });
@@ -582,9 +598,11 @@ function octetCase(c: Case | null): Uint8Array {
 
 /**
  * L'empreinte de l'échiquier : étage, unités par id (camp, mot, case, case
- * quittée, élan, tenue, drapeaux), tour, phase, feuilles. La case quittée et
- * l'élan en font partie parce qu'ils entrent dans la résolution — d'eux
- * viennent le dos et la charge. Ni le journal ni les intentions n'y entrent : le journal se déduit des
+ * quittée, élan, tenue, **PA restants**), tour, phase, feuilles. La case
+ * quittée et l'élan en font partie parce qu'ils entrent dans la résolution —
+ * d'eux viennent le dos et la charge ; les PA aussi, parce que deux
+ * échiquiers qui ne diffèrent que par eux n'offrent pas les mêmes suites.
+ * Ni le journal ni les intentions n'y entrent : le journal se déduit des
  * actes rejoués, l'intention est une figure. Deux états identiques rendent la
  * même trace ; un octet d'écart la change.
  */
@@ -600,7 +618,7 @@ export function traceBataille(etat: EtatBataille): string {
       octetCase(u.precedente),
       u8(u.elan),
       u16(u.tenue),
-      u8((u.aFrappe ? 1 : 0) | (u.aDeplace ? 2 : 0)),
+      u8(u.pa),
     );
   }
   morceaux.push(u32(etat.tour), u8(CAMPS.indexOf(etat.phase)), u16(etat.feuilles));

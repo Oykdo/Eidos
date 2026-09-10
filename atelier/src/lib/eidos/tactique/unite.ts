@@ -3,7 +3,7 @@
  *
  * L'identité (mot, archétype, âge, classe, axes) est une **lecture** de
  * l'objet du coffre par `combatDe` : elle ne bouge ni pendant la bataille ni
- * après. Ce qui bouge est la case, la tenue et les deux drapeaux du tour.
+ * après. Ce qui bouge est la case, la tenue et les points d'action du tour.
  *
  * Les trois lectures mécaniques sont des divisions entières de la somme 64 :
  *
@@ -20,9 +20,11 @@
  * en pas, il ne l'a pas en tenue. Le budget de 64 l'interdit par construction,
  * aucun équilibrage à la main n'est possible ni nécessaire.
  *
- * Une unité qui n'a ni frappé ni bougé de tout un tour reprend
+ * Un tour vaut `PA_PAR_TOUR` points d'action, plats pour toute unité. Une
+ * unité qui finit le tour avec **tous** ses PA n'a rien fait : elle reprend
  * `MULT_TENUE·arc/8` de tenue, jamais au-delà de sa tenue de départ. Une unité
- * retirée (`tenue <= 0`) ne reprend rien : on ne relève pas un mot tombé.
+ * retirée (`tenue <= 0`) ne reprend rien : on ne relève pas un mot tombé, et
+ * `passer` vide les PA — attendre volontairement n'est pas ne rien faire.
  *
  * `elan` note les cases parcourues au déplacement du tour : c'est ce que la
  * charge paie (`bataille.ts`), et il s'éteint dès que l'unité s'arrête.
@@ -43,6 +45,7 @@ import {
   COUP_BASE,
   DIV_REPRISE,
   GRILLE_N,
+  PA_PAR_TOUR,
   RejetTactique,
   type Camp,
   type Case,
@@ -126,8 +129,7 @@ export function uniteDepuisObjet(
     pos: { x: pos.x, y: pos.y },
     elan: 0,
     tenue: TENUE_BASE + MULT_TENUE * axes.ecu,
-    aFrappe: false,
-    aDeplace: false,
+    pa: PA_PAR_TOUR,
   };
 }
 
@@ -151,7 +153,8 @@ export function vivante(u: Unite): boolean {
 }
 
 /**
- * Nouvelle unité sur `vers`, marquée déplacée. La case doit être de la dalle.
+ * Nouvelle unité sur `vers`. La case doit être de la dalle. Le point d'action
+ * se dépense à part (`depenser`) : `deplacer` ne fait que déplacer.
  *
  * `elan` est le nombre de cases parcourues — le coût du chemin, pas la
  * distance à vol d'oiseau : contourner un mur fatigue autant qu'avancer tout
@@ -171,8 +174,32 @@ export function deplacer(u: Unite, vers: Case, cout?: number): Unite {
     precedente: { x: u.pos.x, y: u.pos.y },
     pos: { x: vers.x, y: vers.y },
     elan: parcourues,
-    aDeplace: true,
   };
+}
+
+/**
+ * Dépense `cout` points d'action. Refuse si l'unité ne les a pas — c'est le
+ * seul endroit où le compte se vérifie, et il ne se contourne pas : `jouer`
+ * y passe pour chaque geste.
+ */
+export function depenser(u: Unite, cout: number): Unite {
+  if (!Number.isInteger(cout) || cout < 0) {
+    throw new RejetTactique(`coût ${cout} au lieu d'un entier de 0 ou plus`);
+  }
+  if (u.pa < cout) {
+    throw new RejetTactique(`unité ${u.id} : ${u.pa} PA au lieu de ${cout}`);
+  }
+  return { ...u, pa: u.pa - cout };
+}
+
+/** L'unité a-t-elle de quoi payer `cout` PA ? Une lecture, elle n'engage rien. */
+export function aDesPa(u: Unite, cout: number): boolean {
+  return u.pa >= cout;
+}
+
+/** Passer : le tour de l'unité est fini, ses PA tombent. Elle ne reprend pas. */
+export function terminerTour(u: Unite): Unite {
+  return u.pa === 0 ? u : { ...u, pa: 0 };
 }
 
 /** L'élan s'éteint : l'unité s'est arrêtée. On ne riposte jamais en charge. */
@@ -189,17 +216,18 @@ export function encaisser(u: Unite, degat: number): Unite {
 }
 
 /**
- * Reprise : `arc / 8` de tenue à qui n'a ni frappé ni bougé, plafonnée à
- * la tenue de départ. Sans effet sur une unité qui a agi ou qui est retirée —
- * l'unité est alors rendue telle quelle.
+ * Reprise : `arc / 8` de tenue à qui a gardé **tous** ses PA, plafonnée à la
+ * tenue de départ. Sans effet sur une unité qui a dépensé un point ou qui est
+ * retirée — l'unité est alors rendue telle quelle. `passer` vidant les PA,
+ * une unité qui passe ne reprend pas : attendre n'est pas ne rien faire.
  */
 export function reprendre(u: Unite): Unite {
-  if (u.aFrappe || u.aDeplace || !vivante(u)) return u;
+  if (u.pa < PA_PAR_TOUR || !vivante(u)) return u;
   const gain = MULT_TENUE * Math.trunc(u.axes.arc / DIV_REPRISE);
   return { ...u, tenue: Math.min(tenueMax(u), u.tenue + gain) };
 }
 
-/** Nouveau tour : les deux drapeaux retombent, l'élan aussi, la tenue reste. */
+/** Nouveau tour : les PA repartent à `PA_PAR_TOUR`, l'élan à 0, la tenue reste. */
 export function nouveauTour(u: Unite): Unite {
-  return { ...u, aFrappe: false, aDeplace: false, elan: 0 };
+  return { ...u, pa: PA_PAR_TOUR, elan: 0 };
 }

@@ -10,6 +10,8 @@ import {
   PAS_BASE,
   PORTEE_BASE,
   TENUE_BASE,
+  aDesPa,
+  depenser,
   deplacer,
   poser,
   encaisser,
@@ -18,10 +20,18 @@ import {
   portee,
   reprendre,
   tenueMax,
+  terminerTour,
   uniteDepuisObjet,
   vivante,
 } from "./unite.ts";
-import { COUP_BASE, type Unite } from "./types.ts";
+import {
+  COUP_BASE,
+  PA_DEPLACER,
+  PA_FRAPPER,
+  PA_PAR_TOUR,
+  RejetTactique,
+  type Unite,
+} from "./types.ts";
 
 const GRAINE = sha256d(utf8("eidos-tactique-genese"));
 
@@ -61,8 +71,7 @@ describe("unite", () => {
       precedente: null,
       elan: 0,
       tenue: 42,
-      aFrappe: false,
-      aDeplace: false,
+      pa: PA_PAR_TOUR,
     });
     const g = genese();
     assert.equal(tenueMax(g), TENUE_BASE + MULT_TENUE * 5);
@@ -123,30 +132,60 @@ describe("unite", () => {
     assert.equal(reprendre(encaisser(g, 1)).tenue, 42);
   });
 
-  it("reprendre : rien pour qui a agi, rien pour qui est retirée", () => {
+  it("reprendre : rien pour qui a dépensé un PA, rien pour qui est retirée", () => {
     const blessee = encaisser(genese(), 6);
-    assert.equal(reprendre({ ...blessee, aFrappe: true }).tenue, 36);
-    assert.equal(reprendre({ ...blessee, aDeplace: true }).tenue, 36);
-    assert.equal(reprendre(deplacer(blessee, { x: 4, y: 5 })).tenue, 36);
+    assert.equal(reprendre(depenser(blessee, PA_FRAPPER)).tenue, 36);
+    assert.equal(reprendre(depenser(blessee, PA_PAR_TOUR)).tenue, 36);
+    assert.equal(reprendre(terminerTour(blessee)).tenue, 36);
     // On ne relève pas un mot tombé.
     assert.equal(reprendre(encaisser(genese(), 999)).tenue, 0);
   });
 
-  it("deplacer marque le déplacement, et la case posée est une copie", () => {
+  it("deplacer pose la case sans toucher aux PA, et la case posée est une copie", () => {
     const g = genese();
     const vers = { x: 6, y: 2 };
     const bougee = deplacer(g, vers);
     assert.deepEqual(bougee.pos, { x: 6, y: 2 });
-    assert.equal(bougee.aDeplace, true);
-    assert.equal(bougee.aFrappe, false);
+    assert.equal(bougee.pa, PA_PAR_TOUR);
+    assert.deepEqual(bougee.precedente, { x: 4, y: 4 });
     assert.notStrictEqual(bougee.pos, vers);
   });
 
-  it("nouveauTour : les drapeaux retombent, la tenue reste où elle en est", () => {
-    const agie = { ...encaisser(genese(), 4), aFrappe: true, aDeplace: true };
+  it("les PA : deux par tour, plats, un par geste", () => {
+    const g = genese();
+    assert.equal(PA_PAR_TOUR, 2);
+    assert.equal(PA_DEPLACER, 1);
+    assert.equal(PA_FRAPPER, 1);
+    assert.equal(g.pa, PA_PAR_TOUR);
+    assert.equal(aDesPa(g, PA_DEPLACER), true);
+    const un = depenser(g, PA_DEPLACER);
+    assert.equal(un.pa, 1);
+    assert.equal(aDesPa(un, PA_FRAPPER), true);
+    const zero = depenser(un, PA_FRAPPER);
+    assert.equal(zero.pa, 0);
+    assert.equal(aDesPa(zero, PA_FRAPPER), false);
+    // Plats : la dotation ne lit aucun axe.
+    for (const u of cohorte(200)) assert.equal(u.pa, PA_PAR_TOUR);
+  });
+
+  it("depenser doit échouer : plus de PA que l'unité n'en a, ou un coût fractionnaire", () => {
+    const g = genese();
+    assert.throws(() => depenser(g, PA_PAR_TOUR + 1), RejetTactique);
+    assert.throws(() => depenser(depenser(g, PA_PAR_TOUR), PA_FRAPPER), RejetTactique);
+    assert.throws(() => depenser(g, -1), RejetTactique);
+    assert.throws(() => depenser(g, 0.5), RejetTactique);
+  });
+
+  it("terminerTour vide les PA, et rend l'unité telle quelle si elle est déjà à zéro", () => {
+    const fini = terminerTour(genese());
+    assert.equal(fini.pa, 0);
+    assert.strictEqual(terminerTour(fini), fini);
+  });
+
+  it("nouveauTour : les PA repartent à deux, la tenue reste où elle en est", () => {
+    const agie = terminerTour(encaisser(genese(), 4));
     const neuve = nouveauTour(agie);
-    assert.equal(neuve.aFrappe, false);
-    assert.equal(neuve.aDeplace, false);
+    assert.equal(neuve.pa, PA_PAR_TOUR);
     assert.equal(neuve.tenue, 38);
     assert.equal(reprendre(neuve).tenue, 42);
   });
@@ -158,6 +197,9 @@ describe("unite", () => {
     encaisser(g, 7);
     reprendre(encaisser(g, 7));
     nouveauTour(g);
+    depenser(g, PA_FRAPPER);
+    terminerTour(g);
+    aDesPa(g, PA_DEPLACER);
     tenueMax(g);
     pas(g);
     portee(g);
