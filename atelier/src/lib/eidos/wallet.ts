@@ -85,8 +85,13 @@ function coffreVide(
   };
 }
 
-export function coffreNeuf(scenario: ScenarioId = "mixte"): Coffre {
-  return chargerScenario(coffreVide(aleaHex(32), "personnel", scenario), scenario);
+/**
+ * Un coffre neuf. La graine est **tiree au hasard** par defaut : c'est ce que
+ * veut un vrai coffre. Un essai qui doit se rejouer a l'octet passe la sienne,
+ * derivee d'un tag — sinon deux passes de la meme suite testent deux coffres.
+ */
+export function coffreNeuf(scenario: ScenarioId = "mixte", graine: string = aleaHex(32)): Coffre {
+  return chargerScenario(coffreVide(graine, "personnel", scenario), scenario);
 }
 
 export function coffreAtelier(scenario: ScenarioId = "mixte"): Coffre {
