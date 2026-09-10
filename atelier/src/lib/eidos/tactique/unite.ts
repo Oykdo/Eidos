@@ -83,9 +83,20 @@ export const TENUE_BASE = MULT_TENUE * COUP_BASE;
  * pas plus long ne coûte pas seulement à `eperon` : il tue `arc`, parce qu'un
  * archer rattrapé n'a jamais tiré. Mesuré sur les nouvelles salles, à pas
  * 4..8 : r(arc) = −0,48 ; à pas 2..4 avec portée 1..7 : −0,03. D'où la règle
- * que `unite.test.ts` contrôle — **le pas le plus long reste sous la portée
- * la plus longue**. Le socle, lui, règle le levier de l'axe, exactement comme
- * `COUP_BASE` règle celui de `lame`.
+ * — **le pas le plus long reste sous la portée la plus longue**. Le socle,
+ * lui, règle le levier de l'axe, exactement comme `COUP_BASE` règle celui de
+ * `lame`.
+ *
+ * LIMITE, et elle est ouverte : **cette règle est tenue par pas, et rompue
+ * par tour.** Un pas plein vaut 4 et la plus longue portée 7, donc `4 < 7` ;
+ * mais depuis les points d'action un tour en autorise deux, soit
+ * `PA_PAR_TOUR · pas = 8`, et `8 > 7`. Le contrôle de `unite.test.ts` lit un
+ * pas et reste vert : il garde la lettre, pas ce qui compte. Deux mesures
+ * indépendantes chiffrent le prix — bridée à un seul pas la politique tient
+ * `|r| = 0,236`, à deux pas elle monte à `0,588`, contre la cible de 0,30 du
+ * §9 ter de `SPEC_TACTIQUE.md`. `DIV_PAS = 64` (pas 2..3, donc `6 < 7`) la
+ * rétablirait à 0,255, mais re-tarifer `eperon` est un chantier avec sa
+ * mesure, pas une retouche : la constante ne bouge pas sans arbitrage.
  */
 export const PAS_BASE = 2;
 export const DIV_PAS = 32;

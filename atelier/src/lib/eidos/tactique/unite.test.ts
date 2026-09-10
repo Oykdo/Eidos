@@ -103,13 +103,25 @@ describe("unite", () => {
     }
   });
 
-  it("la mobilité ne noie pas la portée : un pas plein reste sous la plus longue portée", () => {
+  it("un pas plein reste sous la plus longue portée — mais un TOUR ne l'est plus", () => {
     // Recalé quand la dalle est passée à deux bits par case : la plus grande
     // salle a triplé, et une mobilité trop haute écrase `arc` — l'archer se
     // fait rattraper avant d'avoir tiré (mesuré : r(arc) = −0,48 à pas 4..8).
+    const pasMax = PAS_BASE + Math.trunc(64 / DIV_PAS);
+    const porteeMax = PORTEE_BASE + Math.trunc(64 / DIV_PORTEE);
+    assert.ok(pasMax < porteeMax, "le pas le plus long dépasse la portée la plus longue");
+
+    // Ce que ce contrôle NE gardait pas, et son ancien nom le taisait : depuis
+    // `PA_PAR_TOUR = 2`, un tour vaut `2·pas`. La règle de `unite.ts` porte sur
+    // la mobilité réelle d'un tour, et à ce niveau elle est **rompue** — 8 > 7.
+    // On l'affirme plutôt que de la taire. Le jour où `DIV_PAS` passe à 64, ce
+    // contrôle tombe : c'est voulu, il faudra alors exiger l'inverse.
+    assert.equal(pasMax, 4);
+    assert.equal(porteeMax, 7);
+    assert.equal(PA_PAR_TOUR * pasMax, 8);
     assert.ok(
-      PAS_BASE + Math.trunc(64 / DIV_PAS) < PORTEE_BASE + Math.trunc(64 / DIV_PORTEE),
-      "le pas le plus long dépasse la portée la plus longue : `arc` n'achète plus rien",
+      PA_PAR_TOUR * pasMax > porteeMax,
+      "un tour tient enfin sous la portée : retourner cette assertion",
     );
   });
 
