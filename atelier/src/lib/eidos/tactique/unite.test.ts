@@ -4,7 +4,11 @@ import { COMBAT_BUDGET } from "../combat.ts";
 import { concat, sha256d, u32, utf8 } from "../hash.ts";
 import { objetDepuisGraine } from "../objets.ts";
 import {
+  DIV_PAS,
+  DIV_PORTEE,
   MULT_TENUE,
+  PAS_BASE,
+  PORTEE_BASE,
   TENUE_BASE,
   deplacer,
   poser,
@@ -62,8 +66,8 @@ describe("unite", () => {
     });
     const g = genese();
     assert.equal(tenueMax(g), TENUE_BASE + MULT_TENUE * 5);
-    assert.equal(pas(g), 3);
-    assert.equal(portee(g), 2);
+    assert.equal(pas(g), 2);
+    assert.equal(portee(g), 3);
     assert.equal(vivante(g), true);
   });
 
@@ -77,17 +81,27 @@ describe("unite", () => {
     }
   });
 
-  it("pas dans 2..7, portée dans 1..5, entiers, sur les mêmes deux cents", () => {
+  it("pas dans 2..4, portée dans 1..7, entiers, sur les mêmes deux cents", () => {
     for (const unite of cohorte(200)) {
       const p = pas(unite);
       const q = portee(unite);
       assert.equal(Number.isInteger(p), true);
       assert.equal(Number.isInteger(q), true);
-      assert.ok(p >= 2 && p <= 7, `pas ${p} hors de 2..7`);
-      assert.ok(q >= 1 && q <= 5, `portée ${q} hors de 1..5`);
-      assert.equal(p, 2 + Math.trunc(unite.axes.eperon / 12));
-      assert.equal(q, 1 + Math.trunc(unite.axes.arc / 16));
+      assert.ok(p >= PAS_BASE && p <= PAS_BASE + 2, `pas ${p} hors de 2..4`);
+      assert.ok(q >= PORTEE_BASE && q <= PORTEE_BASE + 6, `portée ${q} hors de 1..7`);
+      assert.equal(p, PAS_BASE + Math.trunc(unite.axes.eperon / DIV_PAS));
+      assert.equal(q, PORTEE_BASE + Math.trunc(unite.axes.arc / DIV_PORTEE));
     }
+  });
+
+  it("la mobilité ne noie pas la portée : un pas plein reste sous la plus longue portée", () => {
+    // Recalé quand la dalle est passée à deux bits par case : la plus grande
+    // salle a triplé, et une mobilité trop haute écrase `arc` — l'archer se
+    // fait rattraper avant d'avoir tiré (mesuré : r(arc) = −0,48 à pas 4..8).
+    assert.ok(
+      PAS_BASE + Math.trunc(64 / DIV_PAS) < PORTEE_BASE + Math.trunc(64 / DIV_PORTEE),
+      "le pas le plus long dépasse la portée la plus longue : `arc` n'achète plus rien",
+    );
   });
 
   it("encaisser : la tenue s'arrête à 0, jamais au-dessous", () => {

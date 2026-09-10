@@ -39,8 +39,9 @@ Les six lois n'empêchent pas un bon tactical RPG. Elles empêchent un mauvais.
 
 **Un avertissement, mesuré après coup.** Cette thèse tient sur *quel* axe on pointe, pas sur *combien*. Une
 fois le prix des axes corrigé, aucun des quatre n'achète la victoire (|r| < 0,13) — mais un mot **extrême**
-reste plus faible qu'un mot équilibré, y compris contre les adversaires qui lui conviennent le mieux (95,8 % au
-tier 1, 54,3 % au tier 12). La cause n'est pas réglable : abattre demande de tenir *et* de frapper, un produit,
+reste plus faible qu'un mot équilibré, y compris contre les adversaires qui lui conviennent le mieux (93,9 % au
+tier 1, 57,6 % au tier 12). L'agrandissement des salles, dont on espérait qu'il donne au spécialiste la place
+d'atteindre sa niche, ne referme cet écart que de 5 points — l'hypothèse a été mesurée et elle est fausse. La cause n'est pas réglable : abattre demande de tenir *et* de frapper, un produit,
 et concentrer un budget fixe sur un axe minore un produit. Un haut tier est donc, en duel, un **choix coûteux**
 et non un sidegrade. Ce qui doit le rattraper est le jeu lui-même — en bataille rangée le joueur **choisit**
 quand engager son spécialiste — et cela **n'est pas encore mesuré**. Tant que ça ne l'est pas, la forge de
@@ -108,41 +109,45 @@ d.tenue -= coup    // tenue = 2 × (COUP_BASE + d.ecu), 32..160
 
 **`ecu` n'entre pas dans le coup** : il achète la tenue, une fois. Il la réduisait aussi, et se payait donc
 deux fois — mesuré, `r(ecu, victoire)` tombe de +0,59 à +0,14 quand on le lui retire. Le socle du coup et
-celui de la tenue sont le même nombre au facteur 2 près, pour qu'un point de `lame` vaille un point de `ecu` :
-sans lui, `lame` a un levier de 0 à 64 quand `ecu` en a un de 9. Le plancher de 1 est un garde-fou, pas un
-réglage : le coup le plus faible mesuré vaut 12.
-
-Le **dos est purement positionnel** : la tentation était de le lier à `memeOrbite` (`groupe.ts`), mais la
-mesure la donne vraie 96 fois sur 1 999 000 paires (0,0048 %) — la règle serait morte-née. La table
-d'affinités, elle, n'est **pas** une table de designer : c'est le produit scalaire de deux quaternions
-(`resonance.ts`). Deux objets s'accordent ou se repoussent par leur géométrie. Personne n'a équilibré ça à la
-main, et personne ne peut le contester.
+celui de la tenue sont le même nombre au facteur 2 près, pour qu'un point de `lame` vaille un point de `ecu`.
+Le plancher de 1 est un garde-fou, pas un réglage : le coup le plus faible mesuré vaut 12. Le **dos est
+purement positionnel** — la tentation était de le lier à `memeOrbite`, mais la mesure la donne vraie 96 fois
+sur 1 999 000 paires. La table d'affinités, elle, n'est pas une table de designer : c'est le produit scalaire
+de deux quaternions (`resonance.ts`).
 
 **La riposte.** Frappée à une distance d'où elle atteint son attaquant, une unité **plus vive** que lui
-(`d.eperon > a.eperon`, strictement) lui rend le coup. La riposte ne consomme **aucune feuille** — personne ne
-la choisit, ce n'est pas un acte — elle ne dépense pas la frappe du tour du riposteur, elle entre au journal
-comme un `Coup` marqué `riposte`, et **on ne riposte jamais à une riposte**. Sa condition est l'exacte négation
-de l'allonge : frapper de plus loin que la cible ne porte, c'est `+base/2` **et** aucun coup rendu. C'est ainsi
-que les deux axes qui n'achetaient rien s'entretiennent — `eperon` paie la riposte, `arc` paie l'immunité.
+(`d.eperon > a.eperon`, strictement) lui rend le coup. Elle ne consomme **aucune feuille** — personne ne la
+choisit — ne dépense pas la frappe du tour du riposteur, entre au journal comme un `Coup` marqué `riposte`,
+et **on ne riposte jamais à une riposte**. Sa condition est l'exacte négation de l'allonge : frapper de plus
+loin que la cible ne porte, c'est `+base/2` **et** aucun coup rendu.
 
-**La charge.** Chaque case parcourue avant de frapper ajoute 4 au coup. C'est le second prix de `eperon`, et le
-seul terme **additif** de la résolution : un bonus en fraction de la base aurait profité d'abord aux grosses
-`lame`. L'élan est le coût du chemin, pas la distance à vol d'oiseau — contourner un mur fatigue — et il
-s'éteint à la fin de la phase : on ne riposte jamais en charge.
+**La charge.** Chaque case parcourue avant de frapper ajoute 4 au coup — le seul terme **additif** de la
+résolution, pour qu'il profite d'abord à qui frappe faible. L'élan est le coût du chemin, pas la distance à
+vol d'oiseau, et il s'éteint à la fin de la phase : on ne riposte jamais en charge.
 
-**Ce que ça vaut, mesuré** (330 144 duels, 2 000 mots, huit distances d'engagement, trois politiques d'IA) :
-la corrélation de chaque axe au taux de victoire tient sous 0,13 (`lame` −0,041, `ecu` +0,040, `eperon` +0,126,
-`arc` −0,129) contre 0,56 avant ; le quartile haut de `lame+ecu` sur le quartile bas vaut 0,99× contre 19× à
-l'origine ; une bataille dure 2 coups en médiane et 4 au 95ᵉ centile ; aucun coup ne porte zéro.
+**Le pas et la portée se règlent ensemble.** `pas = 2 + eperon/32` (2..4), `portée = 1 + arc/10` (1..7). Ces
+quatre nombres ont été recalés le jour où `dalleDe` est passée d'un bit à deux par case : la plus grande salle
+d'un seul tenant a triplé (19,8 → 56,8 cases sur 81) et la mobilité s'est mise à valoir bien plus cher sans
+qu'une ligne du moteur ait bougé — `r(eperon)` est monté de +0,126 à +0,293, et `r(arc)` est tombé à −0,367.
+La règle qui en sort, et que `unite.test.ts` contrôle : **le pas le plus long reste sous la portée la plus
+longue**, sinon un archer est rattrapé avant d'avoir tiré et `arc` cesse d'acheter quoi que ce soit (mesuré à
+pas 4..8 : `r(arc)` = −0,48).
 
-**LIMITE — l'extrémité d'un mot reste un malus.** Le taux de victoire décroît de 51,7 % au tier le plus bas à
-27,7 % au plus haut, et il décroît aussi *dans la niche* — contre le quartile d'adversaires le plus favorable,
-95,8 % à 54,3 % — donc ce n'est pas un artefact de mesure. La cause est arithmétique : abattre demande de
-**tenir** *et* de **frapper**, un produit, et concentrer un budget fixe sur un seul axe minore un produit. Ce
-que le prix des axes corrige, c'est *lequel* des quatre on pointe (rapport `lame`/`ecu` contre `eperon`/`arc` :
-19,6× avant, 0,81 à 1,13× après) ; ce qu'il ne corrige pas, c'est *combien* on pointe. Mesuré en duel 1v1 à
-mort : reste à mesurer en bataille rangée, où le joueur **choisit** quand engager son spécialiste. La thèse du
-§1 tient sur *quel* axe, pas sur *l'ampleur* — le §1 est corrigé en conséquence.
+**Ce que ça vaut, mesuré** (330 144 duels, 2 000 mots, huit distances d'engagement, trois politiques, sur les
+dalles à deux bits) : la corrélation de chaque axe au taux de victoire tient sous **0,075** (`lame` −0,065,
+`ecu` +0,075, `eperon` −0,044, `arc` +0,032) ; le quartile haut de `lame+ecu` sur le quartile bas vaut 1,00×
+contre 19× à l'origine ; le rapport entre pointe `lame`/`ecu` et pointe `eperon`/`arc` va de 0,85 à 1,36×
+selon le tier, contre 19,6× avant — **la réserve bloquante de `SPEC_LOOT_TIERS.md` §4 est levée** ; une
+bataille dure 2 coups en médiane et 4 au 95ᵉ centile ; aucun coup ne porte zéro.
+
+**LIMITE : l'extrémité d'un mot reste un malus.** Le taux de victoire décroît de 55,6 % au tier le plus bas à
+19,5 % au plus haut, et il décroît aussi *dans la niche* — contre le quartile d'adversaires le plus favorable,
+93,9 % à 57,6 %. On pouvait espérer que l'agrandissement des salles donne enfin au spécialiste la place
+d'atteindre sa niche : **il ne la lui donne pas.** L'écart de niche ne se referme que de 41,5 à 36,4 points, et
+la bande sur le pool s'ouvre de 24,4 à 36,1. La cause est arithmétique et non réglable par une constante :
+abattre demande de **tenir** *et* de **frapper**, un produit, et concentrer un budget fixe sur un seul axe
+minore un produit. Ce que le prix des axes corrige, c'est *lequel* des quatre on pointe ; ce qu'il ne corrige
+pas, c'est *combien* on pointe.
 
 **Zone de contrôle.** Une unité exerce un contrôle sur ses cases adjacentes ; y entrer arrête le déplacement.
 Sans elle, joueur et IA glissent entre les lignes et la bataille perd sa tension de formation.

@@ -40,16 +40,21 @@
  * une fin, pas un blocage.
  *
  * LIMITE mesurée — **l'extrémité d'un mot reste un malus, pas un sidegrade.**
- * Sur 330 000 duels du moteur (2 000 mots, huit distances d'engagement, trois
- * politiques), le taux de victoire décroît de 51,7 % au tier le plus bas à
- * 27,7 % au plus haut. Ce n'est pas un artefact de la mesure contre un pool
+ * Sur 330 144 duels du moteur (2 000 mots, huit distances d'engagement, trois
+ * politiques), le taux de victoire décroît de 55,6 % au tier le plus bas à
+ * 19,5 % au plus haut. Ce n'est pas un artefact de la mesure contre un pool
  * moyen : il décroît aussi **dans la niche**, c'est-à-dire contre le quartile
- * d'adversaires le plus favorable à chacun (95,8 % → 54,3 %). La cause est
+ * d'adversaires le plus favorable à chacun (93,9 % → 57,6 %). On pouvait
+ * espérer que l'agrandissement des salles — `dalleDe` est passée d'un bit à
+ * deux par case, la plus grande salle d'un tenant de 19,8 à 56,8 cases sur
+ * 81 — donne enfin au spécialiste la place d'atteindre sa niche : **elle ne
+ * la lui donne pas.** L'écart de niche ne se referme que de 41,5 à 36,4
+ * points, et la bande sur le pool s'ouvre au lieu de se fermer. La cause est
  * arithmétique et non réglable par une constante : abattre demande de tenir
  * *et* de frapper, un produit, et concentrer un budget fixe sur un seul axe
- * minore un produit. Ce que le prix des axes a corrigé, c'est *lequel* des
- * quatre on pointe (rapport lame/ecu contre eperon/arc : 19,6× avant,
- * 0,81 à 1,13× après) ; ce qu'il ne corrige pas, c'est *combien* on pointe.
+ * minore un produit. Ce que le prix des axes corrige, c'est *lequel* des
+ * quatre on pointe (rapport lame/ecu contre eperon/arc : 19,6× à l'origine,
+ * 0,85 à 1,36× après) ; ce qu'il ne corrige pas, c'est *combien* on pointe.
  *
  * LIMITE : la bataille est une jauge. Elle ne touche ni le carnet, ni la
  * chaîne, ni le format des transactions ; seules la preuve exportée et les
