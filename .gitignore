@@ -59,3 +59,9 @@ docs/prive/
 
 # fichiers reçus d'une autre session, fusionnés à la main : jamais versionnés tels quels
 atelier/docs/expé/
+
+# références de travail déposées dans docs/ : captures d'écran, planches, photos.
+# Elles nourrissent la conception, elles n'appartiennent pas au dépôt — poids,
+# contenu de tiers, et rien qu'un texte ne puisse porter. Les specs, si.
+docs/IMG_*
+docs/Capture*
