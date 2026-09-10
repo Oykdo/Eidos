@@ -4,15 +4,15 @@ import { commencerDansCoffre } from "./ascension.ts";
 import { hexOf, sha256d, utf8 } from "./hash.ts";
 import {
   BECHES_PAR_ETAGE,
-  aUneTrouvaille,
+  aUnGisement,
   bechesRestantes,
   caseOccupant,
   fouillerCaseDansCoffre,
   fouillesFaites,
   spawnIci,
-  trouvailleDe,
+  objetDuGisement,
   estCachee,
-  trouvaillesDe,
+  gisementsDe,
 } from "./fouilles.ts";
 import { normaliserTour, tourDe } from "./jauge.ts";
 import { DALLE_N, ETAGES, dalleDe } from "./tour.ts";
@@ -38,7 +38,7 @@ describe("fouilles — la dalle se creuse, case par case", () => {
     let max = 0;
     for (let e = 0; e < ETAGES; e++) {
       const d = dalleDe(e);
-      const tr = trouvaillesDe(e);
+      const tr = gisementsDe(e);
       for (const { x, y } of tr) {
         if (d[y]![x]) cachees += 1;
         else ausol += 1;
@@ -62,7 +62,7 @@ describe("fouilles — la dalle se creuse, case par case", () => {
     assert.ok(max <= 24, `au plus vingt-quatre par étage : ${max}`);
     const moyenne = (cachees + ausol) / ETAGES;
     assert.ok(moyenne > 10 && moyenne < 16, `~13 par étage : ${moyenne.toFixed(2)}`);
-    assert.deepEqual(trouvaillesDe(7), trouvaillesDe(7));
+    assert.deepEqual(gisementsDe(7), gisementsDe(7));
     console.log(
       `# fouilles : ${cachees} cachées sur ${pleines} murs, ${ausol} au sol sur ${sol} cases`,
     );
@@ -128,28 +128,28 @@ describe("fouilles — la dalle se creuse, case par case", () => {
   it("la trouvaille entre au coffre là où il y en a une, et nulle part ailleurs", () => {
     const c = coffreAtelier("vide");
     const e = 3;
-    const oui = trouvaillesDe(e)[0]!;
+    const oui = gisementsDe(e)[0]!;
     const r = fouillerCaseDansCoffre(c, e, oui.x, oui.y);
-    assert.ok(r.ok && r.trouvaille !== null);
+    assert.ok(r.ok && r.objet !== null);
     assert.equal(r.coffre.objets!.length, (c.objets?.length ?? 0) + 1);
-    assert.ok(["trouve", "pierre"].includes(r.trouvaille!.genre));
+    assert.ok(["trouve", "pierre"].includes(r.objet!.genre));
     const d = dalleDe(e);
     let non: [number, number] | null = null;
     for (let y = 0; y < DALLE_N && !non; y++)
       for (let x = 0; x < DALLE_N && !non; x++)
-        if (d[y]![x] && !aUneTrouvaille(e, x, y)) non = [x, y];
+        if (d[y]![x] && !aUnGisement(e, x, y)) non = [x, y];
     const r2 = fouillerCaseDansCoffre(c, e, non![0], non![1]);
-    assert.ok(r2.ok && r2.trouvaille === null);
+    assert.ok(r2.ok && r2.objet === null);
     assert.equal(r2.coffre.objets?.length ?? 0, c.objets?.length ?? 0);
     assert.equal(fouillesFaites(tourDe(r2.coffre), e).length, 1, "le coup est noté même à vide");
   });
 
   it("les cases sont à tous, le contenu est à chacun", () => {
     const e = 11;
-    const { x, y } = trouvaillesDe(e)[0]!;
-    const a = trouvailleDe(e, x, y, coffreAtelier("vide"));
-    const b = trouvailleDe(e, x, y, coffreAtelier("vide"));
-    const autre = trouvailleDe(e, x, y, coffreEssai(0));
+    const { x, y } = gisementsDe(e)[0]!;
+    const a = objetDuGisement(e, x, y, coffreAtelier("vide"));
+    const b = objetDuGisement(e, x, y, coffreAtelier("vide"));
+    const autre = objetDuGisement(e, x, y, coffreEssai(0));
     assert.deepEqual(a, b);
     assert.notEqual(a.mot, autre.mot);
   });
@@ -159,7 +159,7 @@ describe("fouilles — la dalle se creuse, case par case", () => {
     const s = spawnIci(c, 0);
     assert.ok(s !== null);
     const r = fouillerCaseDansCoffre(c, 0, s!.x, s!.y);
-    assert.ok(r.ok && r.trouvaille !== null, "la case d'arrivée donne");
+    assert.ok(r.ok && r.objet !== null, "la case d'arrivée donne");
     assert.equal(r.restantes, BECHES_PAR_ETAGE - 1, "le coup s'y compte comme les autres");
     // le pendule ne regarde pas la dalle : une arrivée sur deux tombe sur un trou
     // La case doit etre un trou **et** ne rien porter : `fouilles.ts` ne refuse
@@ -169,7 +169,7 @@ describe("fouilles — la dalle se creuse, case par case", () => {
     for (let i = 0; i < 64 && trou === null; i++) {
       const n = commencerDansCoffre(coffreEssai(i + 1), null);
       const sp = spawnIci(n, 0)!;
-      if (!dalleDe(0)[sp.y]![sp.x] && !aUneTrouvaille(0, sp.x, sp.y)) trou = n;
+      if (!dalleDe(0)[sp.y]![sp.x] && !aUnGisement(0, sp.x, sp.y)) trou = n;
     }
     assert.ok(trou !== null, "aucune arrivée sur un trou nu en 64 coffres");
     const sp = spawnIci(trou!, 0)!;
@@ -179,7 +179,7 @@ describe("fouilles — la dalle se creuse, case par case", () => {
       "hors ascension, le trou reste un trou",
     );
     const rt = fouillerCaseDansCoffre(trou!, 0, sp.x, sp.y);
-    assert.ok(rt.ok && rt.trouvaille !== null, "la case d'arrivée donne même sur un trou");
+    assert.ok(rt.ok && rt.objet !== null, "la case d'arrivée donne même sur un trou");
     assert.equal(
       (fouillerCaseDansCoffre(rt.coffre, 0, sp.x, sp.y) as { code: string }).code,
       "dejaCase",

@@ -1011,8 +1011,8 @@ export const useCoffre = create<Etat>((set, get) => ({
     set({
       coffre: r.coffre,
       erreur: null,
-      flash: r.trouvaille
-        ? t("tour.fouille.trouve", { nom: r.trouvaille.nom, n: r.restantes })
+      flash: r.objet
+        ? t("tour.fouille.trouve", { nom: r.objet.nom, n: r.restantes })
         : t("tour.fouille.rien", { n: r.restantes }),
     });
   },

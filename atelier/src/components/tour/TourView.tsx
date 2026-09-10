@@ -32,7 +32,7 @@ import { signatureDe } from "@/lib/eidos/inventaire.ts";
 import { PORTES } from "@/lib/eidos/sceaux.ts";
 import { enCours } from "@/lib/eidos/ascension.ts";
 import {
-  aUneTrouvaille,
+  aUnGisement,
   bechesRestantes,
   caseOccupant,
   fouillesFaites,
@@ -259,7 +259,7 @@ export function TourView() {
                   : occupant
                     ? "○"
                     : creusee
-                      ? aUneTrouvaille(etage, x, y)
+                      ? aUnGisement(etage, x, y)
                         ? "✓"
                         : "·"
                       : "";
