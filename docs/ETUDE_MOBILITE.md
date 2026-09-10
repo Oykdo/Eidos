@@ -195,3 +195,205 @@ Chiffré sur la lecture retenue (masque d'arrivée, régime B).
 
 **Le terme à changer, et le chiffre qui le désigne : `dos`.** Il est le seul terme *voulu positionnel* et *mort en fait* — 1,00 valeur distincte quand le défenseur n'a pas bougé, **1,31 même quand on lui expose le dos exprès**. `estDeDos` exige la colinéarité stricte entre l'attaquant, le défenseur et la case qu'il vient de quitter : sur une dalle 9×9 c'est une condition de mesure nulle, et elle ne se déclenche que si le défenseur a bougé. Le graduer — dos `base/DIV_DOS`, **flanc** `base/(2·DIV_DOS)`, face 0, le flanc étant toute case hors de l'axe de la marche — le ferait passer de 1,31 à 3 valeurs possibles sans toucher un seul axe : **`dos` est purement positionnel, aucun axe ne l'achète**, donc le modifier ne peut pas rouvrir le §9 ter. C'est le seul terme dont on puisse dire ça. À l'inverse, `allonge` (1,26) est le prix de `arc` et `charge` (2,00) celui de `eperon` : y toucher re-tarife un axe.
 **Et un avertissement chiffré pour le recalibrage en cours** : `charge` est le seul terme positionnel vivant, et son plafond vaut `CHARGE_PAR_CASE · pas`. Passer `DIV_PAS` de 12 à 32 fait tomber ce plafond de 28 à **16** — il faudra relever `CHARGE_PAR_CASE` de 4 à 7 pour le tenir, ou assumer que le seul terme qui fasse compter la case perd 43 % de son amplitude.
+
+## 10. Post-scriptum — le dos gradué et la charge, sur le moteur à points d'action (mesure du 2026-09-10)
+
+`14fe665` a remplacé les deux drapeaux `aFrappe`/`aDeplace` par **deux points d'action** (`PA_PAR_TOUR = 2`,
+`depenser`/`aDesPa`/`terminerTour` dans `unite.ts`). Le §9 chiffrait la densité de décision à **1,50 issue pour
+8,41 cases** (0,171 au recalibrage) sur un moteur à un geste par type et par tour : **ce chiffre est périmé**,
+l'ensemble des issues d'un tour n'est plus le même. Ce post-scriptum le refait, puis mesure les deux
+propositions que le §9 laissait ouvertes : le `dos` gradué et `CHARGE_PAR_CASE` à 7.
+
+**Ce que le compteur ajoute exactement, et rien de plus.** Les drapeaux autorisaient un pas **et** une frappe,
+dans l'ordre qu'on voulait : **frapper puis se retirer était déjà permis** (mesuré au journal — 6,1 % des tours
+d'unité sous les drapeaux, 7,1 % avec les PA). Ce que le compteur ouvre, ce sont **deux familles** : le double
+pas et la double frappe. Toute la mesure porte là-dessus.
+
+**Constantes effectivement mesurées ici**, le moteur bougeant sous la mesure : `COUP_BASE` 16 · `COUP_MIN` 1 ·
+`DIV_ACCORD` 4 · `DIV_DOS` 2 · `DIV_ALLONGE` 2 · `CHARGE_PAR_CASE` 4 · `DIV_REPRISE` 8 · `MULT_TENUE` 2 ·
+`TENUE_BASE` 32 · `PAS_BASE` 2 · `DIV_PAS` 32 · `PORTEE_BASE` 1 · `DIV_PORTEE` 10 (pas 2–4, portée 1–7) ·
+`PA_PAR_TOUR` 2 · `PA_DEPLACER` 1 · `PA_FRAPPER` 1. Étage 198, 73 cases libres, région d'un seul tenant 73.
+
+**Protocole.** Proxy de décision : `pa-decision.ts`, 400 positions, mêmes graines (`eq-<i>`, mêmes indices) et
+même terrain que `mob-decision.ts`/`mob-diag.ts`, mais l'unité énumérée est la **séquence de deux PA**
+(pas+pas, pas+coup, coup+pas, coup+coup, un geste, rien) et non plus la case. L'issue d'une séquence = ce
+qu'elle porte (cible, allonge, riposte — jamais la charge) ‖ ce que la case finale laisse porter ensuite. La
+ligne « drapeaux » est **la même énumération bornée à un pas et une frappe**, refaite ici : les chiffres du §9
+ne s'y comparent pas terme à terme, mais la mesure est recalée sur eux — sur la ligne à une cible elle rend
+9,90 cases, 15,3 % de cases d'où l'on peut frapper, `accord` 1,00, `dos` 1,00, `charge` 2,18, coup 2,46, contre
+9,90 / 15,3 % / 1,00 / 1,00 / 2,18 / 2,48 au §9. Duels : `pa-banc.ts`, vrai moteur (`ouvrirBataille`/`jouer`/
+`finDePhase`), **460 704 duels par configuration** (2 000 mots × 6 adversaires × 8 distances × 3 politiques,
+plus 12 panels de 100 mots par tier contre le pool), nuls exclus. La ligne « drapeaux » du banc s'obtient en
+**interdisant à la politique** le second pas et la seconde frappe : le moteur est le même, la politique
+s'interdit exactement ce que les drapeaux interdisaient. Journal : `pa-termes.ts`, 57 600 duels, ~190 000
+coups par configuration. Tout est déterministe, aucun `Math.random`, aucune horloge.
+
+### M1 — la densité de décision, refaite sur les séquences de deux PA
+
+| | cases offertes | issues distinctes | **issues / case** | écart de coup | écart de tour |
+|---|---|---|---|---|---|
+| drapeaux · 1 adversaire | 9,90 | 2,07 | **0,209** | 2,80 | 2,80 |
+| **PA · 1 adversaire** | **24,29** | **2,61** | **0,108** | **2,80** | **6,25** |
+| drapeaux · 2 adversaires | 9,63 | 3,47 | 0,361 | 4,92 | 4,92 |
+| PA · 2 adversaires | 23,51 | 4,77 | 0,203 | 4,92 | 10,49 |
+| drapeaux · 3 adversaires | 9,34 | 5,34 | **0,572** | 7,58 | 7,58 |
+| **PA · 3 adversaires** | **22,48** | **7,29** | **0,324** | 7,58 | 15,99 |
+
+**Le compteur achète +26 % d'issues et +145 % de cases : la densité tombe de 0,209 à 0,108, −48 %.** C'est la
+même chute que celle des dalles dégagées au §9 (−39 %), pour la même raison : des cases de plus, pas des
+raisons de plus. L'ablation dit laquelle des deux familles paie.
+
+| famille de séquences ouverte | cases | issues | **issues / case** |
+|---|---|---|---|
+| **1 adversaire** — les deux drapeaux | 9,90 | 2,07 | 0,209 |
+| + la double frappe seule | 9,90 | **2,23** | **0,225** |
+| + le double pas seul | 24,29 | 2,45 | 0,101 |
+| les deux (moteur d'aujourd'hui) | 24,29 | 2,61 | **0,108** |
+| **3 adversaires** — les deux drapeaux | 9,34 | 5,34 | 0,572 |
+| + la double frappe seule | 9,34 | **5,92** | **0,634** |
+| + le double pas seul | 22,48 | 6,71 | 0,299 |
+| les deux (moteur d'aujourd'hui) | 22,48 | 7,29 | **0,324** |
+
+**Franchement : la double frappe achète de la décision, le double pas achète des cases indifférentes.** La
+double frappe ajoute **+0,16 issue** à une cible et **+0,58** à trois **pour zéro case de plus** — la densité
+monte de 0,209 à **0,225** (+7,7 %) et de 0,572 à **0,634** (+10,8 %). Le double pas ajoute +0,38 et +1,37
+issue mais **multiplie les cases par 2,45** : la densité tombe à 0,101 et 0,299. La cause est mécanique et
+n'est pas réglable par une constante — **une case atteinte avec les deux PA ne peut plus être frappée
+depuis ce tour** : toute l'issue d'un double pas se réduit à « ce que j'offrirai au tour suivant ».
+Le retrait après frappe, lui, n'est pas nouveau : il était déjà dans les drapeaux, et il vaut +0,22 issue
+(2,07 contre 1,85 sans lui).
+
+**L'écart de coup ne bouge pas d'un point** — 2,80 / 4,92 / 7,58 dans les deux moteurs. Le compteur
+**n'élargit pas un coup, il en autorise deux** : c'est l'écart de tour qui passe de 2,80 à 6,25 (×2,23).
+
+**Le nombre de cibles reste le plus gros levier connu**, et il grossit : de 1 à 3 adversaires, la densité fait
+**×2,74** sous les drapeaux et **×3,00** sur les PA (0,108 → 0,324), quand la meilleure des deux familles
+nouvelles vaut ×1,08. Le §9 chiffrait ce passage à ×1,88 sur son proxy par cases ; il est plus fort, pas moins.
+
+**Ce que les politiques en font vraiment**, sur 57 600 duels du vrai moteur : **36,5 %** des tours d'unité
+prennent le double pas, **12,1 %** la double frappe, 7,1 % la frappe puis le retrait. Le double pas est donc
+le geste le plus joué — et le moins décisif.
+
+**Un résultat non demandé, et le plus important de la page : le compteur a déplacé le prix des axes.**
+
+| | lame | ecu | eperon | arc | \|r\| max | Q4/Q1 | nuls | bande de tier |
+|---|---|---|---|---|---|---|---|---|
+| drapeaux (avant `14fe665`) | −0,009 | +0,106 | **+0,036** | −0,136 | **0,136** | 1,05× | 0,45 % | 41,71 pt |
+| **PA (aujourd'hui)** | +0,111 | +0,161 | **−0,165** | −0,106 | **0,165** | 1,17× | 2,06 % | **37,59 pt** |
+
+`r(eperon)` passe de **+0,036 à −0,165**, `lame+ecu` de +0,087 à **+0,241**. Le mécanisme se lit au journal :
+les deux prix positionnels se **diluent**, parce qu'un tour à deux frappes ou à deux pas n'en paie aucun —
+part des coups portant une charge **42,6 % → 35,6 %** (charge moyenne 2,34 → 1,88), part des coups portant
+une allonge **18,6 % → 15,4 %** (2,60 → 2,16). Les deux cibles du §9 ter tiennent encore (0,165 < 0,30 ;
+1,17× < 3×) et la bande de tier se referme de 4,12 pt, mais la dérive est réelle et va dans le mauvais sens.
+
+### M2 — le `dos` gradué : l'hypothèse du §9 est fausse, et de trois façons
+
+**D'abord une correction au §9 : le `dos` binaire n'est pas mort.** Le §9 le chiffrait à « 1,00 valeur
+distincte », mais sur un proxy où le défenseur n'avait **jamais bougé** — `precedente` à `null`. En duel réel,
+`nouveauTour` ne l'efface pas : dès le deuxième tour, toute unité qui a fait un pas garde un dos. Mesuré au
+journal, `estDeDos` tombe sur **20,7 % des coups portés** et vaut **2,98 points en moyenne, 8,7 % du coup**.
+Le terme n'est pas mort ; il est seulement invisible au proxy qui l'a jugé.
+
+Proposition mesurée : `orientationDe(attaquant, defenseur, precedente)` → dos `base/DIV_DOS`, **flanc**
+`base/(2·DIV_DOS)` (toute case hors de l'axe de la marche), face 0. Une variante plus franche a été mesurée en
+même temps — **demi-plan** : le signe du produit scalaire de la marche par la visée, définie même quand la
+marche a tourné un coin, ce que l'alignement strict ne sait pas lire.
+
+| lecture du `dos` | valeurs distinctes (1 adv / 3 adv, défenseur qui a bougé) | dos / flanc / face | coups avec dos > 0 | dos moyen | coup porté | tours |
+|---|---|---|---|---|---|---|
+| **binaire (aujourd'hui)** | 1,31 / 1,35 | 14,2 % / 0 % / 85,8 % | 20,7 % | 2,98 | 34,40 | 1,93 |
+| gradué (proposition du §9) | 1,73 / 1,87 | 14,2 % / **72,4 %** / 13,4 % | 57,3 % | 5,55 | 37,08 | 1,83 |
+| demi-plan | 1,79 / 2,02 | 32,3 % / 24,4 % / 43,4 % | 54,3 % | 6,97 | 38,52 | 1,78 |
+
+| configuration (dos, charge 4) | lame | ecu | eperon | arc | \|r\| max | Q4/Q1 | nuls |
+|---|---|---|---|---|---|---|---|
+| **binaire (aujourd'hui)** | +0,111 | +0,161 | −0,165 | −0,106 | **0,165** | 1,17× | 2,06 % |
+| gradué | +0,222 | +0,241 | **−0,366** | −0,091 | **0,366 — HORS CIBLE** | 1,35× | 2,02 % |
+| demi-plan | +0,268 | +0,250 | **−0,492** | −0,017 | **0,492 — HORS CIBLE** | 1,40× | 1,98 % |
+| additif gradué (14 / 7 points) | **−0,027** | **+0,329** | −0,297 | −0,005 | **0,329 — HORS CIBLE** | 1,20× | 2,01 % |
+| additif binaire (14 points) | −0,020 | +0,206 | −0,127 | −0,061 | **0,206** | 1,11× | 2,06 % |
+
+**« `dos` est purement positionnel, aucun axe ne l'achète, donc le graduer ne peut pas rouvrir le §9 ter. »
+C'est faux. Vérifié, pas supposé — et la cible de 0,30 saute.**
+
+1. **`dos` vaut `base/DIV_DOS`, et `base = COUP_BASE + lame`.** Élargir le dos multiplie le levier de `lame` :
+   r(lame) **+0,111 → +0,222**, r(lame+ecu) +0,241 → **+0,409**. Un terme positionnel écrit en fraction de la
+   base *est* un prix de `lame`, quoi qu'on dise de sa géométrie.
+2. **Le dos ne se prend que sur une unité qui a bougé** (`precedente`). Graduer le dos **taxe le déplacement**,
+   et `eperon` achète le déplacement : r(eperon) **−0,165 → −0,366**, et **−0,492** avec le demi-plan. Plus la
+   graduation est franche, plus elle punit l'axe qui paie la position — l'inverse exact de ce qu'on cherchait.
+3. **Et il n'achète presque pas de décision.** **72,4 %** des couples (case, cible) tombent dans la même classe
+   « flanc » : le terme gradué est un `+base/4` quasi constant, pas un choix. L'écart de coup n'augmente que de
+   **1,6 %** (3,78 → 3,84 à une cible ; 9,71 → 9,87 à trois) et la densité de décision **ne bouge pas du tout**
+   (0,108 et 0,324, à la troisième décimale) — le dos n'entre ni dans l'allonge ni dans la riposte, donc jamais
+   dans l'issue d'un tour. Contre un défenseur **qui n'a pas bougé**, les trois lectures valent **1,00 valeur
+   distincte** : 100 % « face ». Le §9 le disait mort ; gradué, il reste mort là où il l'était et devient un
+   bonus presque permanent là où il vivait.
+
+### M3 — `CHARGE_PAR_CASE`, 4 ou 7
+
+| `CHARGE_PAR_CASE` | lame | ecu | eperon | arc | \|r\| max | Q4/Q1 | charge moyenne | coups chargés | charge max vue | écart de coup |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **4 (aujourd'hui)** | +0,111 | +0,161 | **−0,165** | −0,106 | **0,165** | 1,17× | 1,88 | 35,6 % | **12** | 2,80 |
+| 7 | +0,113 | +0,268 | **−0,158** | **−0,222** | **0,268** | 1,24× | 3,27 | 35,4 % | **21** | 3,72 |
+
+**Ça se tranche, et la réponse est non.** Passer de 4 à 7 **n'achète rien à `eperon`** — r va de −0,165 à
+−0,158, soit **+0,007**, sous le bruit — et **re-tarife deux autres axes** : `arc` de −0,106 à **−0,222**
+(×2,1) et `ecu` de +0,161 à **+0,268**. Le |r| max monte de 0,165 à **0,268**, à 0,032 de la cible du §9 ter.
+La lecture est mécanique : la charge frappe **qui se fait rattraper**, donc l'archer, et elle est encaissée par
+**qui tient**, donc `ecu` ; la multiplier ne la donne pas davantage à `eperon`, elle l'amplifie pour tout le
+monde — la part des coups chargés ne bouge pas (35,6 % → 35,4 %).
+
+**Et l'avertissement du §9 sur le plafond n'est pas le bon.** Le plafond vaut bien `CHARGE_PAR_CASE · pas` =
+4 × 4 = **16**, mais **la plus forte charge vue en 57 600 duels vaut 12** — un élan de 3 sur 4 possibles. Ce
+qui borne n'est pas le plafond, c'est **l'élan réalisé** : une politique s'arrête dès qu'elle peut frapper. Et
+le double pas ne le relève pas : `deplacer` **remplace** `elan`, il ne le cumule pas (vérifié), et de toute
+façon une case atteinte en deux PA ne peut plus être frappée. Passer à 7 porte la charge maximale observée à
+21 pour 28 permis — le même écart, décalé.
+
+### Recommandations, chiffrées et non implémentées
+
+1. **Ne pas graduer `dos`, sous aucune des trois lectures graduées mesurées.** Le prix est |r| max **0,165 → 0,366**
+   (flanc strict), **0,492** (demi-plan), **0,329** (additif gradué) — la cible du §9 ter est franchie dans les
+   trois cas ; le gain est **+1,6 % d'écart de coup et 0,000 de densité de décision**. Le rapport est
+   indéfendable.
+2. **Ne pas passer `CHARGE_PAR_CASE` à 7.** Gain sur `eperon` : **+0,007**. Coût : `arc` ×2,1 et |r| max
+   à **0,268**. Si l'amplitude de la charge doit remonter, ce n'est pas par le multiplicateur.
+3. **Si le `dos` doit malgré tout vivre, l'additif règle la moitié du problème — et pas l'autre.** Écrit en
+   points (14 pour le dos, 7 pour le flanc, soit la moitié de la base moyenne 29,17) au lieu d'une fraction de
+   la base, il **efface entièrement le prix caché de `lame`** : r(lame) **+0,222 → −0,027**, ce qui confirme le
+   mécanisme 1. Mais la taxe sur le déplacement survit (`eperon` **−0,297**) et le poids glisse sur `ecu`
+   (**+0,329**) : |r| max **0,329**, toujours hors cible. **Aucune des trois lectures graduées mesurées ne
+   tient les 0,30** ; seule la binaire d'aujourd'hui les tient, à 0,165. Rendre le dos actuel simplement
+   additif, sans le graduer (14 points), donne 0,206 : mieux sur `lame` (−0,020) et sur `eperon` (−0,127),
+   moins bien sur `ecu` (+0,206) — un échange, pas un gain, et un changement de format de résolution pour rien.
+4. **Le chiffre qui appelle une décision n'est ni le dos ni la charge : c'est `r(eperon) = −0,165`**, retourné
+   par le compteur de PA lui-même (**+0,036** avant), avec `lame+ecu` à **+0,241** (+0,087 avant). Les deux
+   cibles tiennent encore, mais le §9 ter demande de les vérifier « à chaque changement du moteur » et ce
+   changement-là ne l'a pas été. La cause mesurée est la dilution des deux prix positionnels (coups chargés
+   42,6 % → 35,6 %, coups avec allonge 18,6 % → 15,4 %).
+5. **Ce qui achète de la décision, dans l'ordre et chiffré** : le nombre de cibles (**×3,00** de 1 à 3
+   adversaires), puis la double frappe (**+7,7 %** à une cible, **+10,8 %** à trois, pour zéro case de plus).
+   Ce qui n'en achète pas : le double pas (**−48 %** de densité, 36,5 % des tours joués). Retirer le double pas
+   n'est **pas** recommandé sur cette seule mesure — il est joué, il ne casse aucune cible, et la bande de tier
+   s'est refermée de 4,12 pt avec le compteur entier — mais il faut cesser de le compter comme un gain de
+   décision : il n'en est pas un.
+
+### LIMITE — ce qui n'est pas mesuré ici
+
+- **Le proxy ne rejoue pas la bataille.** Une frappe qui tue ne retire pas la cible de l'énumération, la
+  riposte n'entame pas la tenue, le tour suivant n'existe pas. C'est un plancher honnête, pas le gain réel.
+- **Le duel reste un duel.** Deux unités, une dalle, trois politiques, 100 000 feuilles : la formation, le
+  choix du moment d'engager et la bataille rangée ne sont toujours pas mesurés (LIMITE du §6, inchangée).
+- **Les politiques ne sont pas un joueur.** Elles dépensent leurs deux PA gloutonnement ; un joueur qui garde
+  un PA pour la reprise (`reprendre` exige **tous** les PA) joue un jeu que ce banc n'a pas vu.
+- **`r(eperon)` n'a pas été réparé, seulement constaté.** Aucune constante n'a été essayée pour le ramener :
+  ce serait re-tarifer un axe, c'est-à-dire ouvrir le chantier que le §9 ter encadre, pas un post-scriptum.
+- **Le dos additif n'a été mesuré qu'à 14 et 7 points** (la moitié de la base moyenne, 29,17), sur la seule
+  géométrie stricte. Aucun balayage.
+- **Le moteur a encore bougé pendant la mesure.** Les copies datent du 2026-09-10 à 16 h 11 ; la télégraphie
+  a été sortie de `bataille.ts` vers `ia.ts` après. `resoudreCoup`, `riposteDe`, `jouer` et les règles de PA
+  sont inchangés, donc les chiffres tiennent — mais ils sont datés, comme ceux du §9.
+- **Ces chiffres sont des figures, pas des preuves.** Aucun n'entre dans une feuille, un carnet ou une
+  signature, et aucun de ces scripts n'est rejouable par la CI : ils vivent dans un scratchpad, hors dépôt.
