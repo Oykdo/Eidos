@@ -176,3 +176,30 @@ export function caracteresDe(empreinteHex: string): Caractere[] {
 export function caractereDe(code: number): Caractere {
   return CARACTERES[code & 63]!;
 }
+
+/** id → code de la plaque (0..63). Bijection : `codeDuCaractere(caractereDe(c).id) === c`. */
+export const CODE_PAR_ID: ReadonlyMap<string, number> = new Map(
+  CARACTERES.map((c, i) => [c.id, i]),
+);
+
+/**
+ * Code d'un signe de la plaque, par son id. Refuse ce qui n'y est pas :
+ * les 43 signes de `CHYMIE_UNICODE` sont hors alphabet du carnet.
+ */
+export function codeDuCaractere(id: string): number {
+  const c = CODE_PAR_ID.get(id);
+  if (c === undefined) throw new Error(`signe « ${id} » hors des 64 de la plaque`);
+  return c;
+}
+
+/** Un signe, plaque ou hors plaque (les 107). Rend `undefined` si le nom n'existe pas. */
+export function signeChymique(id: string): Caractere | SigneUnicode | undefined {
+  return CARACTERES.find((c) => c.id === id) ?? CHYMIE_UNICODE.find((c) => c.id === id);
+}
+
+/** Le glyphe Unicode d'un signe, plaque ou hors plaque. Refuse un nom absent. */
+export function uniDe(id: string): string {
+  const s = signeChymique(id);
+  if (!s) throw new Error(`signe « ${id} » absent des ${CARACTERES.length + CHYMIE_UNICODE.length} de la chymie`);
+  return s.uni;
+}
