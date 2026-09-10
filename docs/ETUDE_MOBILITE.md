@@ -141,6 +141,7 @@ Chiffré sur la lecture retenue (masque d'arrivée, régime B).
 3. **Aucune démarche ne domine, avec le bon catalogue** : bande 7,2 pt, rapport 1,15×, pire tête-à-tête 1,38×, très sous le seuil de 2× du marché ouvert. Le modèle (B) est donc **tenable**, mais uniquement dans sa version presque égale : dès que l'inégalité devient lisible (catalogue libre), on passe 1,87× puis 3,17× et le marché saute.
 4. **Le malus d'extrémité n'est pas réglé par une démarche singulière** : −2,89 pt sur 28,80, T12 inchangé. Le gain de 10 pt de la première lecture était un artefact de 30 % de nuls comptés à 0,5. Seule l'indexation explicite de la démarche sur le tier le referme (−7,17 pt, T12 +17,4 pt) — au prix d'un champ de bataille où l'unité commune atteint 1,53 case par tour.
 5. **Et le gain de décision est négatif** (1,45 issue contre 1,50). **La réponse d'ensemble est donc négative** : les démarches singulières coûtent plus qu'elles n'apportent, tant que ce qu'on leur demande est d'équilibrer. Ce qu'elles apportent réellement est de la **saveur** — sept marches nommées, lisibles au pochoir, sans dominante — et ça, elles le font bien.
+6. **Corrigé par le §9** : la phrase « la pauvreté de décision est un problème de résolution » était juste au second ordre, fausse au premier. Le premier verrou est **l'engagement** — 9,0 % des cases offertes permettent de frapper — puis le **nombre de cibles**, et seulement ensuite la résolution.
 
 ## Décisions à trancher
 1. **Livrer les démarches, oui ou non ?** Recommandation : **oui, mais comme saveur, en régime B, catalogue 2 seul**, et **pas avant** d'avoir ramené les nuls sous 5 % (§6). Pas comme réponse au malus d'extrémité : il faut le dire dans `SPEC_TACTIQUE.md` §3, qui l'espérait.
@@ -158,3 +159,39 @@ Chiffré sur la lecture retenue (masque d'arrivée, régime B).
 - **Le catalogue 1 est un balayage, pas une proposition.** Ses chiffres servent à écarter, jamais à livrer.
 - **Aucune de ces mesures n'est rejouable par la CI.** Les scripts vivent dans le scratchpad (`mob-*.ts`) et n'écrivent rien dans `atelier/`. Ce qui doit engager devient un `.test.ts` à vecteurs gelés, ajouté à la main dans `package.json` et dans `CLAUDE.md` §2.
 - **Ces chiffres sont des figures, pas des preuves.** Aucun n'entre dans une feuille, un carnet ou une signature.
+
+## 9. Post-scriptum — les dalles dégagées (mesure du 2026-09-10, après `e9acf52`)
+`dalleDe` lit désormais **deux bits par case**, mur si les deux sont posés : 25 % de murs au lieu de 50 %, plus grande pièce d'un seul tenant **56,8 cases en moyenne** (min 13, 1,2 % des étages sous trente) contre 19,8 avant. L'étage retenu par le banc passe de 149 (52 libres, région 47) à **198 (73 libres, région 73)**. Toutes les mesures des §4 à §8 portent sur l'ancienne dalle et **ne sont plus valides en valeur absolue** ; les conclusions relatives (théorème du §2, matrice du §5, prix des axes du §6) n'ont pas été rejouées.
+
+**Constantes effectivement mesurées ici**, le moteur bougeant sous la mesure : `COUP_BASE` 16 · `COUP_MIN` 1 · `DIV_ACCORD` 4 · `DIV_DOS` 2 · `DIV_ALLONGE` 2 · `CHARGE_PAR_CASE` 4 · `MULT_TENUE` 2 · `TENUE_BASE` 32. Deux lectures de `unite.ts` sont données séparément : celle de l'étude (`DIV_PAS` 12, `DIV_PORTEE` 16, `pas` 2–7, portée 1–5) et celle du recalibrage en cours (`DIV_PAS` 32, `DIV_PORTEE` 10, `pas` 2–4, portée 1–7).
+
+**Le couple avant/après, même proxy, mêmes graines** (`mob-decision.ts`, régime 0, 400 positions) :
+
+| | cases offertes | signatures | **issues distinctes** | **issues / case** | écart de coup |
+|---|---|---|---|---|---|
+| dalle 1 bit, `pas` 2–7 | 8,41 | 4,32 | **1,50** | **0,178** | 1,69 |
+| **dalle 2 bits, `pas` 2–7** | **14,36** | 4,69 | **1,57** | **0,109** | 2,35 |
+| dalle 2 bits, recalibrage `pas` 2–4 / portée 1–7 | 8,90 | 3,75 | 1,52 | 0,171 | 2,80 |
+
+**La densité a baissé, et il faut le dire franchement : +70,8 % de cases offertes pour +4,7 % d'issues distinctes, soit un rapport issues/case qui tombe de 0,178 à 0,109 — −39 %.** La place n'a pas créé de décision, elle a créé des cases indifférentes. Le recalibrage en cours la ramène à 0,171, c'est-à-dire au niveau d'avant : il rend `pas` plus court et la portée plus longue, donc une part bien plus grande des cases atteignables permet de frapper.
+
+**Décomposition** (`mob-diag.ts`, dalle 2 bits ; valeurs distinctes prises par chaque terme sur les cases d'où l'on peut frapper) :
+
+| cas | cases | **% de cases d'où l'on peut frapper** | issues | iss/case | accord | dos | allonge | charge | coup total |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 adversaire, `pas` 2–7 | 15,36 | **9,0 %** | 1,44 | 0,094 | **1,00** | **1,00** | 1,26 | **2,00** | 2,09 |
+| 1 adv., dos délibérément exposé | 15,36 | 9,0 % | 1,44 | 0,094 | 1,00 | **1,31** | 1,26 | 2,00 | 2,40 |
+| 2 adversaires | 14,73 | 17,2 % | 1,93 | 0,131 | — | — | — | — | — |
+| **3 adversaires** | 14,07 | **24,7 %** | **2,49** | **0,177** | — | — | — | — | — |
+| 1 adv., recalibrage 32/10 | 9,90 | **15,3 %** | 1,40 | **0,142** | 1,00 | 1,00 | 1,29 | 2,18 | 2,48 |
+| 3 adv., recalibrage 32/10 | 9,34 | **37,2 %** | 2,42 | **0,259** | — | — | — | — | — |
+
+(Les colonnes de termes sont normalisées par la part des positions offrant au moins une frappe — 35 % à un adversaire ; à plusieurs cibles `accord` varie d'une cible à l'autre et la normalisation ne vaut plus.)
+
+**Le diagnostic, en trois lignes.**
+1. **Ce n'est pas la place qui manquait.** La salle a presque triplé et la densité de décision a perdu 39 %. Le joueur avait déjà la place ; il n'avait pas de raison de s'en servir.
+2. **Ce qui borne d'abord, c'est l'engagement.** À un adversaire, **9,0 %** des cases offertes permettent de frapper, et **65 % des positions n'en offrent aucune** : le tour est une marche, pas un choix. Le recalibrage en cours porte cette part à 15,3 % et la densité à 0,142 (+51 %) — c'est, à une cible, le plus gros gain mesuré.
+3. **Ce qui borne ensuite, c'est le nombre de cibles, puis la résolution.** 1 → 3 adversaires : issues 1,44 → 2,49, densité 0,094 → 0,177 (**×1,88**), et 0,259 avec le recalibrage — plus que tout le reste réuni. Et sur les cases d'où l'on peut frapper, **un seul des quatre termes fait varier le coup avec la case** : `charge` (2,00 valeurs). `accord` en prend **1,00** — par construction, il ne dépend que des deux mots et **ne peut jamais** dépendre de la case ; `dos` **1,00**, et seulement **1,31** face à un dos délibérément exposé ; `allonge` **1,26**, binaire.
+
+**Le terme à changer, et le chiffre qui le désigne : `dos`.** Il est le seul terme *voulu positionnel* et *mort en fait* — 1,00 valeur distincte quand le défenseur n'a pas bougé, **1,31 même quand on lui expose le dos exprès**. `estDeDos` exige la colinéarité stricte entre l'attaquant, le défenseur et la case qu'il vient de quitter : sur une dalle 9×9 c'est une condition de mesure nulle, et elle ne se déclenche que si le défenseur a bougé. Le graduer — dos `base/DIV_DOS`, **flanc** `base/(2·DIV_DOS)`, face 0, le flanc étant toute case hors de l'axe de la marche — le ferait passer de 1,31 à 3 valeurs possibles sans toucher un seul axe : **`dos` est purement positionnel, aucun axe ne l'achète**, donc le modifier ne peut pas rouvrir le §9 ter. C'est le seul terme dont on puisse dire ça. À l'inverse, `allonge` (1,26) est le prix de `arc` et `charge` (2,00) celui de `eperon` : y toucher re-tarife un axe.
+**Et un avertissement chiffré pour le recalibrage en cours** : `charge` est le seul terme positionnel vivant, et son plafond vaut `CHARGE_PAR_CASE · pas`. Passer `DIV_PAS` de 12 à 32 fait tomber ce plafond de 28 à **16** — il faudra relever `CHARGE_PAR_CASE` de 4 à 7 pour le tenir, ou assumer que le seul terme qui fasse compter la case perd 43 % de son amplitude.
