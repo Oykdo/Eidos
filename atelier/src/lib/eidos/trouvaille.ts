@@ -4,12 +4,12 @@
  */
 
 import { FIGURES } from "./constantes.ts";
-import type { Lumen } from "./relique.ts";
+import type { Ionos } from "./relique.ts";
 
 const FIG = ["\u00b7", "\u25cb", "\u263d", "\u271a"] as const;
 
-export function dimensionsAscii(lumen: Lumen): { W: number; H: number } {
-  const s = Math.max(0.35, lumen.a / 40);
+export function dimensionsAscii(ionos: Ionos): { W: number; H: number } {
+  const s = Math.max(0.35, ionos.a / 40);
   const W = 21 + Math.round(20 * s);
   const H = 9 + Math.round(12 * s);
   return { W: W % 2 === 1 ? W : W + 1, H: H % 2 === 1 ? H : H + 1 };
@@ -55,13 +55,13 @@ export function asciiGlyphe(etages: [number, number, number]): string {
   return etages.map((k) => `  ${FIGURES[k]}`).join("\n");
 }
 
-export function asciiTrouvaille(lumen: Lumen, phase: number): string {
-  const { W, H } = dimensionsAscii(lumen);
-  const corps = asciiEllipse(lumen.a, lumen.b, phase, W, H);
-  const r = lumen.recompense(phase);
+export function asciiTrouvaille(ionos: Ionos, phase: number): string {
+  const { W, H } = dimensionsAscii(ionos);
+  const corps = asciiEllipse(ionos.a, ionos.b, phase, W, H);
+  const r = ionos.recompense(phase);
   const pied =
-    `${lumen.age.nomAffiche}  a=${lumen.a} b=${lumen.b}` +
-    `  prix ${lumen.prix.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} eidôla` +
+    `${ionos.age.nomAffiche}  a=${ionos.a} b=${ionos.b}` +
+    `  prix ${ionos.prix.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} eidôla` +
     `  R=${r.toFixed(2)}`;
   return `${corps}\n${pied}`;
 }
