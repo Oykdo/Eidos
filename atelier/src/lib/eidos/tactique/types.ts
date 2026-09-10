@@ -194,8 +194,13 @@ export type Coup = {
  */
 export type Intention = {
   readonly unite: number;
-  readonly acte: Acte;
-  /** Cases couvertes par l'acte annoncé, pour l'affichage. */
+  /**
+   * Le tour annoncé : au plus `PA_PAR_TOUR` actes, dans l'ordre. Vide quand
+   * l'unité ne bougera pas — ce qui n'est pas `passer`, lequel vide ses points
+   * d'action et lui interdit la reprise.
+   */
+  readonly actes: readonly Acte[];
+  /** Cases couvertes une fois le tour annoncé joué, pour l'affichage. */
   readonly menace: readonly Case[];
 };
 

@@ -266,8 +266,11 @@ describe("bataille — ouverture", () => {
     assert.equal(etat.feuilles, 12);
     assert.equal(etat.journal.length, 0);
     assert.equal(etat.fin, null);
-    assert.equal(etat.intentions.length, 1);
-    assert.equal(etat.intentions[0]!.unite, 2);
+    assert.deepEqual(
+      etat.intentions,
+      [],
+      "le moteur n'annonce rien de lui-même : annoncer() d'ia.ts pose la télégraphie",
+    );
   });
 
   it("doit échouer — ouvrir : feuilles négatives, case hors dalle, case pleine, case déjà tenue", () => {
@@ -661,7 +664,7 @@ describe("bataille — les trois issues", () => {
   });
 });
 
-describe("bataille — phases et télégraphie", () => {
+describe("bataille — phases", () => {
   it("les Indéchiffrés agissent par eperon décroissant, à égalité par id croissant", () => {
     const etat = poser(
       [brute({ pos: MANEGE.g })],
@@ -696,29 +699,6 @@ describe("bataille — phases et télégraphie", () => {
     assert.equal(retour.unites[1]!.pa, PA_PAR_TOUR);
   });
 
-  it("l'intention est une figure : annoncée, puis rendue fausse quand la cible s'écarte", () => {
-    const etat = poser(
-      [brute({ pos: TRIO.ouest, lame: 8, ecu: 8, eperon: 40, arc: 8 })],
-      [brute({ pos: TRIO.centre, lame: 20, ecu: 20, eperon: 20, arc: 4 })],
-    );
-    assert.equal(etat.intentions.length, 1);
-    const annonce = etat.intentions[0]!;
-    assert.equal(annonce.unite, 1);
-    assert.deepEqual(annonce.acte, { geste: "frapper", unite: 1, cible: 0 });
-    assert.deepEqual(annonce.menace, [TRIO.ouest]);
-    const fuite = actesPossibles(etat, 0)
-      .filter((a): a is Extract<Acte, { geste: "deplacer" }> => a.geste === "deplacer")
-      .sort((p, q) => distance(q.vers, TRIO.centre) - distance(p.vers, TRIO.centre))[0]!;
-    assert.ok(
-      distance(fuite.vers, TRIO.centre) > portee(etat.unites[1]!),
-      "la fuite doit sortir de la portée adverse",
-    );
-    const apres = finDePhase(finDePhase(jouer(etat, fuite)));
-    assert.equal(apres.phase, "coffre");
-    assert.notDeepEqual(apres.intentions[0]!.acte, annonce.acte);
-    assert.equal(apres.intentions[0]!.acte.geste, "deplacer");
-    assert.ok(apres.intentions[0]!.menace.length > 0);
-  });
 });
 
 describe("bataille — rejeu, trace, conservation", () => {

@@ -78,7 +78,16 @@ empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
 La veillée : `veillee.ts` (arbre, jour, gestes, juge), `veillee-tour.ts` (gestes reliés aux actes, sac),
 `chaine-reseau.ts` (en-têtes de `chaine-eidos.dat`), `classement.ts`, `arbre-vue.ts`, `feuille-son.ts`,
 `veillee-bot.ts`, `depot.ts`, `fantomes.ts`, `veillee-lexique.ts`. L'accueil : `lib/accueil/orbites.ts`
-et `components/accueil/FondOrbital.tsx`. `npm test` énumère ses fichiers dans `package.json` :
+et `components/accueil/FondOrbital.tsx`.
+Le moteur tactique est dans `atelier/src/lib/eidos/tactique/` : `types.ts` (constantes,
+`Unite`, `Acte`, `Intention`, `EtatBataille`), `grille.ts` (dalle 9×9, distance, portée,
+zone de contrôle, parcours entier), `unite.ts` (pas, portée, tenue, points d'action),
+`bataille.ts` (phases, résolution sans dé, riposte, fin, `traceBataille`) et `ia.ts`
+(la politique : plan d'un tour, télégraphie, jouer une phase, jouer une bataille) —
+`grille`, `unite`, `bataille` et `ia` ont chacun leur `.test.ts`. **`bataille.ts`
+n'importe rien d'`ia.ts`** : le moteur ne connaît aucune politique, `ouvrirBataille` et
+`finDePhase` rendent un état sans intentions, et c'est `annoncer` qui les y pose.
+`npm test` énumère ses fichiers dans `package.json` :
 un `.test.ts` nouveau s'y ajoute à la main.
 
 ## 3. Invariants — ne jamais casser

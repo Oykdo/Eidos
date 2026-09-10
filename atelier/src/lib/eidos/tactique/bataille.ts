@@ -64,14 +64,20 @@
  * quatre on pointe (rapport lame/ecu contre eperon/arc : 19,6× à l'origine,
  * 0,85 à 1,36× après) ; ce qu'il ne corrige pas, c'est *combien* on pointe.
  *
+ * **Le moteur ne connaît aucune politique.** Ce fichier n'importe rien
+ * d'`ia.ts` — c'est l'inverse. `ouvrirBataille` et `finDePhase` rendent un état
+ * dont les intentions sont vides ; `annoncer` (dans `ia.ts`) les y pose quand
+ * la main revient au coffre. Une bataille jouée sans jamais appeler `annoncer`
+ * est une bataille sans télégraphie, pas une bataille fausse : le moteur
+ * rejoue et ne croit rien, il ne décide à la place de personne.
+ *
  * LIMITE : la bataille est une jauge. Elle ne touche ni le carnet, ni la
  * chaîne, ni le format des transactions ; seules la preuve exportée et les
  * sceaux engagent. L'intention annoncée est une **figure** : le joueur la rend
- * fausse en déplaçant la cible, et le moteur ne la lui oppose jamais. La règle
- * d'intention de ce fichier est provisoire (PR 3 apporte `ia.ts`), l'orientation
- * d'une unité est une convention de lecture (voir `precedenteDe`), et
- * `rejouer` n'applique que des actes : les passages de main restent explicites,
- * un juge doit intercaler ses `finDePhase`.
+ * fausse en déplaçant la cible, et le moteur ne la lui oppose jamais.
+ * L'orientation d'une unité est une convention de lecture (voir `estDeDos`),
+ * et `rejouer` n'applique que des actes : les passages de main restent
+ * explicites, un juge doit intercaler ses `finDePhase`.
  */
 
 import { concat, hexOf, sha256d, u16, u32, utf8 } from "../hash.ts";
@@ -79,9 +85,7 @@ import { paireDe, qDeMot } from "../resonance.ts";
 import { dalleDe, etageDe } from "../tour.ts";
 import {
   accessibles,
-  casesAPortee,
   casesDe,
-  chemin,
   cible as ciblesDe,
   cle,
   dansGrille,
@@ -89,8 +93,6 @@ import {
   estDeDos,
   estObstacle,
   memeCase,
-  occupantDe,
-  voisines,
 } from "./grille.ts";
 import {
   aDesPa,
@@ -124,7 +126,6 @@ import {
   type Coup,
   type EtatBataille,
   type Fin,
-  type Intention,
   type Unite,
 } from "./types.ts";
 
@@ -164,20 +165,6 @@ function vivantesDe(etat: EtatBataille): Unite[] {
 
 function remplacer(unites: readonly Unite[], neuve: Unite): Unite[] {
   return unites.map((u) => (u.id === neuve.id ? neuve : u));
-}
-
-/** À égalité de distance, le plus petit id. Aucun autre départage. */
-function plusProche(u: Unite, autres: readonly Unite[]): Unite | null {
-  let choix: Unite | null = null;
-  let meilleure = 0;
-  for (const a of autres) {
-    const d = distance(u.pos, a.pos);
-    if (choix === null || d < meilleure || (d === meilleure && a.id < choix.id)) {
-      choix = a;
-      meilleure = d;
-    }
-  }
-  return choix;
 }
 
 // ---------------------------------------------------------------------------
@@ -243,7 +230,7 @@ export function ouvrirBataille(
     journal: [],
     fin: null,
   };
-  return telegraphier(avecFin(ouverte));
+  return avecFin(ouverte);
 }
 
 // ---------------------------------------------------------------------------
@@ -505,86 +492,7 @@ export function finDePhase(etat: EtatBataille): EtatBataille {
     phase: entrant,
     tour: entrant === "coffre" ? etat.tour + 1 : etat.tour,
   };
-  return telegraphier(suivant);
-}
-
-/**
- * Annonce ce que feront les Indéchiffrés — seulement quand la main revient au
- * coffre : c'est au joueur que la télégraphie s'adresse. Pendant la phase
- * adverse, l'annonce du tour reste affichée telle quelle.
- *
- * PROVISOIRE : viser l'unité du coffre vivante la plus proche (à égalité, le
- * plus petit id), la frapper si elle est à portée, sinon s'en rapprocher.
- * `ia.ts` (PR 3) remplacera cette règle. Une figure, dans tous les cas.
- */
-function telegraphier(etat: EtatBataille): EtatBataille {
-  if (etat.fin !== null) return { ...etat, intentions: [] };
-  if (etat.phase !== "coffre") return etat;
-  const vis = vivantesDe(etat);
-  const proies = vis.filter((u) => u.camp === "coffre");
-  const intentions: Intention[] = [];
-  for (const id of ordreDePhase(etat, "indechiffre")) {
-    const u = vis.find((x) => x.id === id);
-    if (u === undefined) continue;
-    const proie = plusProche(u, proies);
-    if (proie === null) {
-      intentions.push({ unite: u.id, acte: { geste: "passer", unite: u.id }, menace: [] });
-      continue;
-    }
-    if (ciblesDe(vis, u, portee(u)).some((p) => p.id === proie.id)) {
-      intentions.push({
-        unite: u.id,
-        acte: { geste: "frapper", unite: u.id, cible: proie.id },
-        menace: [proie.pos],
-      });
-      continue;
-    }
-    const vers = approche(etat, vis, u, proie.pos);
-    if (vers === null) {
-      intentions.push({ unite: u.id, acte: { geste: "passer", unite: u.id }, menace: [] });
-      continue;
-    }
-    intentions.push({
-      unite: u.id,
-      acte: { geste: "deplacer", unite: u.id, vers },
-      menace: casesAPortee(vers, portee(u)),
-    });
-  }
-  return { ...etat, intentions };
-}
-
-/**
- * La case la plus avancée, ce tour-ci, sur le chemin qui mène au contact.
- *
- * On vise un abord libre de la proie — sa case est occupée, personne n'y va —
- * et on suit le chemin tant qu'il reste dans les cases atteignables : le BFS
- * porte sur la dalle entière (`GRILLE_N²`), le pas du tour le tronque. Chemin
- * coupé : la case atteignable la plus proche du but, en ordre de lecture, et
- * seulement si elle rapproche.
- */
-function approche(
-  etat: EtatBataille,
-  vis: readonly Unite[],
-  u: Unite,
-  but: Case,
-): Case | null {
-  const couts = accessibles(etat.obstacles, vis, u, pas(u));
-  const atteignables = casesDe(couts).filter((c) => !memeCase(c, u.pos));
-  if (atteignables.length === 0) return null;
-  const abords = voisines(but)
-    .filter((c) => !estObstacle(etat.obstacles, c) && occupantDe(vis, c) === null)
-    .sort((p, q) => distance(u.pos, p) - distance(u.pos, q));
-  for (const abord of abords) {
-    let sur: Case | null = null;
-    for (const c of chemin(etat.obstacles, vis, u, abord, GRILLE_N * GRILLE_N)) {
-      if (!couts.has(cle(c))) break;
-      sur = c;
-    }
-    if (sur !== null && !memeCase(sur, u.pos)) return sur;
-  }
-  let choix = atteignables[0]!;
-  for (const c of atteignables) if (distance(c, but) < distance(choix, but)) choix = c;
-  return distance(choix, but) < distance(u.pos, but) ? choix : null;
+  return suivant;
 }
 
 // ---------------------------------------------------------------------------
