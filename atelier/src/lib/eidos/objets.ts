@@ -194,6 +194,12 @@ export function racineObjets(objets: readonly Objet[]): string {
 /**
  * Sceau glyptique : encode la feuille. Unidirectionnel.
  * INTERDIT : en faire une KDF, une graine, une clé.
+ *
+ * **Ce sceau-ci n'ouvre rien.** C'est un nom court et vérifiable pour un
+ * objet, rien d'autre. Ne pas le confondre avec le **sceau d'âge** de
+ * `sceaux.ts` — une relique du monde récupérée dans le coffre, qui ouvre les
+ * portes des étages 64, 128 et 192. Deux notions sans rapport sous un même
+ * mot ; seule la seconde a un pouvoir.
  */
 export function sceauObjet(o: Objet): string {
   return encoderGlyphes(feuilleObjet(o));

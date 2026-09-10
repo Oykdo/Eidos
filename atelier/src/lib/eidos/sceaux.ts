@@ -12,6 +12,10 @@
  *
  * Le coffre d'atelier (graine publique) garde ses portes ouvertes : démonstration.
  * Un coffre personnel n'ouvre qu'avec un sceau trouvé. Rien ne s'achète.
+ *
+ * **Ne pas confondre avec `sceauObjet`** (`objets.ts`), qui encode la feuille
+ * d'un objet en glyphes : celui-là est une lecture et n'ouvre rien. Le sceau
+ * de ce fichier est le seul des deux qui ait un pouvoir.
  */
 
 import { AGES_RELIQUE, estNomAge, prixReliqueAtomes } from "./relique.ts";
