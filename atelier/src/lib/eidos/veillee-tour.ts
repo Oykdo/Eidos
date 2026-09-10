@@ -13,7 +13,8 @@
  *
  * **Le sac.** Ce qu'une veillée rapporte — dons, trouvailles, coffrets,
  * captures, élixirs d'écho — n'entre pas au coffre au geste : il va dans un
- * sac de vingt-sept places (une par salle), noté dans la jauge. Le sommet, une
+ * sac de quatre-vingt-une places (trois par salle, la dalle entière), noté dans
+ * la jauge. Le sommet, une
  * porte fermée ou l'effacement volontaire **versent** le sac au coffre ;
  * l'arbre épuisé **le perd** : les gestes restent dans la preuve, les objets
  * ne reviennent pas. C'est le dilemme de la parcimonie : brûler la dernière
@@ -79,7 +80,6 @@ export type VeilleeDuCoffre = {
   sac: ObjetPorte[];
 };
 
-/** Une place par salle. */
 /**
  * Le sac : trois fois les étapes, soit 81 places — la dalle entière, 9².
  * Une place par salle (27) datait d'une dalle à moitié pleine et d'un

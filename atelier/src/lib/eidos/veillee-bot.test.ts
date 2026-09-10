@@ -26,7 +26,7 @@ const rapport = simuler(RUNS, GRAINE);
 const tous: Run[] = POLITIQUES.flatMap((p) => rapport.detail[p]);
 
 /** La table gelée : fin, feuilles brûlées, butin — par politique, run par run. Toute retouche
- *  du bot, du pendule, d'un acte de la Tour ou du sac (veillee-tour.ts, 27 places) la régénère
+ *  du bot, du pendule, d'un acte de la Tour ou du sac (veillee-tour.ts, 81 places) la régénère
  *  sciemment : `node --experimental-strip-types src/lib/eidos/veillee-bot.ts 4` imprime les runs. */
 const GELE: Record<Politique, [Fin, number, number][]> = {
   avare: [
