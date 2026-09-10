@@ -32,15 +32,14 @@ export function CoffreVue() {
 
   return (
     <section className="rounded-lg bg-carte p-4 shadow-[0_0_0_1px_rgb(198_203_209_/_0.10)] sm:p-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-mono text-base font-normal text-encre">{t("coffre.scene")}</h2>
-        <p className="font-mono text-[11px] tabular-nums text-or">{formaterAtomes(atomes)}</p>
-      </div>
+      <h2 className="font-mono text-base font-normal text-encre">{t("coffre.scene")}</h2>
       <p className="mt-2 font-mono text-[12.5px] leading-relaxed text-sourd text-pretty">{t("coffre.sceneLede")}</p>
-      <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
-        {t("coffre.palier")} · {t(`coffre.palier.${PALIERS_BUTIN[palier]}`)}
-      </p>
-      <div className="relative mt-4 h-64 overflow-hidden rounded-md bg-fond">
+      {palier > 0 ? (
+        <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">
+          {t("coffre.palier")} · {t(`coffre.palier.${PALIERS_BUTIN[palier]}`)}
+        </p>
+      ) : null}
+      <div className="relative mt-4 h-64 overflow-hidden rounded-md bg-fond print:hidden">
         {gl ? (
           <Suspense fallback={<div className="h-full bg-fond" />}>
             <CoffreScene amplitude={amp} palier={palier} />

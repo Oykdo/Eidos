@@ -332,7 +332,7 @@ export function FondOrbital({ hauteur, langue, repliques, onAstre }: FondOrbital
       <canvas
         ref={toile}
         aria-hidden="true"
-        className="fixed inset-0 z-0 block h-full w-full"
+        className="fixed inset-0 z-0 block h-full w-full print:hidden"
         style={{ pointerEvents: "auto" }}
       />
       {survol ? (

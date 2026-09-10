@@ -30,6 +30,10 @@ export function Sauvegarde() {
   }
 
   function ouvrir(f: File) {
+    // Sans cette remise a zero, un statut de succes ancien (« enregistre »)
+    // masque l'erreur que `importerFichier` posera : la ligne d'etat ne rend
+    // `erreur` que si `statut` est nul. Un import rate passait en silence.
+    setStatut(null);
     const reader = new FileReader();
     reader.onerror = () => setStatut(t("psnx.lire"));
     reader.onload = () => {

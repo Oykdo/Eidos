@@ -16,8 +16,16 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Eidos — Lamport, glyphes, eidos.carnet. Post-quantum federated ledger.",
+          "Eidos — a turn-based tactical RPG on a post-quantum federated ledger: hash-only signatures (WOTS+, XMSS), bounded emission, full replay.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: APP_NAME },
+      {
+        property: "og:description",
+        content:
+          "Eidos — a turn-based tactical RPG on a post-quantum federated ledger: hash-only signatures, bounded emission, full replay.",
+      },
+      { property: "og:image", content: `${BASE}og.jpg` },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: `${BASE}favicon.svg` },
