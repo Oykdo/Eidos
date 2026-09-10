@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n.ts";
 
 export function Mark({ className, size = 28 }: { className?: string; size?: number }) {
   return (
@@ -20,6 +21,7 @@ export function Mark({ className, size = 28 }: { className?: string; size?: numb
 }
 
 export function Bandeau({ className }: { className?: string }) {
+  const { t } = useI18n();
   return (
     <a
       href={import.meta.env.BASE_URL || "/"}
@@ -31,7 +33,7 @@ export function Bandeau({ className }: { className?: string }) {
           EIDOS
         </span>
         <span className="mt-1 block truncate font-mono text-[10px] leading-snug text-sourd">
-          εἶδος · la forme — hub · réseau d'essai
+          {t("marque.lede")}
         </span>
       </span>
     </a>

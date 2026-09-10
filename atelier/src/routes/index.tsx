@@ -75,7 +75,7 @@ function Home() {
             </section>
             <Inventaire />
             <CoffreVue />
-            {!personnel ? <Creer /> : null}
+            <Creer />
             <Sauvegarde />
             <Papier />
           </>

@@ -11,7 +11,6 @@ export function Sorties() {
   const { t } = useI18n();
   const coffre = useCoffre((s) => s.coffre);
   const [copie, setCopie] = useState<string | null>(null);
-  if (!coffre) return null;
   const sorties = [...coffre.sorties].sort((a, b) => b.montant - a.montant);
   if (sorties.length === 0) return null;
 
