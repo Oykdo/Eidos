@@ -28,7 +28,7 @@ L’unité est l’**eidôlon** (10⁸ atomes). La forme est la règle ; l’ima
 | **Glyphes** | 4 figures, 64 empilements. 31 groupes. Bourrage refusé. |
 | **Signes** | Lectures des mêmes 64. Pas un 5ᵉ glyphe. |
 | **Tour** | 255 coupes. Neuf muses et leurs familiers, élixirs de la tria prima, capsules et bestiaire, alcôves, échos, antres, portes par sceaux d'âge. Jauge hors feuille. |
-| **Veillée** | Le roguelike du jour : un arbre de 64 feuilles WOTS+ pour vie, un geste = une feuille, 27 salles tirées du premier bloc du jour, preuve `eidos-veillee/1` jugée sans rejeu. |
+| **Veillée** | Le run du jour : un arbre de 64 feuilles WOTS+ pour vie, un geste = une feuille, 27 salles tirées du premier bloc du jour, preuve `eidos-veillee/1` jugée sans rejeu. |
 | **Guide** | Mode d’emploi. |
 
 Auth et base distante : **off**. Le carnet vit dans ce navigateur (`localStorage`). Pas de comptes, pas de fédération réelle, pas de nœud réseau.
@@ -104,7 +104,7 @@ The unit is the **eidôlon** (10⁸ atoms). The form is the rule; the image is w
 | **Glyphs** | 64 stacks. Padding refused. |
 | **Signs** | Readings of the same 64. |
 | **Tower** | 255 slices. Nine muses and their households, tria prima elixirs, capsules and bestiary, alcoves, echoes, lairs, gates by age seal. Off-sheet gauge. |
-| **Vigil** | The daily roguelike: a tree of 64 WOTS+ leaves as life, one gesture = one leaf, 27 rooms from the day's first block, an `eidos-veillee/1` proof judged without replay. |
+| **Vigil** | The daily run: a tree of 64 WOTS+ leaves as life, one gesture = one leaf, 27 rooms from the day's first block, an `eidos-veillee/1` proof judged without replay. |
 | **Guide** | How to use it. |
 
 Auth is **off**. The ledger lives in `localStorage`. No accounts, no live federation, no network node.
