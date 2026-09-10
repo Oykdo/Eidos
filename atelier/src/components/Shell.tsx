@@ -4,6 +4,21 @@ import { Nav, type NavId } from "@/components/Nav";
 import { Langue } from "@/components/Langue";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 
+/** Le titre de chaque page, pour le `<h1>`. Les memes cles que la barre. */
+const TITRE: Record<NavId, Msg> = {
+  coffre: "nav.coffre",
+  tour: "nav.tour",
+  veillee: "nav.veillee",
+  coffreHoraire: "nav.coffreHoraire",
+  journal: "nav.journal",
+  temoin: "nav.temoin",
+  arbre: "nav.arbre",
+  reliques: "nav.reliques",
+  glyphes: "nav.glyphes",
+  signatures: "nav.signatures",
+  guide: "nav.guide",
+};
+
 const SOUS: Record<NavId, Msg> = {
   coffre: "sous.coffre",
   tour: "sous.tour",
@@ -21,9 +36,13 @@ const SOUS: Record<NavId, Msg> = {
 export function Shell({ actuel, children }: { actuel: NavId; children: ReactNode }) {
   const { t } = useI18n();
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-[560px] px-[18px] pt-[max(20px,env(safe-area-inset-top))] pb-[calc(32px+env(safe-area-inset-bottom))]">
+    <main className="mx-auto min-h-dvh w-full max-w-[560px] px-[18px] pt-5 pb-[calc(32px+env(safe-area-inset-bottom))]">
       <header className="sticky top-0 z-20 -mx-[18px] bg-fond px-[18px] pt-[max(12px,env(safe-area-inset-top))] pb-4 text-center print:hidden">
         <Bandeau />
+        {/* Aucune page n'avait de titre de niveau 1 : un lecteur d'ecran
+            n'avait aucun point d'entree. Il reste hors de l'oeil — la marque
+            joue deja ce role visuellement. */}
+        <h1 className="sr-only">{t(TITRE[actuel])} · Eidos</h1>
         <p className="mt-2 font-mono text-xs text-sourd">{t(SOUS[actuel])}</p>
         <div className="mt-3">
           <Langue />

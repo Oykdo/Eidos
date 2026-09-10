@@ -28,6 +28,7 @@ export function Bestiaire() {
       {captures.length === 0 ? (
         <p className="mt-3 font-mono text-[12px] text-sourd">{t("inv.bestiaire.vide")}</p>
       ) : null}
+      {captures.length > 0 ? (
       <div className="mt-3 overflow-x-auto">
         <table className="w-full border-separate border-spacing-1 font-mono text-[10px]">
           <thead>
@@ -76,6 +77,7 @@ export function Bestiaire() {
           </tbody>
         </table>
       </div>
+      ) : null}
       {captures.length > 0 ? (
         <p className="mt-2 font-mono text-[11px] text-sourd">
           {captures
