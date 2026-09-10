@@ -38,7 +38,10 @@ Les six lois n'empêchent pas un bon tactical RPG. Elles empêchent un mauvais.
 | Figures ≠ preuves | Le serveur arbitre | **L'intention ennemie est une figure** (annoncée, gratuite, n'engage rien) ; **le coup porté est une preuve** (signé, irréversible). |
 
 **Un avertissement, mesuré après coup.** Cette thèse tient sur *quel* axe on pointe, pas sur *combien*. Une
-fois le prix des axes corrigé, aucun des quatre n'achète la victoire (|r| < 0,13) — mais un mot **extrême**
+fois le prix des axes corrigé, aucun des quatre n'achetait la victoire (|r| < 0,13) — **ce n'est plus vrai
+depuis les points d'action** : `PA_PAR_TOUR = 2` a retourné le prix des axes sans qu'une ligne de résolution
+bouge, et la cible de 0,30 du §9 ter est **rompue** (voir le post-scriptum d'`ETUDE_EQUILIBRAGE_TACTIQUE.md`,
+660 288 duels). Un mot **extrême**
 reste plus faible qu'un mot équilibré, y compris contre les adversaires qui lui conviennent le mieux (93,9 % au
 tier 1, 57,6 % au tier 12). L'agrandissement des salles, dont on espérait qu'il donne au spécialiste la place
 d'atteindre sa niche, ne referme cet écart que de 5 points — l'hypothèse a été mesurée et elle est fausse. La cause n'est pas réglable : abattre demande de tenir *et* de frapper, un produit,
@@ -129,13 +132,15 @@ vol d'oiseau, et il s'éteint à la fin de la phase : on ne riposte jamais en ch
 quatre nombres ont été recalés le jour où `dalleDe` est passée d'un bit à deux par case : la plus grande salle
 d'un seul tenant a triplé (19,8 → 56,8 cases sur 81) et la mobilité s'est mise à valoir bien plus cher sans
 qu'une ligne du moteur ait bougé — `r(eperon)` est monté de +0,126 à +0,293, et `r(arc)` est tombé à −0,367.
-La règle qui en sort, et que `unite.test.ts` contrôle : **le pas le plus long reste sous la portée la plus
-longue**, sinon un archer est rattrapé avant d'avoir tiré et `arc` cesse d'acheter quoi que ce soit (mesuré à
+La règle qui en sort : **le pas le plus long reste sous la portée la plus longue**. `unite.test.ts` la
+contrôle par pas (4 < 7) **et affirme qu'elle est rompue par tour** — `PA_PAR_TOUR · pas = 8 > 7` depuis
+`14fe665`. Sans cela, sinon un archer est rattrapé avant d'avoir tiré et `arc` cesse d'acheter quoi que ce soit (mesuré à
 pas 4..8 : `r(arc)` = −0,48).
 
 **Ce que ça vaut, mesuré** (330 144 duels, 2 000 mots, huit distances d'engagement, trois politiques, sur les
-dalles à deux bits) : la corrélation de chaque axe au taux de victoire tient sous **0,075** (`lame` −0,065,
-`ecu` +0,075, `eperon` −0,044, `arc` +0,032) ; le quartile haut de `lame+ecu` sur le quartile bas vaut 1,00×
+dalles à deux bits, **avant les points d'action — chiffres périmés, conservés pour l'histoire**) : la
+corrélation de chaque axe au taux de victoire tenait sous **0,075** (`lame` −0,065, `ecu` +0,075,
+`eperon` −0,044, `arc` +0,032) ; le quartile haut de `lame+ecu` sur le quartile bas vaut 1,00×
 contre 19× à l'origine ; le rapport entre pointe `lame`/`ecu` et pointe `eperon`/`arc` va de 0,85 à 1,36×
 selon le tier, contre 19,6× avant — **la réserve bloquante de `SPEC_LOOT_TIERS.md` §4 est levée** ; une
 bataille dure 2 coups en médiane et 4 au 95ᵉ centile ; aucun coup ne porte zéro.
@@ -283,9 +288,15 @@ Eidos échappe aux deux moitiés du piège, et pas par chance :
 
 **1. La loi de conservation interdit le power creep.** La somme des axes vaut 64. Toujours, pour toute unité,
 sans exception possible — `integrite.ts` le vérifie et la CI le contrôle. Un marché ne peut donc échanger que
-des **formes**, jamais de la puissance. Il n'existe pas d'objet « meilleur » à acheter : il existe des objets
-autrement faits. Un joueur riche a un roster plus *large*, jamais plus *fort*. C'est la différence exacte entre
-Fire Emblem et Diablo, et ici elle est garantie par une loi, pas par la discipline d'un game designer.
+des **formes**, jamais un budget plus grand. Il n'existe pas d'objet *plus gros* à acheter : il existe des
+objets autrement faits.
+
+**Mais « autrement fait » n'est pas « aussi bon », et la mesure l'a établi.** Un mot central gagne 55,6 % de
+ses duels, un mot extrême 19,5 % ; une gemme du catalogue monte la tenue d'un même mot de +37,9 en moyenne et
+jusqu'à +68. Un joueur riche a donc un roster plus large **et mieux placé**. Ce que la loi garantit, c'est la
+**borne** — 64, jamais un de plus, `integrite.ts` le vérifie et la CI le contrôle. Que les formes se vaillent
+entre elles ne tient qu'aux constantes du moteur, c'est-à-dire à la discipline d'un game designer et aux
+cibles chiffrées du §9 ter. La différence avec Diablo est réelle mais elle est plus étroite qu'annoncé ici.
 
 **2. La permadeath est le puits qui manquait.** Une unité tombée en bataille ancrée est un mot brûlé
 (D5). Le marché a donc une **sortie**, pas seulement une entrée — ce qu'aucun P2E n'avait. Le robinet et les

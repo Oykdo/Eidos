@@ -11,9 +11,9 @@
 
 Les six lois de `integrite.ts` sont gelées : conservation, groupe, doxa, sceau, époques, résonance. Tout ce qui suit s'y plie :
 
-- **Aucun point de vie, aucune expérience, aucun niveau.** Un combat est une lecture de deux mots (orbite, parade, résonance), pas une soustraction. « L'état de combat est éphémère : on le jette. »
+- **Aucune expérience, aucun niveau.** Rien ne s'accumule d'une bataille à l'autre : `ouvrirBataille` remet la case quittée, l'élan et les points d'action à neuf, et la **tenue** se relit du mot à chaque ouverture. Elle vaut 32 à 160 (`TENUE_BASE + MULT_TENUE·ecu`), `encaisser` la soustrait, `vivante` la teste, `reprendre` la remonte : **c'est bien une réserve de points**, posée à l'ouverture et jetée à la fin — « L'état de combat est éphémère : on le jette. » Le duel d'antre (§4.3) reste, lui, une lecture en trois temps sans tenue. *Cette ligne annonçait « aucun point de vie » ; le combat de `tactique/` l'a démentie, et aucune des six lois ne l'interdisait.*
 - **Un objet ne mute pas.** Le mot de 32 bits est une identité. Une pierre *tourne* une pièce en une nouvelle pièce ; une gemme s'*enchâsse* sans toucher au mot.
-- **Un palier ne multiplie pas la norme.** Monter dans la Tour ne rend pas plus fort ; on y lit mieux.
+- **Un palier ne multiplie pas la norme.** Aucun étage n'ajoute au budget de 64 : les gemmes et les pierres qu'on y gagne **redistribuent** les axes sous ce plafond, elles ne l'élèvent pas. Elles rendent bien plus fort pour autant, et il faut le dire : mesuré sur 500 mots, une pierre ramène 56,4 % d'entre eux vers un tier plus central, une gemme 51,2 %, et la meilleure gemme monte la tenue d'un même mot de **+37,9 en moyenne, +68 au maximum** — or le tier central gagne 55,6 % de ses duels contre 19,5 % pour l'extrême. Ce que la loi interdit, c'est d'acheter un budget plus grand que 64 ; pas de mieux le placer.
 - **Rien n'est tiré au sort.** Tout dérive de graines : `SHA-256d(tag ‖ …)`. Deux coffres, même étage : deux lectures, reproductibles.
 - **Le réseau n'en sait rien.** Hôtes, élixirs, secrets vivent dans la *jauge* du coffre (`eidos.carnet`, hors feuille), jamais dans le carnet UTXO ni dans la chaîne.
 - **Figures ≠ preuves.** Une seule chose de la Tour repose sur la chaîne : les **sceaux**, qui sont des reliques du monde détenues dans le coffre (§5).
