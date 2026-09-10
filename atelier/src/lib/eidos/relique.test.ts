@@ -4,8 +4,8 @@ import {
   B_SUR_A,
   AGES_RELIQUE,
   DIVISEUR_PRIX,
-  lumens,
-  lumenDe,
+  tousLesIonos,
+  ionosDe,
   echelleRelique,
   prixSontProgressifs,
   prixReliqueAtomes,
@@ -14,14 +14,14 @@ import { acheterRelique, coffreNeuf, verserRobinet } from "./wallet.ts";
 
 describe("reliques", () => {
   it("b/a = 1/2 pour les quatre âges — le ratio ne grandit pas", () => {
-    for (const l of lumens()) {
+    for (const l of tousLesIonos()) {
       assert.equal(l.ratio, B_SUR_A);
       assert.equal(l.b, l.a / 2);
     }
   });
 
   it("aire = π·a·b, Satya la plus grande, Kali la plus petite", () => {
-    const [satya, treta, dvapara, kali] = lumens();
+    const [satya, treta, dvapara, kali] = tousLesIonos();
     assert.ok(satya && treta && dvapara && kali);
     assert.ok(Math.abs(satya.aire - Math.PI * 40 * 20) < 1e-9);
     assert.ok(satya.aire > treta.aire);
@@ -36,12 +36,12 @@ describe("reliques", () => {
       AGES_RELIQUE.reduce((s, a) => s + a.epoques, 0),
       2080,
     );
-    assert.equal(lumenDe(AGES_RELIQUE[0]!).a, 40);
+    assert.equal(ionosDe(AGES_RELIQUE[0]!).a, 40);
   });
 
   it("prix abordables, distincts, 16:9:4:1", () => {
     assert.equal(DIVISEUR_PRIX, 1_000_000);
-    const [satya, treta, dvapara, kali] = lumens();
+    const [satya, treta, dvapara, kali] = tousLesIonos();
     assert.ok(satya && treta && dvapara && kali);
     assert.equal(satya.prix, 33.54624);
     assert.equal(treta.prix, 18.86976);

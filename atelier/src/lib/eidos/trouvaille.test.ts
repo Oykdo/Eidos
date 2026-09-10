@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { LOI_GLYPHES } from "./constantes.ts";
 import { asciiEllipse, asciiGlyphe, asciiTrouvaille } from "./trouvaille.ts";
-import { lumens } from "./relique.ts";
+import { tousLesIonos } from "./relique.ts";
 
 describe("loi des glyphes — gelée", () => {
   it("2 bits, 31 groupes, 160 bits utiles, 24 de somme", () => {
@@ -37,7 +37,7 @@ describe("trouvaille ASCII", () => {
   });
 
   it("la légende porte a et b de l'âge", () => {
-    const t = asciiTrouvaille(lumens()[0]!, 0);
+    const t = asciiTrouvaille(tousLesIonos()[0]!, 0);
     assert.match(t, /Satya/);
     assert.match(t, /a=40/);
     assert.match(t, /b=20/);
