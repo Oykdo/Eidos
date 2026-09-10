@@ -24,7 +24,7 @@ import {
 } from "./eidos/temoin.ts";
 import type { Coffre, NomAge, ScenarioId } from "./eidos/types.ts";
 import type { PreuvePortable } from "./eidos/merkle.ts";
-import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
+import { type DemandeRobinet } from "./eidos/robinet.ts";
 import { ETAT_URL, lireEtat, urlIssueEnvoi } from "./eidos/envoi.ts";
 import { verifierAdresse } from "./eidos/glyphs.ts";
 import {
@@ -125,7 +125,6 @@ type Etat = {
   hydrater: () => void;
   charger: (id: ScenarioId) => void;
   robinet: () => void;
-  robinetReseau: () => void;
   demandeReseau: DemandeRobinet | null;
   /** Le robinet vu du réseau : canaux publiés, demande de ce coffre dans la
    *  file, hauteur ; lecture (etat.json, mempool.json), jamais persistée. */
@@ -350,24 +349,6 @@ export const useCoffre = create<Etat>((set, get) => ({
     const next = verserRobinet(get().coffre);
     persister(next);
     set({ coffre: next, flash: t("flash.robinet"), erreur: null });
-  },
-
-  robinetReseau: () => {
-    const r = demanderAuReseau(get().coffre);
-    if ("refus" in r) {
-      set({ erreur: t("err.atelier"), demandeReseau: null });
-      return;
-    }
-    try {
-      window.open(r.url, "_blank", "noopener");
-    } catch {
-      /* popup */
-    }
-    set({
-      demandeReseau: r,
-      erreur: null,
-      flash: t("flash.reseau"),
-    });
   },
 
   noterDemande: (r) => set({ demandeReseau: r, erreur: null, flash: t("flash.reseau") }),

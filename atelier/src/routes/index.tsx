@@ -75,7 +75,7 @@ function Home() {
               </p>
             </section>
             <CoffreVue />
-            {!personnel ? <Creer /> : null}
+            <Creer />
             <Sauvegarde />
             <Caracteres />
             <Papier />

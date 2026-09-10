@@ -46,8 +46,6 @@ export function Envoi() {
     return selectionner(coffre.sorties, m);
   }, [coffre.sorties, m]);
 
-  if (!coffre) return null;
-
   const fragmente = sel && !sel.ok && sel.code === "fragmente";
   // Le bouton n'est offert que si le montant tient ET qu'une destination est
   // saisie : signer sans destinataire n'a aucun sens, et coûterait une clé.

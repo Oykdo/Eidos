@@ -20,11 +20,11 @@ describe("i18n", () => {
 
   it("interpolation et pluriel", () => {
     setLocale("fr");
-    assert.equal(t("coffre.sorties", { n: 1 }), "1 pièce");
-    assert.equal(t("coffre.sorties", { n: 8 }), "8 pièces");
+    assert.equal(t("inv.n", { n: 1 }), "1 objet");
+    assert.equal(t("inv.n", { n: 8 }), "8 objets");
     setLocale("en");
-    assert.equal(t("coffre.sorties", { n: 1 }), "1 coin");
-    assert.equal(t("coffre.sorties", { n: 8 }), "8 coins");
+    assert.equal(t("inv.n", { n: 1 }), "1 item");
+    assert.equal(t("inv.n", { n: 8 }), "8 items");
   });
 
   it("aucune valeur vide", () => {
