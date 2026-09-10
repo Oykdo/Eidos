@@ -1,603 +1,327 @@
-# Feuille de route — historique des chantiers et décisions
+# Feuille de route — l'état vrai, les dettes, la suite
 
-**Dépôt :** Oykdo/Eidos. Extrait de `CLAUDE.md` §7 le 2026-09-07 pour alléger le contexte de session ;
-à lire **avant d'ouvrir un chantier**. Chaque section garde ses décisions, limites et reliquats.
+**Dépôt :** Oykdo/Eidos · **Écrite le 2026-09-10**, contre le code de `fa1fa58`, sur `main` · remplace la feuille-journal du 2026-09-08.
+**À lire avant d'ouvrir un chantier**, avec `CLAUDE.md` (les invariants) et la spec du chantier visé.
+**Ce fichier n'est pas un journal.** L'histoire détaillée des chantiers faits vit dans git et dans les documents cités ; elle tient ici en une ligne chacun (§6). Ce qui occupe la place, c'est ce qui reste ouvert.
 
+---
 
-Chaque chantier est une PR isolée. Ne pas en ouvrir deux à la fois.
+## 0. Eidos aujourd'hui, en cinq lignes
 
-### P1 — Fermer la boucle atelier ↔ nœud — FAIT (septembre 2026)
-- `noeud.py` : `construire_envois(ch, h, créneau, file, txs_avant)` décode
-  (`decoder_envoi`, à l'octet près), valide chaque envoi dans un bloc candidat
-  sur une copie profonde du carnet (`essayer_envoi`), écarte les fautifs
-  (`etat: "refus"`, `motif`), inclut les valides après le robinet (au plus
-  `MAX_ENVOIS = 8`), et porte leurs frais dans la coinbase. Un envoi en attente
-  depuis plus de `EXPIRATION_ENVOI = T` créneaux passe en `refus / expiree`.
-- `robinet.py --envoi` inscrit le `creneau` courant ; entre les marqueurs,
-  toute ligne entièrement base64 est retenue (lignes de 76).
-- Atelier : `envoi.ts` (ser/deser = `ser_tx`, base64 sans `Buffer`,
-  encapsulation, `lireEtat`, `sortiesDuCoffre`) ; `wallet.ts` :
-  `appliquerEnvoi` renvoie `envoi.texte` prêt pour une issue, `chargerTestnet`
-  importe les pièces du testnet d'un coffre.
-- Reste hors P1 : brancher l'export d'un envoi dans l'interface (page Coffre) —
-  l'import des pièces du réseau est branché depuis le 2026-09-06 (section Robinet) ;
-  un témoin Lamport (24 577 o) limite un envoi à UNE entrée par issue GitHub
-  (65 536 caractères) — P2 lève cette limite.
+1. Une **chaîne** qui tourne : émission bornée sans halving (`R(h) = a + (a/2)·cos(2π(h−h₀)/T)`, `T = 1008`, `h₀ = 492`), quatre âges, **2 096 640 blocs**, **62 899 200 EIDL**, **239,18 ans** à un bloc par heure. Consensus fédéré à sept validateurs, signatures par hachage pur, aucune courbe elliptique. Rejeu local : **98 blocs revalidés, aucun refus**, hauteur 97.
+2. Un **atelier** qui rejoue la spec à l'octet en TypeScript : **566 tests, 118 suites, 0 échec**, 77 fichiers `.test.ts` tous listés dans `package.json`, parité Python ↔ TS contrôlée par `vecteurs.json` (10 familles) dans les deux sens en CI.
+3. Un **jeu** dont la jauge est hors feuille et dont seuls les sceaux et les preuves exportées engagent : la Tour, la Veillée (arbre XMSS de 64 feuilles, une clé signe une fois et c'est la vie), et depuis peu un **moteur tactique au tour par tour** — 95 contrôles, 77 refus, zéro dé.
+4. Ce qui manque n'est pas du code, c'est du **branchement et du prix** : le moteur tactique, `tiers.ts` et `lignee.ts` n'ont aucun importateur hors de leurs tests ; `reliques.json` et `veillees/index.json` sont vides ; l'eidôlon n'achète encore rien.
+5. Ce qui est faux est **documenté et chiffré** : une adresse a quatre écritures glyphiques valides au lieu d'une, le pas double dépasse la portée la plus longue, et deux documents de référence annoncent des compteurs périmés.
 
-### P2 — WOTS+ à la place de Lamport — FAIT (septembre 2026)
-- `wots.py` : WOTS+ w=16, n=32, SHA-256, F/H/PRF à domaine séparé, ADRS de
-  32 o, arbre L ; adresse = `sha256(graine_pub ‖ racine_L)[:20]`, empreinte =
-  le hachage entier. Témoin 2 176 o. 5 contrôles (dont forge partielle par
-  réemploi, tailles imprimées).
-- `utxo.py` : `VERSION = 2`, témoin `(graine_pub, sig)`, Lamport retiré ;
-  +1 contrôle « transaction sans entrée ». `federation.py` : XMSS (feuille =
-  arbre L, arbre tweaké), clé publique = (racine, graine publique) ;
-  `Federation(..., graines_pub=)` / `Federation.depuis_cles(cles, t0, h)`,
-  `verifier_mss(racine, graine_pub, h, msg, sig)` ; +1 contrôle (signature
-  altérée / indice changé).
-- `noeud.py` : `FORMAT = 2`, tag `GRAINE = "eidos-testnet-2"`, clés mises en
-  cache par exécution. `store.py` (PoW historique) suit le témoin.
-- Atelier : `wots.ts` (port à l'octet), `lamport.ts` dérive adresses,
-  empreintes et témoins via WOTS+ (Lamport conservé en démonstration),
-  `envoi.ts` en `VERSION 2`, `constantes.ts` (témoin 2 177 o).
-- `vecteurs.py` / `vecteurs.json` : amorce de P4 — clé, tx, feuille XMSS 0 ;
-  `vecteurs.test.ts` relit le fichier. Manque encore le job CI `parite`.
-- Testnet réinitialisé le 2026-09-04 (`eidos-testnet-2`, XMSS hauteur 12 :
-  4 096 signatures par validateur, ~3 ans de blocs horaires).
+### La règle qui gouverne cette feuille
 
-### P3 — Racine UTXO dans l'en-tête — FAIT (septembre 2026)
-- `utxo.py` : `feuille_sortie`, `utxo_root`, `entete_federe` (E.header gelé ‖
-  racine), `racine_apres(carnet, blk)` pour le forgeron ; `valider_bloc`
-  compare la racine déclarée, étend la tête, garde `carnet.racine_utxo` ;
-  `verifier_temoins=False` pour l'assume-valid. +3 contrôles.
-- `federation.py` : `id_bloc` exige `utxo_root`, `appliquer_sans_verifier`,
-  `tete_signee` notée à chaque bloc ; +1 contrôle. `noeud.py` : `FORMAT = 3`
-  (`utxo_root` après `ts`), `--depuis <h> <racine>` (3 contrôles),
-  `etat.json` publie `utxo_root` et `tete_signee`. Testnet-3 réinitialisé.
-- Atelier : `xmss.ts` (`verifierMss`), `merkle.ts` (`utxoRoot`, `preuveReseau`,
-  ordre canonique), `temoin.ts` (`parserTeteReseau`, `parserFederation`,
-  `enteteFedere`/`idBlocDe`, `verifierTeteReseau`, `jugerReseau`).
-- `vecteurs.json` : familles `carnet` (3 sorties, racine) et `tete` (fédération
-  h=4, tête signée, sorties engagées) ; relues par `merkle.test.ts`,
-  `temoin.test.ts`, `xmss.test.ts`.
-- Page Témoin branchée : `temoin.suivreReseau` lit `etat.json` et
-  `federation.json` (raw.githubusercontent), vérifie la tête, juge une sortie
-  publiée (`jugerSortieReseau`) ; store `reseau`, section « Réseau d'essai ».
-- `--depuis` note les adresses dépensées des blocs sautés : un réemploi de clé
-  brûlée avant le point de contrôle est refusé (4ᵉ contrôle).
+**Rien n'entre sans une cible chiffrée annoncée d'avance, et sans la mesure qui le tuerait.** Une idée sans seuil n'est pas un chantier, c'est une intention. Un résultat négatif est un livrable : les §1.4 et §5 en sont faits, et ils valent autant que le code écrit.
 
-### Reliques QR — FAIT (septembre 2026), voir docs/HANDOVER_RELIQUES_QR.md
-- R1 `noeud.py` : `charger_reliques`, `noter_reliques` (sorties créées / dépensées
-  sur les adresses déclarées), `etat_reliques` → `etat.json.reliques`
-  (attente / intacte / recuperee avec bloc, txid, vers, artefact) ; 4 contrôles.
-- R2 atelier : `relique-qr.ts` (`parserRelique` : URL `#r=1.<b64url>`, `eidos:relique/1/…`,
-  fragment nu ; `statutRelique` ; `preparerRecuperation` = dépense signée WOTS+
-  au format du nœud + URL d'issue) ; composant `ReliqueTrouvee` (fragment d'URL,
-  collage, caméra via `BarcodeDetector` quand disponible) ; 4 tests, vecteur `relique`.
-- R3 `relique.py --sceller` + `qr.py` (encodeur stdlib, niveau H, v1–10, masque par
-  pénalité) : SVG du QR, planche sans graine, entrée dans `reliques.json`.
-- R4 `relique.py --animer <txid>` : animation ASCII/unicode (figures · ○ ☽ ✚, ellipse
-  de l'âge, R(θ) = a + b·cos θ, satellites et glyphe central tirés du txid).
-- Choix par défaut : 1 eidôlon par relique via le robinet (aucun type `sceau`),
-  gardien manuel (`reliques.json` committé), indices publics dès le scellement.
-- Rendu : la scène three.js (SDF raymarché, `ReliqueCanvas`) est animée ; depuis
-  R4, **une danse par muse** (`lib/reliques/danse.ts` = `danse()` du shader,
-  identité à phase 0, période 11,3 s : nutation, précession, tempo, culbute,
-  flamme, ronde, vis sans fin, phases, rebond), nom de la muse en tête de la
-  scène, relique trouvée rendue avec sa muse, liste « Reliques du monde ».
-  `forme.ts` reste la référence CPU du shader : toute retouche du GLSL se
-  reporte dans `danse.ts` / `forme.ts` et leurs tests.
-- Reste : `qr.py` n'a pas de décodeur (scanner l'écran avant d'imprimer).
+Trois corollaires, tous déjà des règles du dépôt :
 
-### Coffre 3D — un seul coffre, palettes isochromatiques, ornements par butin (FAIT 2026-09)
-`lib/eidos/coffres.ts` : `scoreButin` / `palierButin` (objets 1, gemme 2, affixe
-rang−1, philosophale 4, sceau 1–4 ; seuils 1 / 4 / 9 → nu, garni, orné,
-précieux), `paletteDePalier` (une teinte par palier — acier 215°, vert-de-gris
-150°, ambre-or 42°, améthyste 275° — huit clartés 94→12 %, `hslVersHex`),
-`ornementsDe` cumulatifs (tas 10, ferrures 28, cage 265, couronne 8 cellules).
-`CoffreScene` : un coffre au pic de la cloche, cage au palier précieux.
-Spec : `docs/SPEC_AUDIT_COFFRES.md` v2. Le palier lit la jauge, jamais le solde.
+- **Figures ≠ preuves.** Un rang, une aura, un tier, un compte de validateurs sont des lectures. Seuls le carnet, la chaîne et les signatures engagent.
+- **Rien ne se croit, tout se rejoue.** Une mesure qui ne vit que dans un scratchpad n'est pas une mesure du dépôt (§2, dette D3).
+- **Quand un texte promet plus que le code, c'est le texte qui a tort.** Toute ligne de ce document contredite par une mesure est fausse par construction : on corrige le document, pas la mesure.
 
-### Rendu de l'atelier — socle et quatre scènes (FAIT 2026-09-04)
-Plan « Lumière et matière » (trois juges sur trois, greffes « Grain et
-profondeur » et « Cohérence »), implémenté scène par scène avec relecture
-adversariale (GLSL ES 1.00 / three, gardien Eidos, perf mobile) avant commit.
-- Socle `components/canvas/` : `atelier.ts` (contrat de lumière : résidu
-  ambiant 0,2, hémisphère encre/creux, clé inchangée, contre-lumière teintée
-  par la scène, `ENV_INTENSITE`, `brouillard()` vers #12151a, **clé
-  `toneMapping: 7` (Neutral) posée en dernier**, three importé en type
-  seulement : les hôtes ne chargent pas three), `matiere.ts` (matières par
-  palier, par âge, pierre, ferrure ; métal ≤ 0,60 ; `environnementDisponible`
-  + repli « peinture » ; `couleurSRGB`, `disposerInstance`), `texel.ts` (Bayer
-  4×4 par cellule entière, exact sur tout plan axial, occlusion de voisinage,
-  cellules encloses ; test avec vecteur gelé Satya 168/216), `Lumieres.tsx`,
-  `Environnement.tsx` (sphère de sommets préfiltrée une fois par PMREM 64 px,
-  rebake par teinte d'âge/palier/biome seulement), `Halo.tsx` (dôme à couleurs
-  de sommets, bords #12151a exacts sur les deux axes).
-- Inventaire : couleur de la jauge en sRGB, cubes jointifs, trame + occlusion,
-  encloses retirées, émissif supprimé, environnement par âge, halo, brouillard.
-- Tour : dalle pierre satinée, clartés en sRGB, trois tons de faces par
-  voisinage, ombre de contact, occupants en matière de classe derrière le
-  repli, rendu à la demande. Coffre : `cellules.ts` (coque hors de la scène,
-  ferrures dédoublonnées, trame et contact, testés), matière par palier, cage
-  en ferrures ; `SPEC_AUDIT_COFFRES.md` v2.1. Relique : `glsl.test.ts` (filet
-  statique ES 1.00, parité des uniforms), lumières et matière depuis le
-  contrat, `envi()` analytique, `shade()` réécrit, sortie par
-  `toneMapping()` + OETF de three, aura de fond exacte aux bords, Bayer 4×4 ;
-  **SDF, danse et uniforms de forme intacts** (tests gelés).
-- Règles : aucune dépendance, aucune texture ; jamais `#include` ni
-  `dithering()` dans le shader ; pas de smoothstep à bornes inversées ; le
-  navigateur est le seul compilateur GLSL : contrôle visuel sur `/`, `/tour`,
-  `/reliques` avec la console ouverte à chaque retouche. Reste hors lot :
-  tas du coffre partiellement enfoui dans le couvercle (décision de spec).
+---
 
-### Refonte du hub — FAIT
-- H1 FAIT : navigation en trois registres (Vérifier / Lire / Jouer) + Guide,
-  routes inchangées (`Nav.tsx`).
-- H2 FAIT : l'Arbre d'origine (régimes, champ, lumen, ancre FNV : `lib/arbre/`,
-  `components/arbre/`) est retiré. `/arbre` (chemin conservé, libellé « Carte »)
-  affiche `CarteReliques` : grille 4 âges × 9 muses depuis `etat.json.reliques`
-  (muse = œuf de la goutte), reliques du coffre cerclées, détail, **trophée**
-  `eidos-sceau/1` (`trophee.ts` : sortie + preuve + tête signée, `jugerTrophee`
-  contre federation.json, lien à la relique publiée en lecture ; 2 tests).
-  `lib/eidos/etat-reseau.ts` remplace `lib/arbre/etat.ts` (2 tests).
-- H3 FAIT : **sceaux d'âge**. `noeud.mise_sceau(age)` (émission de l'âge / 10⁶ :
-  Kali 2,10 … Satya 33,55) ; `etat.json.reliques[]` porte `mise_attendue` et
-  `scellee` (5ᵉ contrôle) ; la planche de `relique.py --sceller` annonce la mise.
-  Atelier : `sceaux.ts` (quartiers 0–63 / 64–127 / 128–191 / 192–254, portes
-  64 · 128 · 192, `sceauxDuCoffre` = reliques récupérées vers une adresse du
-  coffre, `porteDe`), store `monde` / `chargerMonde`, la Tour ferme « Monter »
-  devant une porte sans sceau (coffre d'atelier : ouvert, démonstration), la
-  page Reliques ne vend plus (simulation en atelier seulement). 3 tests.
-  Reste : le trophée exportable (avec la carte, H2).
-- H4 FAIT : Guide en trois registres (Vérifier / Lire / Jouer), « Cinq mots »
-  (pièce, artefact, relique, sceau, objet) et Limites ; textes FR/EN
-  `guide.verifier`, `guide.lire`, `guide.jouer`, `guide.mot.*`. La refonte du
-  hub est close ; reste la Tour (`docs/SPEC_TOUR.md`).
-- La Tour : `docs/SPEC_TOUR.md` — FAIT, voir ci-dessous.
-- Le pendule-9 : `docs/SPEC_PENDULE.md` — décisions fondatrices O1–O5 à
-  valider (le pendule choisit le **parcours** et la case de spawn, jamais le
-  contenu d'un étage, qui reste public et fixe), esquisse de la transition en
-  pseudo-code. **Phase 0 FAITE** : `atelier/src/lib/eidos/pendule.ts`
-  (transition, `etageDe` étalé sur la bande, spawn, genre du don),
-  `pendule-phase0.ts` (bot xorshift, trois mesures, `npm run phase0 [runs]`),
-  `pendule.test.ts` (6 tests, table de vérité gelée). Toute retouche de la
-  transition régénère la table sciemment. **Branché dans la Tour** (§4bis de la
-  spec) : exploration libre, décision en fin de salle **prise par le joueur**
-  parmi les trois choix, l'acte du coffre n'étant que la proposition ; l'étage
-  de chaque choix est annoncé (`destinationsDeSalle`), la case jamais
-  (`ascension.ts`, 8 tests ; composant `Pendule` ; jauge `tour.ascension`) ;
-  libre = lecture, ancrée sur bloc + pièce = ce qui compte, exportée au sommet ;
-  une porte fermée arrête ; le don d'un hôte dépend de la case d'arrivée.
+## 1. L'état vrai
 
-### La Tour — hôtes, secrets, élixirs, capsules, bestiaire (FAIT 2026-09, fourni par une session parallèle, fusionné le 2026-09-04)
-Spec : `docs/SPEC_TOUR.md` (§11 décisions, §12 écarts mesurés). Tout dans
-`atelier/src/lib/eidos/`, jauge `coffre.tour` hors feuille, aucune loi
-d'`integrite.ts` touchée, `INTEGRITE` sans constante nouvelle.
-- `jauge.ts` : `Tour`, `tourVide`, `normaliserTour` (relecture tolérante) ;
-  `carnet.ts` exporte la jauge sous `tour`, à côté du feuillet, hors empreinte.
-- `lecture.ts` : l'orbite au grain des figures (`figureOrbite` = première
-  figure de `glypheLecture`), `paradeLue` (g x ḡ tient l'axe, seuil élite),
-  `motDeQ` (mot d'une coupe). `memeOrbite` exact ne se produit jamais entre un
-  mot et une coupe ; `ḡ(A)·(A·B)` rend toujours B : la Tour lit l'axe.
-- `hotes.ts` + `hotes-lexique.ts` : présence 1/7 + 0, 254, portes, muse au
-  médian de sa bande (Thalie 0, Uranie 254) ; 27 répliques × 9 muses, FR/EN,
-  chaque phrase cite une règle vraie ; 9 × 12 noms de capture ; demandes lues
-  dans le coffre ; dons `eidos-don/1` (elixir, gemme, lair ; jamais arme ni
-  philosophale) ; Érato forge, Polymnie révèle, Uranie lit.
-- `elixirs.ts` : espèce = étage dominant du glyphe ; bu à un étage, effet là
-  seulement, mot noté dans `bus`, jamais rebu ; le soufre s'éteint après un tour.
-- `secrets.ts` : alcôve = croix centrale de la dalle (13 étages ; la symétrie
-  diagonale de la v1 vaut 2⁻³⁶) ; échos = même orbite exacte des coupes (44
-  paires), montée dans l'ordre → mercure ; antre : gardien cherché depuis sa
-  graine jusqu'à tenir l'axe (élite ; suprême aux portes), duel en trois temps
-  (orbite / axe ou mercure / résonance d'ensemble avec la capture libérée),
-  repoussé d'un étage, ticket consommé au passage ; observatoire = lecture.
-- `capsules.ts` : capsule « ··· » (Thalie une par jour civil contre trois
-  blocs, alcôve, forge gemme + sel) ; prise nette / fragile (sel) / brisée ;
-  capture = `motDeQ(q)` de l'occupant, l'étage le perd pour ce coffre.
-- `bestiaire.ts` : cellule = forme la plus proche des 101 ; 21 cellules →
-  lecture d'Uranie ; accord par le mercure (conjugué par l'objet porté, ancien
-  mot dans `bus`) ; offrande à Terpsichore → gemme.
-- `sceaux.ts` : l'âge exact ouvre, le coffre d'atelier passe (démonstration).
-- `fouilles.ts` (2026-09-04) : la dalle se creuse case par case ; trouvailles à
-  des cases fixes et publiques (case pleine et `sha256d("eidos-fouille/1" ‖
-  étage ‖ x ‖ y)[0] < 32` : 1 326 sur 10 379, aucun étage sans), trois coups de
-  bêche par étage et par coffre (`tour.fouilles`, relecture plafonnée), la case
-  d'arrivée du pendule donne toujours (même sur un trou) ; contenu (« trouve »,
-  pierre une fois sur quatre) dérivé de (étage, case, coffre) : les cases sont
-  à tous, le contenu à chacun. Occupants posés sur la dalle (`caseOccupant`,
-  même règle que la scène). 6 contrôles. Cap metroidvania proposé puis retiré (cap metroidvania, document retiré le 2026-09-07).
-- Fiche d'objet (2026-09-04) : `fiche.ts` (lecture pure d'un mot : forme du
-  catalogue la plus proche, cellule, proximité = rareté continue, palier, orbite,
-  ascendant force/faiblesse, axe à l'ancre, sceau, résonance avec le coffre ;
-  `texteFiche` en quatre registres FR/EN), `objets-lexique.ts` (21 caractères,
-  4 orbites, 5 raretés, 4 âges, 10 genres, 6 affixes, 3 polarités, 9 tempéraments,
-  chaque phrase cite une règle vraie), `FicheObjet.tsx` dans l'Inventaire ;
-  6 contrôles. `titres.ts` (2026-09-04) : épithète = 21 figures de régime
-  (avec genre) × 12 adjectifs d'orbite accordés, suffixe = 5 tournures de
-  rareté × 9 muses, nom de base par genre ; trois tirages depuis
-  `sha256d("eidos-titre/1" ‖ mot canon)` : même mot, même titre partout ;
-  4 contrôles. **Limite découverte** : `objets.paqueter` omet la plus grande
-  composante et perd son signe, `depaqueter` rend l'inverse de la rotation une
-  fois sur deux ; 53 formes du catalogue sur 100 ne se relisent pas par
-  `motDeQ` → `qDeMot` (nombre gelé dans `fiche.test.ts`). Correction = décision
-  d'auteur (convention « composante omise ≥ 0 », touche `canoniserMot` donc les
-  feuilles) : ne pas corriger à la volée.
-- Transposition du dossier Eidolon (2026-09-04, `docs/TRANSPOSITION_EIDOLON.md`,
-  `docs/LORE_CHAMBRE.md`) : refondre est refusé, transposer est fait pour les
-  œufs — `oeufs.ts` + `oeufs-data.ts` (64 œufs = 64 empilements, œuf i =
-  glyphe de code i, cycle i >> 3 = bande de la Tour de Thalie à Polymnie,
-  L'Inconnu = Uranie ; noms d'ère traduits, huit récits FR/EN ; aucune
-  puissance), page Glyphes (œuf de l'empilement choisi), 4 contrôles. Les
-  dix catégories alchimiques et l'avatar : décisions T1–T4 dans la spec.
-- Forum du royaume : `docs/SPEC_FORUM.md` (spec proposée, 2026-09-04) —
-  objets ancrés = pièces colorées nées de chaque témoin d'une dépense réelle
-  (`tirerObjet(sig, hash_bloc)`), portées rang à rang ; échange = une
-  transaction à deux témoins (offre partielle `flag = 0`, acceptation sur le
-  même `txid`) ; identité Eidolon, négociation Cipher, dépôt par issue ;
-  échelle CardSwap (intégrité, possession, identité ; « certifié » n'existe
-  pas) ; décisions F1–F7, dont corriger le signe de `paqueter` avant tout port.
-- Brume des antres : `docs/SPEC_BROUILLARD.md` (spec proposée, 2026-09-04) —
-  Earnshaw comme loi de la brume (neuf cases centrales jamais éclairées depuis
-  le bord), coïncidence de deux faisceaux de couleurs différentes comme seule
-  clé, fuite de relief au soufre, gardien à la case de laplacien maximal ;
-  décisions B1–B5 à prendre avant tout chantier.
-- UI : `TourView` (hôte et répliques, objet porté, occupants et prise, élixirs,
-  antre, fouiller, carte 255 cases sans secrets non découverts, observatoire),
-  `Bestiaire` dans la page Coffre ; `GENRES` gagne elixir, capsule, capture.
-- Contrôles : lecture 3, hôtes 5, élixirs 4, secrets 4, capsules 5, bestiaire 3,
-  sceaux +1. `npm test` : 254 (30 tests de scripts + 224 suites Eidos).
+Quatre états, aucun autre. **code** : écrit, testé, rejouable. **spécifié** : un document chiffré, zéro ligne de code. **mesuré-et-écarté** : éprouvé sur le vrai moteur ou la vraie chaîne, refusé par un chiffre. **cassé** : le code et le texte se contredisent, ou une règle annoncée n'est gardée par rien.
 
-### Accueil, écosystème et robinet à deux canaux — FAIT (2026-09-06)
-- `atelier/src/lib/navigation.ts` : la liste unique des pages (trois registres +
-  Guide, label et lede) ; `Nav.tsx` et `Ecosysteme.tsx` la lisent. Ajouter une
-  page = une entrée, une route, deux textes FR/EN ; `navigation.test.ts`
-  vérifie les trois (3 contrôles).
-- Accueil (`routes/index.tsx`) en quatre blocs : coffre (solde, scène, Créer /
-  Ouvrir un carnet pour un coffre d'atelier), Robinet, Écosystème, contenu.
-- `Robinet.tsx` : coffre d'atelier = versement local (« Ici · +1 », sans valeur) ;
-  coffre personnel = adresse en glyphes, demande par issue GitHub préremplie ou
-  par courriel prérempli quand `etat.json.robinet_canaux.courriel` est publié,
-  statut de la demande lu dans `mempool.json` (`etat-reseau.parserMempool`,
-  `statutDemande`, +3 contrôles), « Charger mes pièces du réseau »
-  (`store.chargerReseau` → `wallet.chargerTestnet`, jamais si le réseau ne
-  connaît aucune pièce du coffre). `robinet.courrielDemande` (+2 contrôles).
-  `envoi.ETAT_URL` lit désormais le dépôt brut, comme `etat-reseau.ts` : le
-  build Pages ne contient pas `etat.json`.
-- Nœud : `courriel.py` (IMAP + email en bibliothèque standard, `--relever`,
-  `--test`), `robinet.py` note `canal` et `ref` (`EIDOS_CANAL`,
-  `EIDOS_CANAL_REF`, une référence jamais inscrite deux fois), `noeud.ecrire_etat`
-  publie `robinet_canaux` (issue, courriel depuis `EIDOS_ROBINET_COURRIEL`).
-  `courriel.yml` : cron à la minute 37, seulement si la variable de dépôt
-  `EIDOS_ROBINET_COURRIEL` est posée ; secrets `EIDOS_IMAP_HOTE`,
-  `EIDOS_IMAP_UTILISATEUR`, `EIDOS_IMAP_MOT_DE_PASSE`. Relecture (2026-09-06, quatre
-  lentilles, sceptiques non joués faute de quota, constats vérifiés à la main) :
-  expéditeur sous empreinte, refus sans expéditeur, TLS vérifié + délai + UID,
-  octet nul retiré, message fautif sauté, marqueurs inversés = `ValueError`,
-  `MAX_FILE` sur les demandes en attente, `ecrire_file` UTF-8 atomique,
-  `lireRobinet`/`chargerReseau` ignorent une lecture d'un coffre changé,
-  flash quand des pièces locales sont retirées. Décision D1 (2026-09-06) :
-  un autre canal que GitHub ; le courriel est le seul qui ne coûte ni serveur
-  ni compte nouveau au joueur, et son frein par expéditeur est assumé plus
-  faible (`docs/SPEC_SYBIL.md` §3bis). Sans boîte déclarée, rien ne change.
-- Racine `index.html` : n'est plus un portefeuille ; explique que Pages doit
-  publier le workflow (Source : GitHub Actions) et redirige vers le dépôt.
+### 1.1 La chaîne — code
 
-### La Veillée — roguelike XMSS, PR 1 FAITE (2026-09-07), voir docs/BIBLE_VEILLEE.md
-Prompt révisé `docs/PROMPT_ROGUELIKE_XMSS.md` (l'IP fixe ce qui est déjà écrit dans le
-dépôt et la réserve Eidolon, sept décisions C1–C7 tranchées dans la bible).
-- `veillee.ts` : **la clé comme vie** — arbre XMSS de hauteur 6 (64 feuilles WOTS+,
-  port de `federation.CleValidateur`, parité à l'octet sur le vecteur `xmss`, vérifié
-  par `xmss.verifierMss` inchangé) ; un geste (franchir, parler, ouvrir, prendre) =
-  une feuille, message chaîné `sha256d("eidos-veillee/1/geste" ‖ racine ‖ i ‖ étape ‖
-  étage ‖ geste ‖ arg ‖ mot ‖ précédent)`, étape et étage lus dans le pendule, jamais
-  déclarés ; 26 franchir = sommet, 64 gestes = épuisé, porte / abandon ; export
-  `eidos-veillee/1` jugé sans rejeu (deux têtes XMSS, pièce Merkle, chaque feuille,
-  parcours recalculé, fin cohérente) ; score = salles × 64 + butin (lecture).
-  **Le jour** : premier bloc du jour civil UTC, prouvé par la tête de la veille
-  (`estPremierDuJour`) ; graine du parcours `sha256d("eidos-veillee/1" ‖ id_bloc)`
-  la même pour tous, graine de l'arbre `…/arbre ‖ maître ‖ id_bloc ‖ txid ‖ rang`
-  au coffre. 7 contrôles.
-- `fantomes.ts` : nom de salle = nom d'ère de l'œuf des trois figures imaginaires de
-  la coupe (C1) ; fantômes = six tournures des œufs légendaires de la réserve (écho,
-  revenue, dernière, ombre, qui s'efface, murmure) sur la dernière salle (C2). 3 contrôles.
-- `vecteurs.py` : famille `veillee` (trois têtes signées à cheval sur minuit).
-- **PR 2, morceaux 1 et 2 FAITS (2026-09-07)** : `tour.veillee` dans la jauge
-  (`types.ts`, `jauge.ts` : relecture par `parserVeillee`, `indiceReserve` jamais
-  sous les gestes) ; `veillee-tour.ts` relie les gestes aux actes existants —
-  parler = `honorerDansCoffre`, creuser = `fouillerCaseDansCoffre`, ouvrir l'alcôve,
-  prendre = `prendreDansCoffre` (une prise qui échappe ou se brise a eu lieu et coûte
-  sa feuille), franchir = `finDeSalleDansCoffre` — **l'acte d'abord, la feuille
-  ensuite, seulement si l'acte a eu lieu** ; une porte fermée arrête en `porte` sans
-  feuille ; la 26ᵉ feuille de franchir clôt l'ascension ; l'ascension est commencée
-  avec la graine du jour (`commencerDansCoffre(c, ancre, graine)`) et le parcours
-  recalculé de la preuve doit égaler l'étage de la jauge. Réserve d'indice : noté
-  dans la jauge avant la signature (`indiceReserve = i + 1`) et dans un registre de
-  session par racine (`reserverEnSession`, à remplacer par localStorage dans le
-  store) ; une jauge relue d'avant un geste est refusée (`reserve`). L'arbre se
-  reconstruit depuis le maître, jamais stocké ; le coffre d'atelier joue et
-  n'exporte pas. 6 contrôles.
-- **PR 2, morceaux 3 et 4 FAITS (2026-09-07)** : `chaine-reseau.ts` lit les en-têtes
-  de `chaine-eidos.dat` (FORMAT 3, corps sautés par la longueur, `txid = sha256d(core)`
-  pour la racine de Merkle), vérifie chaque tête XMSS et le chaînage, rend le premier
-  bloc du jour et la tête de la veille (`premierDuJour`, `tetesDeLaVeillee`) ; testé
-  sur la chaîne réelle du dépôt et sur les vecteurs, 4 contrôles. **L'ancre** : la
-  pièce est prouvée contre une tête **du même jour**, au plus tôt le bloc du jour
-  (`teteAncre`, en pratique la tête suivie, car `etat.json` ne publie que le carnet
-  courant) ; le juge vérifie cette troisième tête ; famille `veillee` : sorties au
-  second bloc, +1 contrôle. Page **Veillée** (registre Jouer, `routes/veillee.tsx`,
-  `components/veillee/VeilleeView.tsx`) : lire la chaîne, suivre le réseau, le bloc du
-  jour et la veille, ouvrir sur une pièce du coffre, compteur de feuilles, salle et
-  nom d'ère, réplique de la muse (`veillee-lexique.ts`, une par muse, les trois groupes
-  de neuf de `hotes-lexique.ts` intacts, 1 contrôle), gestes (parler, creuser la case
-  d'arrivée, ouvrir l'alcôve, prendre, franchir vers les trois destinations,
-  s'effacer), fin, verdict jugé sans rejeu, fantôme, preuve exportée. Store : réserve
-  d'indice dans localStorage (`eidos-veillee-reserve-v1`) écrite avant la signature,
-  repli session ; chaîne et fédération lues jamais persistées. `npm test` : 387 après la PR 3.
-- **PR 3 FAITE (2026-09-07)**, quatre lots construits en parallèle et relus chacun par
-  un relecteur adversarial (constats corrigés dans les fichiers) :
-  `arbre-vue.ts` (géométrie pure de l'arbre de 2^h feuilles, états brûlée / dernière /
-  vive, chemin d'authentification, geste d'une feuille ; 6 contrôles) et
-  `components/veillee/ArbreFeuilles.tsx` (SVG inline, feuilles cliquables, chemin de la
-  dernière allumé une seconde, veillée mal formée rendue en une ligne) ;
-  `classement.ts` (jugement de chaque preuve dans le navigateur, une pièce par jour,
-  première déposée classée, refus et doublons rendus avec motif, pièce non canonique
-  refusée avant jugement, fantômes d'une salle avec les feuilles qu'ils avaient en
-  arrivant, `lireVeillees` depuis `veillees/index.json` avec nom de fichier
-  `<jour>-<txid8>-<rang>.json` vérifié contre la preuve ; 9 contrôles) et
-  `veillees/README.md` + `index.json` (dépôt par PR) ; `feuille-son.ts` (motif pur :
-  son sec / silence à 0, vibration courte sous 10 feuilles et longue à 0 ou à une fin,
-  une hauteur par muse de 880 à 392 Hz ; `jouerRetour` WebAudio + vibrate qui ne lève
-  jamais ; 10 contrôles) ; `veillee-bot.ts` (bot xorshift, trois politiques avare /
-  gourmand / mesuré sur le jour du vecteur, table gelée, `npm run veillee-bot [runs]` ;
-  7 contrôles, ~65 s). Intégration : page Veillée (arbre, fantômes de la salle,
-  classement, nom du fichier à déposer), store (`lireClassement`, son après chaque
-  geste sauf porte fermée, jamais persisté).
-  **Mesures du bot (4 runs par politique, graine 7)** : avare 26 feuilles / 0 butin,
-  gourmand 46–48 feuilles / 20–22 butin avec 10–18 refus de sac plein, mesuré 30–45 /
-  4–19 ; aucun run épuisé ni effacé : avec le sac de 27 places et sans capsule ni bêches
-  hors case d'arrivée, **aucun des deux seuils de §2.4 n'est atteignable par ce bot** —
-  le verdict est une lecture, rien n'est falsifié. Pour falsifier vraiment : un bot qui
-  creuse les cases pleines (jusqu'à trois bêches par étage), s'efface parfois, et un
-  coffre à capsules — chantier à part. Coût mesuré : `construireArbre` 1,3–1,6 s sur ce
-  poste (la bible disait 0,3 s : corrigée) ; ouvrir une veillée fige la page ce temps.
-  Déni noté (bible §5) : ancrer sur la pièce d'autrui prend sa place du jour ; parade =
-  le sceau final, non codé.
-- **PR 4 — fond orbital de l'accueil, FAITE (2026-09-07, plein écran)**, deux lots
-  construits en parallèle contre un contrat d'API fixe, chacun relu par un relecteur
-  adversarial. `lib/accueil/orbites.ts` (pur, 11 contrôles) : le limaçon de la loi
-  d'émission `R/a = 1 + cos θ/2` (tracé en unités de `a` : la forme de la loi et la
-  phase, pas le montant — décision gelée par un contrôle, à changer par une échelle
-  `a/40` si l'auteur veut que l'âge se lise), neuf orbites emboîtées (fractions 0,18 →
-  0,86 du demi-côté, Thalie au centre, Uranie au bord), période de révolution
-  `11,3 s × (2 + rang)`, angle initial en spirale, la danse de chaque muse
-  (`reliques/danse.ts`) comme modulation normalisée (`AMPLITUDE_DANSE = 3 %`), phase de
-  l'époque `2π·((h mod T) − h₀ mod T)/T` réduite en entiers avant la conversion (exacte
-  au-delà de 2⁵³), inclinaison ≤ 3° vers le pointeur, `astreSous` à 18 px, `PAGE_DE_MUSE`
-  (Thalie → Tour, Uranie → Témoin, Clio → Journal, Calliope → Glyphes, Terpsichore →
-  Veillée, Melpomène → Reliques, Érato → Coffre, Euterpe → Signes, Polymnie → Carte) ;
-  vue illisible → tout au centre, jamais NaN ; scène pure, aucune trace du pointeur.
-  `components/accueil/FondOrbital.tsx` + `fond-orbital.ts` (4 contrôles : lissage à
-  10 % par image, normalisation, cadence ≤ 30 images/s, étiquette dans la vue) : canevas
-  `fixed inset-0 z-0`, dpr ≤ 2, boucle rAF arrêtée onglet caché, image fixe en
-  mouvement réduit, pointeur dans des `useRef` seulement (survol lu seulement quand le
-  canevas est la cible, parallaxe partout sauf au toucher), étiquette fixe z-30 (muse en
-  or, réplique de `veillee-lexique.ts`), clic = `onAstre(PAGE_DE_MUSE)` ; glyphes 16 px,
-  anneaux à 20 % de `sourd`, limaçon à 30 %, disque or du réseau. Intégration :
-  `routes/index.tsx` (fond en premier enfant du Shell, cartes enveloppées en
-  `relative z-10 pointer-events-none [&>*]:pointer-events-auto` : le corps porte le
-  fond `--color-fond`, un `z-index` négatif serait recouvert). Contrôle visuel dans un
-  navigateur : à faire par l'auteur (`/`, console ouverte).
-- Reste : PR 5 (gardiens C3 : séparateurs primordiaux aux portes), P6 (hygiène : note
-  CVE-2012-2459, `historique/` ; `localcontext()` attend une réinitialisation du
-  testnet), le bot qui falsifie vraiment (bêches, effacement, capsules) et l'arbre en
-  Web Worker, la parade du sceau final au classement ; PR 6 [OUVERT] Godot/Rust.
-- **Dépôt des preuves par issue (2026-09-07)** : `depot.ts` (extraction du corps : JSON
-  collé ou adresse d'un des trois hôtes autorisés ; vérification : lisible, ancrée, finie,
-  nouvelle dans l'index, têtes dans la chaîne publiée — le « murmure » est refusé là —,
-  jugée ; preuve resérialisée, index complété, message au déposant ; 5 contrôles),
-  `atelier/scripts/deposer-veillee.ts` (entrée par l'environnement, téléchargement
-  plafonné à deux mégaoctets et trente secondes, codes 0 / 2 / 1),
-  `.github/workflows/veillees.yml` (issue « veillée », groupe de concurrence `chaine`,
-  commit « veillées : dépôt #N », verdict en commentaire, issue fermée). Page Veillée :
-  bouton « Déposer par issue » vers une issue préremplie. README de `veillees/` et
-  bible §5 à jour. Simulé en local avec une preuve de deux gestes collée dans le corps.
-- **Guide étoffé (2026-09-07)** : trois onglets nouveaux dans le Guide — « Le cœur » (la chaîne :
-  loi d'émission, signatures par hachage, adresses, rejeu, fédération, robinet et envois,
-  reliques et sceaux, ancrage), « Mécaniques » (six lois, objets, Tour, hôtes, élixirs,
-  secrets, capsules, fouilles, pendule, veillée, sac, preuve et classement) et « Lore »
-  (muses et danses, quatre âges, Chambre de Genèse, tria prima, fantômes, figures et
-  preuves) ; page Veillée dans « Jouer », dix mots, deux limites. Chaque phrase cite une
-  règle du code ; « époque » reste banni de l'interface (i18n.test.ts), on dit « cycle ».
-- **Veillée libre (2026-09-07)** : `Veillee.ancre` vaut `null` — les salles du jour,
-  l'arbre (graine `… ‖ "libre"`), aucune pièce ; comme l'ascension libre, une lecture :
-  `exporterVeillee` et `jugerVeillee` la refusent, `lectureVeillee` en donne les comptes.
-  Le coffre d'atelier, ou tout coffre sans pièce sur le réseau, y joue ; bouton
-  « Veillée libre » sur la page. +2 contrôles.
-- **Le sac (2026-09-07, décision d'auteur, bible §3.1)** : `tour.veillee.sac`, vingt-sept
-  places ; dons, trouvailles, coffrets, captures et élixirs d'écho y vont au geste (ce
-  que l'acte a ajouté au coffre passe au sac) ; sommet, porte fermée et effacement le
-  versent au coffre, l'arbre épuisé le perd ; sac plein = gestes de butin refusés,
-  franchir toujours possible. `GesteOk` porte `ajoutes`, `verses`, `perdus`. Le coffre
-  n'a pas de places : ce qui borne le butin est l'arbre. +3 contrôles.
+| Sujet | Le chiffre | Où il se rejoue |
+|---|---|---|
+| Émission bornée, sans halving | 2 080 époques × 1008 = **2 096 640 blocs**, **62 899 200 EIDL**, 239,18 ans ; cosinus en `Decimal` par série de Taylor, π à 68 décimales, **aucun `math.cos`** | `verify_genesis.py` → 32 contrôles ; `eonis.py` → 6 ; `eonis.py` gelé (SHA `cc94ad1e…` dans `genesis.json`) |
+| Conservation `Σ utxo == émission cumulée` | invariant **vrai** en local (h 45, 46 blocs, 47 sorties) et en ligne (h 93, 94 blocs) ; coinbase refusée à l'atome près | `utxo.py` → 15 ; `noeud.py --verifier` → « aucun refus » |
+| Rejeu intégral, carnet jamais persisté | **98 blocs revalidés** en local par le même code qu'à la forge | `noeud.py --verifier` |
+| Une clé WOTS+ ne signe qu'une fois | l'**adresse** est notée dans `cles_usees`, donc le refus vaut aussi sur le chemin assume-valid de `--depuis` | `utxo.py:239` ; `noeud.py:831` (`_test_depuis`, 4 contrôles) |
+| Consensus fédéré XMSS, vivacité, tête signée | 7 validateurs, hauteur MSS 12, créneau 3600 s, **9,35 ms par bloc** signature + vérification | `federation.py` → 18 |
+| Rotation de pas 3 | `V[(3·s) mod n]`, refus au chargement si `n % 3 == 0`, rotation prouvée surjective | `federation.py:266`, contrôle `:453` |
+| Un indice MSS ne sert qu'une fois | `CompteurMSS` monotone, écrit avant de rendre la signature, départ = max(chaîne, fichier) | `noeud.py` `_test_indice` → 2 |
+| Cadence réelle | **86 créneaux, 86 blocs depuis le créneau 62** ; avant lui, 54 créneaux (8→61) définitivement vides, jamais rattrapés ; le cron passe toutes les 3 à 5 h et rattrape par rafales de 6 | `etat.json` en ligne : `creneaux_sautes` = 54 |
+| Robinet à deux canaux | 14 + 6 contrôles ; corps d'issue jamais interpolé (`EIDOS_ISSUE_BODY`), frein par auteur (une demande servie par compte et par époque) | `robinet.py --test`, `courriel.py --test` |
+| Parité Python ↔ TS à l'octet | 10 familles, écrites par Python, relues par TS, dans les deux sens en CI | `vecteurs.py`, `vecteurs.test.ts`, job `parite` |
+| Reliques QR, encodeur QR stdlib | 3 + 5 contrôles ; `reliques.json` ne contient effectivement **aucune graine** | `relique.py --test`, `qr.py --test` |
+| Labo pendule-9 | **53 contrôles** = 11 + 11 + 9 + 13 + 9 ; le pont TS → Python compare les exports **octet à octet** | `labo/`, `.github/workflows/labo.yml` |
 
-### Labo pendule-9 — aura, avatar voxelisé, 8 agrégateurs — PR 1 FAITE (2026-09-07), voir docs/SPEC_AURA_PENDULE9.md
-- `labo/` (Python stdlib, figures pas preuves) : `aura_voxel_lab.py` (avatar 12×24×12 depuis §13, visage /
-  taille / poids sans équipement ; aura gaussienne radiale × e^(−Γt) avec plancher résiduel ;
-  8 agrégateurs aux positions 1..8, 9 = source, loi du 9 ; K1–K9), `pendule9_run.py`
-  (255 étages par racine digitale + balancier, sceau en chaîne de hash, Cube de Saturne ;
-  K10–K18), `unification.py` (contrat d'échange avec `pendule.ts` : 27 étapes `{i,p,e,s}`,
-  cran p → position p+1, coût `1 + bande(e)//3` ; K19–K26).
-- Pont atelier → labo : `atelier/scripts/exporter-run.ts` (choix fixes, portMot 0), fixture réelle
-  `labo/run_atelier.json` comparée à l'octet par le job `parite-atelier` de `labo.yml`
-  (matrice 3 OS × Python 3.9/3.12 + hygiène stdlib/fixtures). Groupe de concurrence propre,
-  `contents: read`, déclenché seulement sur les chemins du labo et de `pendule.ts`/`tour.ts`.
-- Deux hypothèses falsifiées en route : l'asymétrie 9/9/9/9/9/5/5/5 après 255 étages vient de la
-  queue 255 = 28·9 + 3, pas d'un biais de drainage (K18) ; « le cran 8 n'est jamais atteint »
-  ne tenait que sur la fixture synthétique — 1 à 7 passages par la source sur dix runs réels (K26).
-  La redistribution reste au cran 8.
-- **Reste — zones non branchées (LIST) :**
-  1. Loot : `tier = position` du labo n'est pas relié à `genreDon` (`pendule.ts`) — décider si le
-     tier module le genre, la quantité, ou seulement la lecture.
-  2. FAIT (2026-09-07, spec §13) — l'avatar n'est pas un objet (pas de mot, pas d'âge, pas de teinte)
-     et n'entre pas dans `voxels.ts`, mais adopte sa convention : grille 12 × 24 × 12 (`VOXEL_N`,
-     `2·VOXEL_N`), entiers seulement, `empreinte_corps` indexée comme `empreinteVoxels` (K8bis, K8ter).
-     Reste : le rendu à l'écran, scène `@react-three/fiber` — chantier de jeu.
-  3. Cube de Saturne : « restaure sans signer le sceau » est une figure Python ; le sceau réel est
-     `ancrage.ts` (graine `eidos-ascension/1`). Spécifier ce que le Cube peut toucher sans rompre
-     « ce qui compte est ancré ».
-  4. FAIT (2026-09-07, spec §12, K37–K38) — la table inventée était fausse ; le labo relit
-     `labo/muses.json` (`exporter-signatures.ts` ← `signatures.ts` + `rangBande`, parité à l'octet
-     en CI) et déduit le mode du rang : `ℓ = (8 − rang)·4 // 9`, s en bas, f au sommet. Les modes
-     nomment, ils ne font rien : leur donner un effet reste un chantier de jeu.
-  5. Aura ↔ Veillée : la jauge (`jauge.ts`, `veillee.ts`) ignore les 8 agrégateurs ; décider si
-     l'aura est une lecture de la jauge ou un système parallèle.
-  6. FAIT (2026-09-07, spec §11, K36) — `sauver.ts` n'était pas la bonne porte (c'est le sélecteur
-     de fichier du navigateur) : `exporter-veillee.ts --depuis <fichier>` relit une veillée jouée
-     depuis un carnet ou un export `serialiserVeillee`. Deuxième fixture `labo/veillee_jouee.json`,
-     non régénérable par construction. Reste : `exporter-run.ts` fige toujours choix et objet porté
-     (une ascension jouée se relirait par `parserAscension`, même schéma).
-  7. FAIT (2026-09-07, spec §14) — le mapping racine digitale + balancier est retiré : il
-     contredisait `pendule.ts` (27 étapes sur 9 bandes, pas 255 étages en file). `pendule9_run.py`
-     consomme désormais `labo/run_atelier.json` ; K10 et K18 supprimés (ils ne mesuraient que la
-     fiction), K17 et K23 réécrits. Un seul pendule.
-  8. Spinor : `spinor.ts` existe côté atelier (SU(2)/SO(3)) et pourrait porter l'orientation des
-     modes p/d au lieu d'une nouvelle table.
-  10. FAIT hors veillée (2026-09-08, spec §15) — `donDuPendule` dans `secrets.ts`, appelé par
-     `arriverDansCoffre` : la quantité du pendule est une CHANCE (quantité/9), pas une pile ;
-     un objet quand elle tombe. Reste : le cas de la veillée, où le sac de 27 est déjà l'enjeu —
-     refonte de l'économie, pas addition. Ancienne entrée : Donner le don : `don()` (genre + quantité) n'est appelé par aucune scène ; l'arrivée d'étage
-     ne distribue rien encore — chantier de jeu (`veillee-tour.ts`, hôtes, sac de 27 places).
-  9. Titre « sans Cube » : impossible tant que le Cube n'est pas un `CHOIX` du pendule (la trace ne
-     le voit pas) ; exige un `TAG_PENDULE` versionné.
-- **Spec de l'aura graduelle (2026-09-08)** : `docs/SPEC_AURA_GRADUELLE.md`, écrite par un agent
-  de recherche puis relue par un contradicteur (19 corrections dans le texte). Dix décisions
-  D1–D10 à prendre par l'auteur : l'aura est une lecture à forme unique et deux sources jamais
-  simultanées (feuilles d'une veillée, cap 8 ; loi du 9 d'une ascension, cap 9 — LIST 5 et 3
-  reçoivent là leur réponse proposée, le Cube restant au labo), la loi de la lampe en entiers sur
-  la dalle (`rayon(a, cap) = (3a + cap − 1) // cap`, foyer = case d'arrivée, octants), le geste
-  et l'étape comme seul temps, les modes s/p/d/f comme résolution angulaire (1, 2, 4, 8 secteurs),
-  le rendu par trame de Bayer et couleur d'instance, neuf interdits, K48–K56, chantier en trois
-  lots (labo → `aura.ts` pur → rendu dalle). Deux objections du relecteur, laissées à l'auteur :
-  D4 (le rayon de la lampe d'un antre lu dans l'aura serait un malus, donc un effet ; il propose
-  R = 3 fixe et l'aura qui teinte) et D7 (révéler les trouvailles sous l'aura ferait ×2,5 en Tour
-  libre : une puissance par construction). Rien n'est codé.
-- **LIST 1 tranchée (2026-09-07, spec §10, K35)** : `quantiteDon(s) = s.y + 1` dans `pendule.ts`,
-  `don()` = genre (hachage, inchangé) + quantité (position) ; test TS (+1), `q` dans l'export,
-  K35 côté labo. Phase 0 inchangée.
-- **LIST 5 tranchée (2026-09-07, spec §9, K29–K34)** : l'aura d'une veillée est une projection des
-  64 feuilles (8 × 8) sur les 8 positions du pendule, jamais croissante, sans Cube ni transfert ;
-  `atelier/scripts/exporter-veillee.ts` (bot gourmand, sans signatures) → `labo/veillee_atelier.json`,
-  lu par `labo/aura_veillee.py`, parité à l'octet dans `labo.yml`. Reste : la Tour libre (jauge
-  `coffre.tour`, hors veillée) garde la loi du 9 et le Cube — LIST 2 et 4 dépendent de ce choix.
-- **LIST 3 tranchée (2026-09-07, spec §8, K27–K28)** : le Cube ne touche que les 8 agrégateurs
-  (`actuel := résiduel`, une fois) ; jamais graine, trace, tête, pièce ni étape jouée. Compatible
-  avec « ce qui compte est ancré » parce que la trace ne contient que `(p, e, s)`. `ancrer()` en
-  Python reproduit `graineAncree` à l'octet, sans vecteur partagé pour l'instant.
+### 1.2 L'atelier et le jeu — code
 
-### Coffre horaire — PR 1 FAITE (2026-09-07), voir docs/SPEC_COFFRE_HORAIRE.md
-- Un coffre par bloc (l'horloge est la tête signée), réclamé avec une pièce prouvée : graine
-  `sha256d("eidos-coffre/1" ‖ id_bloc ‖ txid ‖ rang)`, tier = 1 + zéros de tête du premier octet
-  (1/2 … 1/256, 1/256 ; neuf tiers, neuf muses), t objets de tier t (genres de `GENRES_DON`, âge par
-  tier), sac de 27, une pièce un bloc. `labo/coffre_horaire.py` rejoue les 24 têtes réelles × 25
-  pièces (K39–K46) ; `labo/coffre_vecteurs.json` pour le port.
-- PR 2 FAITE (2026-09-07) : port `coffre-horaire.ts` (+4 contrôles) et famille `coffre` de
-  `vecteurs.json` (10ᵉ famille, écrite par `vecteurs.py`, relue par `vecteurs.test.ts`) ; page
-  `/coffre-horaire` dans le registre **Jouer**, en lecture seule (tête suivie + pièces du coffre →
-  graine, tier, chance, contenu). Route, Shell, i18n FR/EN, `navigation.test.ts` vert.
-- PR 3 FAITE (2026-09-07) : réclamer pour de vrai (`reclamerDansCoffre`, `Tour.coffres`, bouton),
-  le juge (`jugerClaim` : déjà réclamé → racine → feuille → chemin Merkle → XMSS, testé contre la
-  vraie tête signée), et la mesure de la rafale (K47). Les objets d'un coffre sont désormais des
-  `ObjetPorte` (`objetDepuisGraine` + `habille`) au lieu d'une table de genres inventée ; le labo
-  s'arrête à la graine et à l'âge, la parité porte là.
-- **Fenêtre d'un jour : NON adoptée** (§5). Mesure sur 36 têtes réelles : tout l'historique offre
-  77 objets → 27 pris, 50 perdus ; la fenêtre en offre 53 → 27 pris. Le sac plafonne les deux :
-  c'est le sac qui borne la rafale, pas la fenêtre.
-- PR 4 FAITE (2026-09-08) : la scène, par réemploi — le contenu s'affiche avec `VoxelIcon`
-  (`voxelsDe` + `rgbJauge`), aucun rendu nouveau, parce qu'un objet de coffre est un `ObjetPorte`.
-  Pas de scène `three.js` dédiée : le coffre horaire est une lecture, pas un lieu.
-- Décisions §8 arbitrées (2026-09-08) : tiers géométriques **gardés** (1), contenu = t objets avec
-  âge par tier **gardé** (3) ; le claim pendant un run (2) reste ouvert, à rouvrir quand la Tour
-  aura une raison de réclamer. **Chantier du coffre horaire clos.**
-- Échange d'un objet entre joueurs — décidé (2026-09-08) qu'un objet doit pouvoir changer de
-  mains ; étude `docs/ETUDE_ECHANGE_OBJETS.md`. Reste à arrêter : l'option (2, l'objet est une
-  sortie et le consensus change ; ou 3, une pièce porte l'objet et rien ne change) et la règle du
-  trou. Exigence d'auteur (2026-09-08) : survivre à N échanges ET à la duplication — ce qui
-  ÉCARTE (b) et (c), qui protègent la pièce et non l'objet, et appelle (d) la **lignée** :
-  origine = le claim, maillon_k lié à la transaction qui dépense la sortie précédente. La
-  duplication échoue parce qu'elle exigerait une double dépense. Aucune règle de consensus
-  nouvelle. Reste à trancher : la borne sur le nombre d'échanges (l'export grandit avec N).
+| Sujet | Le chiffre |
+|---|---|
+| Suite complète | **566 tests, 118 suites, 0 échec** ; `typecheck` vert ; 77 `.test.ts` sous `src`, **77 listés** dans `package.json` (aucun test orphelin) |
+| Six lois gelées | `conservation, groupe, doxa, sceau, epoques, resonance`, dans cet ordre, 7 contrôles ; `integrite.ts` lève au chargement si `NORME !== ATOMES` ; la loi 6 vérifie explicitement qu'il n'existe **pas** de champ `bonus` |
+| Somme des quatre axes | **64, toujours** : répartition au plus fort reste sur `COMBAT_BUDGET`, l'archétype **permute** et ne multiplie pas ; **400 000 objets tirés, 0 violation, 0 axe négatif** |
+| Zéro dé | `Math.random` : **une seule occurrence** dans tout `atelier/src`, dans le texte d'un docstring qui l'interdit. Les horloges sont des paramètres injectables (`ts = Date.now()`) |
+| Ancrage | `sha256d("eidos-ascension/1" ‖ id_bloc ‖ txid ‖ rang)` — une tête signée et une pièce prouvée, **rien du coffre, rien de la machine**, aucune empreinte de navigateur dans le dépôt |
+| La Veillée | arbre XMSS de 64 feuilles, même construction qu'une clé de validateur ; le juge refuse un indice répété **ou un trou** ; l'UI distingue run ancré et run libre et n'exporte que l'ancré |
+| Moteur tactique | 95 contrôles (bataille 44 / grille 18 / unité 17 / ia 16), **77 refus contrôlés**, toutes divisions en `Math.trunc`, immuabilité stricte, `traceBataille` = SHA-256d de l'échiquier ; `bataille.ts` n'importe **rien** d'`ia.ts` |
+| Tiers | 12 paliers d'extrémité `E3 = Σ(axe−16)²`, loi 2⁻ᵗ tenue à ~10 % sur onze tiers (T10 mesuré **1/1090** contre 1/1024 annoncé), plancher de proximité **78** exact ; 16 contrôles |
+| Lignée | un objet est tenu par une sortie ; changer de mains, c'est dépenser cette sortie. La duplication échoue **parce que c'est une double dépense**, pas par une règle neuve. 12 contrôles |
+| Chymie | **12 espèces** d'élixir lues dans les trois étages d'un glyphe (aucune cellule vide, 12,50 % → 3,125 %), 64 caractères de la plaque, bijection contrôlée |
+| Équipement | 547 lignes, 55 exports, 23 contrôles, 136 assertions ; limite déclarée : T et S donnent le même plafond d'orbite, donc **78 affixes ne valent que 39 leviers** |
 
-### Menu de l'écosystème — deux rangs au lieu de neuf onglets — FAIT (2026-09-07)
-- `navigation.ts` : chaque registre a une page par défaut (`defaut`) ; `registreDe` et `sousOnglets`
-  ajoutés. La liste reste unique — ajouter une page ne touche ni `Nav.tsx` ni `Ecosysteme.tsx`.
-- `Nav.tsx` : deux rangs. En tête les trois registres (Vérifier, Lire, Jouer) et le Guide ; dessous,
-  les pages du seul registre courant. Sur le Guide, pas de second rang (il n'a pas de registre).
-  Neuf onglets à plat + Guide → quatre en tête, deux à quatre en dessous.
-- `Ecosysteme.tsx` : les registres se replient (`<details>` natif — pas d'état React, clavier et
-  « mouvement réduit » suivent tout seuls). Seul le registre de la page courante est ouvert ; les
-  autres tiennent en une ligne qui liste les noms de leurs pages.
-- `navigation.test.ts` : +1 contrôle (le `defaut` est bien une page du registre, `sousOnglets` ne
-  rend que les pages du registre, le Guide n'a ni registre ni sous-onglets, quatre entrées en tête).
-- Reste : le contrôle visuel dans un navigateur (l'auteur, `/` et `/guide`, console ouverte).
+### 1.3 Spécifié — un document chiffré, zéro ligne de code
 
-### P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
-`vecteurs.json` : 9 familles (paramètres, clé WOTS+, tx, XMSS, carnet, tête
-signée, **veillée** : trois têtes à cheval sur minuit UTC, relique, **glyphes** : adresse 27 + 4, condensat 43, bourrage refusé),
-écrit par `vecteurs.py --generer`, relu par `vecteurs.py` et par
-`vecteurs.test.ts`, `xmss.test.ts`, `merkle.test.ts`, `temoin.test.ts`,
-`trophee.test.ts`, `relique-qr.test.ts`. Job CI **`parite`** (tests.yml) :
-`python vecteurs.py`, puis `npm ci`, `npm run typecheck`, `npm test`.
-Toute évolution d'un format : `vecteurs.py --generer`, puis les deux côtés.
+| Document | Ce qu'il fixe | Le chiffre qui commande | Décisions ouvertes |
+|---|---|---|---|
+| `SPEC_PUITS.md` | ce qui absorbe les eidôla | **192 transactions par jour** pour tout le réseau (`MAX_ENVOIS = 8`) et 120 EIDL/jour ; une sortie coûte 28 o contre 2 283 o pour une transaction — **81,5×** ; point fixe **s = 0,1115 EIDL/joueur/jour**, soit 1 076 joueurs | 6 (§7) |
+| `SPEC_MOISSON.md` | ce qui sort du trésor | le trésor garde **99,894 1 %** de l'émission ; hors-trésor à h = 45 : **1,00 EIDL**, un seul compte servi depuis la genèse | 3 |
+| `SPEC_CRAFT.md` | la forge | T1 → T9 en **17 crafts médians**, 34 objets consommés ; conjuguer **vise** sans dépasser le plafond d'orbite (0 déplacement > 1 point sur 3 000) | 3 (D1 bloquante) |
+| `SPEC_LOOT_TIERS.md` | la rareté comme extrémité | **2 149 582 852** mots canoniques, 47 858 profils sur 47 905 ; `r(tier, victoire) = −0,161` — un T12 ne gagne pas plus, il gagne **ailleurs** (σ 16,8 → 34,6) | 5 |
+| `SPEC_FORUM.md` | échanger entre joueurs | un échange = **une transaction à deux témoins**, atomique par construction (le format porte déjà `flag = 0`) | 7 (F1–F7) |
+| `SPEC_MUSES.md` | la classe qu'Eidos avait déjà | `combat.ts:64` : la muse **permute les quatre axes** — la seule progression que la conservation autorise | à ouvrir |
+| `SPEC_AURA_GRADUELLE.md` | l'aura comme lecture de ce qui est dépensé | `A(c) = max(0, R − d∞)`, `R ∈ 0..3`, plateaux entiers, aucune horloge | 10 (D1–D10), contrôles K48–K56 |
+| `SPEC_BROUILLARD.md` | la lampe et Earnshaw | les neuf cases centrales restent noires | 5 (B1–B5) |
+| `SPEC_TACTIQUE.md` | le jeu autour du moteur | D1, D2, D6 tranchées le 2026-09-10 ; découpage en 7 PR, 3 500 à 5 300 lignes dont ~40 % de tests | D3, D4, D5 |
 
-### P5 — État MSS persistant — FAIT (septembre 2026)
-`federation.CompteurMSS` (`indice-<v>.json`, spec `eidos-indice/1`, `prochain`
-monotone) : `reserver(i)` prend un **verrou exclusif** non bloquant sur
-`indice-<v>.json.lock` (fcntl / msvcrt, rendu à la mort du processus), **relit
-le fichier sous le verrou** (le disque fait foi : deux objets ou deux processus
-ne signent jamais le même indice), refuse i < prochain, écrit tmp + fsync +
-`os.replace` + fsync du répertoire, AVANT la signature. Fichier strictement
-validé (objet, spec, validateur, racine, entier borné, jamais un booléen) ;
-`attacher` refuse prochain > 2^h. `noeud.indice_de_depart` = max(chaîne,
-fichier) mais **refuse de repartir de la chaîne sans fichier** quand elle
-connaît déjà des indices (vecteur de réemploi) sauf `--forger --amorcer-indice`
-explicite ; clé épuisée = créneau sauté, pas boucle gelée. Relecture
-adversariale (3 lentilles, 2 sceptiques par constat) : tous les constats
-confirmés sont traités.
-Contrôles : `federation.py` +2 (monotone / recul / fichier d'autrui ; fourche
-même indice sur deux branches refusée côté signataire), `noeud._test_indice` 2
-(fichier perdu → la chaîne fait foi ; blocs perdus → le fichier fait foi).
-`chaine.yml` : forge seulement sur `main` ; cache `indice-<sha(federation.json)>-<run>-<tentative>`
-avec restauration par préfixe de génération (une réinitialisation §6 change
-`federation.json`, donc l'ancien état ne revient jamais) ; sans état, ou
-avec moins de fichiers que de validateurs (2026-09-06 : les blocs 0 et 1 de
-testnet-3 forgés sur le poste ont laissé le validateur 3 sans fichier, et le
-cron a refusé chaque créneau pendant deux jours), amorçage explicite tracé par
-un avertissement du run. Meilleur effort : perdu, le nœud CI repart de la
-chaîne en le disant. Pour une fédération réelle, chaque
-validateur garde son fichier chez lui, le sauvegarde, et ne l'amorce jamais
-à l'aveugle.
+À côté d'eux, quatre études sans décision en attente : `ETUDE_ECHANGE_OBJETS.md` (option (d) retenue, **codée** en `lignee.ts`), `ETUDE_EQUILIBRAGE_TACTIQUE.md`, `ETUDE_MOBILITE.md`, `ETUDE_POLYBE_FRACTALE.md`.
 
-### P6 — Hygiène
-- `getcontext().prec = 60` global → `with localcontext()` dans `dcos` et
-  `build_epoch_table` (ne change pas les tables ; vérifier par `verify_genesis.py`).
-- Documenter l'ambiguïté de duplication de la dernière feuille Merkle
-  (CVE-2012-2459) et pourquoi elle est bénigne ici (double dépense dans le bloc
-  refusée).
-- Déplacer `consensus.py` et `store.py` dans `historique/` avec leur test.
-- Atelier — FAIT (septembre 2026) : retirés `better-auth`, `@electric-sql/pglite`,
-  `kysely`, `jose`, `pg`, `src/lib/auth/`, `src/lib/db.ts`, `src/lib/app-data/`,
-  `src/lib/multiplayer/`, `migrations/`, les scripts de migration, d'invariant
-  d'auth et de fumée Playwright, `@react-three/drei`, `react-query`,
-  `react-table`, `react-hook-form`, `recharts`, `cmdk`, `sonner`, `vaul`,
-  `date-fns`, `react-day-picker`, tous les `@radix-ui/*` sauf `react-slot`
-  (194 paquets en moins). Reste : **18 dépendances** d'exécution, 17 de dev.
-  `@react-three/fiber` + `three` restent : quatre scènes les utilisent.
-  Tests des scripts du gabarit « app-builder » retirés (ils exigeaient
-  `AGENTS.md`, `.grok/skills/og/SKILL.md` et le drapeau `VITE_AUTH_ENABLED`,
-  absents du dépôt) ; `npm test` liste ses fichiers explicitement (le motif glob
-  n'était pas développé sous Windows, la CI n'avait pas de job Node).
-  `with-app-env` accepte `CLE=VALEUR` en tête et un shell sous Windows.
-  `npm run build` ne migre plus rien. Le recensement des imports se refait avec
-  un script qui lit les spécificateurs, pas un `grep` du nom du paquet.
+### 1.4 Mesuré-et-écarté
+
+| Ce qui a été éprouvé | Le chiffre qui l'écarte |
+|---|---|
+| L'extrémité d'un mot comme **sidegrade** | 330 144 duels : victoire **55,6 % → 19,5 %** du tier le plus bas au plus haut, et **93,9 % → 57,6 % dans la niche**. L'agrandissement des salles (19,8 → 56,8 cases d'un tenant) ne referme la niche que de 41,5 à 36,4 pt. La cause est arithmétique : abattre est un produit, concentrer un budget fixe minore un produit |
+| Les **démarches singulières** (cavalier, fou) | théorème : le seul jeu de 4 vecteurs clos par le quart de tour qui engendre Z² est {±(1,0), ±(0,1)} ; à compte constant `r(eperon)` passe de +0,106 à **+0,736**, à rayon constant **30 % des duels ne se concluent plus**, et le gain de décision est **négatif** (1,45 contre 1,50) |
+| **Sierpiński** base 2 sur la dalle 9 × 9 | perd son auto-similarité (blocs `766\|623\|634`) et **aggrave** : bande de tier 24,4 → **35,3 pt** |
+| Le **carré de Gahn** (substitution par les mots) | bande 29,9 → 28,0 pt, décision +0,3 pt, et sa forme est un **classement déguisé** (rapport 64× entre lignes) |
+| La **Poussière de Cantor** et le **Guet** — recommandés en septembre, retirés depuis | ne se reproduisent pas sur le moteur d'aujourd'hui : bandes 42,35 et 42,92 pt contre **37,75 sans motif** ; activation 31,80 % → **16,06 %** ; le témoin « +2 partout » rend le meilleur `\|r\|` du lot (0,142) en ne dictant rien |
+| Le **réseau d'induction** dans la brume | 42 % des étages seulement peuvent enclore quoi que ce soit, l'induction s'allume dans **5 %** des batailles, et un cran de plus offre le gardien sur 16,7 % des étages : « payer un module pour une règle de deux lignes » |
+| Le **dos gradué** et `CHARGE_PAR_CASE = 7` | écartés par la mesure (commit `abf2226`) |
+| La **forge payée** (P5) et la **3ᵉ alvéole** (P6) | P5 : 59 tx/jour à N = 1 000 sur 192 disponibles — pas de place, et elle achète le trou. P6 : la 3ᵉ pièce vaut **+0,9 pt** de plafond, la 4ᵉ +0,06 |
+| La **résurrection** comme puits | elle rachète la permadeath, aujourd'hui le seul puits **réel** du jeu |
+| **Neuf tiers** au lieu de douze | sommet à 1 sur 259 — moins rare que la queue actuelle |
+
+### 1.5 Cassé
+
+Quatre écarts entre ce que le dépôt annonce et ce que le dépôt fait. Chacun est une dette au §2 : **D1** le bourrage glyphique, **D2** le pas double, **D4** la racine UTXO conditionnelle, **D6** le sac à deux tailles. S'y ajoutent trois textes périmés (**D5**) et deux freins absents (**D7**).
+
+---
+
+## 2. Les dettes, par gravité
+
+### D1 — Une adresse a quatre écritures valides, et rien ne le refuse
+
+**Le fait.** La proposition 3 promet « bourrage du 27ᵉ glyphe nul **sinon refus** ». Le refus n'existe nulle part. Une adresse fait 160 bits, 27 groupes de 6 en portent **162** : les deux derniers bits sont silencieusement jetés (`eonis.py:161` `bits[: nbytes*8]`, `glyphs.ts:31` `bits.slice(0, n*8)`). Sonde : les quatre figures en 3ᵉ position du 27ᵉ glyphe donnent **quatre écritures acceptées** pour la même adresse `1a56415346085a7a`, **des deux côtés**. `addr_decode` (`utxo.py:73`) ne compte même pas les groupes.
+**Ce que ça coûte aujourd'hui.** Rien sur le consensus : l'adresse décodée est la même, la somme de contrôle passe, aucune double dépense. Ce qui est cassé, c'est l'**unicité de lecture** — la seule chose que la proposition 3 promettait.
+**Le correctif, sans toucher au fichier gelé.** Refuser dans les décodeurs d'**adresse**, pas dans `eonis.decode_glyphs` : `addr_decode` exige 27 groupes de charge, 4 de contrôle, et les deux bits de queue nuls ; `decoderGlyphes` fait le même refus. `eonis.py` ne bouge pas, donc **ni `genesis.json`, ni les trois empreintes du README, ni le testnet**.
+**Coût.** ~20 lignes Python, ~15 TS, **2 contrôles `doit_echouer`** (un par implémentation), un vecteur partagé de plus dans `vecteurs.json`. Vérifier d'abord que les 47 sorties publiées, les planches de reliques et les QR déjà émis encodent tous un 27ᵉ glyphe nul — ils le font, `addr_encode` bourre à zéro ; c'est le point à contrôler avant de fusionner.
+
+### D2 — « Le pas le plus long reste sous la portée la plus longue » est rompue par tour
+
+**Le fait.** Un pas plein vaut 4, la plus longue portée 7 : `4 < 7`. Mais `PA_PAR_TOUR = 2`, donc `2 × 4 = 8 > 7`. Le contrôle de `unite.test.ts:105` lit **un** pas et reste vert : il garde la lettre, pas ce qui compte.
+**Le prix, mesuré.** Sur 660 288 duels par configuration : `|r|` max **0,622** (eperon +0,622, arc −0,377) contre **0,098** sur un témoin `719ca7a` recopié — l'écart est celui du moteur, pas de la mesure. Bride « 2 frappes / 1 pas » : **0,236, tenue**. Bride « 1 frappe / 2 pas » : **0,588, rompue**. La cible du §9 ter est **0,30**. La seconde moitié de R2 est **tenue** : quartile haut/bas de `lame+ecu` = **0,82×** pour un plafond de 3×.
+**Le correctif connu.** `DIV_PAS = 64` (pas 2..3, donc `6 < 7`) rétablit **0,255**.
+**Coût.** Une constante, et **tout le reste de la mesure** : `eperon` perd un de ses quatre prix, la bande de tier et le taux de nuls sont à remesurer sur le protocole complet. C'est un chantier (§4, C2), pas une retouche — et il est bloquant pour publier l'échelle de tiers, la forge, et les puits P4/P5.
+
+### D3 — Les mesures qui justifient les constantes ne sont pas dans le dépôt
+
+**Le fait.** `COUP_BASE = 16`, `MULT_TENUE = 2`, `CHARGE_PAR_CASE = 4`, `DIV_PAS = 32` sont justifiés par des chiffres précis dans les docstrings (`r(ecu)` de +0,59 à +0,14, pointe `eperon` de 5,85 % à 12,33 %…). Les bancs qui les produisent vivent dans le scratchpad, avec le moteur **recopié et modifié**. Les trois études le déclarent en toutes lettres — `ETUDE_EQUILIBRAGE_TACTIQUE.md:169`, `ETUDE_MOBILITE.md:160`, `ETUDE_POLYBE_FRACTALE.md:199` : « rien n'est rejouable par la CI ».
+**Pourquoi c'est grave.** « Aucune mécanique n'entre sans mesure chiffrée sur le vrai moteur » est la règle de conception ; sans banc dans le dépôt, chaque changement du moteur périme en silence toutes les constantes, et personne ne le voit. C'est déjà arrivé deux fois : la Poussière (§1.4) et R2 (D2).
+**Le correctif.** Un banc réduit dans `atelier/scripts/`, à **vecteurs gelés**, qui rejoue le protocole sur un échantillon calibré et compare à des seuils écrits ; le banc complet reste hors CI, et le banc réduit ne prétend pas le remplacer — il détecte la dérive.
+**Coût.** Un script + un `.test.ts` à ajouter à la main dans `package.json` et `CLAUDE.md` §2 ; budget CI à tenir sous 60 s (le duel 1v1 coûte **3,06 ms**, un balayage complet 147 s : l'échantillonnage est la seule voie).
+
+### D4 — La racine UTXO n'est contrôlée que si la clé est là
+
+**Le fait.** `Carnet.valider_bloc` compare la racine sous `if "utxo_root" in blk:` (`utxo.py:272`) — pas de branche `else: raise`. Sur le chemin fédéré c'est sans conséquence, `deser_bloc` pose toujours la clé en FORMAT 3 ; mais l'obligation vient de la **sérialisation**, pas d'une exigence du validateur. Un appelant qui construirait un bloc sans la clé traverserait sans être refusé — et n'obtiendrait pas non plus d'`id_bloc` étendu.
+**Le correctif.** `else: raise Rejet("bloc sans racine UTXO déclarée")`.
+**Coût.** Deux lignes, **un contrôle `doit_echouer`**, aucun format touché.
+
+### D5 — Trois textes de référence annoncent des chiffres périmés
+
+`CLAUDE.md` §4 : « 409 suites Eidos ». `README.fr.md` : « 537 tests Eidos » (deux fois). Mesure du jour : **564 tests, 118 suites**. `federation.json` déclare `"format_chaine": 2` alors que `chaine-eidos.dat` porte `FORMAT 3` — le champ n'est lu par personne, ce qui est exactement pourquoi il a dérivé. Les en-têtes de `SPEC_CHYMIE.md` (« aucune ligne de code ») sont périmés depuis `8566119`.
+**Correctif.** Les corriger, et poser la règle : tout compteur écrit dans un texte doit être produit par une commande citée à côté de lui. **Coût :** quelques lignes ; à faire dans la PR qui touche ces fichiers, jamais seule.
+
+### D6 — Le sac dit 27 places d'un côté, 81 de l'autre
+
+`veillee-tour.ts:89` : `SAC_PLACES = 3 * ETAPES` = **81**. `coffre-horaire.ts:31` : `SAC_COFFRE = 27`, avec juste au-dessus un commentaire qui affirme que c'est le même nombre. La constante plafonne réellement une rafale de claim (`Math.max(0, SAC_COFFRE − sacRempli)`) ; le port Python le confirme : « 93 objets offerts, **27 pris, 66 perdus** ». Aucun test ne l'attrape — `coffre-horaire.test.ts:71` importe `SAC_COFFRE` et se compare à lui-même.
+**Correctif.** Importer `SAC_PLACES` au lieu de redéclarer, ou déclarer en clair que le coffre horaire plafonne **volontairement** à 27 et dire pourquoi. **Un contrôle qui compare les deux constantes**, pour que la prochaine divergence soit rouge. **Coût :** une ligne, un contrôle, une décision (§3, A7).
+
+### D7 — Le frein par auteur ne couvre pas le canal `envoi`
+
+`robinet.py:180` `auteur_autorise` n'est appelé qu'en `:310`, dans `ajouter()`. `ajouter_envoi()` (`:252`) n'a ni auteur, ni époque, ni quota : le seul plafond restant est `MAX_FILE = 200` en attente et `MAX_ENVOIS = 8` par bloc. C'est cohérent avec la docstring — le frein rationne les **eidôla**, pas les **créneaux** — mais la ressource rare d'Eidos est le créneau : **192 transactions par jour**, et une goutte de robinet (1 EIDL) finance 99 999 999 transactions à 1 atome, soit **1 427 ans** de la capacité entière du réseau.
+**Correctif.** Ou bien un frein par auteur sur `ajouter_envoi`, ou bien un montant plancher par envoi, ou bien l'aveu écrit que le canal envoi est ouvert et que c'est assumé sur un réseau d'essai. **Coût :** faible en code ; c'est un arbitrage (§3, A8), pas un correctif évident — tout frein sur `envoi` freine aussi les joueurs légitimes.
+
+### D8 — P6, hygiène (report de `CLAUDE.md` §7)
+
+`getcontext().prec = 60` global → `with localcontext()` dans `dcos` et `build_epoch_table` (ne change pas les tables ; à vérifier par `verify_genesis.py`). Documenter l'ambiguïté de duplication de la dernière feuille Merkle (CVE-2012-2459) et pourquoi elle est bénigne ici — la double dépense dans le bloc est refusée ; noter que l'argument **ne vaut pas** pour un Merkle de verdicts ou de figures. Déplacer `consensus.py` et `store.py` dans `historique/` avec leur test. **Coût :** une PR, aucun format, aucune empreinte.
+
+---
+
+## 3. Les arbitrages qui attendent l'auteur
+
+Questions fermées. La recommandation engage le rédacteur de cette feuille, pas l'auteur.
+
+| # | Question | Recommandation | Ce qu'elle coûte |
+|---|---|---|---|
+| **A1** | `DIV_PAS` passe-t-il de 32 à 64 (pas 2..3) pour rétablir R2 ? | **Oui**, mais dans un chantier avec sa mesure complète, jamais comme retouche | `eperon` perd un de ses quatre prix ; `\|r\|` 0,588 → 0,255 ; toute la calibration (bande de tier, nuls, feuilles par bataille) est à remesurer sur 660 288 duels |
+| **A2** | La bataille est-elle jouable avant que R2 soit tenu ? | **Oui pour la jauge, non pour ce qui compte** : brancher le moteur sur une route libre ; ne rien ancrer, ne rien exporter, ne publier ni échelle de tiers ni forge | Un chantier de plus, et l'aveu écrit que les tiers ne sont pas publiés |
+| **A3** | D3 — arbre de la Veillée à 64 feuilles ou 256 ? | **64** | 256 exige le Web Worker (construction ~5 s contre 1,3–1,6 s) pour un gain que 6 à 8 batailles par run ne réclament pas |
+| **A4** | D4 — la graine connue d'avance : (a) l'assumer, (b) commit-reveal, (c) une bataille ancrée par jour ? | **(a) + (c)**, documenté en LIMITE | (b) ajoute un abandon de dernier révélateur pour peu de gain ; (a) admet que la journée se simule hors ligne |
+| **A5** | D5 — une unité tombée en bataille ancrée quitte-t-elle le roster ? | **Oui** : c'est le seul puits réel du jeu | Sans elle, le marché de D6 n'a qu'une entrée ; avec elle, la permadeath devient une décision d'économie, pas de difficulté |
+| **A6** | P1 — la mise du sceau se paie-t-elle par acte ou par mise ? | **La mise** (4 EIDL / 64 actes), en disant que le brûlage est la **preuve** et le décompte une **figure** | Un décompte hors chaîne dans `batailles/index.json` ; c'est la seule forme qui tienne dans 192 tx/jour |
+| **A7** | Le péage de lignée est-il obligatoire ? | **Oui, et gratuit pour le premier maillon** (l'origine) | Facultatif, il n'absorbe rien ; gratuit au premier maillon, il ne taxe pas le coffre horaire |
+| **A8** | Le canal `envoi` gagne-t-il un frein (D7) ? | **Un montant plancher**, pas un frein par auteur | Le plancher exclut le scellé à 1 atome sans exclure un joueur ; un frein par auteur pénaliserait celui qui joue |
+| **A9** | La gerbe de la Moisson : 1 EIDL ou 0,25 ? | **1 EIDL, prorata au-delà de 60 glaneurs** | À 0,25 le plafond porte 240 glaneurs (borné à 128 par la transaction) et la Sybil rapporte 4× moins par compte ; à 1 EIDL la rareté se voit et la dilution est publiée |
+| **A10** | La Moisson accepte-t-elle le canal courriel ? | **GitHub seul au départ** | L'expéditeur est plus faible qu'un compte GitHub, et la Moisson multiplie cette faiblesse par 84 |
+| **A11** | Douze tiers ou neuf ? | **Douze**, sommet à 1 sur 2 006 | Neuf alignerait sur le coffre et les muses, mais mettrait le sommet à 1 sur 259 |
+| **A12** | Corrige-t-on le tirage (`paqueter`, 3,48 % de mots hors sphère, 32,0 % hors image) ? | **Oui, dans une PR séparée de l'échelle** | Six vecteurs gelés à regeler, et `vecteurs.json` à refaire ; fait après l'échelle, le regel devient illisible |
+| **A13** | Le canal courriel du robinet : on l'active ou on le retire ? | **L'activer** (poser `EIDOS_ROBINET_COURRIEL`) ou retirer la mention publique | `etat.json` publie `"courriel": null` : un canal annoncé qui n'existe pas est un texte qui promet plus que le code |
+| **A14** | Scelle-t-on la première relique ? | **Oui, une seule**, et publier la planche | `reliques.json` est vide : toute la machinerie (3 + 5 contrôles) est codée et n'a jamais servi ; une relique met à l'épreuve `--sceller`, `--animer` et le statut publié |
+| **A15** | `SAC_COFFRE` : 81, ou 27 assumé ? | **27 assumé et dit** — une rafale de claim n'est pas un sac | Sinon un claim peut rendre 81 objets d'un coup ; dans les deux cas, le contrôle qui compare les deux constantes est obligatoire |
+
+---
+
+## 4. La suite, par chantiers
+
+Un chantier = une branche = une PR, jamais deux à la fois. Chacun porte **sa cible chiffrée annoncée d'avance** et **la mesure qui le tue**. Un chantier tué est un chantier réussi : il a coûté une mesure, pas une dette.
+
+### C1 — Le bourrage du 27ᵉ glyphe (dette D1)
+
+**On livre.** Le refus manquant, dans `addr_decode` (`utxo.py`) et `decoderGlyphes` (`glyphs.ts`), sans toucher `eonis.py`.
+**Cible.** Une adresse de 20 octets a **exactement une** écriture glyphique acceptée, des deux côtés, contre 4 aujourd'hui. Deux `doit_echouer`, un vecteur partagé de plus dans `vecteurs.json`.
+**Ce qui le tue.** Une seule adresse déjà publiée (les 47 sorties d'`etat.json`, une planche de relique, un QR émis) qui ne passe pas le nouveau refus : le format serait alors à faire évoluer, pas à durcir, et le chantier devient une réinitialisation de testnet — donc on ne le livre pas ainsi.
+**Coût.** ~35 lignes, aucun format, aucune empreinte, pas de réinitialisation.
+
+### C2 — Re-tarifer `eperon` (dette D2) — **bloquant pour tout le reste du jeu**
+
+**On livre.** `DIV_PAS` arbitré (A1), le contrôle de `unite.test.ts` réécrit sur `PA_PAR_TOUR · pas` et non sur `pas`, et le banc du chantier.
+**Cible.** `|r|` par axe **< 0,30** et quartile haut/bas de `lame+ecu` **< 3×**, sur le protocole complet (660 288 duels par configuration, deux sens, trois politiques). Aujourd'hui : 0,622 et 0,82×.
+**Ce qui le tue.** Le pas 2..3 fait remonter les duels non conclus au-dessus de ce que le budget de feuilles absorbe (mesuré aujourd'hui : médiane 5 coups, max 11 sur 1 200 mêlées 3v3) ; ou la bande de tier s'ouvre au lieu de se fermer — auquel cas le prix des axes n'est pas dans le pas, et il faut le chercher ailleurs avant d'y toucher.
+**Coût.** Une constante, un banc, une remesure complète ; ne débloque pas seulement le moteur mais **l'échelle de tiers, la forge, P4 et P5**.
+
+### C3 — Le banc dans le dépôt (dette D3)
+
+**On livre.** Un banc réduit à vecteurs gelés dans `atelier/scripts/`, et un `.test.ts` qui compare ses sorties à des seuils écrits.
+**Cible.** Les quatre constantes du moteur (`COUP_BASE`, `MULT_TENUE`, `CHARGE_PAR_CASE`, `DIV_PAS`) ont chacune un chiffre **rejoué par la CI en moins de 60 s**, et un écart de plus de 10 % avec le banc complet rend le test rouge.
+**Ce qui le tue.** Aucun échantillonnage sous 60 s ne reproduit les chiffres publiés à mieux de 10 % : le banc réduit serait alors un faux témoin, et il vaut mieux ne rien avoir qu'un contrôle qui ment. Repli déclaré : un script de nuit à la manière de `veillee-bot`, hors CI, avec ses chiffres publiés à la main.
+**Coût.** Un script, un test, deux entrées à la main dans `package.json` et `CLAUDE.md` §2.
+
+### C4 — Brancher le moteur tactique (PR 4 et 5 de `SPEC_TACTIQUE.md`)
+
+**On livre.** Le rendu de grille sur le socle `components/canvas/` existant, une route, les clés i18n FR/EN, et le branchement Veillée (feuilles = coups, sac, permadeath selon A5).
+**Cible.** Un duel se joue de bout en bout depuis une route ; **0 clé i18n vide**, FR et EN aux mêmes clés ; une bataille consomme **6 à 10 feuilles** sur les 64 de l'arbre, mesuré sur le bot et non promis.
+**Ce qui le tue.** La bataille dépasse le budget de feuilles (une run ne tient plus 6 à 8 batailles), ou le rendu impose une dépendance nouvelle — le socle actuel tient à 18 dépendances d'exécution, et une scène de plus n'en justifie aucune.
+**Coût.** 9 fichiers, 1 100 à 1 700 lignes selon le découpage §10 de la spec, dont ~40 % de tests. **Ne pas ancrer, ne pas exporter tant que C2 n'est pas vert** (A2).
+
+### C5 — La première relique et la première preuve de veillée
+
+**On livre.** Une relique scellée (A14) et une preuve de veillée déposée par le chemin réel — issue → `veillees.yml` → `depot.ts`.
+**Cible.** `reliques.json` porte **1 entrée** et `etat.json.reliques` la publie avec son statut ; `veillees/index.json` porte **1 preuve** jugée par le juge de CI, avec les trois têtes retrouvées dans `chaine-eidos.dat`.
+**Ce qui le tue.** Le juge refuse la première preuve pour une raison de format : c'est alors un défaut de `depot.ts`, à corriger avant tout dépôt public — et c'est précisément ce que ce chantier cherche à savoir. Coût nul en cas d'échec, sauf le correctif.
+**Coût.** Aucune ligne de code si tout passe. C'est le seul chantier dont le livrable est **une donnée, pas du code**, et il éprouve 8 contrôles qui n'ont jamais tourné en réel.
+
+### C6 — L'économie : les puits, puis la Moisson
+
+**On livre.** P1 (mise du sceau), P2 (péage de lignée), P3 (nom) selon `SPEC_PUITS.md` §3, puis la Moisson.
+**Cible.** Point fixe **s = 0,1115 EIDL/joueur/jour**, soit **1 076 joueurs** portés par le budget actuel et 8 609 sur l'émission entière ; et, contrainte dure, **la somme des transactions dédiées reste sous 192 par jour**.
+**Ce qui le tue.** Toute mécanique qui exige une transaction par geste : à un brûlage par acte, c'est 365 000 transactions par an contre 70 080 possibles. Si le décompte des 64 actes d'une mise ne peut pas rester une figure qui **restreint** la preuve, P1 tombe et l'économie repart de zéro.
+**Coût.** `atelier/` + un juge de CI + deux constantes de politique du nœud (`MAX_ENVOIS`, `BUDGET_RATIO`, cf. A12) ; **ni `eonis.py`, ni `genesis.json`, ni la validation, ni `FORMAT 3`**. Gelé jusqu'à C2 pour P4 et P5.
+
+### C7 — La lignée branchée, puis le forum
+
+**On livre.** `lignee.ts` relié à l'inventaire et à l'export d'un objet, puis les décisions F1–F7 de `SPEC_FORUM.md`.
+**Cible.** Un objet change de mains **en une transaction**, et donner N objets tient dans **un créneau et 28·N octets** (contre 2 177 o par témoin) ; un objet à N échanges reste vérifiable hors ligne.
+**Ce qui le tue.** L'export d'un objet à N échanges dépasse ce qu'une issue GitHub peut porter (`MAX_TX_CARACTERES = 80 000`) : il faut alors une borne sur N, écrite avant de livrer, ou le chantier n'est pas mûr.
+**Coût.** L'atelier seul ; aucune règle de consensus nouvelle — la duplication échoue parce que c'est une double dépense.
+
+### C8 — P6, hygiène (dette D8)
+
+**Cible.** `verify_genesis.py` toujours à 32 contrôles, 0 échec, après le passage à `localcontext()` ; `consensus.py` et `store.py` dans `historique/` avec leurs 6 contrôles ; CVE-2012-2459 documentée là où le Merkle est écrit.
+**Ce qui le tue.** Un seul chiffre des tables qui bouge : `eonis.py` est gelé, et une empreinte différente vaut réinitialisation du testnet — on renonce et on garde le `getcontext()` global avec un commentaire.
+**Coût.** Une PR, aucun format.
+
+### Ce qu'on n'ouvre pas encore, et pourquoi
+
+`SPEC_MUSES.md` (la muse permute déjà les quatre axes : c'est la seule progression que la conservation autorise, et elle attend C2 pour être lisible), `SPEC_AURA_GRADUELLE.md` (D1–D10 non tranchées, contrôles K48–K56 à écrire), `SPEC_BROUILLARD.md` (B1–B5 non tranchées ; l'induction est écartée, la lampe ne l'est pas), `SPEC_CRAFT.md` PR 2 (gelée par D1 = notre C2). Aucun de ces quatre n'est bloqué par du code : ils sont bloqués par une décision ou par une mesure.
+
+---
+
+## 5. Ce qui a été écarté, et par quel chiffre
+
+Les mécaniques écartées **par la mesure** sont au §1.4. Ci-dessous, douze propositions écartées **par une loi**, chacune avec la loi cassée et le chiffre qui a tranché. Savoir ce qu'on a écarté vaut autant que savoir ce qu'on garde : aucune de ces douze n'est à reprendre en l'état.
+
+| Proposition | La loi cassée | Le chiffre qui tranche |
+|---|---|---|
+| **Le serment de la feuille zéro** — jurer son parcours avant de l'ouvrir | figures ≠ preuves | le juge ne recalcule que le **budget et l'ordre**, jamais le jeu ; la feuille brûlée se rembourse en **+1 de butin**, coût net **zéro**, et un serment trahi n'est simplement jamais déposé |
+| **Le duel signé** — deux arbres entrelacés, aucun arbitre | une clé WOTS+ ne signe qu'une fois | l'arbitre supprimé est l'**index global** qui fait tenir la règle ; un duel de 6 à 10 coups par camp dont chaque tour cite une tête fraîche coûte **6 à 10 heures** |
+| **Le nom donné une fois** — brûler pour nommer, à 10 000 atomes | rien ne se croit | les **255 étages** de la Tour se nomment pour **0,0255 EIDL** en **une** transaction ; la table de titres entière pour 2,27 EIDL ; et 226 800 sorties de poussière seraient rehachées à chaque bloc, à jamais |
+| **Le legs de l'arbre** — transmettre la fin de sa veillée | une clé WOTS+ ne signe qu'une fois | la « preuve publique de trahison » est fabricable par le receveur, qui tient la **même graine** ; et `depot.ts` refuse le second dépôt **avant** d'appeler le juge |
+| **Le point de reprise signé** — un lecteur signe ses verdicts | assume-valid jamais implicite | un `maître` neuf donne un arbre neuf **gratuit** ; et la racine dépend de la hauteur courante et de la langue — deux lecteurs honnêtes se prouvent mutuellement parjures |
+| **Le scellé** — horodater une empreinte pour 1 atome | le texte promet plus que le code | 28 octets annoncés, **2 283 mesurés** (81,5×) ; une goutte de robinet finance 99 999 999 scellés, soit **1 427 ans** de la capacité entière du réseau |
+| **La maturité** — publier la finalité 2n/3 | figures ≠ preuves | retard de finalité **5 blocs** médians mais **61 heures** maximum sur la chaîne réelle ; et les 7 graines privées sont **dérivables publiquement** (7/7 reproduites), donc le décompte n'engage rien |
+| **Le rendez-vous** — deux politiques scellées, arbitrées par le bloc de l'heure | rien ne se croit | le proposant est connu **239 ans à l'avance**, le bloc se broie gratuitement, **3 600 valeurs de `ts`** sont recevables par créneau pour **255 dalles** : le validateur choisit le terrain quatorze fois |
+| **La cave** — laisser le temps conjuguer un objet | conservation | `\|g q ḡ\|² = \|q\|² × 10¹⁶`, et **5,3 %** seulement des couples sont divisibles ; en 30 jours **100 % des objets montent**, +4,57 tiers en moyenne, T12 **×152** — gratuitement |
+| **L'heure du régime** — `REGIMES[(3·s) mod 7]` comme calendrier | rien ne se croit | `REGIMES.length = 7` est **gelé**, `n` de la fédération est **mutable** ; 46 blocs pour 100 créneaux ; et le catalogue n'est pas équiparti — Comète ouvrirait **1,64×** plus souvent que Pulsar, pour toujours |
+| **La Couverture** — un rang qui recouvre l'espace des profils | le texte promet plus que le code | une union est **monotone** : **96,6 %** de couverture avec 27 objets tirés au hasard, et `r(lame+ecu, couverture) = 0,613` — le rang s'achète ; 147 s par balayage, personne ne le rejouerait |
+| **Les saisons de pas 3** — la rotation du consensus appliquée au méta | doxa, et la rotation elle-même | `(3·e) mod 21` n'atteint que **7 cellules sur 21** et `(3·e) mod 12` que **4 tiers sur 12** : c'est exactement le cas que `federation.py:266` lève en `ValueError` |
+
+**Ce qui survit de ces douze, et qui est déjà spécifié ailleurs :** l'affrontement **asynchrone** contre une armée figée et une politique scellée (`SPEC_TACTIQUE.md` §7-§8, un seul signataire, un seul arbre, un index global) ; le **balayage de couverture comme instrument de mesure**, à ranger à côté de `veillee-bot.ts` ; et l'ajout au `verifierChaine` de l'atelier du **créneau canonique** (`ts = t0 + s·3600`) et du **proposant attendu** (`(3·s) mod n`) — éprouvé sur les 46 blocs réels, 0 anomalie, et qui demande d'étendre `parserFederation` à `t0_unix`, `creneau_s`, `pas_rotation` et `n`.
+
+---
+
+## 6. L'historique — seize chantiers faits, une ligne chacun
+
+Le détail (décisions, limites, reliquats) est dans git et dans les documents cités.
+
+| # | Chantier | En une ligne |
+|---|---|---|
+| 1 | **P1 — Boucle atelier ↔ nœud** | `construire_envois` valide chaque envoi dans un bloc candidat sur une copie du carnet, écarte les fautifs, porte leurs frais en coinbase |
+| 2 | **P2 — WOTS+ à la place de Lamport** | RFC 8391, w=16, témoin de 24 577 o à 2 176 o ; Lamport gardé en démonstration seulement ; testnet-2 |
+| 3 | **P3 — Racine UTXO dans l'en-tête** | `utxo_root` à côté d'`E.header` gelé, `--depuis <h> <racine>` explicite, `FORMAT 3`, testnet-3 |
+| 4 | **Reliques QR** | encodeur QR stdlib, `--sceller` / `--animer`, la graine n'existe que dans le QR ; voir `HANDOVER_RELIQUES_QR.md` |
+| 5 | **Coffre 3D** | un seul coffre, palettes isochromatiques, ornements par butin |
+| 6 | **Rendu de l'atelier** | un socle `components/canvas/` et quatre scènes |
+| 7 | **Refonte du hub** | l'accueil cesse d'être une liste de pages |
+| 8 | **La Tour** | hôtes, secrets, élixirs, capsules, bestiaire, fouilles, équipement — des lectures déterministes, jamais des tirages |
+| 9 | **Accueil, écosystème et robinet à deux canaux** | issues GitHub et boîte IMAP, même filtre, expéditeur publié sous empreinte seule |
+| 10 | **La Veillée** | roguelike XMSS : 64 feuilles, un indice par geste, juge, sac, classement, fantômes, bot de mesure ; voir `BIBLE_VEILLEE.md` |
+| 11 | **Fond orbital de l'accueil** | la loi d'émission en limaçon, neuf astres-muses, phase du cycle lue dans la tête suivie, aucune trace du pointeur |
+| 12 | **Labo pendule-9** | aura, avatar voxelisé, 8 agrégateurs, pont TS → Python comparé octet à octet en CI, 53 contrôles |
+| 13 | **Coffre horaire** | un coffre par bloc, une pièce par claim, neuf tiers géométriques ; voir `SPEC_COFFRE_HORAIRE.md` |
+| 14 | **Menu de l'écosystème** | deux rangs au lieu de neuf onglets |
+| 15 | **P4 — Vecteurs partagés Python ↔ TS** | `vecteurs.json`, 10 familles, job CI `parite` dans les deux sens |
+| 16 | **P5 — État MSS persistant** | `CompteurMSS` monotone, écrit avant de rendre la signature, départ = max(chaîne, fichier) |
+
+**Depuis, sur la branche `tactique-moteur`** (non fusionnée) : le moteur tactique (`grille`, `unite`, `bataille`, `ia` — 95 contrôles), `tiers.ts` (12 paliers, 16 contrôles), `lignee.ts` (12 contrôles), les 12 espèces de la chymie, et cinq études chiffrées. Aucun de ces modules n'est branché sur une route (§2, C4).
+
+---
+
+## 6 bis. Ce qui a bougé après la rédaction de cette feuille
+
+Elle a été écrite contre `f65c0fe`. Six lots ont suivi le même jour ; ils sont
+intégrés ci-dessus quand c'était possible, et listés ici pour que la datation
+reste lisible.
+
+| lot | ce qu'il change pour cette feuille |
+|---|---|
+| **robinet groupé** (`26b78b3`) | un témoin vaut 77 sorties : 12 joueurs en une transaction coûtent 2 591 o contre 27 396, **+28 o par joueur de plus**. Le débit d'entrée passe de 72 à **1 536 nouveaux joueurs par jour**. Change le §C6 |
+| **`SPEC_MUSES.md`** (`6f2652c`) | `combat.ts:64` permute les axes par archétype : le même mot est un colosse sous Uranie, un archer sous Euterpe. Un système de classes **déjà codé et invisible**. Nouveau chantier, non listé au §4 |
+| **lot honnête** (`d6edaf8`) | douze promesses excessives corrigées dans `SPEC_TOUR` et `SPEC_TACTIQUE`. **Referme une partie de D5**, en laisse le reste |
+| **contrôle du pas** (`769db7c`) | D2 n'est plus muette : `unite.test.ts` affirme désormais la rupture (`8 > 7`) au lieu de la taire. La dette **demeure**, son gardien ne ment plus |
+| **hygiène** (`208e766`) | `CLAUDE.md` remis à jour, et la **distinction des deux corpus** écrite au §3 : les six lois d'`integrite.ts` sont des conventions révisables, les invariants du §3 scindent la chaîne. Referme une partie de D5 et de D8 |
+| **Pages** (`fa1fa58`) | l'atelier est **enfin publié**. Le filet de garde de la racine masquait son propre diagnostic : il faisait 1 778 octets, exactement ce que le site servait |
+
+**Une dette est morte le même jour** et n'apparaît donc plus au §2 : le sac
+annonçait 27 places quand `SAC_PLACES` en vaut 81 (`8f23973`). Reste
+`SAC_COFFRE = 27` dans `coffre-horaire.ts`, gelé dans `vecteurs.json` — c'est
+un lot à part, pas une retouche.
+
+**Et une correction de méthode, qui vaut pour la suite.** Les trois études du
+2026-09-10 rendent trois `r(eperon)` différents pour le même moteur : −0,165,
++0,622, −0,310. La cause est nommée : *« son second PA sert à rejoindre, le
+mien à frapper deux fois »*. **Les cibles du §9 ter ne mesurent pas le moteur,
+elles mesurent le couple moteur + politique.** C'est pourquoi **C3 doit
+précéder C2** — re-tarifer un axe sur un chiffre qui dépend de qui joue serait
+décider au hasard. La feuille classe C2 « bloquant » ; il l'est, mais il est
+lui-même bloqué.
+
+## 7. Comment on tient cette feuille
+
+- **Un chantier = une branche + une PR**, fusionnée en rebase quand la CI est verte. Jamais deux à la fois. Le cron `chaine` et le robinet committent aussi sur `main` : `git fetch` puis rebase avant de pousser.
+- **Toute nouvelle règle de validation = un contrôle `doit_echouer` qui la viole**, dans la suite du module concerné, et le compte mis à jour dans le README.
+- **Tout chiffre écrit ici se remesure** : chaque ligne du §1 cite la commande qui la produit. Un chiffre sans commande est une figure, et une figure ne gouverne pas un chantier.
+- **Un chantier ouvert sans cible chiffrée est refusé** ; un chantier tué par sa propre mesure est archivé au §1.4 ou au §5, avec le chiffre — pas effacé.
+- **Aucune modification de `eonis.py` ni de `genesis.json` sans le signaler explicitement avant** : leur empreinte est vérifiée par la CI, et la changer vaut réinitialisation du testnet (`CLAUDE.md` §6).

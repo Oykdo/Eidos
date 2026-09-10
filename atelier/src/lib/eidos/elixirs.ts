@@ -31,8 +31,9 @@
  *
  * LIMITE : `ELIXIRS` est une **donnée** — espèce, nom, lieu, coût en points
  * d'action, identifiant d'effet. La mécanique des neuf effets neufs vit dans
- * `tactique/`, qui n'a pas encore de points d'action ; rien ici ne la branche,
- * et le dosage 1/2 PA du §3 de SPEC_CHYMIE est une conception, pas une mesure.
+ * `tactique/`, qui a des points d'action depuis `14fe665` ; rien ici ne les
+ * branche, et le dosage 1/2 PA du §3 de SPEC_CHYMIE reste une conception, pas
+ * une mesure.
  *
  * LIMITE : `tour.elixirs` ne retient que la famille (`ElixirBu`). Le degré
  * d'un élixir bu n'est donc pas relisible depuis la jauge — `boireDansCoffre`
