@@ -60,7 +60,11 @@ MAGIC = b"EIDOS\x00\x00\x01"
 FORMAT = 3                     # 1 : Lamport ; 2 : WOTS+ / XMSS ; 3 : + racine UTXO
 GRAINE = "eidos-testnet-3"     # tag de dérivation des graines publiques du réseau
 MAX_PAR_EXECUTION = 6          # garde-fou : jamais plus de 6 blocs d'un coup
-MAX_PAIEMENTS = 3              # demandes servies par bloc
+MAX_PAIEMENTS = 64             # joueurs servis par bloc (groupes en peu de tx)
+MAX_RENDUS = 3                 # transactions de robinet par bloc — donc sorties
+                               # de rendu, donc etendue du balayage de
+                               # sorties_tresor. NE JAMAIS BAISSER : les blocs
+                               # deja forges deviendraient introuvables.
 MONTANT_ROBINET = 100_000_000  # 1 eidolon par demande
 BUDGET_RATIO = 8               # plafond d'époque : (a·T) / 8
 MAX_ENVOIS = 8                 # envois inclus par bloc, après le robinet
@@ -465,7 +469,7 @@ def sorties_tresor(ch, combien):
         par_adresse.setdefault(a.hex(), []).append((cle, m))
     trouve = []
     for h in range(ch.carnet.hauteur, -1, -1):
-        graines = [graine_tresor(h)] + [graine_rendu(h, k) for k in range(MAX_PAIEMENTS)]
+        graines = [graine_tresor(h)] + [graine_rendu(h, k) for k in range(MAX_RENDUS)]
         for g in graines:
             for cle, m in par_adresse.get(adr(g).hex(), []):
                 if m > 2 * MONTANT_ROBINET:
@@ -476,8 +480,20 @@ def sorties_tresor(ch, combien):
 
 
 def construire_paiements(ch, hauteur_bloc, f=None):
-    """Une transaction par demande : le trésor verse, et rend la monnaie sur
-    une adresse fraîche. Frais nuls.
+    """Le trésor verse **en groupe** : une transaction paie autant de joueurs
+    que sa pièce le permet, et rend la monnaie sur une adresse fraîche.
+    Frais nuls.
+
+    Pourquoi grouper : un témoin WOTS+ pèse 2 177 octets, une sortie 28. Un
+    témoin vaut donc 77 sorties. Payer cent joueurs en une transaction coûte
+    5 027 octets et **un** créneau ; les payer un par un en coûterait 228 000
+    et cent créneaux. Le format le permet depuis toujours (`n_out(2)`, soit
+    65 535 sorties) ; personne ne s'en servait.
+
+    Deux bornes, et il ne faut pas les confondre. `MAX_PAIEMENTS` borne les
+    **joueurs** servis dans le bloc. `MAX_RENDUS` borne les **transactions**,
+    donc les sorties de rendu, donc l'étendue du balayage de `sorties_tresor`
+    sur tout l'historique : il ne monte pas, et ne doit jamais baisser.
 
     Refus si l'adresse a encore une sortie, ou si a·T/8 est atteint.
     La file n'est pas le carnet : on relit l'UTXO à chaque forge.
@@ -519,25 +535,43 @@ def construire_paiements(ch, hauteur_bloc, f=None):
     if not eligibles:
         return [], f, True
 
-    dispo = sorties_tresor(ch, len(eligibles))
+    dispo = sorties_tresor(ch, MAX_RENDUS)
     txs = []
-    for k, (d, slot) in enumerate(zip(eligibles, dispo)):
+    reste = list(eligibles)
+    for k, slot in enumerate(dispo):
+        if not reste:
+            break
         cle, graine, montant = slot
-        dest = bytes.fromhex(d["adresse"])
-        tx = U.Tx([cle], [(dest, MONTANT_ROBINET),
-                          (adr(graine_rendu(hauteur_bloc, k)),
-                           montant - MONTANT_ROBINET)])
+        # Ce que cette pièce peut payer en gardant un rendu strictement positif.
+        tient = montant // MONTANT_ROBINET - 1
+        lot = reste[:tient]
+        if not lot:
+            continue
+        reste = reste[len(lot):]
+        sorties = [(bytes.fromhex(d["adresse"]), MONTANT_ROBINET) for d in lot]
+        sorties.append((adr(graine_rendu(hauteur_bloc, k)),
+                        montant - len(lot) * MONTANT_ROBINET))
+        tx = U.Tx([cle], sorties)
         tx.sign(0, graine)
         txs.append(tx)
-        d["etat"] = "servie"
-        d["bloc"] = hauteur_bloc
-        d["txid"] = tx.txid().hex()
-        print(f"  robinet : {MONTANT_ROBINET / E.ATOMES:.2f} vers "
-              f"{d['adresse'][:16]}… (issue #{d['issue']})")
-        art = artefact_de_goutte(tx.txid(), dest)
-        if art:
-            d["artefact"] = art["id"]
-            print(f"    artefact : {art['id']}")
+        print(f"  robinet : {len(lot)} versement(s) de "
+              f"{MONTANT_ROBINET / E.ATOMES:.2f} en une transaction")
+        for d in lot:
+            dest = bytes.fromhex(d["adresse"])
+            d["etat"] = "servie"
+            d["bloc"] = hauteur_bloc
+            d["txid"] = tx.txid().hex()
+            print(f"    vers {d['adresse'][:16]}… (issue #{d['issue']})")
+            # L'artefact se dérive de (txid, adresse) : le txid est partagé,
+            # l'adresse ne l'est pas, donc chaque joueur garde le sien.
+            art = artefact_de_goutte(tx.txid(), dest)
+            if art:
+                d["artefact"] = art["id"]
+                print(f"      artefact : {art['id']}")
+    for d in reste:
+        # Le trésor n'avait pas de quoi : la demande reste en attente, elle
+        # n'est ni servie ni refusée.
+        pass
     return txs, f, True
 
 
@@ -1036,6 +1070,47 @@ def _test_paiements():
     assert sum(m for _, m in ch.carnet.utxo.values()) == ch.carnet.emission_cumulee()
     assert any(a == bytes.fromhex(dest) for a, _ in ch.carnet.utxo.values())
     print(f"robinet : bloc forge avec le paiement, conservation  : OK"); ok += 1
+
+    # 4. le groupement : N joueurs, UNE transaction, et la borne d'octets.
+    #    Cible annoncee d'avance — un temoin WOTS+ pese 2 177 octets et une
+    #    sortie 28, donc payer N joueurs doit tenir sous 2177 + 28*N. Si la
+    #    boucle repasse a une transaction par demande, ce controle tombe.
+    h2 = ch.carnet.hauteur + 1
+    joueurs = [U.Portefeuille(f"grp-{i}") for i in range(12)]
+    adrs = [j.nouvelle_adresse().hex() for j in joueurs]
+    f = file_(*[demande(100 + i, a) for i, a in enumerate(adrs)])
+    txs, _, _ = construire_paiements(ch, h2, f)
+    assert len(txs) == 1, f"{len(txs)} transactions au lieu d'une seule"
+    tx = txs[0]
+    assert len(tx.outputs) == len(adrs) + 1, tx.outputs
+    payees = {a.hex() for a, m in tx.outputs if m == MONTANT_ROBINET}
+    assert payees == set(adrs), "un joueur n'a pas ete paye dans le groupe"
+    assert all(d["etat"] == "servie" for d in f["demandes"])
+    assert len({d["txid"] for d in f["demandes"]}) == 1, "un seul txid partage"
+    # Le coût marginal, qui est toute la thèse : un joueur de plus doit coûter
+    # une sortie (28 octets), pas une transaction avec son témoin (2 281).
+    f2 = file_(*[demande(200 + i, a) for i, a in enumerate(adrs[:-1])])
+    txs2, _, _ = construire_paiements(ch, h2, f2)
+    marginal = len(ser_tx(tx)) - len(ser_tx(txs2[0]))
+    assert marginal == 20 + 8, f"un joueur de plus coute {marginal} octets"
+    octets = len(ser_tx(tx))
+    seul = 4 + (4 + 2 + 36 + 2 + 2 * 28) + 2 + 2177   # une tx par demande
+    assert octets < len(adrs) * seul, f"{octets} contre {len(adrs) * seul}"
+    # Les artefacts se derivent de (txid, adresse) : txid partage, adresses
+    # distinctes, donc aucun joueur n'herite de l'artefact d'un autre.
+    arts = [d.get("artefact") for d in f["demandes"] if d.get("artefact")]
+    assert len(arts) == len(set(arts)), "deux joueurs ont le meme artefact"
+    print(f"robinet : {len(adrs)} joueurs en 1 tx, {octets} o contre "
+          f"{len(adrs) * seul} o, +{marginal} o par joueur : OK"); ok += 1
+
+    # 5. la conservation tient sur un bloc qui paie douze adresses d'un coup
+    blk = F.forger(ch, cles, [U.coinbase(h2, adresse_du_bloc(h2))] + txs,
+                   t0 + 3 * F.CRENEAU)
+    ch.valider(blk, maintenant=t0 + 3 * F.CRENEAU)
+    assert sum(m for _, m in ch.carnet.utxo.values()) == ch.carnet.emission_cumulee()
+    vus = {a.hex() for a, _ in ch.carnet.utxo.values()}
+    assert set(adrs) <= vus, "un joueur paye n'est pas au carnet"
+    print(f"robinet : le carnet porte les douze adresses payees    : OK"); ok += 1
     print(f"ok : {ok} controles paiements robinet")
 
 
