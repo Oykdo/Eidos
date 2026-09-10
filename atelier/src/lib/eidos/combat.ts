@@ -5,10 +5,10 @@
  * il est plus spécialisé. L'archétype permute les axes (affinité),
  * il ne multiplie rien. L'âge n'entre pas : c'est une géographie.
  *
- * fer        attaque
- * cuirasse   défense
- * flux       initiative
- * souffle    portée / reprise
+ * lame     attaque
+ * ecu      défense
+ * eperon   initiative
+ * arc      portée / reprise
  */
 
 import { depaqueter, type Objet } from "./objets.ts";
@@ -16,29 +16,29 @@ import type { SignatureId } from "./signatures.ts";
 
 export const COMBAT_BUDGET = 64;
 
-export const COMBAT_AXES = ["fer", "cuirasse", "flux", "souffle"] as const;
+export const COMBAT_AXES = ["lame", "ecu", "eperon", "arc"] as const;
 export type AxeCombat = (typeof COMBAT_AXES)[number];
 
 export type Combat = {
-  fer: number;
-  cuirasse: number;
-  flux: number;
-  souffle: number;
+  lame: number;
+  ecu: number;
+  eperon: number;
+  arc: number;
   somme: number;
   pointe: AxeCombat;
 };
 
 /** Composante 0..3 → axe. Permutation d'affinité, pas un bonus. */
 const PERM: Record<SignatureId, readonly [AxeCombat, AxeCombat, AxeCombat, AxeCombat]> = {
-  uranie: ["souffle", "flux", "cuirasse", "fer"],
-  saturne: ["cuirasse", "souffle", "fer", "flux"],
-  jupiter: ["fer", "cuirasse", "souffle", "flux"],
-  mars: ["fer", "flux", "cuirasse", "souffle"],
-  soleil: ["souffle", "fer", "flux", "cuirasse"],
-  venus: ["flux", "souffle", "fer", "cuirasse"],
-  mercure: ["flux", "fer", "souffle", "cuirasse"],
-  lune: ["cuirasse", "flux", "souffle", "fer"],
-  terre: ["cuirasse", "fer", "flux", "souffle"],
+  uranie: ["arc", "eperon", "ecu", "lame"],
+  saturne: ["ecu", "arc", "lame", "eperon"],
+  jupiter: ["lame", "ecu", "arc", "eperon"],
+  mars: ["lame", "eperon", "ecu", "arc"],
+  soleil: ["arc", "lame", "eperon", "ecu"],
+  venus: ["eperon", "arc", "lame", "ecu"],
+  mercure: ["eperon", "lame", "arc", "ecu"],
+  lune: ["ecu", "eperon", "arc", "lame"],
+  terre: ["ecu", "lame", "eperon", "arc"],
 };
 
 function allouer(poids: readonly number[]): number[] {
@@ -63,10 +63,10 @@ export function combatDe(o: Objet): Combat {
   const parts = allouer(poids);
   const perm = PERM[o.archetype];
   const c: Combat = {
-    fer: 0,
-    cuirasse: 0,
-    flux: 0,
-    souffle: 0,
+    lame: 0,
+    ecu: 0,
+    eperon: 0,
+    arc: 0,
     somme: COMBAT_BUDGET,
     pointe: perm[0]!,
   };

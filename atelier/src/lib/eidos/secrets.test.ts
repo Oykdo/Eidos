@@ -55,12 +55,16 @@ function chercher(pred: (mot: number) => boolean, prefixe: string, max = 20000):
 const ETAGE = 5;
 
 describe("secrets — alcôves, échos, antres, observatoire", () => {
-  it("alcôve = croix au centre de la dalle ; le coffret s'ouvre une fois", () => {
+  it("alcôve = croix ébréchée au centre ; le coffret s'ouvre une fois", () => {
     const liste = etagesAlcoves();
     assert.ok(liste.length >= 8 && liste.length <= 20, String(liste.length));
     for (const e of liste) {
       const d = dalleDe(e);
-      assert.ok(d[4]![4] && d[3]![4] && d[5]![4] && d[4]![3] && d[4]![5]);
+      // Le centre plein, et exactement deux des quatre voisines : la croix
+      // entière valait 2⁻⁵ à moitié de murs, elle vaut 0,25⁵ à un quart.
+      assert.ok(d[4]![4], `étage ${e} : centre vide`);
+      const n = [d[3]![4], d[5]![4], d[4]![3], d[4]![5]].filter(Boolean).length;
+      assert.equal(n, 2, `étage ${e} : ${n} branches au lieu de deux`);
     }
     const e = liste[0]!;
     assert.equal(aUneAlcove(e), true);

@@ -23,7 +23,7 @@ Les six lois de `integrite.ts` sont gelées : conservation, groupe, doxa, sceau,
 - La Tour a **255 coupes** de l'espace SU(2), **Terre au sol, Uranie au faîte**, en neuf bandes qui sont les neuf **astres** et leurs **muses** : ⊕ Thalie, ☽ Clio, ☿ Calliope, ♀ Terpsichore, ☉ Melpomène, ♂ Érato, ♃ Euterpe, ♄ Polymnie, ★ Uranie.
 - Chaque étage a une **coupe** (un quaternion de norme `ATOMES`), une **dalle** 9 × 9 tirée de sa graine, et un à trois **occupants** de la classe du biome. « Les occupants d'un étage s'interfèrent » : même classe, résonance destructive.
 - **La ville est le coffre.** On y crée des blocs (poste du jour : trois), on y tire des objets (101 formes, jamais un stock), on y sertit pierres et gemmes.
-- Les objets ont un **archétype** (une muse), un **âge** (Satya, Trétâ, Dvâpara, Kali : une géographie, pas une puissance), quatre axes de combat à somme 64 (fer, cuirasse, flux, souffle).
+- Les objets ont un **archétype** (une muse), un **âge** (Satya, Trétâ, Dvâpara, Kali : une géographie, pas une puissance), quatre axes de combat à somme 64 (lame, écu, éperon, arc).
 - L'alchimie est déjà là : les trois étages d'un glyphe sont la **tria prima** — sel, mercure, soufre ; les artefacts du robinet sont des **œufs de Paracelse** ; la pierre **philosophale** est réservée aux dix premiers coffres.
 - Le genre **antre** (`lair`, « ticket d'antre, combat plus tard ») existe dans `equipement.ts` et attend.
 

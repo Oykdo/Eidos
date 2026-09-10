@@ -29,8 +29,18 @@ import type { Coffre, ObjetPorte, Tour } from "./types.ts";
 
 export { BECHES_PAR_ETAGE };
 export const TAG_FOUILLE = utf8("eidos-fouille/1");
-/** Seuil sur le premier octet : 32/256 = une case pleine sur huit. */
-export const SEUIL_TROUVAILLE = 32;
+/**
+ * Deux gisements, deux seuils. Une trouvaille **cachée** est dans un mur : il
+ * faut une bêche pour l'ouvrir. Une trouvaille **au sol** se ramasse en
+ * passant. Lire est gratuit, ouvrir coûte — la règle du jeu, appliquée au sol.
+ *
+ * Les seuils tiennent compte de la dalle : un quart de murs (~20 cases) et
+ * trois quarts de sol (~61). À 64/256, un mur sur quatre est creusable, soit
+ * ~5 par étage ; à 32/256, une case de sol sur huit porte quelque chose, soit
+ * ~7,6. La cachette est plus rare que le sol, et c'est elle qui coûte.
+ */
+export const SEUIL_TROUVAILLE = 64;
+export const SEUIL_TROUVAILLE_SOL = 32;
 
 export type Case = { x: number; y: number };
 
@@ -49,11 +59,16 @@ function graineCase(etage: number, x: number, y: number): Uint8Array {
   return sha256d(concat(TAG_FOUILLE, u32(etageDe(etage)), u32(x), u32(y)));
 }
 
-/** Une case pleine, et le hachage sous le seuil. Public, fixe. */
+/** Vrai si la case est un mur : la trouvaille y est cachée, la bêche l'ouvre. */
+export function estCachee(etage: number, x: number, y: number): boolean {
+  return dansLaDalle(x, y) && !!dalleDe(etage)[y]![x];
+}
+
+/** Le hachage sous le seuil de son gisement. Public, fixe, jamais tiré au sort. */
 export function aUneTrouvaille(etage: number, x: number, y: number): boolean {
   if (!dansLaDalle(x, y)) return false;
-  if (!dalleDe(etage)[y]![x]) return false;
-  return graineCase(etage, x, y)[0]! < SEUIL_TROUVAILLE;
+  const seuil = estCachee(etage, x, y) ? SEUIL_TROUVAILLE : SEUIL_TROUVAILLE_SOL;
+  return graineCase(etage, x, y)[0]! < seuil;
 }
 
 export function trouvaillesDe(etage: number): Case[] {
@@ -69,8 +84,18 @@ export function fouillesFaites(t: Tour, etage: number): Case[] {
   return t.fouilles.filter(([f]) => f === e).map(([, x, y]) => ({ x, y }));
 }
 
+/**
+ * Seules les cachettes usent une bêche. Ce qui traîne au sol se ramasse : la
+ * case se note pour qu'on ne la reprenne pas, mais elle ne coûte rien.
+ */
+export function couteUneBeche(etage: number, x: number, y: number): boolean {
+  return estCachee(etage, x, y) || !aUneTrouvaille(etage, x, y);
+}
+
 export function bechesRestantes(t: Tour, etage: number): number {
-  return Math.max(0, BECHES_PAR_ETAGE - fouillesFaites(t, etage).length);
+  const e = etageDe(etage);
+  const creusees = fouillesFaites(t, e).filter((f) => couteUneBeche(e, f.x, f.y)).length;
+  return Math.max(0, BECHES_PAR_ETAGE - creusees);
 }
 
 /** La case d'arrivée du pendule à cet étage, pendant une ascension en cours. */
@@ -147,11 +172,16 @@ export function fouillerCaseDansCoffre(
   const e = etageDe(etage);
   const spawn = spawnIci(c, e);
   const arrivee = spawn !== null && spawn.x === x && spawn.y === y;
-  if (!dansLaDalle(x, y) || (!arrivee && !dalleDe(e)[y]![x])) return { ok: false, code: "hors" };
+  if (!dansLaDalle(x, y)) return { ok: false, code: "hors" };
+  const cachee = estCachee(e, x, y);
+  // Un mur se creuse toujours ; le sol ne se fouille que s'il porte quelque
+  // chose — on ne retourne pas une dalle vide pour rien.
+  if (!arrivee && !cachee && !aUneTrouvaille(e, x, y)) return { ok: false, code: "hors" };
   const t = tourDe(c);
   if (fouillesFaites(t, e).some((f) => f.x === x && f.y === y))
     return { ok: false, code: "dejaCase" };
-  if (bechesRestantes(t, e) <= 0) return { ok: false, code: "epuise" };
+  if (couteUneBeche(e, x, y) && bechesRestantes(t, e) <= 0)
+    return { ok: false, code: "epuise" };
   const trouve = arrivee || aUneTrouvaille(e, x, y);
   const trouvaille = trouve ? trouvailleDe(e, x, y, c) : null;
   const tour: Tour = { ...t, fouilles: [...t.fouilles, [e, x, y]] };

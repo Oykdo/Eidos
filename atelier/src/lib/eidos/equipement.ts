@@ -11,6 +11,10 @@
  */
 
 import { composer, objetDepuisGraine, paqueter } from "./objets.ts";
+import { conjugue } from "./cosmos.ts";
+import { conjuguerPar } from "./groupe.ts";
+import { motDeQ } from "./lecture.ts";
+import { qDeMot } from "./resonance.ts";
 import { sha256d, utf8 } from "./hash.ts";
 import type {
   Affixe,
@@ -68,6 +72,27 @@ export const AFFIXES = ["T1", "T2", "T3", "S1", "S2", "S3"] as const;
 export const COFFRES_PHILO = 10;
 export const SOCKETS_MAX = 2;
 
+/**
+ * Les pièces qui portent des sertissures. Une gemme ne va pas partout : une
+ * arme, un casque, un plastron, une amulette et les deux anneaux. Épaulières,
+ * gants, bottes et accessoire n'en ont pas — on ne sertit pas une semelle.
+ */
+export const EMPLACEMENTS_SERTIS = [
+  "arme",
+  "casque",
+  "plastron",
+  "amulette",
+  "anneau1",
+  "anneau2",
+] as const;
+
+/** Vrai si ce genre et cet emplacement peuvent recevoir une gemme. */
+export function accepteSertissure(genre: Genre, emplacement: Emplacement | null): boolean {
+  if (genre !== "arme" && genre !== "armure") return false;
+  if (emplacement === null) return false;
+  return (EMPLACEMENTS_SERTIS as readonly string[]).includes(emplacement);
+}
+
 const G: readonly (readonly [number, number, number, number])[] = [
   [719, 80, 0, 0],
   [719, 0, 80, 0],
@@ -118,10 +143,14 @@ export function emplacementDe(genre: Genre, roll: number): Emplacement | null {
   return null;
 }
 
-export function socketsDe(genre: Genre, roll: number): number {
+export function socketsDe(
+  genre: Genre,
+  roll: number,
+  emplacement: Emplacement | null = null,
+): number {
+  if (!accepteSertissure(genre, emplacement)) return 0;
   if (genre === "armure") return roll % (SOCKETS_MAX + 1);
-  if (genre === "arme") return roll & 1 ? (roll % (SOCKETS_MAX + 1)) : 0;
-  return 0;
+  return roll & 1 ? roll % (SOCKETS_MAX + 1) : 0;
 }
 
 export function nomDe(genre: Genre, emplacement: Emplacement | null, roll: number): string {
@@ -136,13 +165,29 @@ export function nomDe(genre: Genre, emplacement: Emplacement | null, roll: numbe
 }
 
 export function peutEnchasser(o: ObjetPorte): boolean {
-  if (o.genre !== "arme" && o.genre !== "armure") return false;
+  if (!accepteSertissure(o.genre, o.emplacement)) return false;
   return (o.gemmes?.length ?? 0) < (o.sockets ?? 0);
+}
+
+/**
+ * Sertir une gemme : `g q ḡ`. La conjugaison tourne la part vectorielle et
+ * laisse `|q₀|` où il est — donc l'orbite, donc le plafond d'extrémité.
+ *
+ * C'est toute la différence avec la pierre. La **pierre tourne** (`composer`,
+ * un produit d'un seul côté) : elle déplace l'orbite, elle fait une autre
+ * pièce, et l'ancienne est consommée. La **gemme sertit** : elle redistribue
+ * les axes sous le même plafond, sans jamais acheter l'identité de la pièce.
+ * Un objet ne mute pas — la loi tient parce que l'orbite ne bouge pas.
+ */
+export function sertir(mot: number, affixe: Affixe): number {
+  const g = qDeMot(generateurDe(rangAffixe(affixe)));
+  const q = qDeMot(mot >>> 0);
+  return motDeQ(conjuguerPar(estPrefixe(affixe) ? g : conjugue(g), q));
 }
 
 export function motEffectif(o: ObjetPorte): number {
   let m = o.mot >>> 0;
-  for (const g of o.gemmes ?? []) m = tourner(m, g);
+  for (const g of o.gemmes ?? []) m = sertir(m, g);
   return m;
 }
 
@@ -177,7 +222,7 @@ export function habille(
     genre,
     emplacement,
     affixe,
-    sockets: extra?.sockets ?? socketsDe(genre, roll),
+    sockets: extra?.sockets ?? socketsDe(genre, roll, emplacement),
     gemmes: extra?.gemmes ? extra.gemmes.filter((a) => AFFIXES.includes(a)) : [],
     nom: extra?.nom ?? nomDe(genre, emplacement, roll),
     palierLair: extra?.palierLair ?? (genre === "lair" ? 1 + (roll % 3) : null),
