@@ -25,7 +25,8 @@ import {
 import type { Coffre, NomAge, ScenarioId } from "./eidos/types.ts";
 import type { PreuvePortable } from "./eidos/merkle.ts";
 import { demanderAuReseau, type DemandeRobinet } from "./eidos/robinet.ts";
-import { ETAT_URL, lireEtat } from "./eidos/envoi.ts";
+import { ETAT_URL, lireEtat, urlIssueEnvoi } from "./eidos/envoi.ts";
+import { verifierAdresse } from "./eidos/glyphs.ts";
 import {
   MEMPOOL_URL,
   parserCanaux,
@@ -98,6 +99,14 @@ type Etat = {
   saisieMontant: string;
   saisieDest: string;
   destInterne: boolean;
+  /**
+   * La depense signee, gardee jusqu'au depot. **Rien n'est envoye tant que le
+   * noeud ne l'a pas incluse** : le coffre a deja retire ses pieces et brule
+   * sa cle, mais seule l'issue porte la transaction jusqu'au reseau. Jamais
+   * persistee : elle vit le temps de la copier.
+   */
+  envoiSigne: { texte: string; txid: string; url: string; entrees: number } | null;
+  oublierEnvoi: () => void;
   erreur: string | null;
   flash: string | null;
   preuveRef: string | null;
@@ -263,6 +272,7 @@ export const useCoffre = create<Etat>((set, get) => ({
   saisieMontant: "",
   saisieDest: "",
   destInterne: true,
+  envoiSigne: null,
   erreur: null,
   flash: null,
   preuveRef: null,
@@ -423,7 +433,7 @@ export const useCoffre = create<Etat>((set, get) => ({
   },
 
   envoyer: () => {
-    const { coffre, saisieMontant, destInterne, saisieDest } = get();
+    const { coffre, saisieMontant, saisieDest } = get();
     const m = parserMontant(saisieMontant);
     if (m == null) {
       set({ erreur: t("err.montant") });
@@ -434,32 +444,43 @@ export const useCoffre = create<Etat>((set, get) => ({
       set({ erreur: t(`err.${sel.code}` as Msg) });
       return;
     }
-    let dest = "00".repeat(20);
-    if (!destInterne && saisieDest.trim()) {
-      dest = saisieDest
-        .trim()
-        .toLowerCase()
-        .replace(/[^0-9a-f]/g, "")
-        .slice(0, 40);
-      if (dest.length !== 40) {
-        set({ erreur: t("err.dest") });
-        return;
-      }
+    // La destination est obligatoire, et elle se lit en glyphes : les quatre
+    // groupes de controle refusent une adresse alteree. Sans ce garde-fou, une
+    // saisie vide signait vers l'adresse nulle — la piece brulee et la cle
+    // WOTS+ consommee pour rien, puisqu'une cle ne signe qu'une fois.
+    let dest: string;
+    try {
+      dest = verifierAdresse(saisieDest).hexa;
+    } catch (e) {
+      set({ erreur: e instanceof Error ? e.message : t("err.dest") });
+      return;
     }
-    const { coffre: next, selection } = appliquerEnvoi(coffre, m, dest);
+    const { coffre: next, selection, envoi } = appliquerEnvoi(coffre, m, dest);
     if (!selection.ok) {
       set({ erreur: t(`err.${selection.code}` as Msg) });
+      return;
+    }
+    if (!envoi) {
+      set({ erreur: t("err.dest") });
       return;
     }
     persister(next);
     set({
       coffre: next,
       erreur: null,
+      envoiSigne: {
+        texte: envoi.texte,
+        txid: envoi.txid,
+        url: urlIssueEnvoi(envoi.texte),
+        entrees: selection.entrees.length,
+      },
       flash: selection.poussiere
         ? t("flash.sigPoussiere", { n: selection.frais })
         : t("flash.sig", { n: selection.entrees.length }),
     });
   },
+
+  oublierEnvoi: () => set({ envoiSigne: null }),
 
   regrouper: () => {
     const { coffre } = get();
