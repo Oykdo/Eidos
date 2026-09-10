@@ -198,3 +198,140 @@ Deux tours sur cinq, la meilleure case de tir est une case veinée alors qu'une 
 - **La politique de l'IA cherche le motif.** Sans cela le terrain ne se mesure pas ; avec, l'activation mesurée est celle d'un joueur qui l'exploite systématiquement — une borne haute pour un débutant, une borne basse pour un joueur qui planifie deux tours.
 - **Rien n'est rejouable par la CI.** Les scripts vivent dans le scratchpad. Si la règle entre dans le moteur, elle exige son `.test.ts` à vecteurs gelés (les 81 rangs, la portée sur les 81 cases, un `doit_echouer` par refus), ajouté à la main dans `package.json` et dans `CLAUDE.md` §2.
 - **Ces chiffres sont des figures, pas des preuves.** Aucun n'entre dans une feuille, un carnet ou une signature.
+
+---
+
+## PS.0. Post-scriptum du 2026-09-10 — la règle ne passe plus, et ce n'est pas la faute des deux PA
+**Ce qui a été refait :** les quatre mesures demandées, même banc, politique portée aux deux points d'action (PS.8), **330 144 duels par variante** (plus 165 888 duels de niche et 3 600 batailles de décision). Le moteur est **recopié** dans le scratchpad ; le diff de la copie contre `tactique/bataille.ts` ne contient que les crochets du motif, et à `usage = aucun` ils sont tous inertes — la copie **est** le moteur.
+**Le verdict du §9 tombe.** Sur le moteur de septembre, le Guet ne fait plus reculer le malus d'extrémité — **bande de niche 46,07 pt sans motif, 46,33 pt avec** (l'étude mesurait 41,5 → 21,0) —, il **ouvre** la bande de tier de 37,75 à 42,35 pt, et son activation tombe de 31,80 % à **16,06 %**, sous la densité même du motif sur la région jouable (21,92 %).
+**Trois changements sous l'étude, pas deux**, et le troisième explique presque tout : les dalles se sont dégagées (`e9acf52`). L'ablation le dit — à **un pas et un coup par tour**, le régime d'avant `14fe665`, sur la dalle et les constantes d'aujourd'hui, la bande de tier vaut déjà **37,53 pt** et |r| **0,226**. Les deux PA n'ajoutent que 0,22 pt de bande et 0,092 de |r|.
+**Le contrôle lui-même est hors cible :** |r| max **0,318** (`arc +0,318`, `eperon −0,310`) contre 0,129 dans l'étude, bande de tier 37,75 pt contre 24,39. Le Guet n'a plus de contrôle sain contre lequel se mesurer. Une session parallèle lit le même moteur avec une autre politique et trouve les signes **inversés** (`eperon +0,622`, `arc −0,377`) : les deux ne s'accordent que sur le fait que la cible est rompue — voir **PS.8**, et ce que ce désaccord n'atteint pas. **`docs/SPEC_POUSSIERE.md` n'est pas écrit** : les mesures infirment la règle.
+
+## PS.1. Ce qui a bougé sous l'étude — trois commits, pas deux
+| commit | ce qu'il change | effet mesuré sur le banc |
+|---|---|---|
+| `e9acf52` | `dalleDe` à **deux bits par case** (un quart de murs au lieu de la moitié) | l'étage retenu passe de **149 à 198**, la région jouable de **47 à 73 cases**, la Poussière libre dans la région de **8/47 (17,0 %) à 16/73 (21,9 %)** |
+| `c3703a2` | `DIV_PAS` 12 → 32, `DIV_PORTEE` 16 → 10 | pas **2–7 → 2–4**, portée **1–5 → 1–7** |
+| `14fe665` | `PA_PAR_TOUR = 2` | double pas et double frappe ouverts |
+
+Contrôle du terrain, refait à un bit et à deux : **1 bit** → étage 149, 52 cases libres, plus grande salle **47**, Poussière libre 12/16 ; **2 bits** → étage 198, 73 libres, salle **73**, Poussière **16/16**. L'étude a donc mesuré sur une salle de 47 cases où la moitié de la Poussière était sous les murs ; elle est aujourd'hui entière et découverte. **Le motif est devenu gratuit** : sur la région, 90,4 % des cases ont une veine à **deux pas de chemin** — le pas le plus court — et 100 % à quatre — le plus long. Le double pas n'ouvre donc rien qu'un seul geste ne mette déjà à portée dans neuf cas sur dix.
+
+## PS.2. M0 — le Guet reste jouable, mais pas pour la raison qu'on redoutait
+`PORTEE_BASE = 1`, `DIV_PORTEE = 10` : portée **1 à 7**, et **9** sur une case de rang 2. La crainte était qu'elle couvre la dalle. Elle ne la couvre pas :
+
+| portée | cases de la dalle sous la portée | part |
+|---|---|---|
+| 2 (médiane du pool) | 9,8 / 80 | 12,3 % |
+| 4 (p95 du pool) | 27,4 / 80 | 34,3 % |
+| 7 (maximum arithmétique) | 56,0 / 80 | 70,0 % |
+| **9 (maximum + Guet rang 2)** | **69,6 / 80** | **87,0 %** |
+
+**Zéro case sur 81** met la dalle entière sous la portée, et **zéro sur 73** met la région entière : la distance maximale entre deux cases de la région vaut **16**, et la plus longue portée imaginable en franchit **9**. Et surtout le palier redouté est **vide** : sur 2 000 objets tirés, l'`arc` le plus fort vaut **59**, donc portée **6** (8 objets, 0,4 %) — **personne n'atteint la portée 7**, la médiane est 2 et le p95 4. Sous le Guet, la portée réelle la plus longue est **8**, jamais 9.
+
+**Décision 3 tranchée : pas de plafond.** Il ne servirait à rien — le budget de 64 en est déjà un, et il mord avant la dalle. Ce que le Guet change n'est pas le plafond mais la médiane : **portée 2 → 4**, soit 12,3 % → 34,3 % de la dalle, un facteur 2,8 sur la surface couverte. C'est là qu'il faut le juger, et c'est ce que fait PS.3.
+
+## PS.3. M1 — l'activation s'effondre à 16 %, et 16 % est un plafond
+| | l'étude : contrôle → `c3d2` | **aujourd'hui : contrôle → `c3d2`** |
+|---|---|---|
+| r(lame) | −0,041 → −0,071 | −0,073 → **−0,176** |
+| r(ecu) | +0,040 → +0,051 | +0,067 → **−0,027** |
+| r(eperon) | +0,126 → +0,095 | −0,310 → **−0,112** |
+| r(arc) | −0,129 → −0,078 | +0,318 → **+0,315** |
+| **\|r\| max** | 0,129 → **0,095** | 0,318 → **0,315** |
+| quartile `lame+ecu` | 0,99 → 0,98× | 0,98 → 0,84× |
+| coups médiane / p95 / max | 2 / 4 / 11 | **2 / 4 / 11** |
+| coup le plus faible | 12 | **12** |
+| **activation** | **31,80 %** | **16,06 %** |
+
+Le Guet ne bouge plus |r| : **0,318 → 0,315**, trois millièmes. Il déplace le prix sans le réduire — `eperon` remonte de −0,310 à −0,112, `lame` descend de −0,073 à −0,176 — parce qu'une portée offerte à tout le monde dévalue la mêlée exactement autant qu'elle console le rapide.
+
+**L'activation n'est pas un défaut de politique, c'est une borne du terrain.** L'IA reçoit le motif dans son score de case avec un poids ; on l'a fait varier, tout le reste égal :
+
+| poids du motif dans le score de case | 0 | **3 (celui de l'étude)** | 200 |
+|---|---|---|---|
+| coups tirés d'une case du motif | 4,96 % | **16,06 %** | **16,06 %** |
+
+Poids 3 et poids 200 rendent le **même compte au chiffre près** (166 612 / 1 037 141) : l'IA prend déjà toutes les cases veinées d'où elle peut tirer, il n'y en a pas d'autres. Et à poids 0 — le motif peint, jamais cherché — on tombe à 4,96 %, **très en dessous** de la densité de 21,92 % : les engagements ont lieu au milieu de la dalle, la Poussière est aux coins des coins. La salle a triplé, la Poussière est restée aux bords ; elle est devenue un motif de périphérie.
+
+**La décision, elle, tient encore** — c'est la seule mesure du §8 qui survit :
+
+| | contrôle | `c3d2`/guet | `c3n`/guet | `c3d`/guet (+1) | *témoin* `+2 partout` |
+|---|---|---|---|---|---|
+| décision — l'abattage | 11,08 % | **15,48 %** | 15,79 % | 12,09 % | 12,35 % |
+| décision — la riposte subie | 20,14 % | **24,91 %** | 24,64 % | 20,39 % | 16,64 % |
+| écart max−min du coup selon la case | 10,11 | **12,55** | 12,76 | 10,66 | 10,30 |
+| cases atteignables de rangs mêlés | 0,00 % | 61,20 % | 67,93 % | 60,41 % | **0,00 %** |
+| meilleure case de tir veinée, une nue tirant aussi | 0,00 % | **27,22 %** | 33,34 % | 11,06 % | **0,00 %** |
+
+Deux tours sur sept (27,22 %, contre 39,35 % dans l'étude) le terrain dicte encore la position, et le bonus uniforme continue de ne rien dicter (0,00 %). Mais 4,4 points de décision ne paient pas ce que les autres colonnes coûtent.
+
+## PS.4. M2 — Poussière contre emboîtée : le duel n'a plus d'objet
+| mesure | contrôle | **Poussière `c3d2`** | emboîtée `c3n` | Poussière +1 `c3d` | *témoin* `+2 partout` |
+|---|---|---|---|---|---|
+| \|r\| max | 0,318 | 0,315 | **0,303** | 0,343 | **0,142** |
+| quartile haut/bas `lame+ecu` | 0,98× | 0,84× | 0,83× | 0,94× | 0,99× |
+| taux T1 → T12 | 55,65 → 17,90 | 56,52 → 14,17 | 56,73 → 13,81 | 56,00 → 15,98 | 56,97 → 13,86 |
+| **bande de tier** | **37,75 pt** | 42,35 pt | 42,92 pt | 40,02 pt | 43,11 pt |
+| écart des 4 pointes à T12 | 30,12 pt | **21,71 pt** | 21,63 pt | 27,44 pt | 20,74 pt |
+| pointe `eperon` à T12 | 2,69 % | **2,69 %** | 2,69 % | 2,69 % | 4,84 % |
+| **bande de niche** | **46,07 pt** | 46,33 pt | 47,75 pt | 47,37 pt | 40,77 pt |
+| activation | — | 16,06 % | 21,38 % | 11,59 % | 100,00 % |
+| bande de rareté | 9,85 | 9,52 | 9,64 | 9,22 | 5,88 |
+
+**Aucune des deux ne gagne, parce que les deux perdent.** `c3n` fait 0,012 de mieux en |r| et 5,3 points de mieux en activation ; `c3d2` fait 0,6 point de mieux sur la bande de tier et 1,4 sur la bande de niche. Les deux **aggravent** la bande de tier de 4,6 et 5,2 points, les deux laissent la bande de niche où elle est. Le `+1` (`c3d`), qui aurait été la sortie prudente de la décision 3, est le pire des trois en |r| (0,343) et n'active que 11,59 %.
+
+**Et le témoin est humiliant.** `+2 partout` — le bonus dont le §5 avait prouvé qu'il n'est pas un terrain (0,00 % de rangs mêlés, par construction) — rend le **meilleur |r| de tout le lot, 0,142, seul dans la cible**, et la meilleure bande de niche (40,77 pt). Ce que le Guet cherchait à faire pour `eperon`, une constante le fait mieux, sans dessin, sans table et sans seize cases à apprendre. Il le paie sur la bande de tier (43,11 pt, la pire) et sur la pointe `arc` à T12 (13,99 % → 2,83 %) : ce n'est pas une solution, c'est la preuve que **le prix des axes est aujourd'hui un problème de portée, pas de terrain.**
+
+## PS.5. M3 — le recul du malus d'extrémité ne se reproduit pas
+C'était le seul résultat qui justifiait la règle. Il ne tient pas.
+
+| | T1 niche | T12 niche | **bande de niche** |
+|---|---|---|---|
+| étude — contrôle | 95,80 % | 54,34 % | 41,5 pt |
+| étude — `c3d2`/guet | 83,28 % | 62,33 % | **21,0 pt** |
+| **aujourd'hui — contrôle** | 92,42 % | 46,35 % | **46,07 pt** |
+| **aujourd'hui — `c3d2`/guet** | 92,80 % | 46,47 % | **46,33 pt** |
+| aujourd'hui — `c3n`/guet | 94,13 % | 46,38 % | 47,75 pt |
+| aujourd'hui — `c3d`/guet (+1) | 92,36 % | 44,99 % | 47,37 pt |
+
+**Zéro recul, et même 0,26 point de plus.** Le malus d'extrémité s'est aggravé tout seul — 41,5 → 46,1 pt entre l'étude et aujourd'hui, sans aucun motif — et le Guet ne l'entame plus d'un point. La contre-niche du T12, que l'étude voyait passer de 0,90 % à 7,12 %, passe aujourd'hui de 0,32 % à **0,23 %** : elle baisse.
+
+Une seule pièce du §6 survit : **l'écart des quatre pointes à T12 se resserre encore**, 30,12 → 21,71 pt. Mais il se resserre **par le bas** — `lame` 32,81 → 24,40, `arc` 13,99 → 9,15 — et la pointe `eperon` reste clouée à **2,69 %, la même valeur dans les quatre variantes**, au centième. Le Guet ne relève pas le spécialiste d'initiative ; il abaisse les autres.
+
+## PS.6. Pourquoi — l'ablation, et ce qu'elle innocente
+Deux plafonds posés à la politique, tout le reste identique. `1 pas + 1 coup` par tour **est** le régime d'avant `14fe665`.
+
+| régime du tour | \|r\| max | bande de tier | bande de niche |
+|---|---|---|---|
+| l'étude (dalle à un bit, pas 2–7, portée 1–5, un geste de chaque) | 0,129 | 24,39 pt | 41,5 pt |
+| **1 pas + 1 coup** — contrôle | **0,226** *(cible tenue)* | 37,53 pt | 40,17 pt |
+| **1 pas + 1 coup** — `c3d2`/guet | 0,229 | 42,35 pt | 47,19 pt |
+| 1 coup + 2 pas — contrôle | 0,347 | 36,53 pt | — |
+| 1 coup + 2 pas — `c3d2`/guet | **0,170** | 41,50 pt | — |
+| **2 PA (le moteur)** — contrôle | 0,318 | 37,75 pt | 46,07 pt |
+| **2 PA (le moteur)** — `c3d2`/guet | 0,315 | 42,35 pt | 46,33 pt |
+
+Trois lectures, chiffrées :
+1. **Les deux PA sont presque innocents de la bande.** À un geste de chaque sorte, la bande de tier vaut déjà 37,53 pt contre 24,39 dans l'étude : **13,1 des 13,4 points d'ouverture** viennent de la dalle et des constantes, pas des PA. Les PA ajoutent 0,22 pt de bande — mais 0,092 de |r| (0,226 → 0,318) et 5,9 pt de bande de niche.
+2. **Le Guet était déjà mort avant les PA.** À un geste de chaque sorte, il porte la bande de tier de 37,53 à 42,35 pt et la bande de niche de 40,17 à 47,19 : il **aggrave** les deux, exactement comme sous les deux PA. Ce n'est donc pas la double frappe qui l'a tué, c'est la salle de 73 cases et la portée 1–7.
+3. **La double frappe est ce qui casse le prix des axes.** Interdite (`1 coup + 2 pas`), le Guet ramène |r| de 0,347 à **0,170** ; autorisée, il ne bouge plus rien (0,318 → 0,315). Une portée doublée par tour rend à `arc` tout ce que le terrain lui reprend.
+
+## PS.7. Verdict révisé
+1. **Ne pas implémenter la Poussière + le Guet.** `docs/SPEC_POUSSIERE.md` n'est pas écrit. Sur le moteur de septembre la règle coûte 4,6 points de bande de tier, ne rend ni |r| (0,318 → 0,315) ni bande de niche (46,07 → 46,33), et s'active sur 16,06 % des coups au lieu de 31,80 %.
+2. **Le §9 n'est pas rétracté, il est daté.** Rien de ce qu'il affirmait n'était faux sur son moteur ; ce qui a changé est dessous. La fidélité de la copie, elle, a été contrôlée autrement qu'en 2026-09-07 : le diff de `bataille-m.ts` contre `tactique/bataille.ts` ne contient que les crochets du motif, et à `usage = aucun` `porteeM ≡ portee`, le bonus vaut 0 et l'appui est faux.
+3. **La décision 1 (Poussière ou emboîtée) est sans objet** ; la décision 2 (motif fixe ou tourné) reste sans effet — les seize cases sont invariantes par les **huit** isométries du carré, vérifié une à une ; la **décision 3 est tranchée : aucun plafond**, le budget de 64 en tient lieu (`arc` le plus fort tiré sur 2 000 objets : **59**).
+4. **Le chantier urgent n'est plus le motif.** Le contrôle est hors cible : |r| **0,318**, bande de tier **37,75 pt**, `eperon` à −0,310 quand la charge et la riposte étaient censées le payer. C'est un recalage de `DIV_PAS`, `DIV_PORTEE` et `PA_PAR_TOUR` qu'il faut mesurer, pas un terrain — et le témoin `+2 partout` (|r| **0,142**) dit dans quelle direction chercher : **de la portée pour tous, pas de la portée pour seize cases.** Les deux bancs de PS.8 se rejoignent d'ailleurs sur le rapport à corriger, même s'ils le lisent par des bouts opposés : c'est **`PA_PAR_TOUR · pas` contre `portée`** — 4 à 8 contre 1 à 7 — que personne ne contrôle.
+5. **Ce qui reste vrai de l'étude.** Le §5 tient : sur la dalle dégagée la Poussière garde ses cinq échelles de distance (16/32/24/8/1 sur les 81 cases, 16/29/21/6/1 en pas de chemin sur la région) là où le réseau régulier en a trois et le damier deux. Le §7 tient : le carré de Gahn ne sert toujours à rien. Le §2 tient : Sierpiński base 2 n'est pas un terrain de 9×9. Ce sont des faits de géométrie ; ils ne dépendent d'aucun moteur.
+
+## PS.8. Un désaccord à signaler — le signe de `r(arc)` dépend de la politique, pas du moteur
+Une session parallèle a rejoué le même moteur pour `docs/ETUDE_EQUILIBRAGE_TACTIQUE.md` (post-scriptum du même jour) et trouve l'**inverse** sur les deux axes : `eperon +0,622` et `arc −0,377` là où ce banc lit `eperon −0,310` et `arc +0,318`. Les deux bancs descendent du §4 de l'équilibrage ; ce qui les sépare est **l'emploi du second point d'action**. Là-bas la politique s'écrit comme une boucle sur les points et le double pas sert d'abord à **rejoindre** l'archer (2·pas = 4 à 8 cases contre une portée de 7) ; ici elle garde la structure de l'étude — meilleure case, puis frapper — et le second point sert à **frapper deux fois** dès que la cible est à portée. Le premier régime tue `arc`, le second le sacre.
+
+**Aucune des deux valeurs absolues n'est donc une propriété du moteur**, et il faut le dire avant d'en tirer une constante. Ce que ce post-scriptum conclut sur le **motif** ne repose pas dessus : ses quatre réponses sont des **différences** entre contrôle et motif mesurées sous la **même** politique, et l'ablation les rejoue sous trois régimes de tour. L'ouverture de la bande de tier par le Guet vaut **+4,60 pt** (2 PA), **+4,82 pt** (1 pas + 1 coup), **+4,97 pt** (1 coup + 2 pas) : stable au dixième de point près quel que soit le régime. L'activation vaut **16,06 %** sous les deux PA et **16,06 %** sous `1 coup + 2 pas`, au chiffre près. C'est la partie de ce lot qui ne dépend pas du désaccord.
+
+## LIMITE du post-scriptum
+- **La politique a été portée aux deux PA, elle n'a pas été prouvée optimale.** Elle garde la structure des trois politiques de l'étude — meilleure case, puis frapper — et emploie le PA restant : double pas quand la frappe est hors d'atteinte, double frappe quand elle ne l'est pas, décrochage pour le harceleur. Un joueur qui planifierait deux tours ferait mieux ; l'ablation `1 coup + 2 pas` montre que la conclusion ne tient pas à ce choix, mais elle ne l'annule pas.
+- **Le budget de feuilles n'est pas contraignant** (100 000 feuilles au banc). La double frappe y est gratuite alors qu'en jeu elle vaut deux tours d'arbre : la mesure la **surévalue**, et avec elle la domination de `arc`. C'est la première chose à refaire avec un budget réaliste.
+- **Un seul étage, un seul duel 1v1.** Étage 198, région de 73 cases, deux unités. Les seize cases de la Poussière y sont **toutes** libres — c'est le cas le plus favorable au motif, et il ne suffit pas. Sur un étage moyen, moins.
+- **La borne d'activation est celle de ce terrain.** 16,06 % est un plafond de politique (poids 3 et poids 200 rendent le même chiffre), pas un plafond de la règle : une Poussière recentrée, ou une dalle plus petite, donnerait autre chose. Personne ne l'a mesuré.
+- **Rien de tout cela n'est rejouable par la CI**, pas plus qu'avant : les scripts vivent dans le scratchpad et `atelier/` n'a pas été touché d'une ligne.
+- **Ces chiffres restent des figures, pas des preuves.** Aucun n'entre dans une feuille, un carnet ou une signature.
