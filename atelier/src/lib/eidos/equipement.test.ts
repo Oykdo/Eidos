@@ -2,8 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { sha256d, utf8 } from "./hash.ts";
 import { objetDepuisGraine, composer } from "./objets.ts";
+import { isqrt, norme2 } from "./cosmos.ts";
+import { qDeMot } from "./resonance.ts";
 import {
   AFFIXES,
+  EMPLACEMENTS_SERTIS,
+  accepteSertissure,
+  peutEnchasser,
+  sertir,
+  socketsDe,
   COFFRES_PHILO,
   EMPLACEMENTS_ARMURE,
   GENRES,
@@ -151,5 +158,94 @@ describe("équipement", () => {
     assert.ok(ta.coffre.objets.some((o) => o.genre === "pierre" && o.affixe));
     assert.ok(tb.coffre.objets.some((o) => o.genre === "pierre" && o.affixe));
     assert.equal(tirerDansCoffre(ta.coffre).ok, false);
+  });
+});
+
+describe("équipement — la gemme sertit, la pierre tourne", () => {
+  /**
+   * Le plafond d'orbite est un **angle**, pas une longueur : `|q₀| / ‖q‖`,
+   * en millièmes. C'est la quantité que `memeOrbite` compare (`groupe.ts`),
+   * et la seule qui ait un sens ici — `depaqueter` ne rend pas toujours la
+   * même norme, et `motDeQ` renormalise.
+   */
+  function plafond(mot: number): bigint {
+    const q = qDeMot(mot);
+    const a = q[0] < 0n ? -q[0] : q[0];
+    const n = isqrt(norme2(q));
+    return n === 0n ? 0n : (a * 1000n) / n;
+  }
+
+  const MOTS = (() => {
+    const out: number[] = [];
+    let g = GRAINE;
+    for (let i = 0; i < 300; i++) {
+      g = sha256d(g);
+      out.push(objetDepuisGraine(g, "Satya").mot);
+    }
+    return out;
+  })();
+
+  it("une gemme ne déplace jamais le plafond d'orbite", () => {
+    let pire = 0n;
+    for (const mot of MOTS) {
+      for (const a of AFFIXES) {
+        const avant = plafond(mot);
+        const apres = plafond(sertir(mot, a));
+        const ecart = avant > apres ? avant - apres : apres - avant;
+        if (ecart > pire) pire = ecart;
+      }
+    }
+    // Trois millièmes au plus : l'arrondi de `motDeQ`, jamais l'orbite.
+    assert.ok(pire <= 3n, `plafond déplacé de ${pire}‰ au lieu de 3‰ au plus`);
+  });
+
+  it("la pierre, elle, déplace le plafond — c'est sa raison d'être", () => {
+    let bouges = 0;
+    for (const mot of MOTS) {
+      for (const a of AFFIXES) {
+        const ecart = plafond(tourner(mot, a)) - plafond(mot);
+        if (ecart > 20n || ecart < -20n) bouges += 1;
+      }
+    }
+    const total = MOTS.length * AFFIXES.length;
+    assert.ok(bouges > total / 4, `${bouges} déplacements sur ${total} : la pierre ne tourne plus`);
+  });
+
+  it("sertir deux fois reste sous le même plafond", () => {
+    for (const mot of MOTS.slice(0, 60)) {
+      const deux = sertir(sertir(mot, "T1"), "S3");
+      const ecart = plafond(deux) - plafond(mot);
+      assert.ok(ecart <= 6n && ecart >= -6n, `deux gemmes ont bougé le plafond de ${ecart}‰`);
+    }
+  });
+
+  it("six emplacements sertissables, et pas un de plus", () => {
+    assert.deepEqual([...EMPLACEMENTS_SERTIS], [
+      "arme",
+      "casque",
+      "plastron",
+      "amulette",
+      "anneau1",
+      "anneau2",
+    ]);
+    for (const e of EMPLACEMENTS_ARMURE) {
+      const attendu = (EMPLACEMENTS_SERTIS as readonly string[]).includes(e);
+      assert.equal(accepteSertissure("armure", e), attendu, `armure/${e}`);
+    }
+    assert.equal(accepteSertissure("arme", "arme"), true);
+    assert.equal(accepteSertissure("pierre", "arme"), false);
+    assert.equal(accepteSertissure("armure", null), false);
+  });
+
+  it("doit échouer : une pièce hors sertissure n'a pas de socket et refuse la gemme", () => {
+    for (const e of ["gants", "bottes", "epaulieres", "accessoire"] as const) {
+      for (let roll = 0; roll < 16; roll++) {
+        assert.equal(socketsDe("armure", roll, e), 0, `${e} a reçu un socket`);
+      }
+      const bottes = piece({ genre: "armure", emplacement: e, sockets: 2, nom: e });
+      assert.equal(peutEnchasser(bottes), false, `${e} accepte une gemme`);
+    }
+    const casque = piece({ genre: "armure", emplacement: "casque", sockets: 1, nom: "casque" });
+    assert.equal(peutEnchasser(casque), true);
   });
 });

@@ -54,8 +54,10 @@ function veillee(x: unknown): Tour["veillee"] {
   if ("erreur" in v) return null;
   const reserve = entier(o.indiceReserve, 0, 1 << v.hauteur);
   if (reserve === null) return null;
-  // le sac : vingt-sept places (veillee-tour.SAC_PLACES), des objets comme les autres
-  const sac = normaliserObjets(o.sac).slice(0, 27);
+  // le sac : quatre-vingt-une places (veillee-tour.SAC_PLACES = 3 × ETAPES),
+  // des objets comme les autres. La valeur est répétée ici parce que
+  // veillee-tour importe ce module : la remonter ferait un cycle.
+  const sac = normaliserObjets(o.sac).slice(0, 81);
   return { v, indiceReserve: Math.max(reserve, v.gestes.length), sac };
 }
 

@@ -56,10 +56,20 @@ export const OBSERVATOIRE = ETAGES - 1;
 // ---------------------------------------------------------------------------
 
 /** Croix au centre de la dalle : la case centrale et ses quatre voisines. */
+/**
+ * La croix ébréchée : la case centrale pleine, et **exactement deux** de ses
+ * quatre voisines. La croix entière valait 2⁻⁵ quand la dalle était à moitié
+ * pleine — treize étages sur 255. À un quart de murs (`dalleDe`, deux bits par
+ * case) elle vaudrait 0,25⁵, soit un quart d'étage : l'alcôve s'éteignait.
+ * Deux voisines sur quatre rendent 0,25 · C(4,2) · 0,25² · 0,75² ≈ 13,4 étages.
+ * On garde le compte et la lecture à l'œil ; la figure a perdu deux branches.
+ */
 export function aUneAlcove(etage: number): boolean {
   const d = dalleDe(etage);
   const m = (DALLE_N - 1) / 2;
-  return !!(d[m]![m] && d[m - 1]![m] && d[m + 1]![m] && d[m]![m - 1] && d[m]![m + 1]);
+  if (!d[m]![m]) return false;
+  const voisines = [d[m - 1]![m], d[m + 1]![m], d[m]![m - 1], d[m]![m + 1]];
+  return voisines.filter(Boolean).length === 2;
 }
 
 export function etagesAlcoves(): number[] {

@@ -36,28 +36,28 @@ const GELE: Record<Politique, [Fin, number, number][]> = {
     ["sommet", 26, 0],
   ],
   gourmand: [
-    ["sommet", 46, 20],
-    ["sommet", 47, 21],
-    ["sommet", 46, 20],
-    ["sommet", 48, 22],
+    ["sommet", 55, 29],
+    ["sommet", 53, 27],
+    ["sommet", 54, 28],
+    ["sommet", 54, 28],
   ],
   mesure: [
-    ["sommet", 45, 19],
-    ["sommet", 42, 16],
-    ["sommet", 30, 4],
+    ["sommet", 49, 23],
     ["sommet", 35, 9],
+    ["sommet", 37, 11],
+    ["sommet", 53, 27],
   ],
 };
-const P_MESURE = ["0.6813", "0.6102", "0.1750", "0.3903"];
+const P_MESURE = ["0.6813", "0.3500", "0.3513", "0.9017"];
 // un seul « parler » par run : Thalie (demande « rien ») ; Uranie, « rien » aussi, vient quand le sac est plein
-const GOURMAND_PARLER_OUVRIR: [number, number][] = [
-  [1, 19],
-  [1, 20],
-  [1, 19],
-  [1, 21],
+const GOURMAND_PARLER_OUVRIR = [
+  [2, 27],
+  [1, 26],
+  [2, 26],
+  [2, 26],
 ];
 // refus sans feuille : demandes insatisfaites, puis le sac plein
-const GOURMAND_REFUS = [18, 10, 16, 13];
+const GOURMAND_REFUS = [7, 3, 6, 5];
 
 describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
   it("graine 7, 4 runs par politique : le rapport est gelé — mêmes chiffres à chaque exécution", () => {
@@ -77,9 +77,9 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
     assert.deepEqual(rapport.detail.mesure.map((r) => r.p.toFixed(4)), P_MESURE);
     assert.deepEqual(rapport.detail.gourmand.map((r) => [r.gestes.parler, r.gestes.ouvrir]), GOURMAND_PARLER_OUVRIR);
     assert.deepEqual(rapport.detail.gourmand.map((r) => r.refus), GOURMAND_REFUS);
-    assert.equal(rapport.politiques.gourmand.feuillesMoyennes, 46.75);
-    assert.equal(rapport.politiques.gourmand.feuillesMax, 48);
-    assert.equal(rapport.politiques.mesure.butinMoyen, 12);
+    assert.equal(rapport.politiques.gourmand.feuillesMoyennes, 54);
+    assert.equal(rapport.politiques.gourmand.feuillesMax, 55);
+    assert.equal(rapport.politiques.mesure.butinMoyen, 17.5);
     // aucun sommet à 38, aucun run à 64 feuilles : le sac plafonne le butin, le budget ne mord pas
     for (const p of POLITIQUES) {
       assert.equal(rapport.politiques[p].partSommets38, 0);

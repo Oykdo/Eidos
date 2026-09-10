@@ -80,7 +80,13 @@ export type VeilleeDuCoffre = {
 };
 
 /** Une place par salle. */
-export const SAC_PLACES = ETAPES;
+/**
+ * Le sac : trois fois les étapes, soit 81 places — la dalle entière, 9².
+ * Une place par salle (27) datait d'une dalle à moitié pleine et d'un
+ * parcours de vingt-sept salles ; les salles dégagées rendent trois fois
+ * plus, et un sac qui déborde refuse le butin sans qu'on ait rien décidé.
+ */
+export const SAC_PLACES = 3 * ETAPES;
 
 /** L'alcôve n'a pas de case : son argument est hors de la dalle. */
 export const ARG_ALCOVE = DALLE_N * DALLE_N;

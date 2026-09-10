@@ -245,7 +245,12 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
       }
       for (const [x, y] of cases) {
         const r = creuserDansCoffre(c, x, y);
-        assert.ok(r.ok, r.ok ? "" : r.motif);
+        // Un sac plein refuse le butin, jamais franchir : on passe son chemin
+        // et on brûle la feuille en montant. La dalle dégagée remplit vite.
+        if (!r.ok) {
+          assert.match(r.motif, /sac plein/, r.motif);
+          break;
+        }
         c = r.coffre;
         if (r.fin === "epuise") {
           perdus = r.perdus.length;

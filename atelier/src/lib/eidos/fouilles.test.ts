@@ -10,6 +10,7 @@ import {
   fouillesFaites,
   spawnIci,
   trouvailleDe,
+  estCachee,
   trouvaillesDe,
 } from "./fouilles.ts";
 import { normaliserTour, tourDe } from "./jauge.ts";
@@ -18,29 +19,42 @@ import type { Coffre } from "./types.ts";
 import { coffreAtelier, coffreNeuf } from "./wallet.ts";
 
 describe("fouilles — la dalle se creuse, case par case", () => {
-  it("les trouvailles sont fixes, sur des cases pleines, une sur huit environ", () => {
+  it("deux gisements : cachées dans les murs, ramassées au sol", () => {
     let pleines = 0;
-    let trouvailles = 0;
+    let sol = 0;
+    let cachees = 0;
+    let ausol = 0;
     let sans = 0;
     let max = 0;
     for (let e = 0; e < ETAGES; e++) {
       const d = dalleDe(e);
       const tr = trouvaillesDe(e);
-      for (const { x, y } of tr) assert.ok(d[y]![x], `étage ${e} : (${x}, ${y}) est un trou`);
+      for (const { x, y } of tr) {
+        if (d[y]![x]) cachees += 1;
+        else ausol += 1;
+        assert.equal(estCachee(e, x, y), !!d[y]![x], `étage ${e} : (${x}, ${y}) mal classée`);
+      }
       pleines += d.flat().filter(Boolean).length;
-      trouvailles += tr.length;
+      sol += 81 - d.flat().filter(Boolean).length;
       if (tr.length === 0) sans += 1;
       max = Math.max(max, tr.length);
     }
-    const part = trouvailles / pleines;
-    assert.ok(part > 0.09 && part < 0.16, `part des cases pleines : ${part.toFixed(3)}`);
+    // Un mur sur quatre est creusable, une case de sol sur huit porte quelque
+    // chose : la cachette est plus rare, et c'est elle qui coûte une bêche.
+    const partMur = cachees / pleines;
+    const partSol = ausol / sol;
+    assert.ok(partMur > 0.20 && partMur < 0.30, `murs : ${partMur.toFixed(3)}`);
+    assert.ok(partSol > 0.08 && partSol < 0.17, `sol : ${partSol.toFixed(3)}`);
+    // Il y a plus de sol que de mur : le gisement du sol est le plus gros,
+    // bien qu'il soit le plus pauvre par case.
+    assert.ok(ausol > cachees, `sol ${ausol} contre murs ${cachees}`);
     assert.equal(sans, 0, `${sans} étage(s) sans trouvaille`);
-    assert.ok(max <= 12, `au plus douze par étage : ${max}`);
-    const moyenne = trouvailles / ETAGES;
-    assert.ok(moyenne > 4 && moyenne < 6, `cinq en moyenne : ${moyenne.toFixed(2)}`);
+    assert.ok(max <= 24, `au plus vingt-quatre par étage : ${max}`);
+    const moyenne = (cachees + ausol) / ETAGES;
+    assert.ok(moyenne > 10 && moyenne < 16, `~13 par étage : ${moyenne.toFixed(2)}`);
     assert.deepEqual(trouvaillesDe(7), trouvaillesDe(7));
     console.log(
-      `# fouilles : ${trouvailles} trouvailles sur ${pleines} cases pleines, ${sans} étage(s) sans`,
+      `# fouilles : ${cachees} cachées sur ${pleines} murs, ${ausol} au sol sur ${sol} cases`,
     );
   });
 

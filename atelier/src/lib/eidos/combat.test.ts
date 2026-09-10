@@ -11,12 +11,12 @@ describe("combat", () => {
   it("stabilité : vecteur gelé (saturne d'essai)", () => {
     const c = combatDe(objetDepuisGraine(GRAINE, "Satya"));
     assert.deepEqual(c, {
-      fer: 11,
-      cuirasse: 12,
-      flux: 25,
-      souffle: 16,
+      lame: 11,
+      ecu: 12,
+      eperon: 25,
+      arc: 16,
       somme: 64,
-      pointe: "flux",
+      pointe: "eperon",
     });
   });
 
@@ -36,9 +36,9 @@ describe("combat", () => {
     for (const s of SIGNATURES) {
       const c = combatDe({ ...base, archetype: s.id });
       assert.equal(c.somme, COMBAT_BUDGET);
-      assert.equal(c.fer + c.cuirasse + c.flux + c.souffle, COMBAT_BUDGET);
+      assert.equal(c.lame + c.ecu + c.eperon + c.arc, COMBAT_BUDGET);
       assert.ok(COMBAT_AXES.includes(c.pointe));
-      pointes.add(`${c.fer}:${c.cuirasse}:${c.flux}:${c.souffle}`);
+      pointes.add(`${c.lame}:${c.ecu}:${c.eperon}:${c.arc}`);
     }
     assert.equal(pointes.size, 9);
   });
