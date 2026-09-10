@@ -43,15 +43,15 @@ MONO = "ui-monospace, 'IBM Plex Mono', Consolas, monospace"
 
 TEXTES = {
     "fr": {
-        "aria": "Eidos — émission bornée, consensus fédéré, signatures par hachage",
+        "aria": "Eidos — émission bornée, consensus fédéré, signatures par hachage, tactical RPG au tour par tour",
         "sous": "εἶδος · la forme — émission bornée sans halving · consensus fédéré · signatures par hachage pur",
-        "lien": "réseau d'essai, sans valeur · oykdo.github.io/Eidos",
+        "lien": "tactical RPG au tour par tour, zéro dé · réseau d'essai, sans valeur · oykdo.github.io/Eidos",
         "formule": "R(h) = a + a/2 · cos(2π(h − h₀)/T) — quatre âges 16 : 9 : 4 : 1 — une onde dessinée = 208 époques",
     },
     "en": {
-        "aria": "Eidos — bounded emission, federated consensus, hash-based signatures",
+        "aria": "Eidos — bounded emission, federated consensus, hash-based signatures, turn-based tactical RPG",
         "sous": "εἶδος · the form — bounded emission without halving · federated consensus · hash-only signatures",
-        "lien": "testnet, no value · oykdo.github.io/Eidos",
+        "lien": "turn-based tactical RPG, zero dice · testnet, no value · oykdo.github.io/Eidos",
         "formule": "R(h) = a + a/2 · cos(2π(h − h₀)/T) — four ages 16 : 9 : 4 : 1 — one drawn wave = 208 epochs",
     },
 }

@@ -12,7 +12,7 @@ Eidos est trois choses qui partagent une règle, *rien ne se croit, tout se rejo
 
 - **une chaîne prototype** à émission bornée sans halving, consensus fédéré, et signatures post-quantiques par hachage pur — aucune courbe elliptique nulle part ; la spécification est en Python, bibliothèque standard uniquement ;
 - **un atelier web** qui rejoue les mêmes règles dans le navigateur, à l'octet près, et vous laisse vérifier une pièce, une signature, une adresse sans croire personne ;
-- **un jeu** poussé sur la chaîne — une Tour de 255 étages, neuf muses, et un roguelike quotidien, la Veillée, où une clé à usage unique est votre vie et où la preuve de votre run se juge par quiconque sans rejouer la chaîne.
+- **un jeu** poussé sur la chaîne — un tactical RPG au tour par tour : une Tour de 255 étages, neuf muses, des batailles sur une dalle de neuf par neuf sans un seul dé, et un run quotidien, la Veillée, où une clé à usage unique est votre vie et où la preuve de votre run se juge par quiconque sans rejouer la chaîne.
 
 Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 
@@ -32,7 +32,7 @@ Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 7. [Le réseau d'essai](#7-le-réseau-dessai)
 8. [Reliques et sceaux d'âge](#8-reliques-et-sceaux-dâge)
 9. [L'atelier](#9-latelier)
-10. [Le jeu : la Tour et la Veillée](#10-le-jeu--la-tour-et-la-veillée)
+10. [Le jeu : un tactical RPG au tour par tour](#10-le-jeu--un-tactical-rpg-au-tour-par-tour)
 11. [Le monde](#11-le-monde)
 12. [Carte du dépôt](#12-carte-du-dépôt)
 13. [Tout vérifier](#13-tout-vérifier)
@@ -57,7 +57,7 @@ Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 contrôles de la genèse gelée
 python3 noeud.py --verifier      # rejoue toute la chaîne du réseau d'essai, doit finir par « aucun refus »
-cd atelier && npm ci && npm test # 30 tests de scripts et 409 tests Eidos, vecteurs partagés avec Python
+cd atelier && npm ci && npm test # 30 tests de scripts et 537 tests Eidos, vecteurs partagés avec Python
 ```
 
 La page Guide de l'atelier explique le cœur, les mécaniques et le monde en mots simples ; `CLAUDE.md` dit ce qui ne doit jamais changer ; `docs/FEUILLE_DE_ROUTE.md` garde chaque décision.
@@ -183,7 +183,7 @@ Détail : [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 | Lire | **Carte** | Reliques du monde par âge et par muse ; trophée d'un sceau, jugé sans rejeu |
 | | **Signes** | Lectures des mêmes 64 glyphes |
 | Jouer | **Tour** | 255 étages, neuf muses en hôtes, élixirs, capsules et bestiaire, secrets, fouilles, portes par sceau, le pendule |
-| | **Veillée** | Le roguelike du jour : 64 feuilles WOTS+ pour vie, 27 salles tirées du premier bloc du jour, le sac, l'arbre de feuilles à l'écran, la preuve, le classement et les fantômes |
+| | **Veillée** | Le run du jour : 64 feuilles WOTS+ pour vie, 27 salles tirées du premier bloc du jour, le sac, l'arbre de feuilles à l'écran, la preuve, le classement et les fantômes |
 | | **Reliques** | La scène de la relique et « Relique trouvée » |
 | | **Guide** | Par où commencer, Vérifier / Lire / Jouer, le cœur, les mécaniques, le lore, dix mots, les limites |
 
@@ -195,13 +195,17 @@ Détail : [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 
 Détail : [`atelier/README.md`](atelier/README.md).
 
-## 10. Le jeu : la Tour et la Veillée
+## 10. Le jeu : un tactical RPG au tour par tour
 
-Six lois sont gelées dans `integrite.ts` — conservation, groupe, doxa, sceau, âges, résonance. Elles disent la même chose de six côtés : **aucun point de vie, aucun niveau, aucun tirage au sort, aucun objet qui mute, et un palier ne multiplie jamais la norme.** Tout ce qui semble un hasard dérive d'une graine et se rejoue à l'identique ; le réseau ne sait rien du jeu, sauf les sceaux et les preuves exportées.
+Six lois sont gelées dans `integrite.ts` — conservation, groupe, doxa, sceau, âges, résonance. Ce qu'elles interdisent : **aucun niveau, aucun tirage au sort, aucun objet qui mute, et un palier ne multiplie jamais la norme.** Elles ne disent rien des points de vie, et une bataille en a : la **tenue** d'une unité est une réserve de 32 à 160 points lue de son `ecu`, dépensée en encaissant, un peu regagnée par son `arc`, et jetée à la fin. Elle est dérivée à chaque bataille, jamais stockée sur l'objet, et bornée pour toujours par la somme de 64 — aucune potion, aucun palier ne la relève. La doctrine « aucun point de vie » de [`docs/SPEC_TOUR.md`](docs/SPEC_TOUR.md) date d'avant le combat et reste à réviser. Tout ce qui semble un hasard dérive d'une graine et se rejoue à l'identique ; le réseau ne sait rien du jeu, sauf les sceaux et les preuves exportées.
 
 **La Tour.** 255 coupes de l'espace des rotations, neuf bandes pour neuf muses de Thalie au sol à Uranie au faîte, quatre quartiers d'âge, une dalle de neuf cases sur neuf par étage avec un à trois occupants. Tout étage est public et fixe. Un hôte habite environ un étage sur sept ; chacun demande quelque chose qui se lit dans votre coffre (une preuve d'inclusion, deux objets de même orbite, une paire en résonance, un objet de la classe du biome…) et donne un objet, une fois par coffre. Les élixirs sont la tria prima — sel, mercure, soufre — bus à un étage seulement. Les secrets se lisent, ne se tirent pas : alcôves (la croix centrale d'une dalle), échos (deux étages de même orbite), antres (un ticket, un gardien, un duel en trois temps sans points de vie), l'observatoire où Uranie lit la tête du réseau. Les occupants se prennent avec des capsules, des glyphes creux, et se rangent dans un bestiaire de vingt et une cellules. La dalle se creuse trois coups par étage ; les trouvailles sont à des cases fixes et publiques, leur contenu à chaque coffre. En fin de salle, le **pendule** lit ce que le coffre a fait et propose ; le joueur décide parmi trois étages annoncés, jamais la case. Une ascension fait vingt-sept salles ; libre, c'est une lecture ; ancrée sur un bloc et une pièce, elle compte et se juge sans rejeu.
 
 **La Veillée.** Vous entrez avec un arbre XMSS de **soixante-quatre clés à usage unique**. Chaque geste qui compte en brûle une — franchir (vingt-six fois, obligatoires), parler, creuser, prendre ; lire est gratuit. La dernière feuille arrête la montée : la mort permanente comme théorème, puisqu'une clé réutilisée est une clé compromise et que le juge refuse tout run où un indice sert deux fois. Les vingt-sept salles du jour dérivent du **premier bloc du jour UTC**, prouvé par deux têtes signées : les mêmes pour tous ; une salle porte le nom d'ère de son œuf. Ce que vous trouvez va dans un **sac** de vingt-sept places : le sommet, une porte fermée ou l'effacement volontaire le versent au coffre, la dernière feuille le perd — le dilemme de la parcimonie. Libre, une veillée est une lecture ; ancrée sur une pièce non dépensée, elle compte : la preuve `eidos-veillee/1` porte les têtes, la pièce, chaque geste signé par sa feuille, et quiconque la juge — têtes, pièce, feuilles dans l'ordre, parcours recalculé, fin cohérente. Le classement se recalcule dans chaque navigateur depuis les preuves déposées dans `veillees/` (une pièce, une veillée par jour, la première déposée tient la place ; score = salles × 64 + butin) ; les runs des autres reviennent en **fantômes**, une tournure et leur dernière salle, jamais un nom. Le juge ne sait pas à qui est la pièce : cela se prouve en la dépensant. Bible de conception : [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md).
+
+**La bataille.** Une salle qui tient un Indéchiffré se règle sur la dalle même de l'étage — neuf cases sur neuf, celles de `dalleDe`, les cases pleines pour obstacles. **Zéro dé** : le coup est une somme d'entiers lue sur les deux mots. Les quatre axes de `combat.ts`, dont la somme vaut toujours 64, prennent enfin un sens mécanique — `lame` le coup porté, `ecu` la tenue de départ, `eperon` le pas et le rang dans la phase, `arc` la portée et la reprise. S'y ajoutent trois termes positionnels : l'**accord**, qui est le produit scalaire de deux quaternions et non une table de concepteur ; le **dos**, pris dans l'axe de la marche du défenseur ; l'**allonge**, frapper de plus loin que la cible ne porte — un bonus *et* aucun coup rendu. Une unité plus vive que son attaquant et qui l'atteint lui **riposte**, sans y dépenser ni feuille ni point d'action. Chaque unité a **deux points d'action par tour** : un pas en coûte un, un coup en coûte un *et une feuille*. Avancer puis frapper, frapper puis se retirer, avancer deux fois, frapper deux fois — l'ordre est libre, la feuille est le frein. La tenue est **éphémère** : elle se lit de `ecu`, se dépense en encaissant, se jette à la fin ; le mot ne bouge pas d'un bit et la loi de conservation tient. Une suite d'actes se rejoue à l'octet (`traceBataille`) : c'est la condition pour qu'un juge en CI arbitre une bataille sans croire personne.
+
+**Ce qui est écrit, et ce qui ne l'est pas.** Le moteur existe — `atelier/src/lib/eidos/tactique/` : la grille et son parcours entier, la zone de contrôle, l'unité, la résolution, les phases, la riposte, la fin. Ne sont **pas** faits : l'intention ennemie déterministe (la télégraphie tourne sur une règle provisoire), le rendu à l'écran, le branchement sur la Veillée, le dépôt d'une preuve de bataille. Les **Indéchiffrés** — les mots dont aucune des formes du catalogue n'est assez proche, donc sans cellule, donc sans nom — sont spécifiés et pas encore codés. Spécification : [`docs/SPEC_TACTIQUE.md`](docs/SPEC_TACTIQUE.md).
 
 ## 11. Le monde
 
@@ -242,7 +246,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `etat.json`, `mempool.json` | — | état publié ; demandes de robinet et d'envoi | — |
 | `veillees/` | — | preuves de veillée déposées (`index.json`, un fichier `eidos-veillee/1` par preuve), jugées dans chaque navigateur, jamais par un serveur | — |
 | `docs/` | — | spécifications, la bible de la veillée, la feuille de route, le lore ; générateur des bannières | 2 |
-| `atelier/` | — | atelier web ; `npm test` lance 30 tests de scripts et 409 tests Eidos | 409 |
+| `atelier/` | — | atelier web, moteur tactique compris (`src/lib/eidos/tactique/`) ; `npm test` lance 30 tests de scripts et 537 tests Eidos | 537 |
 
 CI (`.github/workflows/`) : `tests.yml` (3 OS × 2 Python, empreintes, hygiène, `parite`), `chaine.yml` (forge horaire), `robinet.yml` (issues de robinet et d'envoi), `veillees.yml` (preuves de veillée déposées par issue), `courriel.yml` (boîte aux lettres, quand une boîte est déclarée), `pages.yml` (atelier), `init.yml`. Python 3.9 est le plancher ; Node 22 pour l'atelier.
 
@@ -283,6 +287,7 @@ Les tests sont des `assert` et des `print` nus, sans framework. Toute règle de 
 | [`docs/FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md) | la feuille de route et chaque décision, chantier par chantier |
 | [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md) | la bible de conception de la Veillée : la clé comme vie, le jour, le sac, la preuve, les fantômes, les risques |
 | [`docs/PROMPT_ROGUELIKE_XMSS.md`](docs/PROMPT_ROGUELIKE_XMSS.md) | le prompt qui a fixé l'identité du jeu sur ce qui était déjà écrit |
+| [`docs/SPEC_TACTIQUE.md`](docs/SPEC_TACTIQUE.md) | le tactical RPG : la grille, les quatre axes, la résolution sans dé, la feuille comme munition, les Indéchiffrés, le découpage en PR |
 | [`docs/SPEC_TOUR.md`](docs/SPEC_TOUR.md), [`docs/SPEC_PENDULE.md`](docs/SPEC_PENDULE.md) | la Tour (hôtes, secrets, élixirs, capsules, sceaux) et le pendule |
 | [`docs/SPEC_SYBIL.md`](docs/SPEC_SYBIL.md) | un joueur, pas une armée : ce qui est prouvable, ce qui est coûteux, ce qui est libre |
 | [`docs/SPEC_AUDIT_COFFRES.md`](docs/SPEC_AUDIT_COFFRES.md) | le coffre 3D : paliers, palettes, ornements |

@@ -12,7 +12,7 @@ Eidos is three things that share one rule, *nothing is believed, everything is r
 
 - **a prototype chain** with bounded emission and no halving, a federated consensus, and post-quantum signatures made of hashing alone — no elliptic curve anywhere; the specification is Python, standard library only;
 - **a web atelier** that replays the same rules in the browser, byte for byte, and lets you check a coin, a signature, an address without trusting anyone;
-- **a game** grown on top of the chain — a Tower of 255 floors, nine muses, and a daily roguelike, the Vigil, where a one-time key is your life and the proof of your run is judged by anyone without replaying the chain.
+- **a game** grown on top of the chain — a turn-based tactical RPG: a Tower of 255 floors, nine muses, battles on a nine-by-nine slab with not a single die, and a daily run, the Vigil, where a one-time key is your life and the proof of your run is judged by anyone without replaying the chain.
 
 Testnet only: the eidôlon has no value.
 
@@ -32,7 +32,7 @@ Testnet only: the eidôlon has no value.
 7. [The testnet](#7-the-testnet)
 8. [Relics and age seals](#8-relics-and-age-seals)
 9. [The atelier](#9-the-atelier)
-10. [The game: the Tower and the Vigil](#10-the-game-the-tower-and-the-vigil)
+10. [The game: a turn-based tactical RPG](#10-the-game-a-turn-based-tactical-rpg)
 11. [The world](#11-the-world)
 12. [Repository layout](#12-repository-layout)
 13. [Verify everything](#13-verify-everything)
@@ -57,7 +57,7 @@ Testnet only: the eidôlon has no value.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 checks of the frozen genesis
 python3 noeud.py --verifier      # replays the whole testnet chain, must end with « aucun refus »
-cd atelier && npm ci && npm test # 30 script tests and 409 Eidos tests, vectors shared with Python
+cd atelier && npm ci && npm test # 30 script tests and 537 Eidos tests, vectors shared with Python
 ```
 
 The Guide page of the atelier explains the core, the mechanics and the world in plain words; `CLAUDE.md` says what must never change; `docs/FEUILLE_DE_ROUTE.md` records every decision.
@@ -183,7 +183,7 @@ Details: [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 | Read | **Map** | Relics of the world by age and by muse; trophy of a seal, judged without replay |
 | | **Signs** | Readings of the same 64 glyphs |
 | Play | **Tower** | 255 floors, nine muses as hosts, elixirs, capsules and bestiary, secrets, digs, doors by seal, the pendulum |
-| | **Vigil** | The daily roguelike: 64 WOTS+ leaves as life, 27 rooms from the day's first block, the bag, the tree of leaves on screen, the proof, the leaderboard and the ghosts |
+| | **Vigil** | The daily run: 64 WOTS+ leaves as life, 27 rooms from the day's first block, the bag, the tree of leaves on screen, the proof, the leaderboard and the ghosts |
 | | **Relics** | The relic scene and "Relic found" |
 | | **Guide** | Where to start, Verify / Read / Play, the core, the mechanics, the lore, ten words, the limits |
 
@@ -195,13 +195,17 @@ Details: [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md).
 
 Details: [`atelier/README.md`](atelier/README.md).
 
-## 10. The game: the Tower and the Vigil
+## 10. The game: a turn-based tactical RPG
 
-Six laws are frozen in `integrite.ts` — conservation, group, doxa, seal, ages, resonance. They say the same thing from six sides: **no hit points, no level, no dice, no item that mutates, and a tier never multiplies the norm.** Everything that looks like chance derives from a seed and replays identically; the network knows nothing of the game except the seals and the exported proofs.
+Six laws are frozen in `integrite.ts` — conservation, group, doxa, seal, ages, resonance. What they forbid: **no level, no dice, no item that mutates, and a tier never multiplies the norm.** They say nothing about hit points, and a battle does have them: a unit's **stand** is a pool of 32 to 160 points read from its `ecu`, spent as it takes blows, partly recovered by its `arc`, and thrown away at the end. It is derived at every battle, never stored on the object, and bounded for good by the sum of 64 — no potion, no tier lifts it. The « no hit points » doctrine of [`docs/SPEC_TOUR.md`](docs/SPEC_TOUR.md) predates combat and is still to be revised. Everything that looks like chance derives from a seed and replays identically; the network knows nothing of the game except the seals and the exported proofs.
 
 **The Tower.** 255 slices of rotation space, nine bands for nine muses from Thalia at the ground to Urania at the top, four age quarters, a nine-by-nine slab per floor with one to three occupants. Every floor is public and fixed. Hosts live on about one floor in seven and each asks for something read in your vault (a proof of inclusion, two items of the same orbit, a pair in resonance, an item of the biome's class…) and gives an item once per vault. Elixirs are the tria prima — salt, mercury, sulphur — drunk on one floor only. Secrets are read, never rolled: alcoves (the central cross of a slab), echoes (two floors of the same orbit), lairs (a ticket, a guardian, a duel in three beats with no hit points), the observatory where Urania reads the network head. Occupants are captured with hollow-glyph capsules and filed in a bestiary of twenty-one cells. The slab is dug three strokes per floor; finds sit on fixed public cells, their content belongs to each vault. At the end of a room, the **pendulum** reads what the vault did and proposes; the player decides among three announced floors, never the cell. An ascent is twenty-seven rooms; free, it is a reading; anchored on a block and a coin, it counts and is judged without replay.
 
 **The Vigil.** You enter with an XMSS tree of **sixty-four one-time keys**. Every gesture that counts burns one — cross (twenty-six times, mandatory), talk, dig, capture; reading is free. The last leaf ends the climb: permadeath as a theorem, since a reused key is a compromised key and the judge refuses any run where an index serves twice. The day's twenty-seven rooms derive from the **first block of the UTC day**, proven by two signed heads, so they are the same for everyone; a room bears the era name of its egg. What you find goes into a **bag** of twenty-seven places: the summit, a closed door or fading away pour it into the vault, the last leaf loses it — the dilemma of parsimony. Free, a vigil is a reading; anchored on an unspent coin, it counts: the proof `eidos-veillee/1` carries the heads, the coin, every gesture signed by its leaf, and anyone judges it — heads, coin, leaves in order, route recomputed, ending consistent. The leaderboard is recomputed in every browser from the proofs deposited in `veillees/` (one coin, one vigil per day, the first deposited holds the place; score = rooms × 64 + loot); other players' runs come back as **ghosts**, an epithet and their last room, never a name. The judge does not know whose coin it is: that is proven by spending it. Design bible: [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md).
+
+**The battle.** A room holding an Undeciphered is settled on the floor's own slab — nine cells by nine, those of `dalleDe`, full cells as obstacles. **Zero dice**: a blow is a sum of integers read off the two words. The four axes of `combat.ts`, whose sum is always 64, finally take on a mechanical meaning — `lame` the blow dealt, `ecu` the starting stand, `eperon` the step and the rank within the phase, `arc` the range and the recovery. Three positional terms are added: the **accord**, which is the scalar product of two quaternions and not a designer's table; the **back**, taken along the axis of the defender's march; the **reach**, striking from farther than the target carries — a bonus *and* no blow returned. A unit swifter than its attacker and able to reach it **ripostes**, spending neither a leaf nor an action point. Every unit has **two action points per turn**: a step costs one, a blow costs one *and a leaf*. Advance then strike, strike then withdraw, advance twice, strike twice — the order is free, the leaf is the brake. The stand is **ephemeral**: it is read from `ecu`, spent while taking blows, thrown away at the end; the word does not move by one bit and the law of conservation holds. A sequence of acts replays to the byte (`traceBataille`): that is the condition for a judge in CI to settle a battle without trusting anyone.
+
+**What is written, and what is not.** The engine exists — `atelier/src/lib/eidos/tactique/`: the grid and its integer traversal, the zone of control, the unit, the resolution, the phases, the riposte, the ending. Not done: the deterministic enemy intent (telegraphy runs on a provisional rule), the on-screen rendering, the wiring into the Vigil, the deposit of a battle proof. The **Undeciphered** — words that no form of the catalogue comes close enough to, hence with no cell, hence with no name — are specified and not yet coded. Specification: [`docs/SPEC_TACTIQUE.md`](docs/SPEC_TACTIQUE.md).
 
 ## 11. The world
 
@@ -242,7 +246,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `veillees/` | — | deposited vigil proofs (`index.json`, one `eidos-veillee/1` file per proof), judged in every browser, never by a server | — |
 | `docs/` | — | specifications, the vigil bible, the roadmap, the lore; banner generator | 2 |
-| `atelier/` | — | web atelier; `npm test` runs 30 script tests and 409 Eidos tests | 409 |
+| `atelier/` | — | web atelier, tactical engine included (`src/lib/eidos/tactique/`); `npm test` runs 30 script tests and 537 Eidos tests | 537 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (faucet and transfer issues), `veillees.yml` (vigil proofs deposited by issue), `courriel.yml` (mailbox, when a mailbox is declared), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor; Node 22 for the atelier.
 
@@ -283,6 +287,7 @@ Tests are plain `assert` and `print`, no framework. Every validation rule comes 
 | [`docs/FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md) | the roadmap and every decision, chantier by chantier |
 | [`docs/BIBLE_VEILLEE.md`](docs/BIBLE_VEILLEE.md) | the design bible of the Vigil: the key as life, the day, the bag, the proof, the ghosts, the risks |
 | [`docs/PROMPT_ROGUELIKE_XMSS.md`](docs/PROMPT_ROGUELIKE_XMSS.md) | the prompt that fixed the identity of the game on what was already written |
+| [`docs/SPEC_TACTIQUE.md`](docs/SPEC_TACTIQUE.md) | the tactical RPG: the grid, the four axes, resolution without dice, the leaf as ammunition, the Undeciphered, the PR breakdown |
 | [`docs/SPEC_TOUR.md`](docs/SPEC_TOUR.md), [`docs/SPEC_PENDULE.md`](docs/SPEC_PENDULE.md) | the Tower (hosts, secrets, elixirs, capsules, seals) and the pendulum |
 | [`docs/SPEC_SYBIL.md`](docs/SPEC_SYBIL.md) | one player, not an army: what is proven, what is costly, what is free |
 | [`docs/SPEC_AUDIT_COFFRES.md`](docs/SPEC_AUDIT_COFFRES.md) | the 3D vault: tiers, palettes, ornaments |
