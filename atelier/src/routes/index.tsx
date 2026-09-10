@@ -11,6 +11,7 @@ import { Inventaire } from "@/components/inventaire/Inventaire";
 import { Bestiaire } from "@/components/inventaire/Bestiaire";
 import { CoffreVue } from "@/components/coffre/CoffreVue";
 import { Sauvegarde } from "@/components/Sauvegarde";
+import { Papier } from "@/components/papier/Papier.tsx";
 import { FondOrbital } from "@/components/accueil/FondOrbital";
 import { REPLIQUES_VEILLEE } from "@/lib/eidos/veillee-lexique.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
@@ -76,6 +77,7 @@ function Home() {
             <CoffreVue />
             {!personnel ? <Creer /> : null}
             <Sauvegarde />
+            <Papier />
           </>
         ) : null}
 
@@ -88,7 +90,6 @@ function Home() {
             <Bestiaire />
             {personnel ? <Envoi /> : null}
             <Sorties />
-            {personnel ? <Sauvegarde /> : null}
           </>
         ) : null}
       </div>

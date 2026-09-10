@@ -146,7 +146,7 @@ export function soldeAtomes(sorties: readonly Pick<Sortie, "montant">[]): number
   return sorties.reduce((s, o) => s + o.montant, 0);
 }
 
-/** Amplitude de la cloche depuis le solde (atomes). 0 → 0.28 ; 1 eidôlon → ~0.72 ; log10, plafond 1.85. */
+/** Amplitude depuis le solde (atomes). 0 → 0.28 ; 1 eidôlon → ~0.497 ; log10, plafond 1.85. */
 export function amplitudeDuSolde(atomes: number): number {
   const n = Number.isFinite(atomes) && atomes > 0 ? atomes : 0;
   return Math.min(1.85, 0.28 + Math.log10(1 + n / ATOMES) * 0.72);
