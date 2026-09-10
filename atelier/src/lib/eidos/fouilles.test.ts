@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { commencerDansCoffre } from "./ascension.ts";
+import { hexOf, sha256d, utf8 } from "./hash.ts";
 import {
   BECHES_PAR_ETAGE,
   aUneTrouvaille,
@@ -17,6 +18,15 @@ import { normaliserTour, tourDe } from "./jauge.ts";
 import { DALLE_N, ETAGES, dalleDe } from "./tour.ts";
 import type { Coffre } from "./types.ts";
 import { coffreAtelier, coffreNeuf } from "./wallet.ts";
+
+/**
+ * Un coffre d'essai : la graine est **derivee**, jamais tiree. `coffreNeuf()`
+ * sans graine appelle `crypto.getRandomValues`, et une suite qui en depend ne
+ * se rejoue pas — le depot dit « aucun tirage ».
+ */
+function coffreEssai(k: number): Coffre {
+  return coffreNeuf("vide", hexOf(sha256d(utf8(`eidos-fouilles-essai/${k}`))));
+}
 
 describe("fouilles — la dalle se creuse, case par case", () => {
   it("deux gisements : cachées dans les murs, ramassées au sol", () => {
@@ -139,7 +149,7 @@ describe("fouilles — la dalle se creuse, case par case", () => {
     const { x, y } = trouvaillesDe(e)[0]!;
     const a = trouvailleDe(e, x, y, coffreAtelier("vide"));
     const b = trouvailleDe(e, x, y, coffreAtelier("vide"));
-    const autre = trouvailleDe(e, x, y, coffreNeuf("vide"));
+    const autre = trouvailleDe(e, x, y, coffreEssai(0));
     assert.deepEqual(a, b);
     assert.notEqual(a.mot, autre.mot);
   });
@@ -152,13 +162,16 @@ describe("fouilles — la dalle se creuse, case par case", () => {
     assert.ok(r.ok && r.trouvaille !== null, "la case d'arrivée donne");
     assert.equal(r.restantes, BECHES_PAR_ETAGE - 1, "le coup s'y compte comme les autres");
     // le pendule ne regarde pas la dalle : une arrivée sur deux tombe sur un trou
+    // La case doit etre un trou **et** ne rien porter : `fouilles.ts` ne refuse
+    // par « hors » que ce qui n'est ni l'arrivee, ni cache, ni une trouvaille.
+    // Un trou qui porte une trouvaille se creuse hors ascension, et c'est juste.
     let trou: Coffre | null = null;
     for (let i = 0; i < 64 && trou === null; i++) {
-      const n = commencerDansCoffre(coffreNeuf("vide"), null);
+      const n = commencerDansCoffre(coffreEssai(i + 1), null);
       const sp = spawnIci(n, 0)!;
-      if (!dalleDe(0)[sp.y]![sp.x]) trou = n;
+      if (!dalleDe(0)[sp.y]![sp.x] && !aUneTrouvaille(0, sp.x, sp.y)) trou = n;
     }
-    assert.ok(trou !== null, "aucune arrivée sur un trou en 64 coffres");
+    assert.ok(trou !== null, "aucune arrivée sur un trou nu en 64 coffres");
     const sp = spawnIci(trou!, 0)!;
     assert.equal(
       (fouillerCaseDansCoffre(coffreAtelier("vide"), 0, sp.x, sp.y) as { code: string }).code,
