@@ -44,7 +44,7 @@
  * creuse que la case d'arrivée (trois bêches par étage seraient possibles), et
  * les demandes des hôtes (preuve, orbite, sceau…) sont insatisfaites sur ce
  * coffre — « parler » n'y brûle une feuille que là où la demande est « rien ».
- * Surtout, le sac de la veillée (veillee-tour.ts, 27 places) se remplit des
+ * Surtout, le sac de la veillée (veillee-tour.ts, 81 places) se remplit des
  * dons d'arrivée et de chaque trouvaille : sac plein, tout geste de butin est
  * refusé sans rien brûler (compté dans `refus`). Le gourmand plafonne donc
  * vers 20 feuilles de butin sur 38, aucun run ne s'épuise, `partSommets38`
