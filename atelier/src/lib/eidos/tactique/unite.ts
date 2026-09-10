@@ -8,8 +8,8 @@
  * Les trois lectures mécaniques sont des divisions entières de la somme 64 :
  *
  *   tenue  = MULT_TENUE·(COUP_BASE + ecu)   →  32..160
- *   pas    = 2 + eperon / 12                →  2..7
- *   portée = 1 + arc / 16                   →  1..5
+ *   pas    = PAS_BASE + eperon / DIV_PAS    →  2..4
+ *   portée = PORTEE_BASE + arc / DIV_PORTEE →  1..7
  *
  * La tenue est le **seul** prix de `ecu` : il ne réduit plus le coup encaissé
  * (`bataille.ts`), il se payait deux fois. Et son socle est celui du coup, au
@@ -67,9 +67,27 @@ export const MULT_TENUE = 2;
 /** Le socle de tenue, commun à tous : `MULT_TENUE · COUP_BASE`, jamais un chiffre à part. */
 export const TENUE_BASE = MULT_TENUE * COUP_BASE;
 
-/** Diviseurs entiers des deux lectures de déplacement et de portée. */
-export const DIV_PAS = 16;
-export const DIV_PORTEE = 16;
+/**
+ * Socles et diviseurs des deux lectures de déplacement et de portée.
+ *
+ * Les deux ont été recalés quand `dalleDe` est passée d'un bit à deux par
+ * case : la plus grande salle d'un seul tenant a triplé (19,8 → 56,8 cases
+ * sur 81) et la mobilité s'est mise à valoir bien plus cher, sans qu'une
+ * ligne du moteur ait bougé — r(eperon, victoire) est monté de +0,126 à
+ * +0,293, et r(arc) est tombé à −0,367.
+ *
+ * **Le pas et la portée se règlent ensemble, jamais l'un sans l'autre.** Un
+ * pas plus long ne coûte pas seulement à `eperon` : il tue `arc`, parce qu'un
+ * archer rattrapé n'a jamais tiré. Mesuré sur les nouvelles salles, à pas
+ * 4..8 : r(arc) = −0,48 ; à pas 2..4 avec portée 1..7 : −0,03. D'où la règle
+ * que `unite.test.ts` contrôle — **le pas le plus long reste sous la portée
+ * la plus longue**. Le socle, lui, règle le levier de l'axe, exactement comme
+ * `COUP_BASE` règle celui de `lame`.
+ */
+export const PAS_BASE = 2;
+export const DIV_PAS = 32;
+export const PORTEE_BASE = 1;
+export const DIV_PORTEE = 10;
 
 function exigerCase(c: Case, role: string): void {
   if (!dansGrille(c)) {
@@ -118,14 +136,14 @@ export function tenueMax(u: Unite): number {
   return TENUE_BASE + MULT_TENUE * u.axes.ecu;
 }
 
-/** 2..7. Division entière : `eperon` 0..64 donne 0..5 pas de plus. */
+/** 2..4. Division entière : `eperon` 0..64 donne 0..2 pas de plus. */
 export function pas(u: Unite): number {
-  return 2 + Math.trunc(u.axes.eperon / DIV_PAS);
+  return PAS_BASE + Math.trunc(u.axes.eperon / DIV_PAS);
 }
 
-/** 1..5. Division entière : `arc` 0..64 donne 0..4 cases de plus. */
+/** 1..7. Division entière : `arc` 0..64 donne 0..6 cases de plus. */
 export function portee(u: Unite): number {
-  return 1 + Math.trunc(u.axes.arc / DIV_PORTEE);
+  return PORTEE_BASE + Math.trunc(u.axes.arc / DIV_PORTEE);
 }
 
 export function vivante(u: Unite): boolean {

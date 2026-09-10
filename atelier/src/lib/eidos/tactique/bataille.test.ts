@@ -27,7 +27,9 @@ import {
 } from "./grille.ts";
 import {
   deplacer,
+  DIV_PORTEE,
   MULT_TENUE,
+  PORTEE_BASE,
   pas,
   portee,
   TENUE_BASE,
@@ -335,7 +337,7 @@ describe("bataille — résolution", () => {
     const deFace = resoudreCoup(marche, 1, 2);
     assert.equal(deFace.dos, 0);
     assert.equal(deDos.dos, div(COUP_BASE + 16, DIV_DOS));
-    assert.equal(deDos.allonge, 0, "portée 3 : personne ne frappe hors de riposte");
+    assert.equal(deDos.allonge, 0, "personne ne frappe hors de la portée de la cible");
     assert.equal(deFace.allonge, 0);
     assert.equal(deDos.porte - deFace.porte, div(COUP_BASE + 16, DIV_DOS));
     // Avant le pas, aucune unité n'a de dos : elle regarde partout.
@@ -381,8 +383,8 @@ describe("bataille — résolution", () => {
         { ...socle.unites[1]!, pos: meurtriere },
       ],
     };
-    assert.equal(portee(duel.unites[0]!), 1);
-    assert.equal(portee(duel.unites[1]!), 4);
+    assert.equal(portee(duel.unites[0]!), PORTEE_BASE);
+    assert.equal(portee(duel.unites[1]!), PORTEE_BASE + Math.trunc(48 / DIV_PORTEE));
     assert.equal(distance(guet, meurtriere), 3);
     assert.deepEqual(
       actesPossibles(duel, 0).map((a) => a.geste),
@@ -862,8 +864,8 @@ describe("bataille — la riposte", () => {
       [brute({ pos: TRIO.ouest, lame: 12, ecu: 20, eperon: 0, arc: 32 })],
       [brute({ pos: RANG[2]!, lame: 12, ecu: 20, eperon: 32, arc: 0 })],
     );
-    assert.equal(portee(etat.unites[0]!), 3);
-    assert.equal(portee(etat.unites[1]!), 1);
+    assert.equal(portee(etat.unites[0]!), PORTEE_BASE + Math.trunc(32 / DIV_PORTEE));
+    assert.equal(portee(etat.unites[1]!), PORTEE_BASE);
     assert.equal(distance(etat.unites[0]!.pos, etat.unites[1]!.pos), 2);
     const coup = resoudreCoup(etat, 0, 1);
     assert.ok(coup.allonge > 0, "l'allonge ne s'est pas appliquée");
@@ -926,7 +928,7 @@ describe("bataille — la charge", () => {
     const mur: boolean[][] = [];
     for (let y = 0; y < GRILLE_N; y++) {
       const ligne: boolean[] = [];
-      for (let x = 0; x < GRILLE_N; x++) ligne.push(x === 1 && y !== 4);
+      for (let x = 0; x < GRILLE_N; x++) ligne.push(x === 1 && y !== 3);
       mur.push(ligne);
     }
     // Le socle se pose sur des cases libres de la dalle réelle ; c'est le mur
@@ -946,7 +948,7 @@ describe("bataille — la charge", () => {
     const but = { x: 2, y: 2 };
     assert.equal(distance({ x: 0, y: 2 }, but), 2, "le vol d'oiseau vaut deux cases");
     const apres = jouer(etat, { geste: "deplacer", unite: 0, vers: but });
-    assert.equal(apres.unites[0]!.elan, 6, "l'élan a suivi le vol d'oiseau, pas la route");
+    assert.equal(apres.unites[0]!.elan, 4, "l'élan a suivi le vol d'oiseau, pas la route");
   });
 
   it("l'élan s'éteint au passage de main : on ne riposte jamais en charge", () => {
@@ -1170,13 +1172,17 @@ describe("bataille — le prix des axes", () => {
     return SUJETS.map((s) => (s.v + s.d === 0 ? 0.5 : s.v / (s.v + s.d)));
   })();
 
-  it("aucun axe n'achète la victoire : |r| sous 0,30 pour les quatre", () => {
+  it("aucun axe n'achète la victoire : |r| sous 0,20 pour les quatre", () => {
+    // Le banc complet (2 000 mots, huit distances, trois politiques) tient
+    // 0,075 ; ce contrôle en voit 150 sur trois distances, on lui laisse la
+    // marge d'échantillon. Un axe qui repasse au-dessus de 0,20 ici est un
+    // axe dont le prix a bougé, pas du bruit.
     for (const axe of ["lame", "ecu", "eperon", "arc"] as const) {
       const r = pearson(
         SUJETS.map((s) => s.axes[axe]),
         TAUX,
       );
-      assert.ok(Math.abs(r) < 0.3, `r(${axe}) = ${r.toFixed(3)} au lieu de moins de 0,30`);
+      assert.ok(Math.abs(r) < 0.2, `r(${axe}) = ${r.toFixed(3)} au lieu de moins de 0,20`);
     }
   });
 
