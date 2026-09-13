@@ -57,7 +57,7 @@ Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 contrôles de la genèse gelée
 python3 noeud.py --verifier      # rejoue toute la chaîne du réseau d'essai, doit finir par « aucun refus »
-cd atelier && npm ci && npm test # 30 tests de scripts et 567 tests Eidos, vecteurs partagés avec Python
+cd atelier && npm ci && npm test # 30 tests de scripts et 568 tests Eidos, vecteurs partagés avec Python
 ```
 
 La page Guide de l'atelier explique le cœur, les mécaniques et le monde en mots simples ; `CLAUDE.md` dit ce qui ne doit jamais changer ; `docs/FEUILLE_DE_ROUTE.md` garde chaque décision.
@@ -232,7 +232,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `noeud.py` | 1151 | nœud du testnet : rejeu, forge, robinet, envois, `--depuis`, reliques, `etat.json` | 5 + 3 + 4 + 5 + 2 |
 | `robinet.py` | 420 | file du robinet alimentée par issues et courriels, frein par auteur | 14 |
 | `courriel.py` | 321 | second canal du robinet : boîte IMAP, même filtre, frein par expéditeur | 6 |
-| `vecteurs.py` | 217 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 10 familles) | parité |
+| `vecteurs.py` | 222 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 10 familles) | parité |
 | `qr.py` | 428 | encodeur QR, bibliothèque standard, niveau H, versions 1–10 | 5 |
 | `relique.py` | 236 | gardien des reliques : sceller, animer | 3 |
 | `labo/aura_voxel_lab.py` | 132 | labo pendule-9 : avatar voxelisé (grille de `voxels.ts`), aura graduelle, 8 agrégateurs | 11 |
@@ -248,7 +248,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `etat.json`, `mempool.json` | — | état publié ; demandes de robinet et d'envoi | — |
 | `veillees/` | — | preuves de veillée déposées (`index.json`, un fichier `eidos-veillee/1` par preuve), jugées dans chaque navigateur, jamais par un serveur | — |
 | `docs/` | — | spécifications, la bible de la veillée, la feuille de route, le lore ; générateur des bannières | 2 |
-| `atelier/` | — | atelier web, moteur tactique compris (`src/lib/eidos/tactique/`) ; `npm test` lance 30 tests de scripts et 567 tests Eidos | 567 |
+| `atelier/` | — | atelier web, moteur tactique compris (`src/lib/eidos/tactique/`) ; `npm test` lance 30 tests de scripts et 568 tests Eidos | 568 |
 
 CI (`.github/workflows/`) : `tests.yml` (3 OS × 2 Python, empreintes, hygiène, `parite`), `chaine.yml` (forge horaire), `robinet.yml` (issues de robinet et d'envoi), `veillees.yml` (preuves de veillée déposées par issue), `courriel.yml` (boîte aux lettres, quand une boîte est déclarée), `pages.yml` (atelier), `init.yml`. Python 3.9 est le plancher ; Node 22 pour l'atelier.
 

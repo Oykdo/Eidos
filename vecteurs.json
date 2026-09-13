@@ -273,7 +273,6 @@
  },
  "coffre": {
   "tag": "eidos-coffre/1",
-  "sac_places": 27,
   "tiers": 9,
   "claims": [
    {

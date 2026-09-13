@@ -69,7 +69,7 @@ import {
   type Reserver,
 } from "./eidos/veillee-tour.ts";
 import { preuveReseau, serialiser as serialiserPreuve } from "./eidos/merkle.ts";
-import { reclamerDansCoffre } from "./eidos/coffre-horaire.ts";
+import { reclamerDansCoffre, type Ouverture } from "./eidos/coffre-horaire.ts";
 import { selectionner, parserMontant } from "./eidos/coinselect.ts";
 import { getLocale, t, type Msg } from "./i18n.ts";
 import { estPsnxEtranger } from "./eidos/portable.ts";
@@ -185,6 +185,13 @@ type Etat = {
   /** ref null : une veillée libre, sans pièce — une lecture */
   ouvrirVeillee: (ref: string | null) => void;
   reclamerCoffreHoraire: (ref: string) => void;
+  /**
+   * L'ouverture du dernier coffre de l'heure réclamé : ce que le juge a accepté, pour le
+   * montrer et surligner les objets neufs à l'inventaire. Jamais persistée — `lue` dit si le
+   * joueur l'a refermée ; les objets, eux, sont déjà dans `coffre.objets`.
+   */
+  ouverture: (Ouverture & { lue: boolean }) | null;
+  fermerOuverture: () => void;
   veilleeParler: () => void;
   veilleeCreuser: (x: number, y: number) => void;
   veilleeAlcove: () => void;
@@ -281,6 +288,7 @@ export const useCoffre = create<Etat>((set, get) => ({
   reseauOccupe: false,
   monde: null,
   derniereAscension: null,
+  ouverture: null,
   chaine: null,
   chaineOccupe: false,
   federation: null,
@@ -338,6 +346,7 @@ export const useCoffre = create<Etat>((set, get) => ({
     persister(next);
     set({
       coffre: next,
+      ouverture: null,
       saisieMontant: montantPour(id),
       erreur: null,
       flash: t("flash.scenario", { id }),
@@ -521,6 +530,7 @@ export const useCoffre = create<Etat>((set, get) => ({
     persister(next);
     set({
       coffre: next,
+      ouverture: null,
       saisieMontant: montantPour(id),
       erreur: null,
       flash: t("flash.atelier"),
@@ -796,9 +806,15 @@ export const useCoffre = create<Etat>((set, get) => ({
     persister(r.coffre);
     set({
       coffre: r.coffre,
+      ouverture: { ...r.ouverture, lue: false },
       erreur: null,
-      flash: t("coffreh.flash.reclame", { t: r.tier, n: r.pris.length, p: r.perdus }),
+      flash: t("coffreh.flash.reclame", { t: r.ouverture.tier, n: r.ouverture.objets.length }),
     });
+  },
+
+  fermerOuverture: () => {
+    const { ouverture } = get();
+    if (ouverture && !ouverture.lue) set({ ouverture: { ...ouverture, lue: true } });
   },
 
   ouvrirVeillee: (ref) => {
@@ -1107,6 +1123,7 @@ export const useCoffre = create<Etat>((set, get) => ({
     const vide = n === 0 && m === 0;
     set({
       coffre,
+      ouverture: null,
       saisieMontant: montantPour(coffre.scenario ?? "vide"),
       erreur: null,
       flash: vide ? t("psnx.importe.vide") : t("psnx.importe", { n, m }),

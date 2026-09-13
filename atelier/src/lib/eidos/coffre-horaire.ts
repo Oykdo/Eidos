@@ -9,27 +9,30 @@
  *            exactement comme un tirage de bloc (inventaire.ts). Âge par tier.
  *
  * L'horloge est la tête signée, jamais l'horloge de la machine : un coffre existe parce
- * qu'un bloc existe. Une pièce ne réclame qu'un coffre par bloc (`dejaReclame`).
+ * qu'un bloc existe. Une pièce ne réclame qu'un coffre par bloc (`tour.coffres`), et le
+ * prend ENTIER : les t objets entrent dans `coffre.objets`, rien n'est perdu, aucun sac ne
+ * borne un claim (décision A15, docs/FEUILLE_DE_ROUTE.md §3). L'ouverture rendue au joueur
+ * (`Ouverture`) porte exactement ce que le juge a accepté — ni plus, ni moins.
  *
- * Figures, pas preuves : rien ici n'engage le carnet. Ce module NE VÉRIFIE PAS le claim —
- * la tête se vérifie par `temoin.ts` (XMSS) et la pièce par `merkle.ts` (contre `utxoRoot`),
- * exactement comme une ascension (`ancrage.ts`). Le tirage seul vit ici.
- * LIMITE : une pièce neuve peut réclamer les blocs passés d'un coup ; seul le sac (27 places)
- * borne la rafale. Voir spec §5 — la fenêtre d'un jour est écrite, pas adoptée.
+ * Figures, pas preuves : rien ici n'engage le carnet. Le tirage seul vit ici ; le juge
+ * (`jugerClaim`) n'invente rien — la tête se vérifie par `temoin.ts` (XMSS) et la pièce par
+ * `merkle.ts` (contre `utxoRoot`), exactement comme une ascension (`ancrage.ts`).
+ * LIMITE : une pièce neuve peut réclamer tous les blocs passés qu'elle sait prouver ; rien ne
+ * le borne hors « une pièce, un bloc ». La page n'offre que la tête suivie, et c'est une
+ * politique d'interface, pas une règle. Voir spec §5.
  */
 
 import { concat, fromHex, hexOf, sha256d, u32, utf8 } from "./hash.ts";
 import { feuilleSortie, verifierPreuve, type PreuvePortable, type SortieMin } from "./merkle.ts";
 import { objetDepuisGraine } from "./objets.ts";
 import { habille } from "./equipement.ts";
+import { SIGNATURES, type Signature } from "./signatures.ts";
 import { verifierTeteReseau, type TeteReseau } from "./temoin.ts";
 import type { Coffre, NomAge, ObjetPorte } from "./types.ts";
 
 export const SPEC_COFFRE = "eidos-coffre/1";
 export const TAG_COFFRE = utf8(SPEC_COFFRE);
 export const TIERS = 9;
-/** Les 27 places du sac (veillee-tour.SAC_PLACES) ; répété ici pour rester sans dépendance de jeu. */
-export const SAC_COFFRE = 27;
 
 export const AGES_COFFRE = [
   "Kali",
@@ -50,6 +53,17 @@ export const PROBA_TIER: readonly number[] = [
 ];
 
 export type CoffreTire = { graine: string; tier: number; objets: ObjetPorte[] };
+
+/**
+ * La muse d'un tier — une lecture (spec §3) : neuf tiers pour neuf muses, du plus commun
+ * (1, Thalie, ⊕) au plus rare (9, Uranie, ★). SIGNATURES va d'Uranie (0) à Thalie (8),
+ * donc le tier t lit SIGNATURES[9 − t]. Rien de plus : le tier ne change ni le mot ni les axes.
+ */
+export function museDuTier(tier: number): Signature {
+  if (!Number.isInteger(tier) || tier < 1 || tier > TIERS)
+    throw new Error(`tier ${tier} hors 1..${TIERS}`);
+  return SIGNATURES[TIERS - tier]!;
+}
 
 function u8(n: number): Uint8Array {
   return new Uint8Array([n & 255]);
@@ -103,27 +117,6 @@ export function cleClaim(idBlocHex: string, piece: Pick<SortieMin, "txid" | "ran
   return `${piece.txid}:${piece.rang}@${idBlocHex}`;
 }
 
-export type Reclame = { coffre: CoffreTire; pris: ObjetPorte[]; perdus: number };
-
-/**
- * Réclamer : refuse si (pièce, bloc) a déjà servi, sinon remplit le sac et compte le surplus.
- * `sac` n'est pas modifié — l'appelant décide quoi en faire (l'extraction est ailleurs).
- */
-export function reclamer(
-  idBlocHex: string,
-  piece: Pick<SortieMin, "txid" | "rang">,
-  sacRempli: number,
-  deja: ReadonlySet<string>,
-  hauteur = 0,
-): Reclame | { erreur: string } {
-  const cle = cleClaim(idBlocHex, piece);
-  if (deja.has(cle)) return { erreur: `coffre déjà réclamé pour cette pièce à ce bloc` };
-  const coffre = coffreDe(idBlocHex, piece, hauteur);
-  const place = Math.max(0, SAC_COFFRE - sacRempli);
-  const pris = coffre.objets.slice(0, place);
-  return { coffre, pris, perdus: coffre.objets.length - pris.length };
-}
-
 // ---------------------------------------------------------------------------
 // Le juge : ce qui doit être vrai pour qu'un coffre soit réclamé.
 // Rien de neuf — la tête par temoin.ts (XMSS), la pièce par merkle.ts, comme une ascension.
@@ -154,14 +147,31 @@ export function jugerClaim(
   return { ok: true, idBloc: tete.idBloc, cle };
 }
 
+/**
+ * L'ouverture : ce qu'un claim accepté rend au joueur, et rien d'autre. Jamais persistée —
+ * elle vit le temps d'être montrée ; les objets, eux, sont déjà dans `coffre.objets`.
+ */
+export type Ouverture = {
+  cle: string;
+  idBloc: string;
+  hauteur: number;
+  graine: string;
+  tier: number;
+  objets: ObjetPorte[];
+};
+
 export type Reclamation =
-  | { ok: true; coffre: Coffre; pris: ObjetPorte[]; perdus: number; tier: number }
+  | { ok: true; coffre: Coffre; ouverture: Ouverture }
   | { ok: false; motif: string };
 
+/** Deux objets portés sont le même s'ils ont même mot, même hauteur et même teinte. */
+export function memeObjet(a: ObjetPorte, b: ObjetPorte): boolean {
+  return a.mot === b.mot && a.hauteur === b.hauteur && a.nonce === b.nonce;
+}
+
 /**
- * Réclamer pour de vrai : juge le claim, puis pose les objets dans `coffre.objets` et la clé
- * dans `coffre.tour.coffres`. Le sac (27) borne la prise ; le surplus est perdu, comme une veillée.
- * Le coffre n'est pas modifié en cas de refus.
+ * Réclamer pour de vrai : juge le claim, puis pose les t objets dans `coffre.objets` et la clé
+ * dans `coffre.tour.coffres`. Le coffre est pris entier ; il n'est pas modifié en cas de refus.
  */
 export function reclamerDansCoffre(
   c: Coffre,
@@ -172,16 +182,20 @@ export function reclamerDansCoffre(
   const v = jugerClaim(claim, federation, deja);
   if (!v.ok) return { ok: false, motif: v.motif };
   const tire = coffreDe(v.idBloc, claim.piece, claim.tete.hauteur);
-  const pris = tire.objets.slice(0, Math.max(0, SAC_COFFRE));
   return {
     ok: true,
-    tier: tire.tier,
-    pris,
-    perdus: tire.objets.length - pris.length,
     coffre: {
       ...c,
-      objets: [...c.objets, ...pris],
+      objets: [...c.objets, ...tire.objets],
       tour: { ...c.tour, coffres: [...deja, v.cle] },
+    },
+    ouverture: {
+      cle: v.cle,
+      idBloc: v.idBloc,
+      hauteur: claim.tete.hauteur,
+      graine: tire.graine,
+      tier: tire.tier,
+      objets: tire.objets,
     },
   };
 }

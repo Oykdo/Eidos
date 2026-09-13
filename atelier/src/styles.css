@@ -72,6 +72,39 @@
   }
 }
 
+/* L'ouverture d'un coffre de l'heure (OuvertureCoffre.tsx) : l'astre se pose, puis les
+   objets paraissent un à un. Jauge, hors feuille — et la règle de mouvement réduit
+   ci-dessous éteint les deux. */
+@keyframes ouverture-astre {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ouverture-objet {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ouverture-astre {
+  animation: ouverture-astre 420ms var(--ease-smooth-out) both;
+}
+
+.ouverture-objet {
+  animation: ouverture-objet 360ms var(--ease-smooth-out) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -5,7 +5,7 @@ import { fromHex, hexOf, sha256 } from "./hash.ts";
 import { graineDe, adresseDe, signerEntrees, sighash } from "./lamport.ts";
 import { serTx } from "./envoi.ts";
 import { encoderAdresse, encoderGlyphes, verifierAdresse } from "./glyphs.ts";
-import { SAC_COFFRE, SPEC_COFFRE, TIERS, coffreDe } from "./coffre-horaire.ts";
+import { SPEC_COFFRE, TIERS, coffreDe } from "./coffre-horaire.ts";
 import {
   TYPE_LTREE,
   TYPE_OTS,
@@ -47,7 +47,6 @@ type Vecteurs = {
   };
   coffre: {
     tag: string;
-    sac_places: number;
     tiers: number;
     claims: {
       id_bloc: string;
@@ -144,7 +143,6 @@ describe("vecteurs.json = vecteurs.py", () => {
   it("coffre horaire : graine, tier et contenu identiques à labo/coffre_horaire.py", () => {
     const c = V.coffre;
     assert.equal(c.tag, SPEC_COFFRE);
-    assert.equal(c.sac_places, SAC_COFFRE);
     assert.equal(c.tiers, TIERS);
     assert.ok(c.claims.length >= 3);
     for (const cl of c.claims) {
