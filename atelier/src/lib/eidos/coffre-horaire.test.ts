@@ -11,14 +11,15 @@ import {
   jugerClaim,
   reclamerDansCoffre,
   PROBA_TIER,
-  SAC_COFFRE,
   TIERS,
   cleClaim,
   coffreDe,
   graineCoffre,
-  reclamer,
+  memeObjet,
+  museDuTier,
   tierDe,
 } from "./coffre-horaire.ts";
+import { SIGNATURES } from "./signatures.ts";
 
 const BLOC = "31a68674bf8b3ed90bcf4e110fdab1f7273b66a486817fd26683b220af9c51bc";
 const PIECE = { txid: "17b5470bfe2f0c3aec87f5a5c5d21b5da558194100d1e7a3955053cbe4bef847", rang: 0 };
@@ -59,20 +60,19 @@ describe("coffre horaire — le tirage, jamais le juge", () => {
     assert.notEqual(coffreDe(BLOC, { ...PIECE, rang: 1 }).graine, a.graine);
   });
 
-  it("une pièce, un bloc, un coffre ; le sac borne le reste", () => {
-    const deja = new Set([cleClaim(BLOC, PIECE)]);
-    const refus = reclamer(BLOC, PIECE, 0, deja);
-    assert.ok("erreur" in refus);
-    const ok = reclamer(BLOC, PIECE, 0, new Set());
-    assert.ok(!("erreur" in ok));
-    if ("erreur" in ok) return;
-    assert.equal(ok.pris.length, ok.coffre.objets.length);
-    assert.equal(ok.perdus, 0);
-    const plein = reclamer(BLOC, PIECE, SAC_COFFRE, new Set());
-    assert.ok(!("erreur" in plein));
-    if ("erreur" in plein) return;
-    assert.equal(plein.pris.length, 0);
-    assert.equal(plein.perdus, plein.coffre.objets.length);
+  it("neuf tiers, neuf muses : Thalie la plus commune, Uranie la plus rare, une lecture", () => {
+    assert.equal(museDuTier(1).muse, "Thalie");
+    assert.equal(museDuTier(1).astre, "⊕");
+    assert.equal(museDuTier(TIERS).muse, "Uranie");
+    assert.equal(museDuTier(TIERS).astre, "★");
+    const ids = new Set(Array.from({ length: TIERS }, (_, i) => museDuTier(i + 1).id));
+    assert.equal(ids.size, SIGNATURES.length, "chaque tier a sa muse, aucune deux fois");
+    // la muse la plus rare est celle dont la chance est la plus faible : l'ordre suit PROBA_TIER
+    for (let t = 2; t <= TIERS; t++) assert.ok(PROBA_TIER[t - 1]! <= PROBA_TIER[t - 2]!);
+    for (const t of [0, 10, 1.5, Number.NaN]) assert.throws(() => museDuTier(t), /hors 1\.\.9/);
+    // la muse ne touche pas l'objet : même graine, même mot, quel que soit ce qu'on en lit
+    const a = coffreDe(BLOC, PIECE);
+    assert.deepEqual(coffreDe(BLOC, PIECE).objets.map((o) => o.mot), a.objets.map((o) => o.mot));
   });
 
   it("réclamer pour de vrai : le juge exige la tête et la preuve, le carnet garde la clé", () => {
@@ -100,12 +100,51 @@ describe("coffre horaire — le tirage, jamais le juge", () => {
     const r = reclamerDansCoffre(c, claim, fed);
     assert.ok(r.ok, r.ok ? "" : r.motif);
     if (!r.ok) return;
-    assert.equal(r.coffre.objets.length, c.objets.length + r.pris.length);
-    assert.equal(r.pris.length, r.tier);
+    assert.equal(r.coffre.objets.length, c.objets.length + r.ouverture.tier);
     assert.deepEqual(r.coffre.tour.coffres, [cleClaim(tete.idBloc, piece)]);
 
     // une pièce, un bloc : la seconde fois est refusée, et le coffre n'a pas bougé
     const encore = reclamerDansCoffre(r.coffre, claim, fed);
     assert.equal(encore.ok, false);
+    if (encore.ok) return;
+    assert.match(encore.motif, /déjà réclamé/);
+  });
+
+  it("l'ouverture porte exactement ce que le juge a accepté : pris entier, rien de perdu", () => {
+    const VEC = JSON.parse(readFileSync(new URL("../../../../vecteurs.json", import.meta.url), "utf8")) as {
+      tete: { tete_signee: Record<string, unknown>; federation: Record<string, unknown>; sorties: { txid: string; rang: number; adresse: string; montant: number }[] };
+    };
+    const tete = parserTeteReseau({ tete_signee: VEC.tete.tete_signee });
+    const fed = parserFederation(VEC.tete.federation);
+    assert.ok(!("erreur" in tete) && !("erreur" in fed));
+    if ("erreur" in tete || "erreur" in fed) return;
+    const piece = VEC.tete.sorties[0]!;
+    const p = preuveReseau(VEC.tete.sorties, `${piece.txid}:${piece.rang}`);
+    assert.ok(p);
+    const claim = { tete, piece, preuve: serialiser(p) };
+
+    // un coffre qui a déjà des objets : les neufs s'ajoutent à la fin, les anciens ne bougent pas
+    const avant = coffreDe("11".repeat(32), { txid: "22".repeat(32), rang: 3 }, 7).objets;
+    const c = { ...coffreAtelier("vide"), objets: avant, tour: tourVide() };
+    const r = reclamerDansCoffre(c, claim, fed);
+    assert.ok(r.ok, r.ok ? "" : r.motif);
+    if (!r.ok) return;
+    const { ouverture: o } = r;
+    const tire = coffreDe(tete.idBloc, piece, tete.hauteur);
+    assert.equal(o.tier, tire.tier);
+    assert.equal(o.graine, tire.graine);
+    assert.equal(o.idBloc, tete.idBloc);
+    assert.equal(o.hauteur, tete.hauteur);
+    assert.equal(o.cle, cleClaim(tete.idBloc, piece));
+    assert.equal(o.objets.length, o.tier, "t objets pour un tier t, aucun de perdu");
+    assert.deepEqual(o.objets, tire.objets, "l'ouverture est le tirage, à l'objet près");
+    assert.deepEqual(r.coffre.objets.slice(0, avant.length), avant);
+    assert.deepEqual(r.coffre.objets.slice(avant.length), o.objets, "les neufs sont les derniers");
+    // chaque objet de l'ouverture se retrouve une fois et une seule dans le coffre (memeObjet)
+    for (const n of o.objets)
+      assert.equal(r.coffre.objets.filter((x) => memeObjet(x, n)).length, 1);
+    for (const a of avant) assert.ok(!o.objets.some((n) => memeObjet(a, n)), "un ancien n'est pas neuf");
+    // l'ouverture n'est pas dans le coffre : rien à persister, le carnet ne la connaît pas
+    assert.ok(!("ouverture" in r.coffre));
   });
 });

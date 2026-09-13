@@ -7,6 +7,7 @@ import { useI18n, type Msg } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import type { ObjetPorte } from "@/lib/eidos/types.ts";
 import { objetDePorte, racineDuCoffre } from "@/lib/eidos/inventaire.ts";
+import { memeObjet } from "@/lib/eidos/coffre-horaire.ts";
 import { combatDe, COMBAT_AXES, COMBAT_BUDGET } from "@/lib/eidos/combat.ts";
 import { conjugue, produit, type Q } from "@/lib/eidos/cosmos.ts";
 import { memeOrbite, memeRayon } from "@/lib/eidos/groupe.ts";
@@ -36,6 +37,8 @@ export function Inventaire() {
   const divin = useCoffre((s) => s.divin);
   const erreur = useCoffre((s) => s.erreur);
   const flash = useCoffre((s) => s.flash);
+  // les objets du dernier coffre de l'heure ouvert : surlignés, jusqu'au prochain ou au rechargement
+  const ouverture = useCoffre((s) => s.ouverture);
   const objets = coffre.objets ?? [];
   const tip = coffre.chaine[coffre.chaine.length - 1];
   const h = tip?.hauteur ?? 0;
@@ -151,6 +154,7 @@ export function Inventaire() {
           {visibles.map((o) => {
             const i = objets.indexOf(o);
             const on = choisi === o;
+            const neuf = ouverture?.objets.some((n) => memeObjet(n, o)) ?? false;
             return (
               <button
                 key={`${o.mot}-${o.hauteur}`}
@@ -164,14 +168,21 @@ export function Inventaire() {
                   else setContre(i);
                 }}
                 className={cn(
-                  "flex min-h-11 flex-col items-center rounded-sm bg-fond px-1 py-2",
+                  "relative flex min-h-11 flex-col items-center rounded-sm bg-fond px-1 py-2",
                   on
                     ? "shadow-[0_0_0_2px_#c9a227]"
                     : contre === i
                       ? "shadow-[0_0_0_2px_#8a6a32]"
-                      : "shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
+                      : neuf
+                        ? "shadow-[0_0_0_1px_rgb(201_162_39_/_0.55)]"
+                        : "shadow-[0_0_0_1px_rgb(198_203_209_/_0.24)]",
                 )}
               >
+                {neuf ? (
+                  <span className="absolute right-1 top-1 rounded-xs bg-or px-1 font-mono text-[8.5px] uppercase tracking-wide text-or-fg">
+                    {t("inv.neuf")}
+                  </span>
+                ) : null}
                 <VoxelIcon objet={o} size={64} />
                 <span className="mt-1 text-center font-mono text-[10px] tracking-wide">
                   {o.genre === "pierre" || o.genre === "gemme"

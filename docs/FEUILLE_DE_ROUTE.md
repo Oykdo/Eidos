@@ -9,7 +9,7 @@
 ## 0. Eidos aujourd'hui, en cinq lignes
 
 1. Une **chaîne** qui tourne : émission bornée sans halving (`R(h) = a + (a/2)·cos(2π(h−h₀)/T)`, `T = 1008`, `h₀ = 492`), quatre âges, **2 096 640 blocs**, **62 899 200 EIDL**, **239,18 ans** à un bloc par heure. Consensus fédéré à sept validateurs, signatures par hachage pur, aucune courbe elliptique. Rejeu local : **98 blocs revalidés, aucun refus**, hauteur 97.
-2. Un **atelier** qui rejoue la spec à l'octet en TypeScript : **567 tests, 119 suites, 0 échec**, 78 fichiers `.test.ts` tous listés dans `package.json`, parité Python ↔ TS contrôlée par `vecteurs.json` (10 familles) dans les deux sens en CI.
+2. Un **atelier** qui rejoue la spec à l'octet en TypeScript : **568 tests, 119 suites, 0 échec**, 78 fichiers `.test.ts` tous listés dans `package.json`, parité Python ↔ TS contrôlée par `vecteurs.json` (10 familles) dans les deux sens en CI.
 3. Un **jeu** dont la jauge est hors feuille et dont seuls les sceaux et les preuves exportées engagent : la Tour, la Veillée (arbre XMSS de 64 feuilles, une clé signe une fois et c'est la vie), et depuis peu un **moteur tactique au tour par tour** — 95 contrôles, 77 refus, zéro dé.
 4. Ce qui manque n'est pas du code, c'est du **branchement et du prix** : le moteur tactique, `tiers.ts` et `lignee.ts` n'ont aucun importateur hors de leurs tests ; `reliques.json` et `veillees/index.json` sont vides ; l'eidôlon n'achète encore rien.
 5. Ce qui est faux est **documenté et chiffré** : une adresse a quatre écritures glyphiques valides au lieu d'une, le pas double dépasse la portée la plus longue, et deux documents de référence annoncent des compteurs périmés.
@@ -51,7 +51,7 @@ Quatre états, aucun autre. **code** : écrit, testé, rejouable. **spécifié**
 
 | Sujet | Le chiffre |
 |---|---|
-| Suite complète | **567 tests, 119 suites, 0 échec** ; `typecheck` vert ; 77 `.test.ts` sous `src` + 1 sous `scripts/` (le banc, C3), **78 listés** dans `package.json` (aucun test orphelin) |
+| Suite complète | **568 tests, 119 suites, 0 échec** ; `typecheck` vert ; 77 `.test.ts` sous `src` + 1 sous `scripts/` (le banc, C3), **78 listés** dans `package.json` (aucun test orphelin) |
 | Six lois gelées | `conservation, groupe, doxa, sceau, epoques, resonance`, dans cet ordre, 7 contrôles ; `integrite.ts` lève au chargement si `NORME !== ATOMES` ; la loi 6 vérifie explicitement qu'il n'existe **pas** de champ `bonus` |
 | Somme des quatre axes | **64, toujours** : répartition au plus fort reste sur `COMBAT_BUDGET`, l'archétype **permute** et ne multiplie pas ; **400 000 objets tirés, 0 violation, 0 axe négatif** |
 | Zéro dé | `Math.random` : **une seule occurrence** dans tout `atelier/src`, dans le texte d'un docstring qui l'interdit. Les horloges sont des paramètres injectables (`ts = Date.now()`) |
@@ -134,10 +134,10 @@ Quatre écarts entre ce que le dépôt annonce et ce que le dépôt fait. Chacun
 `CLAUDE.md` §4 : « 409 suites Eidos ». `README.fr.md` : « 537 tests Eidos » (deux fois). Mesure du jour : **564 tests, 118 suites**. `federation.json` déclare `"format_chaine": 2` alors que `chaine-eidos.dat` porte `FORMAT 3` — le champ n'est lu par personne, ce qui est exactement pourquoi il a dérivé. Les en-têtes de `SPEC_CHYMIE.md` (« aucune ligne de code ») sont périmés depuis `8566119`.
 **Correctif.** Les corriger, et poser la règle : tout compteur écrit dans un texte doit être produit par une commande citée à côté de lui. **Coût :** quelques lignes ; à faire dans la PR qui touche ces fichiers, jamais seule.
 
-### D6 — Le sac dit 27 places d'un côté, 81 de l'autre
+### D6 — Le sac dit 27 places d'un côté, 81 de l'autre — **FERMÉE le 2026-09-13**
 
-`veillee-tour.ts:89` : `SAC_PLACES = 3 * ETAPES` = **81**. `coffre-horaire.ts:31` : `SAC_COFFRE = 27`, avec juste au-dessus un commentaire qui affirme que c'est le même nombre. La constante plafonne réellement une rafale de claim (`Math.max(0, SAC_COFFRE − sacRempli)`) ; le port Python le confirme : « 93 objets offerts, **27 pris, 66 perdus** ». Aucun test ne l'attrape — `coffre-horaire.test.ts:71` importe `SAC_COFFRE` et se compare à lui-même.
-**Correctif.** Importer `SAC_PLACES` au lieu de redéclarer, ou déclarer en clair que le coffre horaire plafonne **volontairement** à 27 et dire pourquoi. **Un contrôle qui compare les deux constantes**, pour que la prochaine divergence soit rouge. **Coût :** une ligne, un contrôle, une décision (§3, A7).
+`veillee-tour.ts:89` : `SAC_PLACES = 3 * ETAPES` = **81**. `coffre-horaire.ts:31` : `SAC_COFFRE = 27`, avec juste au-dessus un commentaire qui affirme que c'est le même nombre. Et la dette était pire que son énoncé : le `reclamer()` qui appliquait `Math.max(0, SAC_COFFRE − sacRempli)` n'était appelé **que par les tests** ; le chemin livré, `reclamerDansCoffre`, faisait `slice(0, 27)` sur au plus 9 objets — « perdus » valait toujours 0, et le flash l'affichait. Le sac de 27 n'a jamais borné un claim dans l'atelier.
+**Fermée par A15 :** le coffre se prend entier, `SAC_COFFRE` et le `reclamer()` mort sont retirés, `sac_places` quitte `vecteurs.json` (ce n'était pas un vecteur), et `SPEC_COFFRE_HORAIRE.md` §4–§5 dit ce que le code fait. Le sac de 27 reste le modèle du labo (K44, K47), nommé comme tel.
 
 ### D7 — Le frein par auteur ne couvre pas le canal `envoi`
 
@@ -170,7 +170,7 @@ Questions fermées. La recommandation engage le rédacteur de cette feuille, pas
 | **A12** | Corrige-t-on le tirage (`paqueter`, 3,48 % de mots hors sphère, 32,0 % hors image) ? | **Oui, dans une PR séparée de l'échelle** | Six vecteurs gelés à regeler, et `vecteurs.json` à refaire ; fait après l'échelle, le regel devient illisible |
 | **A13** | Le canal courriel du robinet : on l'active ou on le retire ? | **L'activer** (poser `EIDOS_ROBINET_COURRIEL`) ou retirer la mention publique | `etat.json` publie `"courriel": null` : un canal annoncé qui n'existe pas est un texte qui promet plus que le code |
 | **A14** | Scelle-t-on la première relique ? | **Oui, une seule**, et publier la planche | `reliques.json` est vide : toute la machinerie (3 + 5 contrôles) est codée et n'a jamais servi ; une relique met à l'épreuve `--sceller`, `--animer` et le statut publié |
-| **A15** | `SAC_COFFRE` : 81, ou 27 assumé ? | **27 assumé et dit** — une rafale de claim n'est pas un sac | Sinon un claim peut rendre 81 objets d'un coup ; dans les deux cas, le contrôle qui compare les deux constantes est obligatoire |
+| **A15** | `SAC_COFFRE` : 81, ou 27 assumé ? | **TRANCHÉ le 2026-09-13 : ni l'un ni l'autre — dire ce que le code fait.** Un claim par pièce et par bloc, pris entier, rien de perdu ; la constante et le `reclamer()` mort sont retirés. Un vrai plafond, s'il vient, sera une règle neuve avec son `doit_echouer` | Rien ne borne la rafale rétroactive hors « une pièce, un bloc » ; la page n'offre que la tête suivie, et c'est une politique d'interface, dite comme telle |
 
 ---
 
@@ -302,11 +302,12 @@ reste lisible.
 | **contrôle du pas** (`769db7c`) | D2 n'est plus muette : `unite.test.ts` affirme désormais la rupture (`8 > 7`) au lieu de la taire. La dette **demeure**, son gardien ne ment plus |
 | **hygiène** (`208e766`) | `CLAUDE.md` remis à jour, et la **distinction des deux corpus** écrite au §3 : les six lois d'`integrite.ts` sont des conventions révisables, les invariants du §3 scindent la chaîne. Referme une partie de D5 et de D8 |
 | **Pages** (`fa1fa58`) | l'atelier est **enfin publié**. Le filet de garde de la racine masquait son propre diagnostic : il faisait 1 778 octets, exactement ce que le site servait |
+| **l'ouverture du coffre de l'heure** (2026-09-13) | A15 tranché, **D6 fermée**. `OuvertureCoffre.tsx` : un `<dialog>` natif, zéro dépendance, qui montre exactement ce que le juge a accepté ; l'inventaire surligne les objets neufs ; la page ne montre le contenu qu'une fois le coffre ouvert (politique d'interface, la graine reste affichée). `coffre-horaire.test.ts` 5 → 6 contrôles, `sac_places` retiré de `vecteurs.json` |
 
 **Une dette est morte le même jour** et n'apparaît donc plus au §2 : le sac
-annonçait 27 places quand `SAC_PLACES` en vaut 81 (`8f23973`). Reste
-`SAC_COFFRE = 27` dans `coffre-horaire.ts`, gelé dans `vecteurs.json` — c'est
-un lot à part, pas une retouche.
+annonçait 27 places quand `SAC_PLACES` en vaut 81 (`8f23973`). Le reste,
+`SAC_COFFRE = 27` dans `coffre-horaire.ts`, est tombé le 2026-09-13 avec A15
+(D6 fermée ci-dessus).
 
 **Et une correction de méthode, qui vaut pour la suite.** Les trois études du
 2026-09-10 rendent trois `r(eperon)` différents pour le même moteur : −0,165,

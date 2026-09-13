@@ -174,10 +174,12 @@ def calculer():
     claims = [(idb, so[0]["txid"], so[0]["rang"]), (idb, so[-1]["txid"], so[-1]["rang"]),
               (idj, so[0]["txid"], so[0]["rang"])]
     v["coffre"] = {
-        "tag": CH.TAG.decode(), "sac_places": CH.SAC_PLACES, "tiers": CH.TIERS,
-        # graine, tier, et pour chaque objet sa graine et son age : un objet de coffre est un
-        # ObjetPorte derive cote atelier (objetDepuisGraine + habille) et le labo n'a pas de
-        # mots. La parite porte sur ce qui vient de la chaine.
+        # Le sac de 27 du labo (SAC_PLACES) n'est pas un vecteur : l'atelier prend un coffre
+        # entier (SPEC_COFFRE_HORAIRE §4, A15). Ne passent ici que le tag, les tiers et ce qui
+        # vient de la chaine : graine, tier, et pour chaque objet sa graine et son age — un
+        # objet de coffre est un ObjetPorte derive cote atelier (objetDepuisGraine + habille)
+        # et le labo n'a pas de mots.
+        "tag": CH.TAG.decode(), "tiers": CH.TIERS,
         "claims": [{"id_bloc": b, "txid": t, "rang": r, **CH.coffre(b, t, r)} for b, t, r in claims],
     }
     return v

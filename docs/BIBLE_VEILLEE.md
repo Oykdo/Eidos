@@ -317,7 +317,7 @@ Un bestiaire adverse **dérivé** et non écrit à la main ; une raison de monte
 | **forge, prix `2^(t−1)`** | [SPÉCIFIÉ] | forges en **salles 5 et 9** (mesuré : 18 % d'évaporation contre 47 % en salles 3 et 6). Érato n'est croisée qu'une run sur neuf : la forge est une **case**, pas une muse — quand la muse est là, le craft est gratuit |
 | **sac de 81 places** | [CODÉ] | ne borne plus une run de neuf salles (§6.3) |
 | **échange d'un objet** | [ÉTUDE] | option (d), la lignée ancrée sur les dépenses (`ETUDE_ECHANGE_OBJETS.md` §7.1). La Veillée n'en dépend pas et ne l'attend pas |
-| **coffre horaire** | [CODÉ] | un coffre par bloc, une pièce par claim, neuf tiers géométriques ; son contenu tombe dans le même sac (§6.3) |
+| **coffre horaire** | [CODÉ] | un coffre par bloc, une pièce par claim, neuf tiers géométriques ; un claim vaut hors run et son contenu entre à l'inventaire, pas au sac (`SPEC_COFFRE_HORAIRE.md` §4, A15) |
 
 **La règle qui les tient toutes** [FIXE] : aucune de ces lectures ne touche la norme, les axes ni le mot. Un objet ne mute pas ; un palier ne multiplie rien ; il n'existe pas d'objet « meilleur », il existe des objets autrement faits.
 

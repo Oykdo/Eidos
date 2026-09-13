@@ -1,15 +1,19 @@
 import { useEffect, useMemo } from "react";
 import { useI18n } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store";
-import { cleClaim, coffreDe, PROBA_TIER, SAC_COFFRE, TIERS } from "@/lib/eidos/coffre-horaire.ts";
+import { cleClaim, coffreDe, PROBA_TIER, TIERS } from "@/lib/eidos/coffre-horaire.ts";
 import { tourDe } from "@/lib/eidos/jauge.ts";
 import { VoxelIcon } from "@/components/inventaire/VoxelIcon";
+import { OuvertureCoffre } from "@/components/coffre/OuvertureCoffre";
 
 /**
- * Le coffre de l'heure — une LECTURE (docs/SPEC_COFFRE_HORAIRE.md).
- * Pour la tête suivie et chaque pièce du coffre, montre le coffre que cette pièce ouvrirait :
- * graine, tier, contenu. Rien n'est réclamé ici : réclamer touche l'inventaire, ce sera la
- * PR suivante. Sans tête suivie, la page le dit et n'invente aucune heure — l'horloge est le bloc.
+ * Le coffre de l'heure (docs/SPEC_COFFRE_HORAIRE.md).
+ * Pour la tête suivie et chaque pièce du coffre, montre le coffre que cette pièce ouvrirait —
+ * graine, tier, contenu : une lecture, tout se rejoue depuis la tête publiée. Le bouton
+ * « Ouvrir » réclame pour de vrai (`store.reclamerCoffreHoraire` : le juge, puis l'inventaire),
+ * et `OuvertureCoffre` montre ce que le juge a accepté. Une pièce, un bloc, une fois ; la page
+ * n'offre que la tête suivie. Sans tête suivie, elle le dit et n'invente aucune heure —
+ * l'horloge est le bloc.
  */
 export function CoffreHoraire() {
   const { t } = useI18n();
@@ -79,12 +83,21 @@ export function CoffreHoraire() {
                     {t("coffreh.chance", { p: `1/${Math.round(1 / PROBA_TIER[c.tier - 1]!)}` })} ·{" "}
                     {c.graine.slice(0, 12)}…
                   </p>
+                  {/* Fermé : t places sourdes, le contenu n'est montré qu'à l'ouverture — une politique
+                      d'interface, pas un secret : la graine est là, n'importe qui rejoue le tirage. */}
                   <ul className="mt-2 flex flex-wrap gap-2">
-                    {c.objets.map((o) => (
+                    {c.objets.map((o, i) => (
                       <li key={o.mot} className="flex w-[68px] flex-col items-center gap-0.5">
-                        <VoxelIcon objet={o} size={56} />
+                        {pris ? (
+                          <VoxelIcon objet={o} size={56} />
+                        ) : (
+                          <span
+                            aria-hidden
+                            className="block size-14 rounded-sm bg-fond shadow-[inset_0_0_0_1px_rgb(198_203_209_/_0.14)]"
+                          />
+                        )}
                         <span className="w-full truncate text-center font-mono text-[9.5px] text-sourd">
-                          {o.genre} · {o.age}
+                          {pris ? `${o.genre} · ${o.age}` : `${i + 1}/${c.tier}`}
                         </span>
                       </li>
                     ))}
@@ -108,8 +121,9 @@ export function CoffreHoraire() {
       )}
 
       <p className="mt-4 font-mono text-[11px] leading-relaxed text-sourd/80">
-        {t("coffreh.regle", { n: SAC_COFFRE, k: TIERS })}
+        {t("coffreh.regle", { k: TIERS })}
       </p>
+      <OuvertureCoffre />
     </section>
   );
 }
