@@ -53,6 +53,17 @@
  * pas un réglage : il n'a **pas** été mesuré, et c'est au banc de dire s'il
  * est fréquent.
  *
+ * LIMITE, mesurée le 2026-09-13 (C2 bis, `scripts/banc-r2.ts`) : **elle ne
+ * peut pas rendre payant ce que le moteur ne paie pas.** Quatre variantes de
+ * ses rangs — viser le seuil `pas + portée` plutôt que le contact, ne pas
+ * compter comme exposée une case d'où l'on riposte, et leurs combinaisons —
+ * laissent r(eperon, victoire) entre −0,547 et −0,653 sur l'échantillon
+ * rapide, pour une cible de |r| < 0,30 (§9 ter de `SPEC_TACTIQUE.md`) ; deux
+ * d'entre elles ne changent aucun choix. Arriver au contact est déjà ce
+ * qu'une politique peut faire de mieux pour un mot qui n'a que de
+ * l'initiative : ce qui lui manque est une règle du moteur — la riposte qui
+ * ne demande plus la portée, dette D9 — pas un rang de plus ici.
+ *
  * LIMITE : **elle ne joue qu'un tour d'avance et qu'une unité à la fois.**
  * Pas de formation, pas de garde d'un couloir, pas de sacrifice. `eperon`
  * décide seul de l'ordre (`ordreDePhase`), donc la première unité choisit
