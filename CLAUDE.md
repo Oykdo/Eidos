@@ -60,7 +60,8 @@ labo/               laboratoire pendule-9 hors chaîne (aura, avatar, agrégateu
 veillees/           preuves de veillée déposées (index.json + un fichier par preuve), écrites par veillees.yml
 atelier/            interface web (TanStack Start, React), rejoue la spec en TS ;
                     scripts/deposer-veillee.ts = le juge des preuves dans la CI (logique dans lib/eidos/depot.ts) ;
-                    scripts/banc-tactique.ts = banc du moteur réel, vecteurs gelés, calibration hors CI
+                    scripts/banc-tactique.ts = banc du moteur réel, vecteurs gelés, calibration hors CI ;
+                    scripts/banc-r2.ts = le prix des axes (R2) sur le moteur ET la politique, deux sièges, 440 320 duels hors CI
 .github/workflows/  tests.yml (3 OS × 2 Python + empreintes), chaine.yml (cron
                     horaire), robinet.yml (issues), veillees.yml (issues « veillée » : le juge
                     TypeScript dépose les preuves dans veillees/), courriel.yml (boîte IMAP, minute 37,
@@ -200,9 +201,10 @@ python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 569 tests Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 573 tests Eidos
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 npm run banc-tactique          # calibration tactique complète : 256 duels (~1 s)
+npm run banc-r2                # R2, le prix des axes : 440 320 duels et 1 200 mêlées (~16 min), le juge de C2 bis
 ```
 
 Règles :

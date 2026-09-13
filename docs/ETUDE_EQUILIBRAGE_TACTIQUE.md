@@ -363,3 +363,105 @@ Un détail qui n'engage rien mais qui trompe : la polarité destructive **avanta
 - **Les nuls sont comptés pour une demi-victoire**, comme au §4. À 2,28 % de nuls sur le moteur à PA, cette convention tire mécaniquement toutes les lectures vers 50 % et comprime les écarts d'environ 2 % ; à 6,15 % (variante `PAS_BASE = 1`), elle les comprime de 6 %. Les comparaisons entre moteurs sont donc légèrement conservatrices, jamais exagérées.
 - **Rien n'est rejouable par la CI.** Les scripts vivent dans le scratchpad, hors dépôt : un banc, une copie de `719ca7a`, deux copies à `DIV_PAS` modifié. Aucun fichier de `atelier/` n'a été touché. S'ils doivent engager, ils deviennent un `.test.ts` à vecteurs gelés, ajouté à la main dans `package.json`.
 - **Ces chiffres sont des figures, pas des preuves.** Aucun n'entre dans une feuille, un carnet ou une signature. Un taux de victoire ne garantit rien ; seuls le carnet, la chaîne et les signatures engagent.
+
+---
+
+# Second post-scriptum — C2 : R2 rejouée sur le moteur **et la politique** du dépôt
+
+**Statut :** mesure, **et un banc dans le dépôt** — `atelier/scripts/banc-r2.ts`, `npm run banc-r2`, test CI `banc-r2.test.ts` · **Branche :** `eperon-c2` · **Moteur mesuré :** `main` à `2637c97` (`DIV_PAS = 32`), et la même arborescence à `DIV_PAS = 64` · **Politique :** `ia.ts`, `jouerBataille`, pour les deux camps · **Date :** 2026-09-13
+**Pourquoi ce second post-scriptum :** le §6 bis de `docs/FEUILLE_DE_ROUTE.md` a nommé la faille du premier — trois politiques écrites pour l'occasion ont rendu trois `r(eperon)` pour le même moteur (−0,165, +0,622, −0,310), donc **les cibles du §9 ter mesurent le couple moteur + politique**, et C3 a mis la politique dans le dépôt pour qu'on puisse enfin mesurer *ce* couple. C2 devait re-tarifer `eperon` (`DIV_PAS` 32 → 64, arbitrage A1) et se donnait pour cible `|r| < 0,30` sur le protocole complet, avec pour critère d'abandon une bande de tier qui s'ouvre.
+**Règle de lecture :** inchangée — aucune phrase sans chiffre, aucun résultat négatif caché.
+
+## PS2.0 En sept lignes
+**C2 est tué par sa mesure, et proprement.** `DIV_PAS = 64` ne change rien : `|r|` max **0,640 → 0,657**, bande de tier **29,6 → 29,5 pt**, nuls **0 → 0**, feuilles par mêlée **2 / 9 → 2 / 9** (médiane / max). Les deux cibles de R2 sont, sur ce couple, dans le même état avant et après.
+**Et la prémisse de D2 est fausse sur ce couple.** Le double pas ne rattrape pas l'archer : `arc` corrèle à **+0,591** avec la victoire et `eperon` à **−0,640**. Le premier post-scriptum lisait l'inverse (+0,622 / −0,377) parce que ses politiques donnaient l'initiative au plus grand `eperon` ; dans le moteur, l'initiative est **par camp** (`phase: "coffre"` d'abord), `eperon` n'ordonne qu'à l'intérieur d'un camp.
+**Le prix de `arc`, c'est l'allonge.** Sans elle (`DIV_ALLONGE → ∞`), `r(arc)` tombe de +0,419 à **+0,016** sur l'échantillon rapide ; à `base/4`, +0,272.
+**Le prix de `eperon` n'est nulle part.** Aucune des sept sondes ne le ramène au-dessus de **−0,418** : ni la charge doublée (−0,591), ni l'initiative qu'on lui donne (−0,587), ni une politique qui se couvre avant d'approcher (−0,597), ni un pas plus long (2..6 : −0,418, mais la bande s'ouvre de 26,3 à 33,3 pt). Au tier le plus haut, la pointe `eperon` gagne **3,8 %** de ses duels, la pointe `arc` 43,9 %.
+**La cible (b) tient partout** : quartile haut / quartile bas de `lame+ecu` = **1,04×** dans les deux configurations, contre 3× de plafond.
+**Ce qui reste vrai de D2 :** `PA_PAR_TOUR · pas = 8 > 7`, et `unite.test.ts` l'affirme. Ce qui est faux : que cela coûte quelque chose à `arc`. La règle « le pas le plus long reste sous la portée la plus longue » n'a plus de mesure derrière elle sur ce couple.
+**Le banc est dans le dépôt.** 440 320 duels en ~16 min hors CI ; 15 616 duels et 60 mêlées en ~30 s en CI, calibrés contre les chiffres d'ici.
+
+## PS2.1 Le protocole, et ce qui change par rapport à PS.1
+Même pool que le §4 : 2 000 mots `objetDepuisGraine(sha256d("eq-" + i))`, les quatre âges à tour de rôle, classe par rang (`arme`, `defense`, `accessoire`). Mêmes panels par tier : 120 mots par tier, tirés dans l'ordre de `sha256d("tier-" + i)` (T12 vaut un mot sur 2 048 : la suite est longue, pas aléatoire). Même dalle, l'étage 198 et ses 73 cases libres ; huit distances d'engagement sur la rangée libre y = 1, le coffre en (0,1) et l'Indéchiffré en (d,1). Tout passe par `ouvrirBataille` puis `jouerBataille` — aucune grille, aucune résolution, aucune politique recopiée.
+
+Trois différences, chacune motivée :
+
+| | PS.1 | ici | pourquoi |
+|---|---|---|---|
+| politique | trois, écrites pour le banc | **une**, `ia.ts`, les deux camps | c'est elle que le jeu joue ; le §6 bis de la feuille de route l'exige |
+| initiative | au plus grand `eperon` | **par camp**, comme le moteur ; chaque paire jouée **deux fois**, chacun tenant une fois le coffre | `ouvrirBataille` donne toujours la main au coffre ; `ordreDePhase` n'ordonne qu'un camp. Jouer les deux sièges retire de la mesure le premier coup **et** la case (14,52 pt à PS.5), il ne reste que les axes |
+| adversaires | K = 8 par lot, 24 lots | K = 8 par distance, 8 distances, tirés par empreinte (`adv-i-d-k`) | même volume par mot (128 duels), un seul lot par distance puisqu'une seule politique |
+
+Tailles : **256 000** duels du pool contre lui-même (comptés pour les deux mots), **184 320** duels des panels contre le pool (comptés pour le sujet), **1 200** mêlées 3 contre 3 (équipes tirées du pool, coffre en x = 1, Indéchiffrés en x = 7, rangées 1 à 3, 64 feuilles). Nul = `jouerBataille` rend la main à `TOURS_MAX = 64` phases sans issue, compté une demi-victoire pour chacun, comme au §4. `epuise` (l'arbre vide) compté de même. Tout est entier jusqu'aux corrélations, rendues en millièmes.
+
+## PS2.2 M1 — R2, dans les deux configurations (440 320 duels chacune)
+
+| `DIV_PAS` | pas | pas d'un tour | lame | ecu | eperon | arc | \|r\| max | (a) < 0,30 | Q4/Q1 | (b) < 3× | nuls |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **32** (le moteur) | 2..4 | 4..8 | +0,003 | +0,057 | **−0,640** | **+0,591** | **0,640** | **ROMPUE** | 1,04× | tenue | 0,00 % |
+| **64** (C2, A1) | 2..3 | 4..6 | +0,010 | +0,055 | **−0,657** | **+0,602** | **0,657** | **ROMPUE** | 1,04× | tenue | 0,00 % |
+
+Taux du quartile bas / haut de `lame+ecu` : 46,1 % / 47,9 % à 32, 46,0 % / 48,0 % à 64. Phases par duel 1,352 / 1,354 ; coups par duel 2,30 / 2,29.
+
+**Verdict M1.** La cible (a) est rompue **dans les deux configurations, par les mêmes deux axes, dans le même sens, à 0,017 près**. `DIV_PAS = 64` n'est pas un correctif : il retire à `eperon` un prix qu'il ne convertissait déjà pas — sur 2 000 mots, `eperon ≥ 32` (le seul cas où le pas monte à 3) concerne **7,8 %** du pool (156 mots), et `eperon = 64` (pas 4) n'existe pas — le plus haut `eperon` tiré vaut 56. Le pas est plat en pratique, avant comme après.
+
+**Le signe est l'inverse du premier post-scriptum, et la raison se lit dans le protocole.** PS.2 donnait le siège du premier coup au plus grand `eperon` ; rejoué ici avec **cette** convention et la politique du dépôt (échantillon rapide, un duel par paire), `eperon` reste à **−0,587** et `arc` à +0,235. L'initiative n'était donc pas ce qui portait `eperon` à +0,622 : c'étaient les trois politiques (« posté », « harceleur ») qui tenaient l'archer immobile ou fuyant, là où `ia.ts` le fait **tirer deux fois** depuis sa case.
+
+## PS2.3 M2 — la bande de tier, et la pointe qui survit
+Panels de 120 mots par tier contre le pool, 184 320 duels par configuration, deux sièges.
+
+| `DIV_PAS` | T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10 | T11 | T12 | **bande T1 − T12** |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 32 | 54,9 | 49,7 | 44,4 | 44,6 | 37,9 | 37,3 | 33,4 | 30,9 | 30,5 | 29,5 | 26,2 | 25,3 | **29,6 pt** |
+| 64 | 55,1 | 49,7 | 43,8 | 44,5 | 37,4 | 37,4 | 33,4 | 31,0 | 30,7 | 30,0 | 26,5 | 25,6 | **29,5 pt** |
+
+**Verdict M2.** La bande **ne bouge pas** (0,1 pt sur 29,6, dans le bruit d'un panel de 120). Le critère d'abandon de C2 — « la bande s'ouvre au lieu de se fermer » — ne se déclenche pas au sens strict ; il ne se referme pas non plus, et c'est la cible principale qui n'est pas atteinte. Le malus d'extrémité mesuré à PS.4 (35,2 pt) se retrouve, un peu plus doux avec la politique du dépôt (29,6 pt), et toujours monotone du tier le plus bas au plus haut.
+
+**La pointe qui survit au tier le plus haut** (panel T12, taux de victoire par axe de pointe, `DIV_PAS = 32`, protocole complet) : lame 37,6 % · ecu 20,3 % · eperon **3,8 %** · arc 43,9 %. Sur l'échantillon rapide : 44,2 / 23,4 / **3,1** / 28,9 %. Les chiffres de la docstring de `CHARGE_PAR_CASE` (« 12,33 % » pour `eperon`, « 41 % » pour `arc`, puis 6,62 / 28,98 % à PS.4) sont remplacés par ceux-ci.
+
+## PS2.4 M3 — les nuls et les feuilles
+| `DIV_PAS` | nuls, duels du pool | nuls, panels | mêlées 3v3 : nuls | feuilles par mêlée, médiane | moyenne | max | phases, médiane |
+|---|---|---|---|---|---|---|---|
+| 32 | 0 / 256 000 | 0 / 184 320 | 0 / 1 200 | **2** | 1,77 | **9** | 3 |
+| 64 | 0 / 256 000 | 0 / 184 320 | 0 / 1 200 | **2** | 1,76 | **9** | 3 |
+
+**Verdict M3.** Avec `ia.ts` des deux côtés, **aucune bataille ne reste sans issue** — les 2,28 % de nuls de PS.3 venaient de politiques qui fuyaient ; la politique du dépôt approche toujours (rang 4, `approche`). Le budget de feuilles est très large : 2 coups du coffre en médiane pour une mêlée 3 contre 3, 9 au pire sur 1 200, contre les « 6 à 10 feuilles par bataille » du §4. Un tour à deux coups vaut deux feuilles, et pourtant la mêlée en coûte peu : les Indéchiffrés jouent second, à distance 6, et c'est souvent **eux** qui frappent les premiers — le coffre a approché, et l'échange tourne court.
+
+## PS2.5 Pourquoi — cinq duels lisibles
+Le mot à pointe `eperon` du pool rapide (`lame 13 · ecu 4 · eperon 45 · arc 2`, pas 3, portée 1, tenue 40) contre le mot à pointe `arc` (`2 · 5 · 3 · 54`, pas 2, portée 6, tenue 42), distance 5 :
+- **le rapide tient le coffre** : il avance de 4 cases en deux pas (deux PA, donc aucun coup), s'arrête au contact ; l'archer frappe (22), encaisse la riposte (36 — `eperon` 45 > 3, l'attaquant est à portée 1), frappe encore (22) : le rapide est retiré au tour 1, l'archer garde 6 de tenue ;
+- **l'archer tient le coffre** : deux coups de 31 depuis sa case (base 18, accord +4, **allonge +9**), aucune riposte possible — retiré au tour 1, l'archer n'a pas bougé.
+
+Contre le mot à pointe `lame` (`47 · 2 · 12 · 3`, tenue 36), distance 3 : celui qui joue en premier avance de 2 cases et frappe avec la charge (+8) — 37 contre 36 de tenue pour le rapide, 71 pour la lame : **le premier à frapper gagne, dans les deux sens**. À distance 7, l'archer avance de 2 (charge +8), tire avec l'allonge (35), puis achève (31) avant que la lame ne l'ait touché.
+
+Ce que ces duels disent, et que les corrélations résument : la politique minimise l'`approche` (rang 4) avant l'`exposition` (rang 5), donc un mot à portée 1 **entre dans la portée d'un archer sans pouvoir frapper le même tour**, et l'archer, lui, frappe deux fois sans bouger. Les quatre prix de `eperon` — le pas, le rang de phase, la riposte, la charge — ne pèsent rien face à cela : le pas ne sert qu'à arriver plus vite au contact où l'on est frappé le premier ; le rang de phase ne compte pas en duel ; la riposte exige que l'attaquant soit **dans la portée** du riposteur, donc adjacent quand `arc` est bas, et elle rend un coup de base 18 ; la charge (+4 par case) profite autant à la lame qui approche.
+
+## PS2.6 Sondes d'orientation — où le prix des axes n'est pas (échantillon rapide, 200 mots, 15 616 duels, `DIV_PAS = 32`)
+Une constante ou une ligne changée à la fois, dans un worktree jetable, jamais dans le dépôt. Le témoin est l'échantillon rapide du banc tel qu'il est.
+
+| sonde | lame | ecu | eperon | arc | \|r\| max | Q4/Q1 | bande | ce qu'elle dit |
+|---|---|---|---|---|---|---|---|---|
+| **témoin** | +0,113 | +0,019 | **−0,547** | **+0,419** | 0,547 | 1,12× | 26,3 pt | l'échantillon rapide lit le même moteur que le protocole complet (−0,640 / +0,591), un peu moins fort |
+| sans allonge (`DIV_ALLONGE → ∞`) | +0,210 | +0,190 | −0,425 | **+0,016** | 0,425 | 1,29× | 24,8 pt | **l'allonge est tout le prix de `arc`** ; `eperon` reste le dernier |
+| allonge à `base/4` | +0,159 | +0,092 | −0,524 | +0,272 | 0,524 | 1,20× | 26,7 pt | `arc` passe sous la cible, `eperon` non |
+| `CHARGE_PAR_CASE = 8` | +0,040 | +0,236 | −0,591 | +0,294 | 0,591 | 1,26× | 22,4 pt | doubler la charge **n'aide pas** `eperon` : tout le monde approche avant de frapper |
+| `exposition` avant `approche` (`ia.ts`) | +0,151 | +0,188 | −0,597 | +0,246 | 0,597 | 1,36× | 27,2 pt | se couvrir d'abord n'aide pas non plus ; les batailles finissent toujours (0 nul) |
+| initiative au plus grand `eperon`, un duel par paire | +0,172 | +0,171 | −0,587 | +0,235 | 0,587 | 1,36× | 26,3 pt | **la convention de PS.2 ne sauve pas `eperon`** avec la politique du dépôt |
+| pas 2..6 (`DIV_PAS = 16`) | +0,084 | +0,015 | −0,418 | +0,321 | 0,418 | 1,07× | **33,3 pt** | le mieux pour `eperon`, et la bande s'ouvre de 7 pt |
+| pas 1..5 (`PAS_BASE = 1`, `DIV_PAS = 16`) | +0,010 | −0,095 | −0,449 | **+0,544** | 0,544 | 0,96× | 33,3 pt | `arc` redevient l'axe dominant |
+
+**Lecture.** Aucune constante prise seule ne ramène `eperon` au-dessus de −0,42, et la seule qui s'en approche ouvre la bande de tier. Le prix des axes n'est **ni dans le pas, ni dans la charge, ni dans l'initiative** : ce sont les trois choses que `eperon` achète, et les trois sont sans valeur pour une politique qui approche toujours et frappe dès qu'elle peut. Ce qu'une sonde ne mesure pas, et qu'il faudrait mesurer avant de toucher au moteur : un prix **nouveau** pour `eperon`, ou une politique qui sache dépenser ce qu'il achète — les deux sont des chantiers avec leur mesure, et le second est le moins cher.
+
+## PS2.7 Verdict, et ce qu'il fait à la feuille de route
+- **C2 est tué.** Sa cible (`|r| < 0,30` sur le protocole complet) n'est pas atteinte à `DIV_PAS = 64`, et elle ne l'est pas davantage à 32 : **0,657 contre 0,640**. `DIV_PAS` reste à **32**. A1 est tranché par la mesure, dans le sens contraire de sa recommandation.
+- **D2 est reformulée.** Le fait demeure (`8 > 7`, et le contrôle l'affirme), mais son prix mesuré change de signe : sur le couple du dépôt, `arc` n'est pas rattrapé, il domine (+0,591) ; c'est `eperon` qui n'achète rien (−0,640). La règle « le pas le plus long reste sous la portée la plus longue » n'a plus de mesure derrière elle ; elle reste écrite comme une convention, pas comme un résultat.
+- **Une dette nouvelle, D9 : le prix des axes est renversé.** Deux axes sur quatre sont hors cible, dans les deux sens, et **la cible (a) est plus loin qu'aucune étude ne l'avait vue** (0,640 contre 0,622, 0,365, 0,152 selon les lectures de PS.2).
+- **C4 reste gelé sur le même mot** — « ne pas ancrer, ne pas exporter tant que R2 n'est pas tenue » (A2) — et il ne dépend plus de C2, mais du chantier qui trouvera le prix de `eperon`.
+- **Le banc est livré**, et c'est le seul livrable de code : `banc-r2.ts` rejoue le protocole entier hors CI et un échantillon calibré en CI. La prochaine mesure de R2 coûte une commande, pas une étude.
+
+## PS2.LIMITE
+- **Une politique n'est pas un joueur, mais c'est celle du jeu.** `ia.ts` tient les Indéchiffrés à l'écran ; le coffre est tenu par une main humaine que ce banc ne modélise pas. Un joueur qui tient son archer hors de portée et son rapide en retrait peut rendre d'autres chiffres — le banc mesure ce que le jeu fait jouer, pas ce qu'un joueur pourrait faire.
+- **Les deux sièges effacent l'initiative, à dessein.** Dans le jeu, le coffre joue toujours en premier : un joueur a *toujours* l'initiative contre les Indéchiffrés, quel que soit son `eperon`. La lecture « un siège chacun » est celle qui mesure les axes ; la lecture « le coffre d'abord » mesurerait le joueur.
+- **Un seul étage, une seule rangée, une seule distance de mêlée.** L'étage 198, la rangée y = 1, les mêlées à distance 6. Comme à PS.LIMITE : les valeurs absolues valent sur cette dalle, les **écarts** entre configurations valent davantage.
+- **Les sondes sont des sondes.** 200 mots, 15 616 duels, une modification à la fois : elles orientent, elles ne tranchent pas. Une décision se prendra sur le protocole complet, par `npm run banc-r2` sur la modification proposée.
+- **Ces chiffres sont des figures, pas des preuves.** Aucun n'entre dans une feuille, un carnet ou une signature.

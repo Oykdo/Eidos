@@ -87,16 +87,20 @@ export const TENUE_BASE = MULT_TENUE * COUP_BASE;
  * lui, règle le levier de l'axe, exactement comme `COUP_BASE` règle celui de
  * `lame`.
  *
- * LIMITE, et elle est ouverte : **cette règle est tenue par pas, et rompue
- * par tour.** Un pas plein vaut 4 et la plus longue portée 7, donc `4 < 7` ;
- * mais depuis les points d'action un tour en autorise deux, soit
- * `PA_PAR_TOUR · pas = 8`, et `8 > 7`. Le contrôle de `unite.test.ts` lit un
- * pas et reste vert : il garde la lettre, pas ce qui compte. Deux mesures
- * indépendantes chiffrent le prix — bridée à un seul pas la politique tient
- * `|r| = 0,236`, à deux pas elle monte à `0,588`, contre la cible de 0,30 du
- * §9 ter de `SPEC_TACTIQUE.md`. `DIV_PAS = 64` (pas 2..3, donc `6 < 7`) la
- * rétablirait à 0,255, mais re-tarifer `eperon` est un chantier avec sa
- * mesure, pas une retouche : la constante ne bouge pas sans arbitrage.
+ * LIMITE : **cette règle est tenue par pas, rompue par tour, et sa mesure
+ * a changé de signe.** Un pas plein vaut 4 et la plus longue portée 7, donc
+ * `4 < 7` ; mais un tour en autorise deux, `PA_PAR_TOUR · pas = 8 > 7`, et
+ * `unite.test.ts` l'affirme. Les chiffres ci-dessus (r(arc) = −0,48 à pas
+ * 4..8) viennent de politiques écrites pour la mesure. Rejouée avec la
+ * politique du dépôt (`ia.ts`, `scripts/banc-r2.ts`, 440 320 duels, deux
+ * sièges), la règle ne protège personne : l'archer n'est pas rattrapé, il
+ * domine — r(arc) = **+0,591**, r(eperon) = **−0,640** — et `DIV_PAS = 64`
+ * (pas 2..3, donc `6 < 7`) ne change rien : 0,657 contre 0,640, bande de
+ * tier 29,5 contre 29,6 pt. C2 a été tué par cette mesure le 2026-09-13
+ * (`docs/ETUDE_EQUILIBRAGE_TACTIQUE.md`, second post-scriptum) ; `DIV_PAS`
+ * reste à 32, et la règle reste écrite comme une convention, pas comme un
+ * résultat. Le prix d'`eperon` n'est ni dans le pas, ni dans la charge, ni
+ * dans l'initiative : c'est la dette D9 de la feuille de route.
  */
 export const PAS_BASE = 2;
 export const DIV_PAS = 32;

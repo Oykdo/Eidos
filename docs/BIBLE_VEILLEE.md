@@ -74,7 +74,7 @@ LIMITE codée et assumée : la portée ignore les murs et la ligne de vue. On fr
 | `eperon` | le pas, le rang de phase, la **riposte**, la **charge** | `PAS_BASE + eperon/DIV_PAS` | 2 à 4 pas |
 | `arc` | la portée, la reprise, l'**allonge** | `PORTEE_BASE + arc/DIV_PORTEE` | 1 à 7 cases |
 
-`ecu` n'entre pas dans la résolution du coup : il se payait deux fois, et le lui retirer fait tomber r(ecu, victoire) de +0,59 à +0,14. **Le pas et la portée se règlent ensemble** — le pas le plus long reste sous la portée la plus longue, sinon un archer est rattrapé avant d'avoir tiré (mesuré à pas 4..8 : r(arc) = −0,48) ; `unite.test.ts` le contrôle.
+`ecu` n'entre pas dans la résolution du coup : il se payait deux fois, et le lui retirer fait tomber r(ecu, victoire) de +0,59 à +0,14. **Le pas et la portée se règlent ensemble** — le pas le plus long reste sous la portée la plus longue, sinon un archer est rattrapé avant d'avoir tiré (mesuré à pas 4..8 : r(arc) = −0,48) ; `unite.test.ts` le contrôle par pas, et affirme qu'un tour (deux pas, 8 > 7) la rompt. Remesuré le 2026-09-13 avec la politique du dépôt (`scripts/banc-r2.ts`, 440 320 duels) : l'archer n'est pas rattrapé, il domine — r(arc) = **+0,591**, r(eperon) = **−0,640** — et ramener le pas d'un tour sous la portée (`DIV_PAS = 64`) ne change rien. C'est la dette D9 de la feuille de route ; `DIV_PAS` reste à 32.
 
 ### 2.3 La résolution — zéro dé
 

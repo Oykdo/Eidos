@@ -74,15 +74,20 @@ export const DIV_ALLONGE = 2;
  * le paie en moyenne mais pas à l'extrême : une unité qui n'a que de
  * l'initiative rend un coup de `COUP_BASE`, et ne tue rien. Un bonus en
  * fraction de la base aurait profité d'abord aux grosses `lame` ; un bonus
- * absolu profite proportionnellement plus à qui frappe faible — mesuré, la
- * pointe `eperon` au tier le plus haut passe de 5,85 % à 12,33 % de victoires
- * (×2,1), sans qu'aucun des quatre axes ne sorte de |r| < 0,13.
+ * absolu profite proportionnellement plus à qui frappe faible — mesuré à
+ * l'époque, sur un moteur à drapeaux et des politiques écrites pour le banc,
+ * la pointe `eperon` au tier le plus haut passait de 5,85 % à 12,33 % de
+ * victoires (×2,1), sans qu'aucun des quatre axes ne sorte de |r| < 0,13.
  *
- * LIMITE : 12,33 % reste loin des 41 % de la pointe `arc` au même tier. La
- * charge ne referme pas le trou, elle le réduit de moitié ; ce qui manque à
- * une unité qui n'a que de l'initiative est de pouvoir frapper **puis** se
- * retirer hors d'atteinte, donc un pas qui se dépense en deux temps autour de
- * la frappe. C'est une règle de plus, pas une constante : elle n'est pas ici.
+ * LIMITE, remesurée le 2026-09-13 sur le moteur **et la politique** du dépôt
+ * (`scripts/banc-r2.ts`, 440 320 duels, deux sièges) : au tier le plus haut,
+ * la pointe `eperon` gagne **3,8 %** de ses duels, la pointe `arc`
+ * 43,9 %, la pointe `lame` 37,6 %, la pointe `ecu` 20,3 %. La
+ * charge ne referme rien : doublée (8 par case), r(eperon) passe de −0,547 à
+ * −0,591 sur l'échantillon rapide, parce que tout le monde approche avant de
+ * frapper et que la lame qui approche en profite autant. Ce qui manque à une
+ * unité qui n'a que de l'initiative n'est pas ici, et n'est pas une
+ * constante : c'est la dette D9 de la feuille de route.
  *
  * L'élan se lit sur le déplacement du tour, il vaut donc au plus `pas(u)`,
  * et il s'éteint à la fin de la phase : on ne riposte jamais en charge.

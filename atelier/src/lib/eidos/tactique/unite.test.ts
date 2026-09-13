@@ -114,14 +114,17 @@ describe("unite", () => {
     // Ce que ce contrôle NE gardait pas, et son ancien nom le taisait : depuis
     // `PA_PAR_TOUR = 2`, un tour vaut `2·pas`. La règle de `unite.ts` porte sur
     // la mobilité réelle d'un tour, et à ce niveau elle est **rompue** — 8 > 7.
-    // On l'affirme plutôt que de la taire. Le jour où `DIV_PAS` passe à 64, ce
-    // contrôle tombe : c'est voulu, il faudra alors exiger l'inverse.
+    // On l'affirme plutôt que de la taire. C2 (2026-09-13) a mesuré ce que
+    // `DIV_PAS = 64` (6 < 7) rendrait sur le moteur et la politique du dépôt :
+    // rien — |r| max 0,657 contre 0,640, bande de tier 29,5 contre 29,6 pt
+    // (`scripts/banc-r2.ts`). La constante reste, et l'assertion aussi : le
+    // jour où elle tombe, ce sera sur une mesure, pas sur une lettre.
     assert.equal(pasMax, 4);
     assert.equal(porteeMax, 7);
     assert.equal(PA_PAR_TOUR * pasMax, 8);
     assert.ok(
       PA_PAR_TOUR * pasMax > porteeMax,
-      "un tour tient enfin sous la portée : retourner cette assertion",
+      "un tour tient sous la portée : la mesure de C2 est à refaire avant de retourner cette assertion",
     );
   });
 

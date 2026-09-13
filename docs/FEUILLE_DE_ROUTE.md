@@ -46,6 +46,7 @@ Quatre états, aucun autre. **code** : écrit, testé, rejouable. **spécifié**
 | Parité Python ↔ TS à l'octet | 10 familles, écrites par Python, relues par TS, dans les deux sens en CI | `vecteurs.py`, `vecteurs.test.ts`, job `parite` |
 | Reliques QR, encodeur QR stdlib | 3 + 5 contrôles ; `reliques.json` ne contient effectivement **aucune graine** | `relique.py --test`, `qr.py --test` |
 | Labo pendule-9 | **53 contrôles** = 11 + 11 + 9 + 13 + 9 ; le pont TS → Python compare les exports **octet à octet** | `labo/`, `.github/workflows/labo.yml` |
+| Le prix des axes, sur le couple moteur + politique | **440 320 duels** et 1 200 mêlées par configuration, `ia.ts` des deux côtés, deux sièges ; r(eperon) **−0,640**, r(arc) **+0,591**, bande de tier 29,6 pt, 0 nul ; un échantillon de 15 616 duels rejoué par la CI en ~30 s | `atelier/scripts/banc-r2.ts` (`npm run banc-r2`), `banc-r2.test.ts` |
 
 ### 1.2 L'atelier et le jeu — code
 
@@ -96,7 +97,7 @@ Quatre états, aucun autre. **code** : écrit, testé, rejouable. **spécifié**
 
 ### 1.5 Cassé
 
-Quatre écarts entre ce que le dépôt annonce et ce que le dépôt fait, dont deux fermés le 2026-09-13. Chacun est une dette au §2 : **D1** le bourrage glyphique (fermée), **D2** le pas double, **D4** la racine UTXO conditionnelle, **D6** le sac à deux tailles (fermée). S'y ajoutent trois textes périmés (**D5**) et deux freins absents (**D7**).
+Cinq écarts entre ce que le dépôt annonce et ce que le dépôt fait, dont deux fermés le 2026-09-13. Chacun est une dette au §2 : **D1** le bourrage glyphique (fermée), **D2** le pas double (reformulée), **D4** la racine UTXO conditionnelle, **D6** le sac à deux tailles (fermée), **D9** le prix des axes renversé — mesuré le 2026-09-13 sur le couple moteur + politique. S'y ajoutent trois textes périmés (**D5**) et deux freins absents (**D7**).
 
 ---
 
@@ -110,12 +111,21 @@ Quatre écarts entre ce que le dépôt annonce et ce que le dépôt fait, dont d
 **Coût.** ~20 lignes Python, ~15 TS, **2 contrôles `doit_echouer`** (un par implémentation), un vecteur partagé de plus dans `vecteurs.json`. Vérifier d'abord que les 47 sorties publiées, les planches de reliques et les QR déjà émis encodent tous un 27ᵉ glyphe nul — ils le font, `addr_encode` bourre à zéro ; c'est le point à contrôler avant de fusionner.
 **Fermée par C1 (§4) :** le refus est dans les **trois** décodeurs d'adresse, pas deux — le troisième, `decoder` (`robinet.py`), est l'entrée réelle des adresses tapées par les joueurs. Et la dette était plus large que son énoncé : le vecteur `bourrage_refuse` de `vecteurs.json` forçait le 27ᵉ glyphe entier à `✚✚✚`, donc il était refusé par la **somme de contrôle**, pas par le bourrage — un témoin qui ne témoignait pas de sa règle. Il ne change plus que la 3ᵉ figure.
 
-### D2 — « Le pas le plus long reste sous la portée la plus longue » est rompue par tour
+### D2 — « Le pas le plus long reste sous la portée la plus longue » est rompue par tour — **REFORMULÉE le 2026-09-13**
 
 **Le fait.** Un pas plein vaut 4, la plus longue portée 7 : `4 < 7`. Mais `PA_PAR_TOUR = 2`, donc `2 × 4 = 8 > 7`. Le contrôle de `unite.test.ts:105` lit **un** pas et reste vert : il garde la lettre, pas ce qui compte.
 **Le prix, mesuré.** Sur 660 288 duels par configuration : `|r|` max **0,622** (eperon +0,622, arc −0,377) contre **0,098** sur un témoin `719ca7a` recopié — l'écart est celui du moteur, pas de la mesure. Bride « 2 frappes / 1 pas » : **0,236, tenue**. Bride « 1 frappe / 2 pas » : **0,588, rompue**. La cible du §9 ter est **0,30**. La seconde moitié de R2 est **tenue** : quartile haut/bas de `lame+ecu` = **0,82×** pour un plafond de 3×.
 **Le correctif connu.** `DIV_PAS = 64` (pas 2..3, donc `6 < 7`) rétablit **0,255**.
+**Ce que C2 a mesuré (2026-09-13).** Les chiffres ci-dessus viennent de trois politiques écrites pour la mesure. Sur le couple **moteur + politique du dépôt** (`ia.ts`, `scripts/banc-r2.ts`, 440 320 duels par configuration, deux sièges), le prix change de signe : `arc` n'est pas rattrapé, il domine (**+0,591**), et c'est `eperon` qui n'achète rien (**−0,640**). `DIV_PAS = 64` ne change rien : `|r|` max **0,657 contre 0,640**, bande de tier **29,5 contre 29,6 pt**, 0 nul dans les deux cas. Le fait demeure (`8 > 7`, `unite.test.ts` l'affirme) ; sa conséquence annoncée — « un archer rattrapé n'a jamais tiré » — n'a plus de mesure derrière elle. La dette qui reste est **D9**, et `DIV_PAS` reste à 32.
 **Coût.** Une constante, et **tout le reste de la mesure** : `eperon` perd un de ses quatre prix, la bande de tier et le taux de nuls sont à remesurer sur le protocole complet. C'est un chantier (§4, C2), pas une retouche — et il est bloquant pour publier l'échelle de tiers, la forge, et les puits P4/P5.
+
+### D9 — Le prix des axes est renversé : `eperon` n'achète rien, `arc` achète tout
+
+**Le fait.** Sur le couple moteur + politique du dépôt, R2 (a) est rompue par deux axes sur quatre, dans les deux sens : r(eperon, victoire) = **−0,640**, r(arc) = **+0,591**, contre une cible de 0,30 (`ETUDE_EQUILIBRAGE_TACTIQUE.md`, second post-scriptum). Au tier le plus haut, la pointe `eperon` gagne **3,8 %** de ses duels, la pointe `arc` 43,9 % (panel T12, protocole complet). R2 (b) tient : quartile haut / bas de `lame+ecu` = 1,04×.
+**Pourquoi.** `ia.ts` minimise l'`approche` avant l'`exposition` : un mot à portée 1 entre dans la portée d'un archer sans pouvoir frapper le même tour, et l'archer tire deux fois sans bouger, avec l'allonge (`+base/2`) et sans riposte. Les quatre prix d'`eperon` — le pas, le rang de phase, la riposte, la charge — ne pèsent rien dans ce jeu-là : sans allonge, r(arc) tombe à +0,016 mais r(eperon) reste à −0,425 ; la charge doublée, l'initiative rendue au plus grand `eperon`, une politique qui se couvre d'abord, ne le remontent pas au-dessus de −0,42 ; un pas 2..6 le porte à −0,418 et ouvre la bande de tier de 7 pt.
+**Ce que ça coûte aujourd'hui.** Rien au consensus, rien à la chaîne. Ce qui est bloqué, c'est ce que A2 gèle tant que R2 n'est pas tenue : ancrer, exporter, publier l'échelle de tiers, la forge, P4 et P5. Et un marché (§9 bis de `SPEC_TACTIQUE.md`) où tout le monde voudrait le même profil — `arc` haut, `eperon` nul.
+**Le correctif.** Il n'est pas connu, et il n'est pas dans une constante : les sept sondes le disent. Deux directions, chacune un chantier avec sa mesure : une **politique** qui sache dépenser ce qu'`eperon` achète (approcher **et** frapper dans le même tour, ou refuser d'entrer dans une portée d'où l'on ne frappe pas), ou un **prix nouveau** pour `eperon` — voir C2 bis. La mesure coûte une commande : `npm run banc-r2`.
+**Coût.** Une décision d'auteur (A16), puis un chantier ; le banc est déjà là.
 
 ### D3 — Les mesures qui justifient les constantes ne sont pas dans le dépôt
 
@@ -157,7 +167,7 @@ Questions fermées. La recommandation engage le rédacteur de cette feuille, pas
 
 | # | Question | Recommandation | Ce qu'elle coûte |
 |---|---|---|---|
-| **A1** | `DIV_PAS` passe-t-il de 32 à 64 (pas 2..3) pour rétablir R2 ? | **Oui**, mais dans un chantier avec sa mesure complète, jamais comme retouche | `eperon` perd un de ses quatre prix ; `\|r\|` 0,588 → 0,255 ; toute la calibration (bande de tier, nuls, feuilles par bataille) est à remesurer sur 660 288 duels |
+| **A1** | `DIV_PAS` passe-t-il de 32 à 64 (pas 2..3) pour rétablir R2 ? | **TRANCHÉ PAR LA MESURE le 2026-09-13 : non.** Accordé par l'auteur, mesuré dans C2 sur le couple moteur + politique du dépôt : `\|r\|` max 0,640 → 0,657, bande de tier 29,6 → 29,5 pt, 0 nul. Le pas est plat en pratique (7,8 % des mots ont `eperon ≥ 32`, aucun n'a 64) | `DIV_PAS` reste à 32 ; la dette devient D9, et la question suivante est A16 |
 | **A2** | La bataille est-elle jouable avant que R2 soit tenu ? | **Oui pour la jauge, non pour ce qui compte** : brancher le moteur sur une route libre ; ne rien ancrer, ne rien exporter, ne publier ni échelle de tiers ni forge | Un chantier de plus, et l'aveu écrit que les tiers ne sont pas publiés |
 | **A3** | D3 — arbre de la Veillée à 64 feuilles ou 256 ? | **64** | 256 exige le Web Worker (construction ~5 s contre 1,3–1,6 s) pour un gain que 6 à 8 batailles par run ne réclament pas |
 | **A4** | D4 — la graine connue d'avance : (a) l'assumer, (b) commit-reveal, (c) une bataille ancrée par jour ? | **(a) + (c)**, documenté en LIMITE | (b) ajoute un abandon de dernier révélateur pour peu de gain ; (a) admet que la journée se simule hors ligne |
@@ -171,6 +181,7 @@ Questions fermées. La recommandation engage le rédacteur de cette feuille, pas
 | **A12** | Corrige-t-on le tirage (`paqueter`, 3,48 % de mots hors sphère, 32,0 % hors image) ? | **Oui, dans une PR séparée de l'échelle** | Six vecteurs gelés à regeler, et `vecteurs.json` à refaire ; fait après l'échelle, le regel devient illisible |
 | **A13** | Le canal courriel du robinet : on l'active ou on le retire ? | **L'activer** (poser `EIDOS_ROBINET_COURRIEL`) ou retirer la mention publique | `etat.json` publie `"courriel": null` : un canal annoncé qui n'existe pas est un texte qui promet plus que le code |
 | **A14** | Scelle-t-on la première relique ? | **Oui, une seule**, et publier la planche | `reliques.json` est vide : toute la machinerie (3 + 5 contrôles) est codée et n'a jamais servi ; une relique met à l'épreuve `--sceller`, `--animer` et le statut publié |
+| **A16** | Où va le prix d'`eperon` (D9) : dans la **politique** (`ia.ts` approche et frappe dans le même tour, ou refuse d'entrer dans une portée d'où elle ne frappe pas), dans un **prix nouveau** du moteur (un pas fractionné autour de la frappe, une riposte qui ne demande plus la portée), ou nulle part (assumer qu'`eperon` est l'axe du rang de phase en mêlée, et le dire) ? | **La politique d'abord** : c'est le seul des trois qui ne touche ni au moteur, ni aux vecteurs gelés, ni à la parité ; et c'est ce que le jeu fait jouer. Mesurer sur le protocole complet avant de conclure | Un chantier (C2 bis) avec `npm run banc-r2` comme juge ; la cible reste `\|r\|` < 0,30 sur les quatre axes |
 | **A15** | `SAC_COFFRE` : 81, ou 27 assumé ? | **TRANCHÉ le 2026-09-13 : ni l'un ni l'autre — dire ce que le code fait.** Un claim par pièce et par bloc, pris entier, rien de perdu ; la constante et le `reclamer()` mort sont retirés. Un vrai plafond, s'il vient, sera une règle neuve avec son `doit_echouer` | Rien ne borne la rafale rétroactive hors « une pièce, un bloc » ; la page n'offre que la tête suivie, et c'est une politique d'interface, dite comme telle |
 
 ---
@@ -185,12 +196,20 @@ Un chantier = une branche = une PR, jamais deux à la fois. Chacun porte **sa ci
 **Cible tenue.** Une adresse de 20 octets a **exactement une** écriture glyphique acceptée, des deux côtés, contre 4 avant ; les trois autres sont refusées (« bourrage du 27e glyphe … au lieu de 00 » côté Python, « Bourrage du 27ᵉ glyphe non nul » à l'atelier). `utxo.py` 15 → 16, `robinet.py` 14 → 15, `glyphs.test.ts` + 1. `vecteurs.json` porte `bourrage_refuse` (bourrage seul : mêmes 160 bits, même somme) et `controle_refuse` (somme seule) — chaque refus par sa règle, relu des deux côtés.
 **Ce qui l'aurait tué.** Une adresse déjà publiée qui ne passe pas le refus. Vérifié avant de livrer : `etat.json` et `mempool.json` publient en hexadécimal, `reliques.json` est vide, et l'unique suite de glyphes de `genesis.json` est le condensat du bloc de genèse, pas une adresse. Aucun format, aucune empreinte, pas de réinitialisation.
 
-### C2 — Re-tarifer `eperon` (dette D2) — **bloquant pour tout le reste du jeu**
+### C2 — Re-tarifer `eperon` (dette D2) — **TUÉ le 2026-09-13**
 
-**On livre.** `DIV_PAS` arbitré (A1), le contrôle de `unite.test.ts` réécrit sur `PA_PAR_TOUR · pas` et non sur `pas`, et le banc du chantier.
-**Cible.** `|r|` par axe **< 0,30** et quartile haut/bas de `lame+ecu` **< 3×**, sur le protocole complet (660 288 duels par configuration, deux sens, trois politiques). Aujourd'hui : 0,622 et 0,82×.
-**Ce qui le tue.** Le pas 2..3 fait remonter les duels non conclus au-dessus de ce que le budget de feuilles absorbe (mesuré aujourd'hui : médiane 5 coups, max 11 sur 1 200 mêlées 3v3) ; ou la bande de tier s'ouvre au lieu de se fermer — auquel cas le prix des axes n'est pas dans le pas, et il faut le chercher ailleurs avant d'y toucher.
-**Coût.** Une constante, un banc, une remesure complète ; ne débloque pas seulement le moteur mais **l'échelle de tiers, la forge, P4 et P5**.
+**On livrait.** `DIV_PAS` arbitré (A1), le contrôle de `unite.test.ts` réécrit sur `PA_PAR_TOUR · pas` et non sur `pas`, et le banc du chantier.
+**Cible.** `|r|` par axe **< 0,30** et quartile haut/bas de `lame+ecu` **< 3×**, sur le protocole complet (660 288 duels par configuration, deux sens, trois politiques). Avant : 0,622 et 0,82×.
+**Ce qui l'a tué.** Ni les nuls, ni les feuilles, ni la bande de tier — **la cible elle-même**. Mesuré sur le moteur et **la politique du dépôt** (`ia.ts`, ce que le §6 bis exigeait), 440 320 duels et 1 200 mêlées par configuration, deux sièges : `|r|` max **0,640 à `DIV_PAS = 32`, 0,657 à 64** ; bande de tier 29,6 → 29,5 pt ; nuls 0 → 0 ; feuilles par mêlée 2 en médiane, 9 au pire, dans les deux cas. Et le signe est l'inverse de la prémisse : `eperon` **−0,640**, `arc` **+0,591**. Le pas n'est pas le prix des axes ; le retirer à `eperon` ne rend rien à personne.
+**Ce qui reste.** Le banc, dans le dépôt : `atelier/scripts/banc-r2.ts` rejoue le protocole entier hors CI (`npm run banc-r2`, ~16 min) et un échantillon calibré de 15 616 duels en CI (`banc-r2.test.ts`, ~30 s). `DIV_PAS` reste à 32 ; `unite.test.ts` continue d'affirmer `8 > 7` ; les docstrings de `unite.ts` et `types.ts` disent ce qui a été mesuré. À noter pour qui rouvrirait la constante : à `DIV_PAS = 64`, le contrôle du détour de `bataille.test.ts` (« l'élan est le coût du chemin ») pose un mot à `eperon = 64` qui doit parcourir 4 cases en un pas — il tombe, et c'est le pas qu'il faudrait lui rendre, pas le mur qu'il faudrait déplacer (relecture du 2026-09-13). La dette devient **D9**, la question **A16**, le chantier **C2 bis**.
+**Coût.** Une mesure : deux configurations complètes, sept sondes, aucune constante changée.
+
+### C2 bis — Le prix d'`eperon` (dette D9) — **bloquant pour tout le reste du jeu**
+
+**On livre.** La sortie de A16, mesurée : d'abord la politique — `ia.ts` apprend à approcher **et** frapper dans le même tour quand c'est possible, et à ne pas entrer dans une portée d'où elle ne frappe pas — puis, seulement si cela ne suffit pas, un prix nouveau du moteur.
+**Cible.** `|r|` **< 0,30** sur les **quatre** axes, protocole complet de `banc-r2.ts` (440 320 duels, deux sièges), la cible (b) toujours tenue, la bande de tier qui ne s'ouvre pas au-delà de 29,6 pt, 0 nul.
+**Ce qui le tue.** Une politique qui tient la cible mais rend des batailles sans issue (les nuls remontent au-dessus de ce que 64 feuilles absorbent), ou qui ne la tient qu'en fuyant — auquel cas le prix est dans le moteur, et c'est la seconde direction qu'il faut mesurer avant d'y toucher.
+**Coût.** `ia.ts` et son test, une remesure complète par variante (~16 min chacune), aucune constante, aucun vecteur gelé. Débloque ce que C2 devait débloquer : **l'échelle de tiers, la forge, P4 et P5**.
 
 ### C3 — Le banc dans le dépôt (dette D3)
 
@@ -203,7 +222,7 @@ Un chantier = une branche = une PR, jamais deux à la fois. Chacun porte **sa ci
 **On livre.** Le rendu de grille sur le socle `components/canvas/` existant, une route, les clés i18n FR/EN, et le branchement Veillée (feuilles = coups, sac, permadeath selon A5).
 **Cible.** Un duel se joue de bout en bout depuis une route ; **0 clé i18n vide**, FR et EN aux mêmes clés ; une bataille consomme **6 à 10 feuilles** sur les 64 de l'arbre, mesuré sur le bot et non promis.
 **Ce qui le tue.** La bataille dépasse le budget de feuilles (une run ne tient plus 6 à 8 batailles), ou le rendu impose une dépendance nouvelle — le socle actuel tient à 18 dépendances d'exécution, et une scène de plus n'en justifie aucune.
-**Coût.** 9 fichiers, 1 100 à 1 700 lignes selon le découpage §10 de la spec, dont ~40 % de tests. **Ne pas ancrer, ne pas exporter tant que C2 n'est pas vert** (A2).
+**Coût.** 9 fichiers, 1 100 à 1 700 lignes selon le découpage §10 de la spec, dont ~40 % de tests. **Ne pas ancrer, ne pas exporter tant que R2 n'est pas tenue** (A2) — ce n'est plus C2 qui la tiendra, c'est C2 bis.
 
 ### C5 — La première relique et la première preuve de veillée
 
@@ -304,6 +323,7 @@ reste lisible.
 | **Pages** (`fa1fa58`) | l'atelier est **enfin publié**. Le filet de garde de la racine masquait son propre diagnostic : il faisait 1 778 octets, exactement ce que le site servait |
 | **l'ouverture du coffre de l'heure** (2026-09-13) | A15 tranché, **D6 fermée**. `OuvertureCoffre.tsx` : un `<dialog>` natif, zéro dépendance, qui montre exactement ce que le juge a accepté ; l'inventaire surligne les objets neufs ; la page ne montre le contenu qu'une fois le coffre ouvert (politique d'interface, la graine reste affichée). `coffre-horaire.test.ts` 5 → 6 contrôles, `sac_places` retiré de `vecteurs.json` |
 | **C1, le bourrage du 27ᵉ glyphe** (2026-09-13) | **D1 fermée.** Une adresse n'a plus qu'une écriture, refusée sinon par les trois décodeurs (`utxo.py`, `robinet.py`, `glyphs.ts`) ; `vecteurs.json` porte un refus par règle (`bourrage_refuse`, `controle_refuse`). `utxo.py` 15 → 16, `robinet.py` 14 → 15, atelier 568 → 569 ; `eonis.py` intact, aucune empreinte ne bouge |
+| **C2, tué par sa mesure** (2026-09-13) | Le banc du chantier est dans le dépôt (`scripts/banc-r2.ts`, `npm run banc-r2`, test CI) et il a tué C2 : sur le couple moteur + politique, `DIV_PAS = 64` rend `\|r\|` max 0,657 contre 0,640, bande de tier 29,5 contre 29,6 pt. Et le signe de D2 était le mauvais : `eperon` −0,640, `arc` +0,591. **D2 reformulée, A1 tranché (non), D9 ouverte, A16 posée, C2 bis écrit.** `DIV_PAS` reste à 32, aucune constante ne bouge ; atelier 569 → 573 tests |
 
 **Une dette est morte le même jour** et n'apparaît donc plus au §2 : le sac
 annonçait 27 places quand `SAC_PLACES` en vaut 81 (`8f23973`). Le reste,
