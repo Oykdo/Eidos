@@ -9,7 +9,7 @@
 ## 0. Eidos aujourd'hui, en cinq lignes
 
 1. Une **chaîne** qui tourne : émission bornée sans halving (`R(h) = a + (a/2)·cos(2π(h−h₀)/T)`, `T = 1008`, `h₀ = 492`), quatre âges, **2 096 640 blocs**, **62 899 200 EIDL**, **239,18 ans** à un bloc par heure. Consensus fédéré à sept validateurs, signatures par hachage pur, aucune courbe elliptique. Rejeu local : **98 blocs revalidés, aucun refus**, hauteur 97.
-2. Un **atelier** qui rejoue la spec à l'octet en TypeScript : **566 tests, 118 suites, 0 échec**, 77 fichiers `.test.ts` tous listés dans `package.json`, parité Python ↔ TS contrôlée par `vecteurs.json` (10 familles) dans les deux sens en CI.
+2. Un **atelier** qui rejoue la spec à l'octet en TypeScript : **567 tests, 119 suites, 0 échec**, 78 fichiers `.test.ts` tous listés dans `package.json`, parité Python ↔ TS contrôlée par `vecteurs.json` (10 familles) dans les deux sens en CI.
 3. Un **jeu** dont la jauge est hors feuille et dont seuls les sceaux et les preuves exportées engagent : la Tour, la Veillée (arbre XMSS de 64 feuilles, une clé signe une fois et c'est la vie), et depuis peu un **moteur tactique au tour par tour** — 95 contrôles, 77 refus, zéro dé.
 4. Ce qui manque n'est pas du code, c'est du **branchement et du prix** : le moteur tactique, `tiers.ts` et `lignee.ts` n'ont aucun importateur hors de leurs tests ; `reliques.json` et `veillees/index.json` sont vides ; l'eidôlon n'achète encore rien.
 5. Ce qui est faux est **documenté et chiffré** : une adresse a quatre écritures glyphiques valides au lieu d'une, le pas double dépasse la portée la plus longue, et deux documents de référence annoncent des compteurs périmés.
@@ -51,7 +51,7 @@ Quatre états, aucun autre. **code** : écrit, testé, rejouable. **spécifié**
 
 | Sujet | Le chiffre |
 |---|---|
-| Suite complète | **566 tests, 118 suites, 0 échec** ; `typecheck` vert ; 77 `.test.ts` sous `src`, **77 listés** dans `package.json` (aucun test orphelin) |
+| Suite complète | **567 tests, 119 suites, 0 échec** ; `typecheck` vert ; 77 `.test.ts` sous `src` + 1 sous `scripts/` (le banc, C3), **78 listés** dans `package.json` (aucun test orphelin) |
 | Six lois gelées | `conservation, groupe, doxa, sceau, epoques, resonance`, dans cet ordre, 7 contrôles ; `integrite.ts` lève au chargement si `NORME !== ATOMES` ; la loi 6 vérifie explicitement qu'il n'existe **pas** de champ `bonus` |
 | Somme des quatre axes | **64, toujours** : répartition au plus fort reste sur `COMBAT_BUDGET`, l'archétype **permute** et ne multiplie pas ; **400 000 objets tirés, 0 violation, 0 axe négatif** |
 | Zéro dé | `Math.random` : **une seule occurrence** dans tout `atelier/src`, dans le texte d'un docstring qui l'interdit. Les horloges sont des paramètres injectables (`ts = Date.now()`) |
@@ -194,10 +194,9 @@ Un chantier = une branche = une PR, jamais deux à la fois. Chacun porte **sa ci
 
 ### C3 — Le banc dans le dépôt (dette D3)
 
-**On livre.** Un banc réduit à vecteurs gelés dans `atelier/scripts/`, et un `.test.ts` qui compare ses sorties à des seuils écrits.
-**Cible.** Les quatre constantes du moteur (`COUP_BASE`, `MULT_TENUE`, `CHARGE_PAR_CASE`, `DIV_PAS`) ont chacune un chiffre **rejoué par la CI en moins de 60 s**, et un écart de plus de 10 % avec le banc complet rend le test rouge.
-**Ce qui le tue.** Aucun échantillonnage sous 60 s ne reproduit les chiffres publiés à mieux de 10 % : le banc réduit serait alors un faux témoin, et il vaut mieux ne rien avoir qu'un contrôle qui ment. Repli déclaré : un script de nuit à la manière de `veillee-bot`, hors CI, avec ses chiffres publiés à la main.
-**Coût.** Un script, un test, deux entrées à la main dans `package.json` et `CLAUDE.md` §2.
+**Fait le 2026-09-11.** `atelier/scripts/banc-tactique.ts` rejoue 128 duels sur le moteur et la politique réels, depuis 32 objets et des positions gelés. Sa calibration complète, hors CI, en rejoue 256 : coup **43 865**, tenue **1 230**, charge **3 467**, pas **4 125** milli-unités ; le témoin est à 2,1 %, 2,8 %, 2,8 % et 0 % de ces lectures.
+**Cible tenue.** Les quatre constantes du moteur (`COUP_BASE`, `MULT_TENUE`, `CHARGE_PAR_CASE`, `DIV_PAS`) ont chacune un chiffre **rejoué par la CI en moins de 60 s** ; un écart de plus de 10 % avec la calibration complète rend le test rouge. `npm run banc-tactique` la reproduit hors CI en ~1 s.
+**Ce qui l'aurait tué.** Aucun échantillonnage sous 60 s ne reproduit la calibration complète à mieux de 10 % : le banc réduit aurait alors été un faux témoin. Ce n'est pas le cas.
 
 ### C4 — Brancher le moteur tactique (PR 4 et 5 de `SPEC_TACTIQUE.md`)
 
