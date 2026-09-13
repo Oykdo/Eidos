@@ -342,6 +342,15 @@ Deux cibles à tenir, à vérifier à chaque changement du moteur :
 - **|r| par axe sous 0,30** entre la valeur d'un axe et le taux de victoire ;
 - **rapport quartile haut / quartile bas de `lame+ecu` sous 3×** (il était à 19×).
 
+**Dans quelle convention, et par quoi.** Les cibles mesurent le couple **moteur + politique** — trois politiques écrites
+pour un banc ont rendu trois `r(eperon)` pour le même moteur. Depuis C3 la politique est celle du dépôt (`ia.ts`) et le
+banc aussi : `atelier/scripts/banc-r2.ts`, `npm run banc-r2`, 440 320 duels, **chaque paire jouée deux fois, chacun
+tenant une fois le coffre** — l'initiative est par camp dans le moteur, et jouer les deux sièges retire de la mesure le
+premier coup et la case. Mesuré le 2026-09-13 (C2, `ETUDE_EQUILIBRAGE_TACTIQUE.md`, second post-scriptum) : (b) est
+tenue (1,04×) ; (a) est **rompue par deux axes, dans les deux sens** — `eperon` **−0,640**, `arc` **+0,591** — et
+`DIV_PAS = 64` n'y change rien (0,657). Le prix des axes n'est pas dans le pas : dette D9, question A16, chantier C2 bis
+de la feuille de route.
+
 Deux corrections mineures tombées de la même mesure :
 - la **rareté est presque une constante** — proximité au catalogue entre 78 et 100 sur 2 000 objets, σ 2,67,
   et deux des cinq paliers de `RARETES` sont inatteignables. À reprendre si la rareté doit servir au marché ;
