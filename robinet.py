@@ -62,7 +62,8 @@ def sha(b): return hashlib.sha256(b).digest()
 
 def decoder(symboles: str):
     """Renvoie l'adresse de 20 octets, ou leve ValueError.
-    N'accepte que les figures : tout autre caractere fait echouer."""
+    N'accepte que les figures : tout autre caractere fait echouer. Meme
+    refus que utxo.addr_decode : une adresse n'a qu'une ecriture."""
     groupes = [g for g in symboles.split() if g != "|"]
     if len(groupes) != 31:
         raise ValueError(f"{len(groupes)} symboles au lieu de 31")
@@ -79,8 +80,12 @@ def decoder(symboles: str):
         b = "".join(format(c, "06b") for c in cs)[: n * 8]
         return bytes(int(b[i:i + 8], 2) for i in range(0, n * 8, 8))
 
-    # les 27 premiers glyphes portent l'adresse (162 bits, dont 2 de bourrage),
-    # les 4 derniers la somme de controle (24 bits, exactement)
+    # les 27 premiers glyphes portent l'adresse (162 bits, dont 2 de bourrage
+    # qui doivent etre nuls : la somme de controle ne les voit pas, et sans ce
+    # refus la meme adresse aurait quatre ecritures), les 4 derniers la somme
+    # de controle (24 bits, exactement)
+    if codes[26] & 3:
+        raise ValueError(f"bourrage du 27e glyphe {codes[26] & 3:02b} au lieu de 00")
     a20, ctrl = octets(codes[:27], 20), octets(codes[27:], 3)
     if sha(sha(a20))[:3] != ctrl:
         raise ValueError("somme de controle invalide")
@@ -392,7 +397,27 @@ def _tests():
     # une reference de message n'est jamais inscrite deux fois, quel que soit le canal
     file = {"demandes": [{"type": "robinet", "etat": "servie", "ref": "abcd"}]}
     assert deja_par_ref(file, "abcd") and not deja_par_ref(file, "efgh") and not deja_par_ref(file, None)
-    print("ok : 14 controles robinet")
+    # une adresse n'a qu'une ecriture : le vecteur partage se lit, ses trois
+    # autres ecritures (bourrage du 27e glyphe non nul) sont refusees, et la
+    # somme de controle reste jugee apres — meme refus que utxo.addr_decode
+    with open(os.path.join(HERE, "vecteurs.json"), encoding="utf-8") as f:
+        g = json.load(f)["glyphes"]
+    assert decoder(g["encodee"]) == bytes.fromhex(g["adresse"])
+    assert extraire("merci\n" + g["encodee"] + "\nvoila") == bytes.fromhex(g["adresse"])
+    charge, controle = g["encodee"].split("  |  ")
+    groupes = charge.split(" ")
+    for fig in FIGURES[1:]:
+        autre = " ".join(groupes[:26] + [groupes[26][:2] + fig]) + "  |  " + controle
+        try:
+            decoder(autre); raise AssertionError("bourrage non nul accepte")
+        except ValueError as e:
+            assert "bourrage" in str(e), e
+    altere = FIGURES[(INDEX[controle[0]] + 1) % 4] + controle[1:]
+    try:
+        decoder(charge + "  |  " + altere); raise AssertionError("controle faux accepte")
+    except ValueError as e:
+        assert "controle" in str(e), e
+    print("ok : 15 controles robinet")
 
 
 if __name__ == "__main__":

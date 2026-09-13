@@ -34,7 +34,15 @@ function octetsDepuis(codes: number[], n: number): Uint8Array {
   return o;
 }
 
-export function decoderGlyphes(saisie: string): Uint8Array {
+/**
+ * Lit les 31 codes d'une adresse écrite : 27 glyphes de charge, 4 de somme,
+ * trois figures chacun. Une adresse de 20 octets n'a qu'une écriture : les
+ * 27 glyphes portent 162 bits pour 160, et les deux bits de queue du 27ᵉ
+ * doivent être nuls — la somme de contrôle ne les voit pas, et sans ce refus
+ * la même adresse s'écrivait de quatre façons. Même refus que `addr_decode`
+ * (utxo.py) et `decoder` (robinet.py) ; `vecteurs.json` en porte le témoin.
+ */
+function lireCodes(saisie: string): number[] {
   const groupes = saisie
     .trim()
     .split(/\s+/)
@@ -53,7 +61,14 @@ export function decoderGlyphes(saisie: string): Uint8Array {
     }
     codes.push(c);
   }
-  return octetsDepuis(codes, 20);
+  if ((codes[26]! & 3) !== 0) {
+    throw new Error("Bourrage du 27ᵉ glyphe non nul — une adresse n'a qu'une écriture.");
+  }
+  return codes;
+}
+
+export function decoderGlyphes(saisie: string): Uint8Array {
+  return octetsDepuis(lireCodes(saisie).slice(0, 27), 20);
 }
 
 export function encoderAdresse(a20: Uint8Array): string {
@@ -63,24 +78,7 @@ export function encoderAdresse(a20: Uint8Array): string {
 }
 
 export function verifierAdresse(saisie: string): { a20: Uint8Array; hexa: string } {
-  const groupes = saisie
-    .trim()
-    .split(/\s+/)
-    .filter((g) => g !== "|");
-  if (groupes.length !== 31) {
-    throw new Error(`${groupes.length} symboles au lieu de 31.`);
-  }
-  const codes: number[] = [];
-  for (const g of groupes) {
-    const f = [...g];
-    if (f.length !== 3) throw new Error("Ce n'est pas une adresse Eidos.");
-    let c = 0;
-    for (const ch of f) {
-      if (!(ch in INV)) throw new Error("Ce n'est pas une adresse Eidos.");
-      c = (c << 2) | INV[ch]!;
-    }
-    codes.push(c);
-  }
+  const codes = lireCodes(saisie);
   const a20 = octetsDepuis(codes.slice(0, 27), 20);
   const ctrl = octetsDepuis(codes.slice(27), 3);
   const attendu = sha256d(a20).slice(0, 3);

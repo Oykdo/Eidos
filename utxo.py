@@ -72,10 +72,29 @@ def addr_encode(a20: bytes) -> str:
 
 
 def addr_decode(s: str) -> bytes:
-    """Rejette toute adresse dont le controle ne concorde pas."""
+    """Rejette toute adresse dont le controle ne concorde pas, et toute
+    ecriture qui n'est pas LA sienne : 27 glyphes de charge, 4 de controle,
+    trois figures chacun, et les deux bits de bourrage du 27e nuls. Une
+    adresse de 20 octets n'a qu'une ecriture (proposition 3) ; sans ce refus,
+    les quatre figures en 3e position du 27e glyphe donnaient quatre ecritures
+    de la meme adresse, que la somme de controle ne distingue pas.
+    eonis.decode_glyphs, gele, jette la queue : c'est ici qu'on la refuse."""
     corps, _, ctrl = s.partition("|")
-    a20 = E.decode_glyphs(corps.strip(), 20)
-    cs = E.decode_glyphs(ctrl.strip(), 3)
+    charge, controle = corps.split(), ctrl.split()
+    if len(charge) != 27:
+        raise ValueError(f"{len(charge)} glyphes de charge au lieu de 27")
+    if len(controle) != 4:
+        raise ValueError(f"{len(controle)} glyphes de controle au lieu de 4")
+    for g in charge + controle:
+        if len(g) != 3:
+            raise ValueError(f"glyphe de {len(g)} figures au lieu de 3")
+        if any(ch not in E.INVERSE for ch in g):
+            raise ValueError("figure inconnue au lieu de l'une des quatre")
+    queue = E.INVERSE[charge[26][2]]
+    if queue:
+        raise ValueError(f"bourrage du 27e glyphe {queue:02b} au lieu de 00")
+    a20 = E.decode_glyphs(" ".join(charge), 20)
+    cs = E.decode_glyphs(" ".join(controle), 3)
     if sha256d(a20)[:3] != cs:
         raise ValueError("somme de controle invalide")
     return a20
@@ -349,6 +368,28 @@ def tests():
     except ValueError:
         pass
     print(f"adresse : controle a 24 bits  : OK  ({len(enc.split()) - 1} glyphes)"); ok += 1
+
+    # une adresse n'a qu'une ecriture : les 2 bits de bourrage du 27e glyphe
+    # sont nuls, sinon refus. Le codec gele les jette (il accepte les quatre
+    # figures), la somme de controle ne les voit pas : seul addr_decode refuse.
+    charge, controle = enc.split("  |  ")
+    groupes = charge.split(" ")
+    for fig in "\u25cb\u263d\u271a":
+        autre = " ".join(groupes[:26] + [groupes[26][:2] + fig])
+        assert E.decode_glyphs(autre, 20) == a
+        try:
+            addr_decode(autre + "  |  " + controle); raise AssertionError("bourrage non nul accepte")
+        except ValueError as e:
+            assert "bourrage" in str(e), e
+    for malforme in (" ".join(groupes[:26]) + "  |  " + controle,               # 26 glyphes
+                     charge + "  |  " + " ".join(controle.split(" ")[:3]),      # 3 de controle
+                     " ".join(groupes[:26] + [groupes[26] + "\u00b7"]) + "  |  " + controle,  # 4 figures
+                     charge + "  |  o" + controle[1:]):                          # figure etrangere
+        try:
+            addr_decode(malforme); raise AssertionError("ecriture malformee acceptee")
+        except ValueError as e:
+            assert "au lieu de" in str(e), e
+    print("adresse : une seule ecriture  : OK  (bourrage du 27e glyphe nul, 27 + 4 glyphes de 3 figures)"); ok += 1
 
     # -- racine UTXO --------------------------------------------------------
     u = {(sha256(b"b"), 1): (a, 5), (sha256(b"a"), 0): (a, 7), (sha256(b"b"), 0): (a, 9)}

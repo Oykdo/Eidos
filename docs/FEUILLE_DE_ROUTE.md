@@ -35,14 +35,14 @@ Quatre états, aucun autre. **code** : écrit, testé, rejouable. **spécifié**
 | Sujet | Le chiffre | Où il se rejoue |
 |---|---|---|
 | Émission bornée, sans halving | 2 080 époques × 1008 = **2 096 640 blocs**, **62 899 200 EIDL**, 239,18 ans ; cosinus en `Decimal` par série de Taylor, π à 68 décimales, **aucun `math.cos`** | `verify_genesis.py` → 32 contrôles ; `eonis.py` → 6 ; `eonis.py` gelé (SHA `cc94ad1e…` dans `genesis.json`) |
-| Conservation `Σ utxo == émission cumulée` | invariant **vrai** en local (h 45, 46 blocs, 47 sorties) et en ligne (h 93, 94 blocs) ; coinbase refusée à l'atome près | `utxo.py` → 15 ; `noeud.py --verifier` → « aucun refus » |
+| Conservation `Σ utxo == émission cumulée` | invariant **vrai** en local (h 45, 46 blocs, 47 sorties) et en ligne (h 93, 94 blocs) ; coinbase refusée à l'atome près | `utxo.py` → 16 ; `noeud.py --verifier` → « aucun refus » |
 | Rejeu intégral, carnet jamais persisté | **98 blocs revalidés** en local par le même code qu'à la forge | `noeud.py --verifier` |
 | Une clé WOTS+ ne signe qu'une fois | l'**adresse** est notée dans `cles_usees`, donc le refus vaut aussi sur le chemin assume-valid de `--depuis` | `utxo.py:239` ; `noeud.py:831` (`_test_depuis`, 4 contrôles) |
 | Consensus fédéré XMSS, vivacité, tête signée | 7 validateurs, hauteur MSS 12, créneau 3600 s, **9,35 ms par bloc** signature + vérification | `federation.py` → 18 |
 | Rotation de pas 3 | `V[(3·s) mod n]`, refus au chargement si `n % 3 == 0`, rotation prouvée surjective | `federation.py:266`, contrôle `:453` |
 | Un indice MSS ne sert qu'une fois | `CompteurMSS` monotone, écrit avant de rendre la signature, départ = max(chaîne, fichier) | `noeud.py` `_test_indice` → 2 |
 | Cadence réelle | **86 créneaux, 86 blocs depuis le créneau 62** ; avant lui, 54 créneaux (8→61) définitivement vides, jamais rattrapés ; le cron passe toutes les 3 à 5 h et rattrape par rafales de 6 | `etat.json` en ligne : `creneaux_sautes` = 54 |
-| Robinet à deux canaux | 14 + 6 contrôles ; corps d'issue jamais interpolé (`EIDOS_ISSUE_BODY`), frein par auteur (une demande servie par compte et par époque) | `robinet.py --test`, `courriel.py --test` |
+| Robinet à deux canaux | 15 + 6 contrôles ; corps d'issue jamais interpolé (`EIDOS_ISSUE_BODY`), frein par auteur (une demande servie par compte et par époque) | `robinet.py --test`, `courriel.py --test` |
 | Parité Python ↔ TS à l'octet | 10 familles, écrites par Python, relues par TS, dans les deux sens en CI | `vecteurs.py`, `vecteurs.test.ts`, job `parite` |
 | Reliques QR, encodeur QR stdlib | 3 + 5 contrôles ; `reliques.json` ne contient effectivement **aucune graine** | `relique.py --test`, `qr.py --test` |
 | Labo pendule-9 | **53 contrôles** = 11 + 11 + 9 + 13 + 9 ; le pont TS → Python compare les exports **octet à octet** | `labo/`, `.github/workflows/labo.yml` |
@@ -96,18 +96,19 @@ Quatre états, aucun autre. **code** : écrit, testé, rejouable. **spécifié**
 
 ### 1.5 Cassé
 
-Quatre écarts entre ce que le dépôt annonce et ce que le dépôt fait. Chacun est une dette au §2 : **D1** le bourrage glyphique, **D2** le pas double, **D4** la racine UTXO conditionnelle, **D6** le sac à deux tailles. S'y ajoutent trois textes périmés (**D5**) et deux freins absents (**D7**).
+Quatre écarts entre ce que le dépôt annonce et ce que le dépôt fait, dont deux fermés le 2026-09-13. Chacun est une dette au §2 : **D1** le bourrage glyphique (fermée), **D2** le pas double, **D4** la racine UTXO conditionnelle, **D6** le sac à deux tailles (fermée). S'y ajoutent trois textes périmés (**D5**) et deux freins absents (**D7**).
 
 ---
 
 ## 2. Les dettes, par gravité
 
-### D1 — Une adresse a quatre écritures valides, et rien ne le refuse
+### D1 — Une adresse a quatre écritures valides, et rien ne le refuse — **FERMÉE le 2026-09-13**
 
 **Le fait.** La proposition 3 promet « bourrage du 27ᵉ glyphe nul **sinon refus** ». Le refus n'existe nulle part. Une adresse fait 160 bits, 27 groupes de 6 en portent **162** : les deux derniers bits sont silencieusement jetés (`eonis.py:161` `bits[: nbytes*8]`, `glyphs.ts:31` `bits.slice(0, n*8)`). Sonde : les quatre figures en 3ᵉ position du 27ᵉ glyphe donnent **quatre écritures acceptées** pour la même adresse `1a56415346085a7a`, **des deux côtés**. `addr_decode` (`utxo.py:73`) ne compte même pas les groupes.
 **Ce que ça coûte aujourd'hui.** Rien sur le consensus : l'adresse décodée est la même, la somme de contrôle passe, aucune double dépense. Ce qui est cassé, c'est l'**unicité de lecture** — la seule chose que la proposition 3 promettait.
 **Le correctif, sans toucher au fichier gelé.** Refuser dans les décodeurs d'**adresse**, pas dans `eonis.decode_glyphs` : `addr_decode` exige 27 groupes de charge, 4 de contrôle, et les deux bits de queue nuls ; `decoderGlyphes` fait le même refus. `eonis.py` ne bouge pas, donc **ni `genesis.json`, ni les trois empreintes du README, ni le testnet**.
 **Coût.** ~20 lignes Python, ~15 TS, **2 contrôles `doit_echouer`** (un par implémentation), un vecteur partagé de plus dans `vecteurs.json`. Vérifier d'abord que les 47 sorties publiées, les planches de reliques et les QR déjà émis encodent tous un 27ᵉ glyphe nul — ils le font, `addr_encode` bourre à zéro ; c'est le point à contrôler avant de fusionner.
+**Fermée par C1 (§4) :** le refus est dans les **trois** décodeurs d'adresse, pas deux — le troisième, `decoder` (`robinet.py`), est l'entrée réelle des adresses tapées par les joueurs. Et la dette était plus large que son énoncé : le vecteur `bourrage_refuse` de `vecteurs.json` forçait le 27ᵉ glyphe entier à `✚✚✚`, donc il était refusé par la **somme de contrôle**, pas par le bourrage — un témoin qui ne témoignait pas de sa règle. Il ne change plus que la 3ᵉ figure.
 
 ### D2 — « Le pas le plus long reste sous la portée la plus longue » est rompue par tour
 
@@ -180,10 +181,9 @@ Un chantier = une branche = une PR, jamais deux à la fois. Chacun porte **sa ci
 
 ### C1 — Le bourrage du 27ᵉ glyphe (dette D1)
 
-**On livre.** Le refus manquant, dans `addr_decode` (`utxo.py`) et `decoderGlyphes` (`glyphs.ts`), sans toucher `eonis.py`.
-**Cible.** Une adresse de 20 octets a **exactement une** écriture glyphique acceptée, des deux côtés, contre 4 aujourd'hui. Deux `doit_echouer`, un vecteur partagé de plus dans `vecteurs.json`.
-**Ce qui le tue.** Une seule adresse déjà publiée (les 47 sorties d'`etat.json`, une planche de relique, un QR émis) qui ne passe pas le nouveau refus : le format serait alors à faire évoluer, pas à durcir, et le chantier devient une réinitialisation de testnet — donc on ne le livre pas ainsi.
-**Coût.** ~35 lignes, aucun format, aucune empreinte, pas de réinitialisation.
+**Fait le 2026-09-13.** Le refus manquant est dans les **trois** décodeurs d'adresse — `addr_decode` (`utxo.py`), `decoder` (`robinet.py`, l'entrée réelle des adresses tapées, que `courriel.py` emprunte) et `lireCodes` (`glyphs.ts`, partagé par `verifierAdresse` et `decoderGlyphes`) — sans toucher `eonis.py`.
+**Cible tenue.** Une adresse de 20 octets a **exactement une** écriture glyphique acceptée, des deux côtés, contre 4 avant ; les trois autres sont refusées (« bourrage du 27e glyphe … au lieu de 00 » côté Python, « Bourrage du 27ᵉ glyphe non nul » à l'atelier). `utxo.py` 15 → 16, `robinet.py` 14 → 15, `glyphs.test.ts` + 1. `vecteurs.json` porte `bourrage_refuse` (bourrage seul : mêmes 160 bits, même somme) et `controle_refuse` (somme seule) — chaque refus par sa règle, relu des deux côtés.
+**Ce qui l'aurait tué.** Une adresse déjà publiée qui ne passe pas le refus. Vérifié avant de livrer : `etat.json` et `mempool.json` publient en hexadécimal, `reliques.json` est vide, et l'unique suite de glyphes de `genesis.json` est le condensat du bloc de genèse, pas une adresse. Aucun format, aucune empreinte, pas de réinitialisation.
 
 ### C2 — Re-tarifer `eperon` (dette D2) — **bloquant pour tout le reste du jeu**
 
@@ -303,6 +303,7 @@ reste lisible.
 | **hygiène** (`208e766`) | `CLAUDE.md` remis à jour, et la **distinction des deux corpus** écrite au §3 : les six lois d'`integrite.ts` sont des conventions révisables, les invariants du §3 scindent la chaîne. Referme une partie de D5 et de D8 |
 | **Pages** (`fa1fa58`) | l'atelier est **enfin publié**. Le filet de garde de la racine masquait son propre diagnostic : il faisait 1 778 octets, exactement ce que le site servait |
 | **l'ouverture du coffre de l'heure** (2026-09-13) | A15 tranché, **D6 fermée**. `OuvertureCoffre.tsx` : un `<dialog>` natif, zéro dépendance, qui montre exactement ce que le juge a accepté ; l'inventaire surligne les objets neufs ; la page ne montre le contenu qu'une fois le coffre ouvert (politique d'interface, la graine reste affichée). `coffre-horaire.test.ts` 5 → 6 contrôles, `sac_places` retiré de `vecteurs.json` |
+| **C1, le bourrage du 27ᵉ glyphe** (2026-09-13) | **D1 fermée.** Une adresse n'a plus qu'une écriture, refusée sinon par les trois décodeurs (`utxo.py`, `robinet.py`, `glyphs.ts`) ; `vecteurs.json` porte un refus par règle (`bourrage_refuse`, `controle_refuse`). `utxo.py` 15 → 16, `robinet.py` 14 → 15, atelier 568 → 569 ; `eonis.py` intact, aucune empreinte ne bouge |
 
 **Une dette est morte le même jour** et n'apparaît donc plus au §2 : le sac
 annonçait 27 places quand `SAC_PLACES` en vaut 81 (`8f23973`). Le reste,

@@ -57,7 +57,7 @@ Testnet only: the eidôlon has no value.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 checks of the frozen genesis
 python3 noeud.py --verifier      # replays the whole testnet chain, must end with « aucun refus »
-cd atelier && npm ci && npm test # 30 script tests and 568 Eidos tests, vectors shared with Python
+cd atelier && npm ci && npm test # 30 script tests and 569 Eidos tests, vectors shared with Python
 ```
 
 The Guide page of the atelier explains the core, the mechanics and the world in plain words; `CLAUDE.md` says what must never change; `docs/FEUILLE_DE_ROUTE.md` records every decision.
@@ -227,12 +227,12 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `genesis.json` | 105 | frozen tables and fingerprints — **frozen** | — |
 | `verify_genesis.py` | 134 | independent verification of genesis | 32 |
 | `wots.py` | 284 | WOTS+ w = 16, L-tree, addresses, fingerprints | 5 |
-| `utxo.py` | 509 | witnesses, addresses, transactions, ledger, UTXO root, validation | 15 |
+| `utxo.py` | 550 | witnesses, addresses, transactions, ledger, UTXO root, validation | 16 |
 | `federation.py` | 694 | XMSS, rotation, liveness, signed head, locked persistent counter | 18 |
 | `noeud.py` | 1151 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 3 + 4 + 5 + 2 |
-| `robinet.py` | 420 | faucet queue fed by issues and email, per-author brake | 14 |
+| `robinet.py` | 445 | faucet queue fed by issues and email, per-author brake | 15 |
 | `courriel.py` | 321 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
-| `vecteurs.py` | 222 | shared vectors Python ↔ TS (`vecteurs.json`, 10 families) | parity |
+| `vecteurs.py` | 231 | shared vectors Python ↔ TS (`vecteurs.json`, 10 families) | parity |
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
 | `relique.py` | 236 | relic keeper: seal, animate | 3 |
 | `labo/aura_voxel_lab.py` | 132 | pendulum-9 lab: voxel avatar (grid of `voxels.ts`), graded aura, 8 aggregators | 11 |
@@ -248,7 +248,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `veillees/` | — | deposited vigil proofs (`index.json`, one `eidos-veillee/1` file per proof), judged in every browser, never by a server | — |
 | `docs/` | — | specifications, the vigil bible, the roadmap, the lore; banner generator | 2 |
-| `atelier/` | — | web atelier, tactical engine included (`src/lib/eidos/tactique/`); `npm test` runs 30 script tests and 568 Eidos tests | 568 |
+| `atelier/` | — | web atelier, tactical engine included (`src/lib/eidos/tactique/`); `npm test` runs 30 script tests and 569 Eidos tests | 569 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (faucet and transfer issues), `veillees.yml` (vigil proofs deposited by issue), `courriel.yml` (mailbox, when a mailbox is declared), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor; Node 22 for the atelier.
 

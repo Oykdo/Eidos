@@ -63,6 +63,7 @@ type Vecteurs = {
     condensat: string;
     condensat_encode: string;
     bourrage_refuse: string;
+    controle_refuse: string;
   };
   xmss: {
     graine: string;
@@ -120,13 +121,15 @@ describe("vecteurs.json = vecteurs.py", () => {
     assert.equal(sig.adresseRendu, V.tx.sorties[1]!.adresse);
   });
 
-  it("glyphes : adresse 27 + 4, condensat 43, bourrage refusé — mêmes figures que eonis.py", () => {
+  it("glyphes : adresse 27 + 4, condensat 43, bourrage et contrôle refusés chacun par sa règle — mêmes figures que eonis.py", () => {
     const g = V.glyphes;
     assert.equal(encoderAdresse(fromHex(g.adresse)), g.encodee);
     assert.equal(hexOf(verifierAdresse(g.encodee).a20), g.adresse);
     assert.equal(encoderGlyphes(fromHex(g.condensat)), g.condensat_encode);
     assert.equal(g.condensat_encode.split(" ").length, 43);
-    assert.throws(() => verifierAdresse(g.bourrage_refuse));
+    // bourrage_refuse : mêmes 160 bits, même somme, seuls les 2 bits de queue changent
+    assert.throws(() => verifierAdresse(g.bourrage_refuse), /[Bb]ourrage/);
+    assert.throws(() => verifierAdresse(g.controle_refuse), /altérée/);
   });
 
   it("XMSS : la feuille 0 se reconstruit depuis la signature de bloc", () => {
