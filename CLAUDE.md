@@ -41,14 +41,14 @@ eonis.py            émission (cosinus Decimal, π à 68 décimales), codec glyp
 genesis.json        tables et empreintes figées                                   GELÉ
 verify_genesis.py   32 contrôles d'intégrité de la genèse
 wots.py             WOTS+ w=16 (RFC 8391), arbre L, adresses, empreintes (5 contrôles)
-utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (15 contrôles)
+utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (16 contrôles)
 federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
 vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (10 familles)
 noeud.py            nœud du testnet : rejeu, forge, robinet groupé, envois, --depuis, reliques (1+5+5+4+2+5 contrôles)
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
 reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
-robinet.py          file mempool.json alimentée par issues GitHub et courriels, frein par auteur (14 contrôles)
+robinet.py          file mempool.json alimentée par issues GitHub et courriels, frein par auteur (15 contrôles)
 courriel.py         second canal du robinet : boîte IMAP relevée par courriel.yml, même filtre (6 contrôles)
 consensus.py        difficulté PoW et travail cumulé — chemin HISTORIQUE
 store.py            chaîne PoW sur disque (chaine.dat) — chemin HISTORIQUE
@@ -185,9 +185,9 @@ un `.test.ts` nouveau s'y ajoute à la main.
 python3 verify_genesis.py      # 32 contrôles — toujours en premier
 python3 eonis.py               # 6
 python3 wots.py                # 5
-python3 utxo.py                # 15
+python3 utxo.py                # 16
 python3 vecteurs.py            # parité Python ↔ TS (vecteurs.json)
-python3 robinet.py --test      # 14
+python3 robinet.py --test      # 15
 python3 courriel.py --test     # 6
 python3 -c "import noeud as N; N._test_artefact()"
 python3 -c "import noeud as N; N._test_envois()"      # 5
@@ -200,7 +200,7 @@ python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 568 tests Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 569 tests Eidos
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 npm run banc-tactique          # calibration tactique complète : 256 duels (~1 s)
 ```

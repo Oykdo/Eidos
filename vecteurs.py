@@ -155,14 +155,19 @@ def calculer():
         "graine": g.hex(), "adresse": ar.hex(), "id": RQ.id_relique(ar),
         "base64url": RQ.b64url(g), "charge_utile": RQ.charge_utile(g),
     }
-    # glyphes : l'adresse WOTS+ du vecteur en 27 + 4 figures, et un condensat en 43
+    # glyphes : l'adresse WOTS+ du vecteur en 27 + 4 figures, et un condensat en 43.
+    # Deux refus, un par regle : bourrage_refuse ne change que la 3e figure du
+    # 27e glyphe (les 2 bits de bourrage), l'adresse et la somme de controle
+    # restent intactes — seule la regle « une adresse n'a qu'une ecriture » le
+    # refuse ; controle_refuse altere la 1re figure du controle, bourrage nul.
     a0 = bytes.fromhex(v["wots"]["adresse"])
+    charge, controle = U.addr_encode(a0).split("  |  ")
+    groupes = charge.split(" ")
     v["glyphes"] = {
         "adresse": a0.hex(), "encodee": U.addr_encode(a0),
         "condensat": m.hex(), "condensat_encode": E.encode_glyphs(m),
-        # 27e groupe force a ✚✚✚ : ses 2 bits de bourrage ne sont plus nuls
-        "bourrage_refuse": " ".join(U.addr_encode(a0).split("  |  ")[0].split(" ")[:26] + ["✚✚✚"])
-                           + "  |  " + U.addr_encode(a0).split("  |  ")[1],
+        "bourrage_refuse": " ".join(groupes[:26] + [groupes[26][:2] + "✚"]) + "  |  " + controle,
+        "controle_refuse": charge + "  |  " + E.FIGURES[(E.INVERSE[controle[0]] + 1) % 4] + controle[1:],
     }
     # coffre horaire : graine, tier et contenu d'un coffre (docs/SPEC_COFFRE_HORAIRE.md)
     # Trois claims a partir de la tete du vecteur et de sorties connues du carnet.
@@ -199,10 +204,14 @@ def verifier(v):
                            [bytes.fromhex(c) for c in x["chemin"]]))
     g = v["glyphes"]
     assert U.addr_decode(g["encodee"]) == bytes.fromhex(g["adresse"])
-    try:
-        U.addr_decode(g["bourrage_refuse"]); raise AssertionError("bourrage accepte")
-    except ValueError:
-        pass
+    # chaque refus vient de SA regle : le bourrage n'est pas vu par la somme de
+    # controle (le codec gele decode la meme adresse), et reciproquement
+    assert E.decode_glyphs(g["bourrage_refuse"].split("  |  ")[0], 20) == bytes.fromhex(g["adresse"])
+    for cle, motif in (("bourrage_refuse", "bourrage"), ("controle_refuse", "somme de controle")):
+        try:
+            U.addr_decode(g[cle]); raise AssertionError(f"{cle} accepte")
+        except ValueError as e:
+            assert motif in str(e), (cle, e)
     t = v["tx"]
     assert W.verifier(bytes.fromhex(v["wots"]["adresse"]), bytes.fromhex(t["sighash_0"]),
                       (bytes.fromhex(t["temoin_0"]["graine_publique"]),
