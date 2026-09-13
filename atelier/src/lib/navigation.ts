@@ -12,6 +12,7 @@ export type NavId =
   | "coffre"
   | "tour"
   | "veillee"
+  | "bataille"
   | "coffreHoraire"
   | "journal"
   | "temoin"
@@ -25,6 +26,7 @@ export type Chemin =
   | "/"
   | "/tour"
   | "/veillee"
+  | "/bataille"
   | "/coffre-horaire"
   | "/journal"
   | "/temoin"
@@ -83,18 +85,33 @@ export const GROUPES: Groupe[] = [
 
 export const GUIDE: Page = { to: "/guide", id: "guide", label: "nav.guide", lede: "eco.guide" };
 
+/**
+ * Pages rattachées : atteintes depuis une page d'un registre, jamais un
+ * sous-onglet de plus (quatre au plus par registre, navigation.test.ts). La
+ * barre montre le registre et le sous-onglet du parent ; la route existe.
+ * La bataille se joue depuis la Tour : une salle qui tient un Indéchiffré.
+ */
+export const RATTACHEES: Partial<Record<NavId, NavId>> = { bataille: "tour" };
+
+/** La page du registre qui porte `id` : elle-même, ou son parent si elle est rattachée. */
+export function parentDe(id: NavId): NavId {
+  return RATTACHEES[id] ?? id;
+}
+
 /** Toutes les pages, Guide compris, dans l'ordre d'affichage. */
 export function pages(): Page[] {
   return [...GROUPES.flatMap((g) => g.items), GUIDE];
 }
 
 export function groupeDe(id: NavId): Registre | "guide" {
-  return GROUPES.find((g) => g.items.some((it) => it.id === id))?.id ?? "guide";
+  const p = parentDe(id);
+  return GROUPES.find((g) => g.items.some((it) => it.id === p))?.id ?? "guide";
 }
 
 /** Le registre d'une page, ou null pour le Guide (qui n'en a pas). */
 export function registreDe(id: NavId): Groupe | null {
-  return GROUPES.find((g) => g.items.some((it) => it.id === id)) ?? null;
+  const p = parentDe(id);
+  return GROUPES.find((g) => g.items.some((it) => it.id === p)) ?? null;
 }
 
 /** Les sous-onglets à montrer : les pages du registre courant, rien d'autre. */
