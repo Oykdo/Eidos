@@ -5,6 +5,7 @@ import {
   GROUPES,
   GUIDE,
   groupeDe,
+  parentDe,
   registreDe,
   sousOnglets,
   type NavId,
@@ -42,6 +43,8 @@ export function Nav({ actuel }: { actuel: NavId }) {
   const courant = groupeDe(actuel);
   const sous = sousOnglets(actuel);
   const registre = registreDe(actuel);
+  // Une page rattachée allume le sous-onglet de son parent.
+  const onglet = parentDe(actuel);
   return (
     <nav className="flex flex-col items-center gap-2" aria-label="Sections">
       <div className="flex flex-wrap items-center justify-center gap-1.5">
@@ -69,7 +72,7 @@ export function Nav({ actuel }: { actuel: NavId }) {
           aria-label={registre ? t(registre.label) : undefined}
         >
           {sous.map((it) => (
-            <Onglet key={it.id} it={it} actuel={actuel} />
+            <Onglet key={it.id} it={it} actuel={onglet} />
           ))}
         </div>
       ) : null}

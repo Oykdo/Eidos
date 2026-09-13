@@ -57,7 +57,7 @@ Testnet only: the eidôlon has no value.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 checks of the frozen genesis
 python3 noeud.py --verifier      # replays the whole testnet chain, must end with « aucun refus »
-cd atelier && npm ci && npm test # 30 script tests and 573 Eidos tests, vectors shared with Python
+cd atelier && npm ci && npm test # 30 script tests and 591 Eidos tests, vectors shared with Python
 ```
 
 The Guide page of the atelier explains the core, the mechanics and the world in plain words; `CLAUDE.md` says what must never change; `docs/FEUILLE_DE_ROUTE.md` records every decision.
@@ -207,7 +207,7 @@ Six laws are frozen in `integrite.ts` — conservation, group, doxa, seal, ages,
 
 **The enemy's turn is read, not rolled.** `tactique/ia.ts` holds the one policy the game uses in three places: it announces what the Undeciphered will do before your turn, it plays their phase, and it drives both sides on a measuring bench. It is exhaustive over a turn — every sequence of at most two acts, replayed on a copy — and its score is **lexicographic**: kills, then the exchange of stand given against stand taken, then leaves spent, then closing distance, then exposure. No weights, no designer table, and above all no invented rate between a leaf and a point of stand. The engine itself knows no policy: `bataille.ts` imports nothing from `ia.ts`, and a battle played without ever calling `annoncer` is a battle without telegraphy, not a false one.
 
-**What is written, and what is not.** Written: the grid and its integer traversal, the zone of control, the unit, the resolution, the phases, the riposte, the ending, the policy. Not done: the on-screen rendering, the wiring into the Vigil, the deposit of a battle proof. The **Undeciphered** — words that no form of the catalogue comes close enough to, hence with no cell, hence with no name — are specified and not yet coded. Specification: [`docs/SPEC_TACTIQUE.md`](docs/SPEC_TACTIQUE.md).
+**What is written, and what is not.** Written: the grid and its integer traversal, the zone of control, the unit, the resolution, the phases, the riposte, the ending, the policy, and the on-screen rendering — `partie.ts` (the player's hand and a whole `Lecture`: reachable cells, hovered path, zone of control, announced threat, the blow read before it lands), the slab on the `components/canvas/` base, a `/bataille` route reached from the Tower's floor; a free reading of 64 simulated leaves, nothing signed. Not done: the wiring into the Vigil, the deposit of a battle proof. The **Undeciphered** — words that no form of the catalogue comes close enough to, hence with no cell, hence with no name — are specified and not yet coded. Specification: [`docs/SPEC_TACTIQUE.md`](docs/SPEC_TACTIQUE.md).
 
 ## 11. The world
 
@@ -248,7 +248,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `etat.json`, `mempool.json` | — | published state; faucet and transfer requests | — |
 | `veillees/` | — | deposited vigil proofs (`index.json`, one `eidos-veillee/1` file per proof), judged in every browser, never by a server | — |
 | `docs/` | — | specifications, the vigil bible, the roadmap, the lore; banner generator | 2 |
-| `atelier/` | — | web atelier, tactical engine included (`src/lib/eidos/tactique/`); `npm test` runs 30 script tests and 573 Eidos tests | 573 |
+| `atelier/` | — | web atelier, tactical engine included (`src/lib/eidos/tactique/`); `npm test` runs 30 script tests and 591 Eidos tests | 591 |
 
 CI (`.github/workflows/`): `tests.yml` (3 OS × 2 Python, fingerprints, hygiene, `parite`), `chaine.yml` (hourly forge), `robinet.yml` (faucet and transfer issues), `veillees.yml` (vigil proofs deposited by issue), `courriel.yml` (mailbox, when a mailbox is declared), `pages.yml` (atelier), `init.yml`. Python 3.9 is the floor; Node 22 for the atelier.
 

@@ -6,11 +6,14 @@ import { EN, FR } from "./i18n.ts";
 import {
   GROUPES,
   GUIDE,
+  RATTACHEES,
   fichierRoute,
   groupeDe,
   pages,
+  parentDe,
   registreDe,
   sousOnglets,
+  type NavId,
 } from "./navigation.ts";
 
 describe("navigation — une liste, trois conditions", () => {
@@ -46,6 +49,22 @@ describe("navigation — une liste, trois conditions", () => {
     for (const g of GROUPES) {
       assert.ok(g.label in FR && g.label in EN, g.label);
     }
+  });
+
+  it("une page rattachée prend le registre et le sous-onglet de son parent, et a sa route", () => {
+    for (const [id, parent] of Object.entries(RATTACHEES) as [NavId, NavId][]) {
+      assert.ok(
+        pages().some((p) => p.id === parent),
+        `${id} : parent ${parent} inconnu`,
+      );
+      assert.ok(!pages().some((p) => p.id === id), `${id} : rattachée, pas un sous-onglet`);
+      assert.equal(parentDe(id), parent);
+      assert.equal(groupeDe(id), groupeDe(parent));
+      assert.deepEqual(sousOnglets(id), sousOnglets(parent));
+      const f = fileURLToPath(new URL(`../routes/${id}.tsx`, import.meta.url));
+      assert.ok(existsSync(f), `${id} : ${f} absent`);
+    }
+    assert.equal(parentDe("tour"), "tour");
   });
 
   it("chaque registre ouvre une de ses pages, et n'affiche que les siennes en sous-onglets", () => {

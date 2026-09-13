@@ -57,7 +57,7 @@ Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 contrôles de la genèse gelée
 python3 noeud.py --verifier      # rejoue toute la chaîne du réseau d'essai, doit finir par « aucun refus »
-cd atelier && npm ci && npm test # 30 tests de scripts et 568 tests Eidos, vecteurs partagés avec Python
+cd atelier && npm ci && npm test # 30 tests de scripts et 591 tests Eidos, vecteurs partagés avec Python
 ```
 
 La page Guide de l'atelier explique le cœur, les mécaniques et le monde en mots simples ; `CLAUDE.md` dit ce qui ne doit jamais changer ; `docs/FEUILLE_DE_ROUTE.md` garde chaque décision.
@@ -207,7 +207,7 @@ Six lois sont gelées dans `integrite.ts` — conservation, groupe, doxa, sceau,
 
 **Le tour de l'ennemi se lit, il ne se tire pas.** `tactique/ia.ts` porte la seule politique du jeu, employée à trois endroits : elle annonce ce que feront les Indéchiffrés avant votre tour, elle joue leur phase, et elle tient les deux camps sur un banc de mesure. Elle est exhaustive sur un tour — toute suite d'au plus deux actes, rejouée sur une copie — et son score est **lexicographique** : les abattus, puis l'échange de tenue ôtée contre tenue perdue, puis les feuilles dépensées, puis l'approche, puis l'exposition. Aucun poids, aucune table de concepteur, et surtout aucun taux inventé entre une feuille et un point de tenue. Le moteur, lui, ne connaît aucune politique : `bataille.ts` n'importe rien d'`ia.ts`, et une bataille jouée sans jamais appeler `annoncer` est une bataille sans télégraphie, pas une bataille fausse.
 
-**Ce qui est écrit, et ce qui ne l'est pas.** Écrits : la grille et son parcours entier, la zone de contrôle, l'unité, la résolution, les phases, la riposte, la fin, la politique. Ne sont **pas** faits : le rendu à l'écran, le branchement sur la Veillée, le dépôt d'une preuve de bataille. Les **Indéchiffrés** — les mots dont aucune des formes du catalogue n'est assez proche, donc sans cellule, donc sans nom — sont spécifiés et pas encore codés. Spécification : [`docs/SPEC_TACTIQUE.md`](docs/SPEC_TACTIQUE.md).
+**Ce qui est écrit, et ce qui ne l'est pas.** Écrits : la grille et son parcours entier, la zone de contrôle, l'unité, la résolution, les phases, la riposte, la fin, la politique, et le rendu à l'écran — `partie.ts` (la main du joueur et une `Lecture` entière : cases atteignables, chemin survolé, zone de contrôle, menace annoncée, le coup lu avant qu'il porte), la dalle sur le socle `components/canvas/`, une route `/bataille` atteinte depuis l'étage de la Tour ; une lecture libre de 64 feuilles simulées, rien n'est signé. Ne sont **pas** faits : le branchement sur la Veillée, le dépôt d'une preuve de bataille. Les **Indéchiffrés** — les mots dont aucune des formes du catalogue n'est assez proche, donc sans cellule, donc sans nom — sont spécifiés et pas encore codés. Spécification : [`docs/SPEC_TACTIQUE.md`](docs/SPEC_TACTIQUE.md).
 
 ## 11. Le monde
 
@@ -248,7 +248,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `etat.json`, `mempool.json` | — | état publié ; demandes de robinet et d'envoi | — |
 | `veillees/` | — | preuves de veillée déposées (`index.json`, un fichier `eidos-veillee/1` par preuve), jugées dans chaque navigateur, jamais par un serveur | — |
 | `docs/` | — | spécifications, la bible de la veillée, la feuille de route, le lore ; générateur des bannières | 2 |
-| `atelier/` | — | atelier web, moteur tactique compris (`src/lib/eidos/tactique/`) ; `npm test` lance 30 tests de scripts et 568 tests Eidos | 568 |
+| `atelier/` | — | atelier web, moteur tactique compris (`src/lib/eidos/tactique/`) ; `npm test` lance 30 tests de scripts et 591 tests Eidos | 591 |
 
 CI (`.github/workflows/`) : `tests.yml` (3 OS × 2 Python, empreintes, hygiène, `parite`), `chaine.yml` (forge horaire), `robinet.yml` (issues de robinet et d'envoi), `veillees.yml` (preuves de veillée déposées par issue), `courriel.yml` (boîte aux lettres, quand une boîte est déclarée), `pages.yml` (atelier), `init.yml`. Python 3.9 est le plancher ; Node 22 pour l'atelier.
 

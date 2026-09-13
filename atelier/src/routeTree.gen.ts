@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ArbreRouteImport } from './routes/arbre'
+import { Route as BatailleRouteImport } from './routes/bataille'
 import { Route as CoffreHoraireRouteImport } from './routes/coffre-horaire'
 import { Route as GlyphesRouteImport } from './routes/glyphes'
 import { Route as GuideRouteImport } from './routes/guide'
@@ -29,6 +30,11 @@ const IndexRoute = IndexRouteImport.update({
 const ArbreRoute = ArbreRouteImport.update({
   id: '/arbre',
   path: '/arbre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BatailleRoute = BatailleRouteImport.update({
+  id: '/bataille',
+  path: '/bataille',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoffreHoraireRoute = CoffreHoraireRouteImport.update({
@@ -80,6 +86,7 @@ const VeilleeRoute = VeilleeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/bataille': typeof BatailleRoute
   '/coffre-horaire': typeof CoffreHoraireRoute
   '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/bataille': typeof BatailleRoute
   '/coffre-horaire': typeof CoffreHoraireRoute
   '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/arbre': typeof ArbreRoute
+  '/bataille': typeof BatailleRoute
   '/coffre-horaire': typeof CoffreHoraireRoute
   '/glyphes': typeof GlyphesRoute
   '/guide': typeof GuideRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/arbre'
+    | '/bataille'
     | '/coffre-horaire'
     | '/glyphes'
     | '/guide'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/arbre'
+    | '/bataille'
     | '/coffre-horaire'
     | '/glyphes'
     | '/guide'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/arbre'
+    | '/bataille'
     | '/coffre-horaire'
     | '/glyphes'
     | '/guide'
@@ -162,6 +174,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ArbreRoute: typeof ArbreRoute
+  BatailleRoute: typeof BatailleRoute
   CoffreHoraireRoute: typeof CoffreHoraireRoute
   GlyphesRoute: typeof GlyphesRoute
   GuideRoute: typeof GuideRoute
@@ -187,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/arbre'
       fullPath: '/arbre'
       preLoaderRoute: typeof ArbreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bataille': {
+      id: '/bataille'
+      path: '/bataille'
+      fullPath: '/bataille'
+      preLoaderRoute: typeof BatailleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/coffre-horaire': {
@@ -258,6 +278,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArbreRoute: ArbreRoute,
+  BatailleRoute: BatailleRoute,
   CoffreHoraireRoute: CoffreHoraireRoute,
   GlyphesRoute: GlyphesRoute,
   GuideRoute: GuideRoute,

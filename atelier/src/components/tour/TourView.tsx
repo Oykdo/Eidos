@@ -316,6 +316,12 @@ export function TourView() {
           <Button type="button" variant="discret" onClick={() => fouiller()}>
             {t("tour.fouiller")}
           </Button>
+          {/* Une salle qui tient un Indéchiffré se règle sur la dalle : la bataille, rattachée à la Tour. */}
+          <Button asChild variant="discret" disabled={occupants.length === 0}>
+            <Link to="/bataille" title={t("tour.bataille.aide", { n: occupants.length })}>
+              {t("tour.bataille")}
+            </Link>
+          </Button>
           <Button asChild variant="discret">
             <Link to="/">{t("tour.ville")}</Link>
           </Button>
