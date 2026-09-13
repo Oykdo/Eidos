@@ -380,6 +380,7 @@ Un détail qui n'engage rien mais qui trompe : la polarité destructive **avanta
 **La cible (b) tient partout** : quartile haut / quartile bas de `lame+ecu` = **1,04×** dans les deux configurations, contre 3× de plafond.
 **Ce qui reste vrai de D2 :** `PA_PAR_TOUR · pas = 8 > 7`, et `unite.test.ts` l'affirme. Ce qui est faux : que cela coûte quelque chose à `arc`. La règle « le pas le plus long reste sous la portée la plus longue » n'a plus de mesure derrière elle sur ce couple.
 **Le banc est dans le dépôt.** 440 320 duels en ~16 min hors CI ; 15 616 duels et 60 mêlées en ~30 s en CI, calibrés contre les chiffres d'ici.
+**Et la suite, le même soir (PS2.8–PS2.9).** La politique ne peut pas (quatre candidats, aucun ne remonte `eperon`) ; le moteur le peut en partie : la riposte qui ne demande plus la portée ramène `|r|` max de **0,640 à 0,487** sur le protocole complet, **0,330** avec l'allonge à `base/4` — le levier, pas encore la cible, et 7 points de bande de tier en plus.
 
 ## PS2.1 Le protocole, et ce qui change par rapport à PS.1
 Même pool que le §4 : 2 000 mots `objetDepuisGraine(sha256d("eq-" + i))`, les quatre âges à tour de rôle, classe par rang (`arme`, `defense`, `accessoire`). Mêmes panels par tier : 120 mots par tier, tirés dans l'ordre de `sha256d("tier-" + i)` (T12 vaut un mot sur 2 048 : la suite est longue, pas aléatoire). Même dalle, l'étage 198 et ses 73 cases libres ; huit distances d'engagement sur la rangée libre y = 1, le coffre en (0,1) et l'Indéchiffré en (d,1). Tout passe par `ouvrirBataille` puis `jouerBataille` — aucune grille, aucune résolution, aucune politique recopiée.
@@ -458,6 +459,49 @@ Une constante ou une ligne changée à la fois, dans un worktree jetable, jamais
 - **Une dette nouvelle, D9 : le prix des axes est renversé.** Deux axes sur quatre sont hors cible, dans les deux sens, et **la cible (a) est plus loin qu'aucune étude ne l'avait vue** (0,640 contre 0,622, 0,365, 0,152 selon les lectures de PS.2).
 - **C4 reste gelé sur le même mot** — « ne pas ancrer, ne pas exporter tant que R2 n'est pas tenue » (A2) — et il ne dépend plus de C2, mais du chantier qui trouvera le prix de `eperon`.
 - **Le banc est livré**, et c'est le seul livrable de code : `banc-r2.ts` rejoue le protocole entier hors CI et un échantillon calibré en CI. La prochaine mesure de R2 coûte une commande, pas une étude.
+
+## PS2.8 C2 bis, la politique d'abord — quatre candidats, aucun ne remonte `eperon`
+A16 a été tranché dans le sens de la politique (2026-09-13, soir) : c'est le seul des trois chemins qui ne touche ni au moteur ni aux vecteurs gelés. Quatre candidats, écrits sans nombre magique, chacun une règle de plus dans l'ordre lexicographique de `meilleurQue`, mesurés sur l'échantillon rapide dans un worktree jetable (200 mots, 15 616 duels, 60 mêlées) :
+
+| candidat | ce qu'il change | lame | ecu | eperon | arc | \|r\| max | bande | mêlée, feuilles méd./max |
+|---|---|---|---|---|---|---|---|---|
+| **témoin** (`ia.ts` tel qu'il est) | — | +0,113 | +0,019 | **−0,547** | +0,419 | 0,547 | 26,3 pt | 2 / 9 |
+| **seuil** | sans coup possible ce tour, viser une case d'où `pas + portée` atteint la proie au tour prochain, la moins exposée, puis la plus proche | +0,107 | +0,129 | **−0,596** | +0,353 | 0,596 | 27,3 pt | 4 / 8 |
+| seuil, puis approche, puis exposition | idem, l'exposition après l'approche | +0,113 | +0,019 | −0,547 | +0,419 | 0,547 | 26,3 pt | 2 / 9 |
+| **exposition à riposte près** | une case d'où l'on riposte (attaquant à portée, `eperon` plus haut) n'est pas une case exposée | +0,113 | +0,019 | −0,547 | +0,419 | 0,547 | 26,3 pt | 2 / 9 |
+| seuil + riposte | les deux | +0,143 | +0,147 | **−0,653** | +0,354 | 0,653 | 26,6 pt | 3 / 10 |
+
+**Verdict.** Deux candidats ne changent **aucun choix** (mêmes 15 616 duels à l'octet : minimiser l'approche implique déjà d'être au seuil quand c'est possible, et l'exposition ne départage presque jamais) ; les deux autres **aggravent** `eperon`. La raison se lit dans les duels de PS2.5 : s'arrêter au seuil au lieu du contact, c'est encaisser deux flèches **avec l'allonge et sans riposte** (31 + 31) au lieu de deux coups au contact **ripostés** (22 + 22, moins 36 rendus). La politique du dépôt fait déjà la meilleure chose qu'une politique puisse faire à un mot qui n'a que de l'initiative : arriver. Aucun candidat ne mérite le protocole complet. **C2 bis (direction politique) est tué**, au premier étage du banc.
+
+Ce que la politique **ne peut pas** faire, et qu'aucune ne pourra : rendre payant un axe dont le moteur ne paie rien. Le pas arrive plus vite là où l'on est frappé le premier ; la charge profite à tous ; la riposte exige que l'attaquant soit **dans la portée du riposteur** — un archer à six cases n'est jamais riposté par un mot à portée 1. C'est cette condition-là que la direction moteur interroge.
+
+## PS2.9 La direction moteur, sondée pour A16 — la riposte qui ne demande plus la portée
+Même échantillon rapide, une règle changée à la fois dans un worktree jetable, `ia.ts` intact :
+
+| sonde | ce qu'elle change | lame | ecu | eperon | arc | \|r\| max | Q4/Q1 | bande | T12 pointe eperon / arc |
+|---|---|---|---|---|---|---|---|---|---|
+| **témoin** | — | +0,113 | +0,019 | −0,547 | +0,419 | 0,547 | 1,12× | 26,3 pt | 3,1 % / 28,9 % |
+| **riposte sans portée** | `riposteDe` ne teste plus `distance ≤ portée(d)` : un mot plus vif rend le coup à **tout** attaquant, où qu'il frappe de | +0,216 | +0,123 | **−0,298** | −0,043 | **0,298** | 1,25× | 31,0 pt | 3,8 % / 7,8 % |
+| riposte à `pas` cases | la riposte porte à `max(portée, pas)` : l'éperon rejoint son attaquant | +0,144 | +0,005 | −0,459 | +0,316 | 0,459 | 1,13× | 25,0 pt | 3,8 % / 28,9 % |
+| **riposte sans portée + allonge à `base/4`** | les deux prix se rééquilibrent | +0,265 | +0,186 | **−0,171** | −0,287 | **0,287** | 1,34× | 32,5 pt | 6,3 % / 3,1 % |
+| riposte à `pas` + allonge à `base/4` | | +0,193 | +0,066 | −0,396 | +0,139 | 0,396 | 1,20× | 25,0 pt | 6,3 % / 25,0 % |
+| riposte sans portée, sans allonge | | +0,283 | +0,226 | +0,008 | **−0,526** | 0,526 | 1,39× | 30,0 pt | 10,0 % / 2,3 % |
+
+**Lecture.** Une seule condition du moteur porte tout le prix manquant d'`eperon` : la riposte n'atteint que ce qui est **à portée**, donc jamais un archer. La lever ramène `|r|` max de 0,547 à **0,298** sur l'échantillon rapide — sous la cible, ce que ni une constante ni une politique n'avaient approché — en donnant à `eperon` le prix qui manquait (−0,547 → −0,298) et en retirant à `arc` celui qu'il avait en trop (+0,419 → −0,043). Le coût : la bande de tier s'ouvre de 26,3 à 31,0 pt (la pointe `arc` au tier le plus haut tombe de 28,9 % à 7,8 %). Adoucir l'allonge en plus (`base/4`) équilibre encore `eperon` et `arc` (−0,171 / −0,287) mais ouvre la bande à 32,5 pt et fait remonter `lame` et `ecu` (+0,265 / +0,186) : à chasser `arc`, on rend le trône à `lame+ecu`, dont le rapport de quartiles monte à 1,34× — loin des 3×, mais dans la mauvaise direction. Sans allonge du tout, `arc` devient l'axe mort (−0,526).
+
+**Protocole complet, les deux meilleures** (440 320 duels et 1 200 mêlées chacune, `DIV_PAS = 32`, `ia.ts` intact) :
+
+| variante | lame | ecu | eperon | arc | \|r\| max | (a) | Q4/Q1 | bande | nuls | feuilles / mêlée |
+|---|---|---|---|---|---|---|---|---|---|---|
+| le moteur (PS2.2) | +0,003 | +0,057 | −0,640 | +0,591 | 0,640 | rompue | 1,04× | 29,6 pt | 0 | 2 / 9 |
+| **riposte sans portée** | +0,133 | +0,167 | −0,487 | +0,194 | 0,487 | rompue | 1,18× | 36,8 pt | 0 | 1 / 8 |
+| **riposte sans portée + allonge `base/4`** | +0,221 | +0,246 | −0,330 | −0,132 | 0,330 | rompue | 1,28× | 36,7 pt | 0 | 1 / 8 |
+
+**Verdict.** Sur le protocole complet, la riposte sans portée rend `|r|` max **0,487** (au-dessus de la cible de 0,30 ; eperon −0,487, arc +0,194, lame +0,133, ecu +0,167), la cible (b) tenue (1,18×), 0 nul, une bande de tier de **36,8 pt** contre 29,6 (T1 55,4 % → T12 18,6 % ; au tier le plus haut, pointe eperon 4,2 %, arc 12,9 %, lame 37,7 %, ecu 21,7 %). Avec l'allonge à `base/4` : `|r|` max **0,330** (rompue ; eperon −0,330, arc −0,132, lame +0,221, ecu +0,246), Q4/Q1 1,28×, bande 36,7 pt. 
+
+**Ce que le protocole complet ajoute à l'échantillon.** Les quatre distances que l'échantillon rapide ne joue pas (2, 4, 6, 8) et les 1 800 mots qu'il ne tire pas rendent à `arc` une partie de son prix (−0,043 → +0,194) et laissent `eperon` plus bas (−0,298 → −0,487) : la riposte sans portée est **le levier** — aucune constante ni aucune politique n'avait bougé `|r|` max de plus de 0,13, celle-ci le fait de 0,15, et de 0,31 avec l'allonge à `base/4` — mais elle **ne suffit pas seule**, et elle coûte 7 points de bande de tier. Le reste est à chercher dans ce qui reste : l'allonge, le socle du coup et de la tenue (`COUP_BASE`, `MULT_TENUE`), ensemble et sur le protocole complet.
+
+**Ce qu'une riposte sans portée veut dire, et ce qu'elle coûte.** La riposte cesse d'être un coup rendu à qui est à portée pour devenir un **contre** : le mot le plus vif rend le coup à quiconque le frappe, fût-ce de six cases — un éperon, pas un tir. Elle reste hors de tout PA et de toute feuille, elle n'appelle jamais de riposte, elle exige toujours `eperon` strictement plus haut et une tenue non nulle après le coup : deux conditions au lieu de trois. Rien ne change au carnet, à la chaîne ni aux formats — la bataille est une jauge — mais **`bataille.ts` change**, donc les contrôles de riposte de `bataille.test.ts`, la docstring de `riposteDe`, le §3 de `SPEC_TACTIQUE.md` et `BIBLE_VEILLEE.md`. Aucune preuve déposée ne rejoue encore une bataille (`depot.ts` ne connaît pas `bataille.ts`, et `veillees/index.json` est vide) : la règle peut changer sans rien invalider. C'est un chantier, avec sa première mesure faite et sa cible encore devant lui : **C2 ter**, à l'arbitrage de l'auteur.
 
 ## PS2.LIMITE
 - **Une politique n'est pas un joueur, mais c'est celle du jeu.** `ia.ts` tient les Indéchiffrés à l'écran ; le coffre est tenu par une main humaine que ce banc ne modélise pas. Un joueur qui tient son archer hors de portée et son rapide en retrait peut rendre d'autres chiffres — le banc mesure ce que le jeu fait jouer, pas ce qu'un joueur pourrait faire.
