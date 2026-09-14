@@ -288,6 +288,8 @@ export function BatailleView() {
                 <Suspense fallback={<div className="h-full bg-fond" />}>
                   <BatailleCanvas
                     lecture={lecture}
+                    avant={partie.avant}
+                    derniers={partie.derniers}
                     teinte={teinte}
                     onCase={surCase}
                     onSurvol={setSurvol}

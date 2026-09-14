@@ -317,17 +317,31 @@ export function annoncer(etat: EtatBataille): EtatBataille {
  * tout sur l'échiquier de départ. Jouer, c'est savoir ; annoncer, c'est lire.
  */
 export function jouerPhase(etat: EtatBataille): EtatBataille {
+  return jouerPhaseTracee(etat).etat;
+}
+
+/**
+ * `jouerPhase`, avec les actes joués rendus dans l'ordre : ce que la scène
+ * anime (`animation.ts`, `evenementsDe`). Même politique, mêmes choix — les
+ * actes rendus rejouent l'état final à l'octet depuis l'état d'entrée.
+ */
+export function jouerPhaseTracee(etat: EtatBataille): {
+  readonly etat: EtatBataille;
+  readonly actes: readonly Acte[];
+} {
   let e = etat;
+  const actes: Acte[] = [];
   for (const id of ordreDePhase(etat)) {
     if (e.fin !== null) break;
     const u = e.unites.find((x) => x.id === id);
     if (u === undefined || !vivante(u) || u.camp !== e.phase) continue;
     for (const acte of planDe(e, id).actes) {
       e = jouer(e, acte);
+      actes.push(acte);
       if (e.fin !== null) break;
     }
   }
-  return e;
+  return { etat: e, actes };
 }
 
 /**
