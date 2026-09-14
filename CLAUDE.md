@@ -62,6 +62,7 @@ atelier/            interface web (TanStack Start, React), rejoue la spec en TS 
                     scripts/deposer-veillee.ts = le juge des preuves dans la CI (logique dans lib/eidos/depot.ts) ;
                     scripts/banc-tactique.ts = banc du moteur réel, vecteurs gelés, calibration hors CI ;
                     scripts/banc-r2.ts = le prix des axes (R2) sur le moteur ET la politique, deux sièges, 440 320 duels hors CI
+                    scripts/banc-veillee.ts = le budget d'une run entière sous chaque règle (A17, A18, A5), 12 configurations, sans signature
 .github/workflows/  tests.yml (3 OS × 2 Python + empreintes), chaine.yml (cron
                     horaire), robinet.yml (issues), veillees.yml (issues « veillée » : le juge
                     TypeScript dépose les preuves dans veillees/), courriel.yml (boîte IMAP, minute 37,
@@ -212,11 +213,12 @@ python3 relique.py --test      # 4
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 612 tests Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 621 tests Eidos
 npm run langue [page]          # la règle d'écriture : les manquements par page, ou ceux d'une page (~1 s)
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 npm run banc-tactique          # calibration tactique complète : 256 duels (~1 s)
 npm run banc-r2                # R2, le prix des axes : 440 320 duels et 1 200 mêlées (~16 min), le juge de C2 bis
+npm run banc-veillee           # le budget d'une run : 1 000 runs × 12 configurations (~10 min), le juge d'A17 et d'A18
 ```
 
 Règles :
