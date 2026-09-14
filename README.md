@@ -234,7 +234,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `courriel.py` | 321 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
 | `vecteurs.py` | 231 | shared vectors Python ↔ TS (`vecteurs.json`, 10 families) | parity |
 | `qr.py` | 428 | QR encoder, standard library, level H, versions 1–10 | 5 |
-| `relique.py` | 236 | relic keeper: seal, animate | 3 |
+| `relique.py` | 245 | relic keeper: seal, animate | 4 |
 | `labo/aura_voxel_lab.py` | 132 | pendulum-9 lab: voxel avatar (grid of `voxels.ts`), graded aura, 8 aggregators | 11 |
 | `labo/pendule9_run.py` | 193 | lab: free Tower over the atelier's run, seal, Cube and anchoring, muses from `signatures.ts` | 11 |
 | `labo/unification.py` | 95 | lab: contract with `pendule.ts`, synthetic and real fixtures (`exporter-run.ts`), gift | 9 |
@@ -269,7 +269,7 @@ python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 -c "import noeud as N; N._test_indice()"      # 2
 python3 -c "import noeud as N; N._test_reliques()"    # 5
 python3 qr.py --test           # 5
-python3 relique.py --test      # 3
+python3 relique.py --test      # 4
 python3 federation.py          # 18
 python3 consensus.py           # 6, historical
 python3 noeud.py --verifier    # full replay of the testnet: must end with « aucun refus »

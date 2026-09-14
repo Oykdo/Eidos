@@ -2,7 +2,7 @@
 
 **Dépôt :** Oykdo/Eidos · **Rédigé le :** 2026-09-14, contre `9927508` (chaîne à la hauteur 181, `reliques.json` et `veillees/index.json` vides) · **Statut :** rien à coder si tout passe — le livrable est **une donnée**, pas du code
 **Entrées :** `HANDOVER_RELIQUES_QR.md` (la conception) · `relique.py`, `noeud.py` (`noter_reliques`, `etat_reliques`, `mise_sceau`) · `relique-qr.ts`, la page Reliques · `veillee.ts`, `veillee-tour.ts`, `depot.ts`, `veillees.yml`, la page Veillée · `FEUILLE_DE_ROUTE.md` C5, A13, A14
-**Ne change pas :** aucun fichier de code, sauf les défauts du §5 s'ils se confirment
+**Ne change pas :** aucun fichier de code, sauf les défauts du §5 s'ils se confirment (le premier est corrigé le 2026-09-14, `relique.py` 4 contrôles)
 
 ---
 
@@ -14,7 +14,7 @@ Faire tourner **en réel** deux machineries codées, testées, et jamais servies
 
 | Étape | Déjà là | Où |
 |---|---|---|
-| Sceller | `relique.py --sceller --age A --indice "…" [--dossier D]` : graine par `secrets`, adresse WOTS+, id = `sha256("eidos-relique-qr/1" ‖ adresse)[:16]`, QR SVG (**seul** porteur de la graine), planche `.txt` (id, âge, adresse hex et en 31 glyphes, consignes), entrée ajoutée à `reliques.json` ; la graine n'est ni affichée ni stockée | `relique.py` (3 contrôles) |
+| Sceller | `relique.py --sceller --age A --indice "…" [--dossier D]` : graine par `secrets`, adresse WOTS+, id = `sha256("eidos-relique-qr/1" ‖ adresse)[:16]`, QR SVG (**seul** porteur de la graine), planche `.txt` (id, âge, adresse hex et en 31 glyphes, consignes), entrée ajoutée à `reliques.json` ; la graine n'est ni affichée ni stockée | `relique.py` (4 contrôles) |
 | Publier le statut | à chaque rejeu, `noter_reliques` suit les sorties créées sur les adresses de `reliques.json` et leur dépense ; `etat_reliques` publie `attente` → `intacte` (txid, rang, montant, `scellee` = montant ≥ mise) → `recuperee` (bloc, txid, vers, artefact) dans `etat.json.reliques` | `noeud.py` (`_test_reliques`, 5 contrôles) |
 | La mise d'un sceau | `mise_sceau(âge)` = émission de l'âge / 10⁶ : Kali **2,10** EIDL, Dvâpara 8,39, Trétâ 18,87, Satya 33,55 | `noeud.py`, `relique.ts` |
 | Créditer | une issue « robinet » dont le corps porte les 31 glyphes de l'adresse ; une goutte de **1 EIDL** ; **une demande servie par compte GitHub et par époque** (règle 4) ; le cron `chaine.yml` forge à la minute 7 | `robinet.py`, `robinet.yml`, `chaine.yml` |
@@ -26,9 +26,9 @@ Faire tourner **en réel** deux machineries codées, testées, et jamais servies
 ## 3. Livrable R — une relique scellée et publiée
 
 1. **Sceller hors du dépôt.** `python3 relique.py --sceller --age Kali --indice "…" --dossier <un dossier hors du dépôt>`. Le `--dossier` par défaut est la racine du dépôt : le SVG y serait ignoré par `.gitignore` (`/*.svg`, `*graine*`), la planche non — ne pas s'y fier, sortir les deux. Scanner l'écran une fois avant d'imprimer (`qr.py` n'a pas de décodeur). Imprimer, cacher, **puis supprimer le SVG** : la graine n'existe plus qu'à l'endroit caché.
-2. **Committer `reliques.json` seul**, sur une branche, PR « reliques : la première » — une entrée : id, adresse hex, âge, indice, date. Vérifier avant : `python3 relique.py --test` (3), `python3 -c "import noeud as N; N._test_reliques()"` (5), `python3 noeud.py --verifier` (« aucun refus » : le fichier est lu au rejeu).
+2. **Committer `reliques.json` seul**, sur une branche, PR « reliques : la première » — une entrée : id, adresse hex, âge, indice, date. Vérifier avant : `python3 relique.py --test` (4), `python3 -c "import noeud as N; N._test_reliques()"` (5), `python3 noeud.py --verifier` (« aucun refus » : le fichier est lu au rejeu).
 3. **Créditer.** Ouvrir une issue « robinet » avec les 31 glyphes de la planche. Au cron suivant, `etat.json.reliques[0].etat` passe d'`attente` à `intacte`, `montant` 100 000 000, **`scellee: false`** (1 EIDL < 2,10). Lire aussi la page Reliques (statut « intacte », âge, artefact).
-4. **Décider du sceau** (§6, R1) : rester « intacte, sous-scellée » — la lecture est vraie et publiée — ou verser la mise en **une seule sortie** (§5, défaut 1).
+4. **Le sceau** (R1, tranché par l'auteur le 2026-09-14) : la première relique reste « intacte, sous-scellée » — la lecture est vraie et publiée. La mise entière, en **une seule sortie**, viendra d'un coffre qui la possède (§5, défaut 1).
 5. **Ne pas récupérer soi-même** : la première récupération est un événement du jeu ; la machinerie est déjà couverte par `_test_reliques` (intacte → recuperee).
 
 **Cible.** `reliques.json` porte 1 entrée ; `etat.json.reliques` la publie `intacte` avec son txid ; la page Reliques la lit ; aucune graine nulle part dans le dépôt (`grep -E '[A-Za-z0-9_-]{43}' reliques.json` vide — la note du fichier contient le mot « graine », pas une graine ; `git log -p reliques.json` sans octet de QR).
@@ -47,7 +47,7 @@ Faire tourner **en réel** deux machineries codées, testées, et jamais servies
 
 ## 5. Défauts déjà visibles, à confirmer en réel
 
-1. **La planche conseille un second versement, et il serait perdu.** `relique.py` écrit : « Le robinet n'en verse qu'un : compléter par un envoi depuis votre coffre vers cette adresse. » Or une clé WOTS+ ne signe qu'une fois **et `Carnet.valider_bloc` refuse une adresse déjà signée dans le même bloc** (`utxo.py`, « cle WOTS+ reutilisee — usage unique ») : de deux sorties sur l'adresse de la relique, **une seule sera jamais dépensable**, et `etat_reliques` ne lit que la première (`par_adresse[a][0]`). La mise d'un sceau doit arriver en **une seule sortie** ≥ mise, donc par un envoi depuis un coffre qui la possède, jamais par goutte + complément. Correctif : le texte de la planche (`relique.py`, un contrôle : la planche ne dit plus « compléter ») et une phrase dans `HANDOVER_RELIQUES_QR.md` §7.
+1. **La planche conseillait un second versement, et il aurait été perdu — CORRIGÉ le 2026-09-14.** `relique.py` écrivait : « Le robinet n'en verse qu'un : compléter par un envoi depuis votre coffre vers cette adresse. » Or une clé WOTS+ ne signe qu'une fois **et `Carnet.valider_bloc` refuse une adresse déjà signée dans le même bloc** (`utxo.py`, « cle WOTS+ reutilisee — usage unique ») : de deux sorties sur l'adresse de la relique, **une seule sera jamais dépensable**, et `etat_reliques` ne lit que la première (`par_adresse[a][0]`). La planche dit désormais « une seule pièce, jamais les deux », un contrôle l'exige (`relique.py` 3 → 4), et `HANDOVER_RELIQUES_QR.md` §7 le porte. Reste vrai : la mise entière ne peut venir que d'un envoi en une sortie depuis un coffre qui la possède.
 2. **`--dossier` par défaut = la racine du dépôt.** Sans dommage grâce à `.gitignore`, mais une planche `.txt` (adresse, indice) resterait dans l'arbre de travail. Correctif possible : refuser un `--dossier` sous le dépôt, ou l'exiger.
 3. **Le frein d'auteur mord sur le chantier lui-même** : la relique et la pièce de veillée demandent deux gouttes, donc deux comptes ou deux époques (42 jours). Ce n'est pas un défaut du robinet ; c'est à savoir avant de commencer.
 
@@ -55,7 +55,7 @@ Faire tourner **en réel** deux machineries codées, testées, et jamais servies
 
 | # | Question | Recommandation |
 |---|---|---|
-| R1 | Le sceau de la première relique : sous-scellée à 1 EIDL, ou la mise entière (Kali 2,10) en une sortie ? | **Sous-scellée**, dite telle : c'est ce que le nœud publie, et rien ne promet plus. La mise entière attend un coffre qui la possède |
+| R1 | Le sceau de la première relique : sous-scellée à 1 EIDL, ou la mise entière (Kali 2,10) en une sortie ? | **TRANCHÉ le 2026-09-14 : sous-scellée**, dite telle : c'est ce que le nœud publie, et rien ne promet plus. La mise entière attend un coffre qui la possède |
 | R2 | L'indice de lieu : public dès le scellement (`reliques.json`), ou révélé plus tard ? | **Public** : c'est le jeu, pas le protocole, et l'entrée est relue par le nœud telle quelle |
 | R3 | L'âge : Kali (le moins cher, ellipse la plus petite) ? | **Kali** pour la première ; les autres âges quand une mise entière sera possible |
 | A13 | Le canal courriel : activé (`EIDOS_ROBINET_COURRIEL`) ou retiré de la mention publique ? | Sans rapport direct, mais le chantier le croise : `etat.json` publie `courriel: null`. Trancher dans la même passe |
@@ -67,7 +67,7 @@ La première **récupération** (elle appartient au chercheur), un dépôt de pr
 ## 8. Comment on vérifie
 
 ```bash
-python3 relique.py --test                                  # 3
+python3 relique.py --test                                  # 4
 python3 -c "import noeud as N; N._test_reliques()"         # 5
 python3 noeud.py --verifier                                # aucun refus, reliques.json relu
 grep -rE '[A-Za-z0-9_-]{43}' reliques.json               # rien : pas de base64url de 32 octets

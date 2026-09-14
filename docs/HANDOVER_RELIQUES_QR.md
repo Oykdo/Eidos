@@ -204,6 +204,15 @@ l'envie. Tout tient sur le testnet-2 sans réinitialisation.
   adresse — suffisant. Si l'on veut des prix par âge (Kali 2,10 … Satya 33,55),
   il faut un type de demande `sceau` dans `noeud.py`, budgété comme le robinet.
   À décider après R1.
+- **Une seule pièce sur l'adresse, jamais deux** (2026-09-14). Une clé WOTS+ ne
+  signe qu'une fois et `Carnet.valider_bloc` refuse une adresse déjà signée dans
+  le même bloc : de deux pièces versées à la relique, **une seule sera jamais
+  dépensable** — l'autre est perdue, et `etat_reliques` ne lit que la première.
+  La mise d'un sceau arrive donc en **une seule sortie** : la goutte du robinet
+  (la relique est alors publiée « sous-scellée », ce qui est vrai), ou un envoi
+  de la mise entière depuis un coffre qui la possède. Jamais goutte + complément.
+  La planche de `relique.py` le dit, et un contrôle l'exige. Décision d'auteur :
+  la première relique est scellée à la goutte, sous-scellée, dite telle.
 
 ## 8. Décisions qui vous reviennent
 
