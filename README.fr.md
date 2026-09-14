@@ -296,6 +296,7 @@ Les tests sont des `assert` et des `print` nus, sans framework. Toute règle de 
 | [`docs/SPEC_FORUM.md`](docs/SPEC_FORUM.md), [`docs/SPEC_BROUILLARD.md`](docs/SPEC_BROUILLARD.md), [`docs/ETUDE_ARBRE_VISITE.md`](docs/ETUDE_ARBRE_VISITE.md) | des propositions non construites : le forum du royaume, la brume des antres, l'arbre de visite |
 | [`docs/LORE_CHAMBRE.md`](docs/LORE_CHAMBRE.md), [`docs/TRANSPOSITION_EIDOLON.md`](docs/TRANSPOSITION_EIDOLON.md) | la Chambre de Genèse et la règle de transposition : les noms et les nombres, jamais la puissance |
 | [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md) | les reliques : sceller, récupérer, animer |
+| [`docs/HANDOVER_VEILLEE_BATAILLE.md`](docs/HANDOVER_VEILLEE_BATAILLE.md), [`docs/HANDOVER_PREMIERE_RELIQUE.md`](docs/HANDOVER_PREMIERE_RELIQUE.md), [`docs/HANDOVER_PUITS.md`](docs/HANDOVER_PUITS.md), [`docs/HANDOVER_LIGNEE_FORUM.md`](docs/HANDOVER_LIGNEE_FORUM.md), [`docs/HANDOVER_HYGIENE_P6.md`](docs/HANDOVER_HYGIENE_P6.md) | les passations des chantiers restants : la bataille dans la Veillée, la première relique, les puits, la lignée, l'hygiène — ce qui existe, la cible chiffrée, ce qui tue, les décisions attendues |
 | [`veillees/README.md`](veillees/README.md) | comment une preuve de veillée se dépose et se juge |
 
 ## 15. Ce que ce dépôt ne fait pas
