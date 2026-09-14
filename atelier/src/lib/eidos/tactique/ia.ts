@@ -61,8 +61,11 @@
  * rapide, pour une cible de |r| < 0,30 (§9 ter de `SPEC_TACTIQUE.md`) ; deux
  * d'entre elles ne changent aucun choix. Arriver au contact est déjà ce
  * qu'une politique peut faire de mieux pour un mot qui n'a que de
- * l'initiative : ce qui lui manque est une règle du moteur — la riposte qui
- * ne demande plus la portée, dette D9 — pas un rang de plus ici.
+ * l'initiative : ce qui lui manquait était une règle du moteur — la riposte
+ * qui ne demande plus la portée, dette D9 — pas un rang de plus ici. C2 ter
+ * l'a posée le 2026-09-14 (`bataille.ts`, `riposteDe` : un contre) avec le
+ * socle `COUP_BASE` relevé ; cette politique n'a pas bougé d'une ligne, et
+ * c'est elle que `banc-r2.ts` joue des deux côtés pour le dire.
  *
  * LIMITE : **elle ne joue qu'un tour d'avance et qu'une unité à la fois.**
  * Pas de formation, pas de garde d'un couloir, pas de sacrifice. `eperon`

@@ -11,6 +11,9 @@ import {
   TOLERANCES_R2,
 } from "./banc-r2.ts";
 
+/** La cible (a) du §9 ter de `SPEC_TACTIQUE.md` : |r| < 0,30, en millièmes. */
+const CIBLE_R_MILLE = 300;
+
 describe("banc R2 — le prix des axes, échantillon gelé", () => {
   const p = PARAMETRES_R2.rapide;
   const r2 = bancR2("rapide");
@@ -34,6 +37,8 @@ describe("banc R2 — le prix des axes, échantillon gelé", () => {
     assert.equal(r2.moteur.pasTourMax, 8);
     assert.equal(r2.moteur.porteeMax, 7);
     assert.ok(r2.moteur.pasTourMax > r2.moteur.porteeMax);
+    // C2 ter (2026-09-14) : le socle est à 24, avec la riposte en contre.
+    assert.equal(r2.moteur.COUP_BASE, 24);
   });
 
   it("ne dérive pas de sa calibration : r par axe, bande de tier, nuls, feuilles", () => {
@@ -58,21 +63,41 @@ describe("banc R2 — le prix des axes, échantillon gelé", () => {
     );
   });
 
-  it("l'échantillon rapide lit le même moteur que la calibration complète", () => {
+  it("l'échantillon rapide reste du même côté de chaque cible que la calibration complète", () => {
     // Le protocole complet (440 320 duels) ne tourne pas en CI : ses chiffres
     // sont publiés dans `ETALONS_R2_COMPLET`, et l'échantillon doit rester du
-    // même côté qu'eux — le signe de chaque axe qui a un prix (|r| ≥ 0,10 sur
-    // le protocole complet ; un axe sans prix n'a pas de côté), et la bande.
+    // même côté de chaque **cible** qu'eux — |r| < 0,30 par axe, quartiles
+    // sous 3×, une bande positive. Pas du même signe : ce contrôle le
+    // demandait quand les prix étaient grands (−0,640 / +0,591), et C2 ter a
+    // montré qu'un prix proche de zéro n'a pas de signe stable entre les deux
+    // échelles (eperon −0,128 complet, +0,053 rapide ; arc +0,145 / −0,109).
     for (const axe of COMBAT_AXES) {
-      const complet = ETALONS_R2_COMPLET.r[axe];
-      if (Math.abs(complet) < 100) continue;
+      const complet = Math.abs(ETALONS_R2_COMPLET.r[axe]) < CIBLE_R_MILLE;
+      const rapide = Math.abs(r2.pool.r[axe]) < CIBLE_R_MILLE;
       assert.equal(
-        Math.sign(r2.pool.r[axe]),
-        Math.sign(complet),
-        `r(${axe}) : l'échantillon (${r2.pool.r[axe]}) et le protocole complet (${complet}) ne sont pas du même signe`,
+        rapide,
+        complet,
+        `r(${axe}) : l'échantillon (${r2.pool.r[axe]}) et le protocole complet (${ETALONS_R2_COMPLET.r[axe]}) ne sont pas du même côté de ${CIBLE_R_MILLE} millièmes`,
       );
     }
     assert.equal(r2.tiers.bandeMille > 0, ETALONS_R2_COMPLET.bandeMille > 0);
     assert.equal(r2.pool.quartilesLameEcuCent < 300, true, "la cible (b) tient sur l'échantillon");
+  });
+
+  it("C2 ter : la cible du §9 ter tient sur le protocole complet, et l'échantillon le voit", () => {
+    // |r| < 0,30 sur les quatre axes, mesuré le 2026-09-14 (PS2.10) ; la
+    // veille, eperon −0,640 et arc +0,591. Ce contrôle affirme l'état mesuré :
+    // il tombe le jour où une constante ou une règle bouge, et c'est alors le
+    // protocole complet qu'il faut refaire, pas l'étalon qu'il faut retoucher.
+    for (const axe of COMBAT_AXES) {
+      assert.ok(
+        Math.abs(ETALONS_R2_COMPLET.r[axe]) < CIBLE_R_MILLE,
+        `r(${axe}) ${ETALONS_R2_COMPLET.r[axe]} au lieu de moins de ${CIBLE_R_MILLE} sur le protocole complet`,
+      );
+      assert.ok(
+        Math.abs(r2.pool.r[axe]) < CIBLE_R_MILLE,
+        `r(${axe}) ${r2.pool.r[axe]} au lieu de moins de ${CIBLE_R_MILLE} sur l'échantillon`,
+      );
+    }
   });
 });

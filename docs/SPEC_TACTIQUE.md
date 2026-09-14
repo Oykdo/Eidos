@@ -40,8 +40,8 @@ Les six lois n'empêchent pas un bon tactical RPG. Elles empêchent un mauvais.
 **Un avertissement, mesuré après coup.** Cette thèse tient sur *quel* axe on pointe, pas sur *combien*. Une
 fois le prix des axes corrigé, aucun des quatre n'achetait la victoire (|r| < 0,13) — **ce n'est plus vrai
 depuis les points d'action** : `PA_PAR_TOUR = 2` a retourné le prix des axes sans qu'une ligne de résolution
-bouge, et la cible de 0,30 du §9 ter est **rompue** (voir le post-scriptum d'`ETUDE_EQUILIBRAGE_TACTIQUE.md`,
-660 288 duels). Un mot **extrême**
+bouge, et la cible de 0,30 du §9 ter a été **rompue** (voir le post-scriptum d'`ETUDE_EQUILIBRAGE_TACTIQUE.md`,
+660 288 duels) jusqu'à ce que C2 ter la rétablisse le 2026-09-14 (riposte en contre, `|r|` max 0,145). Un mot **extrême**
 reste plus faible qu'un mot équilibré, y compris contre les adversaires qui lui conviennent le mieux (93,9 % au
 tier 1, 57,6 % au tier 12). L'agrandissement des salles, dont on espérait qu'il donne au spécialiste la place
 d'atteindre sa niche, ne referme cet écart que de 5 points — l'hypothèse a été mesurée et elle est fausse. La cause n'est pas réglable : abattre demande de tenir *et* de frapper, un produit,
@@ -101,14 +101,18 @@ Dans une phase, l'ordre des unités est libre pour le joueur, imposé par `epero
 **La résolution — zéro dé.** Attaquant *a*, défenseur *d* :
 
 ```
-base    = COUP_BASE + a.lame                    // 16..80
+base    = COUP_BASE + a.lame                    // 24..88
 accord  = constructif → +base/4 | neutre → 0 | destructif → −base/4
 dos     = frappé depuis la direction opposée au dernier déplacement de d → +base/2
-allonge = distance(a, d) > portée(d) → +base/2  // d ne peut pas riposter
+allonge = distance(a, d) > portée(d) → +base/4  // d n'atteint pas a ; d contre quand même s'il est plus vif
 charge  = 4 × cases parcourues par a ce tour    // au plus 4 × pas(a)
 coup    = max(1, base + accord + dos + allonge + charge)
-d.tenue -= coup    // tenue = 2 × (COUP_BASE + d.ecu), 32..160
+d.tenue -= coup    // tenue = 2 × (COUP_BASE + d.ecu), 48..176
 ```
+
+`COUP_BASE` vaut 24 et `DIV_ALLONGE` 4 depuis le 2026-09-14 (C2 ter) ; 16 et 2 avant. Les deux ne valent
+qu'avec la riposte en contre (ci-dessous) : le socle à 24 avec l'ancienne riposte **aggrave** le prix des axes
+(`ETUDE_EQUILIBRAGE_TACTIQUE.md`, PS2.10).
 
 **`ecu` n'entre pas dans le coup** : il achète la tenue, une fois. Il la réduisait aussi, et se payait donc
 deux fois — mesuré, `r(ecu, victoire)` tombe de +0,59 à +0,14 quand on le lui retire. Le socle du coup et
@@ -118,11 +122,17 @@ purement positionnel** — la tentation était de le lier à `memeOrbite`, mais 
 sur 1 999 000 paires. La table d'affinités, elle, n'est pas une table de designer : c'est le produit scalaire
 de deux quaternions (`resonance.ts`).
 
-**La riposte.** Frappée à une distance d'où elle atteint son attaquant, une unité **plus vive** que lui
-(`d.eperon > a.eperon`, strictement) lui rend le coup. Elle ne consomme **aucune feuille** — personne ne la
-choisit — ne dépense pas la frappe du tour du riposteur, entre au journal comme un `Coup` marqué `riposte`,
-et **on ne riposte jamais à une riposte**. Sa condition est l'exacte négation de l'allonge : frapper de plus
-loin que la cible ne porte, c'est `+base/2` **et** aucun coup rendu.
+**La riposte est un contre.** Frappée, une unité **plus vive** que son attaquant (`d.eperon > a.eperon`,
+strictement) lui rend le coup, d'où qu'il ait frappé : un archer à six cases est rendu comme un voisin de case
+— un éperon, pas un tir. Elle ne consomme **aucune feuille** — personne ne la choisit — ne dépense pas la
+frappe du tour du riposteur, entre au journal comme un `Coup` marqué `riposte`, et **on ne riposte jamais à une
+riposte**. Le coup rendu n'a jamais d'allonge : l'attaquant était à sa propre portée. Jusqu'au 2026-09-14 elle
+exigeait aussi que l'attaquant fût à portée du riposteur — l'exacte négation de l'allonge — et c'est cette
+condition qui rendait `eperon` gratuit : un archer n'était jamais riposté, r(eperon) −0,640 et r(arc) +0,591
+sur 440 320 duels, que ni une constante ni la politique ne rattrapaient (C2, C2 bis). Le contre, l'allonge à
+`base/4` et le socle à 24 ramènent les quatre axes sous 0,15 (C2 ter, `ETUDE_EQUILIBRAGE_TACTIQUE.md`
+PS2.9–PS2.10). L'allonge reste un bonus pour qui frappe hors de la portée de sa cible ; elle n'achète plus
+l'impunité.
 
 **La charge.** Chaque case parcourue avant de frapper ajoute 4 au coup — le seul terme **additif** de la
 résolution, pour qu'il profite d'abord à qui frappe faible. L'élan est le coût du chemin, pas la distance à
@@ -335,8 +345,10 @@ Dans la résolution d'origine, `lame + ecu` corrélait à **0,899** avec le taux
 voulu le même profil, et le power creep serait revenu par la fenêtre : non pas des objets *plus gros*, mais
 un unique profil *toujours meilleur*.
 
-D'où l'**allonge** (§3) : frapper de plus loin que la cible ne peut riposter vaut `+lame/4`. `arc` a
-désormais un prix, et ce prix est positionnel — il se gagne en jouant bien, pas en possédant mieux.
+D'où l'**allonge** (§3) : frapper de plus loin que la cible n'atteint vaut `+base/DIV_ALLONGE`. `arc` a
+désormais un prix, et ce prix est positionnel — il se gagne en jouant bien, pas en possédant mieux. Depuis
+C2 ter (2026-09-14) il n'achète plus l'impunité : la riposte est un contre, et c'est ce qui a ramené `arc`
+de +0,591 à +0,145.
 
 Deux cibles à tenir, à vérifier à chaque changement du moteur :
 - **|r| par axe sous 0,30** entre la valeur d'un axe et le taux de victoire ;
@@ -349,7 +361,9 @@ tenant une fois le coffre** — l'initiative est par camp dans le moteur, et jou
 premier coup et la case. Mesuré le 2026-09-13 (C2, `ETUDE_EQUILIBRAGE_TACTIQUE.md`, second post-scriptum) : (b) est
 tenue (1,04×) ; (a) est **rompue par deux axes, dans les deux sens** — `eperon` **−0,640**, `arc` **+0,591** — et
 `DIV_PAS = 64` n'y change rien (0,657). Le prix des axes n'est pas dans le pas : dette D9, question A16, chantier C2 bis
-de la feuille de route.
+de la feuille de route. **Tenue le 2026-09-14 (C2 ter, PS2.10)** : la riposte en contre, `DIV_ALLONGE` 4 et
+`COUP_BASE` 24 rendent (a) **tenue** — lame −0,007, ecu −0,008, eperon −0,128, arc +0,145, `|r|` max **0,145** —
+et (b) tenue (0,99×), 0 nul, bande de tier 32,4 pt. La politique n'a pas bougé.
 
 Deux corrections mineures tombées de la même mesure :
 - la **rareté est presque une constante** — proximité au catalogue entre 78 et 100 sur 2 000 objets, σ 2,67,

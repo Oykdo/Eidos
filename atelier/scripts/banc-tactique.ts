@@ -88,14 +88,16 @@ export type ResultatBanc = {
 
 /**
  * Calibration du banc complet (256 duels), relue par
- * `npm run banc-tactique` le 2026-09-11. Le test CI ne le rejoue pas : il
- * vérifie que l'échantillon réduit reste à moins de 10 % de ces quatre
- * lectures, sans prétendre remplacer le protocole étendu des études.
+ * `npm run banc-tactique` le 2026-09-14 (C2 ter : riposte en contre,
+ * `COUP_BASE` 24, `DIV_ALLONGE` 4 ; le 2026-09-11 : coup 43 865, tenue 1 230,
+ * charge 3 467, pas 4 125). Le test CI ne le rejoue pas : il vérifie que
+ * l'échantillon réduit reste à moins de 10 % de ces quatre lectures, sans
+ * prétendre remplacer le protocole étendu des études.
  */
 export const ETALONS_COMPLETS: ResultatBanc["mesures"] = {
-  coup: 43865,
-  tenue: 1230,
-  charge: 3467,
+  coup: 51215,
+  tenue: 1133,
+  charge: 2547,
   pas: 4125,
 };
 

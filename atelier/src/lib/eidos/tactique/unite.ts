@@ -7,7 +7,7 @@
  *
  * Les trois lectures mécaniques sont des divisions entières de la somme 64 :
  *
- *   tenue  = MULT_TENUE·(COUP_BASE + ecu)   →  32..160
+ *   tenue  = MULT_TENUE·(COUP_BASE + ecu)   →  48..176
  *   pas    = PAS_BASE + eperon / DIV_PAS    →  2..4
  *   portée = PORTEE_BASE + arc / DIV_PORTEE →  1..7
  *
@@ -58,9 +58,9 @@ import {
  * plus dans la résolution du coup (`bataille.ts`), il se payait deux fois.
  *
  * Le facteur n'est pas choisi, il est contraint deux fois :
- * — **le levier**. Le coup vaut `COUP_BASE + lame`, soit 8 à 72 : un rapport
- *   de 9. Pour qu'un point de `ecu` vaille un point de `lame`, la tenue doit
- *   avoir le même rapport, donc valoir `MULT_TENUE·(COUP_BASE + ecu)`.
+ * — **le levier**. Le coup vaut `COUP_BASE + lame`, soit 24 à 88 : un
+ *   rapport de 3,67. Pour qu'un point de `ecu` vaille un point de `lame`, la
+ *   tenue doit avoir le même rapport, donc valoir `MULT_TENUE·(COUP_BASE + ecu)`.
  * — **la durée**. Ce même facteur est le nombre de coups nus qu'il faut pour
  *   abattre un adversaire de même valeur : à 2, une bataille de face tient la
  *   médiane de 2 à 4 coups, et 1 à 2 avec l'accord et le dos.

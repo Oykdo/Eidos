@@ -48,8 +48,15 @@ export const GRILLE_N = 9;
  * (tenue 8 à 72) : mesuré, r(lame, victoire) = +0,67 contre +0,14 à `ecu`.
  * Avec le même socle des deux côtés, un point de `lame` et un point de `ecu`
  * se paient au même prix, et c'est le seul réglage qui l'obtienne.
+ *
+ * 24 depuis le 2026-09-14 (C2 ter), 16 avant. Le socle règle le levier des
+ * deux axes de face — 16 à 80 devient 24 à 88, un rapport de 5 devient 3,67 —
+ * et il ne vaut qu'avec la riposte en contre (`bataille.ts`) : mesuré sur
+ * 440 320 duels (`scripts/banc-r2.ts`), 24 avec le contre et l'allonge à
+ * `base/4` tient |r| < 0,15 sur les quatre axes ; 24 avec l'ancienne riposte
+ * **aggrave** (|r| max 0,604, `arc` roi) ; 28 rend `ecu` négatif (−0,125).
  */
-export const COUP_BASE = 16;
+export const COUP_BASE = 24;
 
 /**
  * Plancher d'un coup : un garde-fou, plus un réglage. Le coup vaut au moins
@@ -64,8 +71,15 @@ export const COUP_MIN = 1;
 export const DIV_ACCORD = 4;
 export const DIV_DOS = 2;
 export const DIV_REPRISE = 8;
-/** Frapper de plus loin que la cible ne riposte. Le prix de `arc`. */
-export const DIV_ALLONGE = 2;
+/**
+ * Frapper de plus loin que la cible n'atteint. Le prix de `arc` — un bonus,
+ * pas une impunité : la riposte est un contre qui ne demande pas la portée
+ * (`bataille.ts`, `riposteDe`). 4 depuis le 2026-09-14 (C2 ter), 2 avant :
+ * tant que l'allonge achetait l'impunité, `base/2` était son prix ; en
+ * contre, `base/2` laisse `arc` à +0,473 et `base/3` à +0,275, `base/4` le
+ * ramène à +0,145 (protocole complet, `COUP_BASE` 24).
+ */
+export const DIV_ALLONGE = 4;
 
 /**
  * La charge : ce que chaque case parcourue avant de frapper ajoute au coup.

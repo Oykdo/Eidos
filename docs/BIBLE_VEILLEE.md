@@ -14,7 +14,7 @@ Figures ≠ preuves. Ce qui compte est ancré, ce qui est libre ne vaut rien. Au
 
 **La Veillée est un tactical RPG au tour par tour** (arbitrage d'auteur, `e8816b8`), et non plus un roguelike de parcimonie : la parcimonie reste, elle n'est plus le jeu, elle en est le prix. L'adversaire s'appelle les **Indéchiffrés** et il est déjà dans le lore — les mots qu'aucune des 101 formes du catalogue n'approche, donc sans cellule, donc sans nom, donc illisibles.
 **Le combat existe et il est entier** : dalle 9×9 de l'étage, zéro dé, deux points d'action par unité et par tour, riposte, zone de contrôle, rejeu à l'octet (`traceBataille`). 79 contrôles, `atelier/src/lib/eidos/tactique/`.
-**Il y a des points de vie et il faut le dire** : la `tenue` vaut 32 à 160, `encaisser` la soustrait, `reprendre` la remonte. Aucune des six lois de `integrite.ts` ne l'interdit ; la doctrine « aucun point de vie » est de `SPEC_TOUR.md:14`, écrite quand il n'y avait pas de combat. La v2 **assume la tenue** et écrit en quoi elle n'est pas un point de vie classique (§3).
+**Il y a des points de vie et il faut le dire** : la `tenue` vaut 48 à 176, `encaisser` la soustrait, `reprendre` la remonte. Aucune des six lois de `integrite.ts` ne l'interdit ; la doctrine « aucun point de vie » est de `SPEC_TOUR.md:14`, écrite quand il n'y avait pas de combat. La v2 **assume la tenue** et écrit en quoi elle n'est pas un point de vie classique (§3).
 **La run passe de 27 salles à neuf**, une par bande donc une par muse, et le sac à 81 places. Toute l'arithmétique en découle : **morts + butin ≤ 24** (§6).
 **Ce qu'une feuille signe change** : plus un coup porté, **une mort** — arbre de hauteur 5, 32 feuilles. Une clé ne signe qu'une fois, et c'est la vie : littéralement (§4).
 
@@ -69,8 +69,8 @@ LIMITE codée et assumée : la portée ignore les murs et la ligne de vue. On fr
 
 | Axe | Ce qu'il achète | Lecture | Amplitude |
 |---|---|---|---|
-| `lame` | le socle du coup | `COUP_BASE + lame` | 16 à 80 |
-| `ecu` | la **tenue**, et rien d'autre | `TENUE_BASE + MULT_TENUE·ecu` | 32 à 160 |
+| `lame` | le socle du coup | `COUP_BASE + lame` | 24 à 88 |
+| `ecu` | la **tenue**, et rien d'autre | `TENUE_BASE + MULT_TENUE·ecu` | 48 à 176 |
 | `eperon` | le pas, le rang de phase, la **riposte**, la **charge** | `PAS_BASE + eperon/DIV_PAS` | 2 à 4 pas |
 | `arc` | la portée, la reprise, l'**allonge** | `PORTEE_BASE + arc/DIV_PORTEE` | 1 à 7 cases |
 
@@ -79,19 +79,19 @@ LIMITE codée et assumée : la portée ignore les murs et la ligne de vue. On fr
 ### 2.3 La résolution — zéro dé
 
 ```
-base    = COUP_BASE + a.lame                                                    16..80
-accord  = ± base/DIV_ACCORD      polarité de deux quaternions (resonance.ts)     ±4..20
-dos     = + base/DIV_DOS         a, d et la case quittée par d alignés            8..40
-allonge = + base/DIV_ALLONGE     distance > portée de d : d ne riposte pas        8..40
+base    = COUP_BASE + a.lame                                                    24..88
+accord  = ± base/DIV_ACCORD      polarité de deux quaternions (resonance.ts)     ±6..22
+dos     = + base/DIV_DOS         a, d et la case quittée par d alignés           12..44
+allonge = + base/DIV_ALLONGE     distance > portée de d ; d contre quand même     6..22
 charge  = CHARGE_PAR_CASE × élan cases parcourues ce tour, au plus pas(a)         0..16
-porte   = max(COUP_MIN, base + accord + dos + allonge + charge)                 12..196
+porte   = max(COUP_MIN, base + accord + dos + allonge + charge)                 18..192
 ```
 
-Constantes, `types.ts` : `COUP_BASE` 16 · `COUP_MIN` 1 · `DIV_ACCORD` 4 · `DIV_DOS` 2 · `DIV_ALLONGE` 2 · `CHARGE_PAR_CASE` 4 · `DIV_REPRISE` 8 · `PA_PAR_TOUR` 2. Toutes les divisions sont entières. L'accord n'est pas une table de concepteur : c'est le produit scalaire de deux quaternions. Le dos est **purement positionnel** — aucun axe ne l'achète, ce qui est la seule raison pour laquelle on peut le modifier sans re-tarifer quoi que ce soit (§12, V7).
+Constantes, `types.ts` : `COUP_BASE` 24 · `COUP_MIN` 1 · `DIV_ACCORD` 4 · `DIV_DOS` 2 · `DIV_ALLONGE` 4 · `CHARGE_PAR_CASE` 4 · `DIV_REPRISE` 8 · `PA_PAR_TOUR` 2 (`COUP_BASE` 16 et `DIV_ALLONGE` 2 jusqu'au 2026-09-14, C2 ter). Toutes les divisions sont entières. L'accord n'est pas une table de concepteur : c'est le produit scalaire de deux quaternions. Le dos est **purement positionnel** — aucun axe ne l'achète, ce qui est la seule raison pour laquelle on peut le modifier sans re-tarifer quoi que ce soit (§12, V7).
 
 ### 2.4 La riposte, les points d'action, la fin
 
-**Riposte** : frappée à une distance d'où elle atteint son attaquant, une unité **strictement** plus vive (`d.eperon > a.eperon`) lui rend le coup. Elle ne consomme **ni feuille ni point d'action** — personne ne la choisit — et **on ne riposte jamais à une riposte**. Sa condition est l'exacte négation de l'allonge.
+**Riposte** : frappée, une unité **strictement** plus vive (`d.eperon > a.eperon`) rend le coup à qui l'a frappée, d'où qu'il ait frappé — un **contre**, un éperon et non un tir, jamais d'allonge sur le coup rendu. Elle ne consomme **ni feuille ni point d'action** — personne ne la choisit — et **on ne riposte jamais à une riposte**. Jusqu'au 2026-09-14 elle exigeait aussi la portée du riposteur (l'exacte négation de l'allonge) : c'est ce qui rendait `eperon` gratuit et `arc` roi, et C2 ter l'a levé — l'allonge est un bonus, plus une impunité.
 
 **Deux points d'action par unité et par tour** (`PA_PAR_TOUR`), plats pour toutes. Un pas en coûte un ; un coup en coûte un **et une feuille** ; `passer` les vide et interdit la reprise. L'ordre est libre : avancer puis frapper (avec la charge), **frapper puis se retirer**, avancer deux fois, frapper deux fois. Le prix ne dépend d'aucun axe — `eperon` en a déjà quatre.
 
@@ -119,7 +119,7 @@ Le rendu à l'écran ; le branchement sur la Veillée (`veillee-tour.ts` connaî
 
 ### 3.1 Le fait
 
-`tactique/unite.ts` : `tenue = TENUE_BASE + MULT_TENUE·ecu` (32 à 160) ; `encaisser` soustrait ; `vivante` teste `> 0` ; `reprendre` **remonte** de `MULT_TENUE·⌊arc/DIV_REPRISE⌋`, soit 0 à 16, à l'unité qui finit le tour avec **tous** ses points d'action. C'est un système de points de vie. La v1 écrivait « pas de points de vie » et rangeait « des points de vie déguisés » dans ce qu'on ne fait pas : **le texte était faux, il est corrigé ici.**
+`tactique/unite.ts` : `tenue = TENUE_BASE + MULT_TENUE·ecu` (48 à 176) ; `encaisser` soustrait ; `vivante` teste `> 0` ; `reprendre` **remonte** de `MULT_TENUE·⌊arc/DIV_REPRISE⌋`, soit 0 à 16, à l'unité qui finit le tour avec **tous** ses points d'action. C'est un système de points de vie. La v1 écrivait « pas de points de vie » et rangeait « des points de vie déguisés » dans ce qu'on ne fait pas : **le texte était faux, il est corrigé ici.**
 
 Les six lois gelées de `integrite.ts` sont **conservation, groupe, doxa, sceau, époques, résonance**. Ce sont des lois sur le *mot* : sa norme vaut `ATOMES`, il vit dans SU(2), il se range en 21 cellules, un âge est une géographie, une paire a une polarité. **Aucune ne parle de points de vie.** « Aucun point de vie, aucune expérience, aucun niveau » est une **doctrine** de `SPEC_TOUR.md:14`, écrite quand il n'y avait pas de combat ; la même page, ligne 15, écrit déjà la sortie : *« L'état de combat est éphémère : on le jette. »*
 
