@@ -301,6 +301,13 @@ L'historique détaillé (décisions, limites, reliquats de chaque chantier) est 
 - P4 — Vecteurs de test partagés Python ↔ TS — FAIT (septembre 2026)
 - P5 — État MSS persistant — FAIT (septembre 2026)
 
+Chantiers restants, chacun avec son document de passation (écrits le 2026-09-14,
+à lire avant d'ouvrir la branche) : C4 PR 5–6 `docs/HANDOVER_VEILLEE_BATAILLE.md`
+(A17 tranché par la mesure, jamais par un texte), C5 `docs/HANDOVER_PREMIERE_RELIQUE.md`,
+C6 `docs/HANDOVER_PUITS.md`, C7 `docs/HANDOVER_LIGNEE_FORUM.md`, C8
+`docs/HANDOVER_HYGIENE_P6.md` (le `localcontext()` de P6 ci-dessous touche `eonis.py`,
+donc vaut réinitialisation : à la prochaine, jamais seul).
+
 ### P6 — Hygiène
 - `getcontext().prec = 60` global → `with localcontext()` dans `dcos` et
   `build_epoch_table` (ne change pas les tables ; vérifier par `verify_genesis.py`).

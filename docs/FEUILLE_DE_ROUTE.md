@@ -186,6 +186,20 @@ Questions fermées. La recommandation engage le rédacteur de cette feuille, pas
 | **A16** | Où va le prix d'`eperon` (D9) : dans la **politique**, dans un **prix nouveau** du moteur, ou nulle part ? | **Tranché par l'auteur pour la politique le 2026-09-13, puis par la mesure le même soir : la politique ne le peut pas** (quatre candidats, aucun ne remonte `eperon`, C2 bis tué) ; **le moteur, en partie** — la riposte qui ne demande plus la portée ramène `\|r\|` max de 0,640 à 0,487 sur le protocole complet (0,330 avec l'allonge à `base/4`), sans toucher ni constante ni politique : le levier est trouvé, il ne suffit pas seul. **Accordé par l'auteur et tenu le 2026-09-14 (C2 ter)** : le contre, l'allonge à `base/4` et le socle à 24 ensemble, `\|r\|` max **0,145** sur le protocole complet | Une ligne de `bataille.ts` et deux constantes, leurs contrôles, deux étalons recalibrés, quatre docs ; la bande de tier s'ouvre de 2,8 pt (29,6 → 32,4), pas 7 |
 | **A15** | `SAC_COFFRE` : 81, ou 27 assumé ? | **TRANCHÉ le 2026-09-13 : ni l'un ni l'autre — dire ce que le code fait.** Un claim par pièce et par bloc, pris entier, rien de perdu ; la constante et le `reclamer()` mort sont retirés. Un vrai plafond, s'il vient, sera une règle neuve avec son `doit_echouer` | Rien ne borne la rafale rétroactive hors « une pièce, un bloc » ; la page n'offre que la tête suivie, et c'est une politique d'interface, dite comme telle |
 
+**Posés par les handovers du 2026-09-14** (le détail, la recommandation et ce qui tranche sont dans chaque document) :
+
+| # | Question | Où | Qui tranche |
+|---|---|---|---|
+| **A17** | en combat, une feuille signe un coup (`SPEC_TACTIQUE` D2, 64 feuilles) ou une mort (`BIBLE_VEILLEE` §4.3, 32) ? | `HANDOVER_VEILLEE_BATAILLE.md` §3 | **le banc 5a**, seuils de la bible §4.5 |
+| **A18** | 27 salles ou 9 ? | idem | le banc 5a, puis l'auteur |
+| **A19** | d'où le juge tire-t-il le roster d'une bataille rejouée ? | idem §6 | l'auteur, avant PR 6 |
+| **A20** | la normalisation d'un nom (elle fixe l'adresse à jamais) | `HANDOVER_PUITS.md` §5 | l'auteur, regelée dans `vecteurs.json` |
+| **A21** | la caution de socle | idem | à écarter sans marché |
+| **A22** | F1–F2 de `SPEC_FORUM.md` abandonnés au profit de la lignée ? | `HANDOVER_LIGNEE_FORUM.md` §5 | l'auteur |
+| **A23–A25** | la borne sur N échanges ; les objets de jauge ; l'identité du forum | idem §6 | l'auteur, après la mesure de L2 |
+| **A26** | `localcontext()` maintenant (réinitialisation) ou à la prochaine ? | `HANDOVER_HYGIENE_P6.md` §5 | l'auteur |
+| **A27** | `format_chaine` : corrigé seul, ou avec un lecteur qui refuse ? | idem | l'auteur |
+
 ---
 
 ## 4. La suite, par chantiers
@@ -235,6 +249,8 @@ Ce qui suit est le chantier tel qu'il a été écrit la veille.
 
 ### C4 — Brancher le moteur tactique (PR 4 et 5 de `SPEC_TACTIQUE.md`)
 
+**Handover :** `docs/HANDOVER_VEILLEE_BATAILLE.md` (2026-09-14) — PR 5 est coupée en **5a** (le banc des budgets, qui tranche A17 et A18 par le chiffre) et **5b** (le branchement) ; PR 6 rejoue les batailles dans la preuve de veillée, un seul juge, aucun `batailles/`.
+
 **On livre.** Le rendu de grille sur le socle `components/canvas/` existant, une route, les clés i18n FR/EN, et le branchement Veillée (feuilles = coups, sac, permadeath selon A5).
 **Cible.** Un duel se joue de bout en bout depuis une route ; **0 clé i18n vide**, FR et EN aux mêmes clés ; une bataille consomme **6 à 10 feuilles** sur les 64 de l'arbre, mesuré sur le bot et non promis.
 **Ce qui le tue.** La bataille dépasse le budget de feuilles (une run ne tient plus 6 à 8 batailles), ou le rendu impose une dépendance nouvelle — le socle actuel tient à 18 dépendances d'exécution, et une scène de plus n'en justifie aucune.
@@ -255,12 +271,16 @@ Ce qui suit est le chantier tel qu'il a été écrit la veille.
 
 ### C5 — La première relique et la première preuve de veillée
 
+**Handover :** `docs/HANDOVER_PREMIERE_RELIQUE.md` (2026-09-14) — la marche à suivre pas à pas, et un défaut déjà visible : la planche de `relique.py` conseille un second versement qu'une clé à usage unique rendrait indépensable.
+
 **On livre.** Une relique scellée (A14) et une preuve de veillée déposée par le chemin réel — issue → `veillees.yml` → `depot.ts`.
 **Cible.** `reliques.json` porte **1 entrée** et `etat.json.reliques` la publie avec son statut ; `veillees/index.json` porte **1 preuve** jugée par le juge de CI, avec les trois têtes retrouvées dans `chaine-eidos.dat`.
 **Ce qui le tue.** Le juge refuse la première preuve pour une raison de format : c'est alors un défaut de `depot.ts`, à corriger avant tout dépôt public — et c'est précisément ce que ce chantier cherche à savoir. Coût nul en cas d'échec, sauf le correctif.
 **Coût.** Aucune ligne de code si tout passe. C'est le seul chantier dont le livrable est **une donnée, pas du code**, et il éprouve 8 contrôles qui n'ont jamais tourné en réel.
 
 ### C6 — L'économie : les puits, puis la Moisson
+
+**Handover :** `docs/HANDOVER_PUITS.md` (2026-09-14) — six lots E1–E6 ; **E1 (mesurer : trois seaux dans `etat.json`) d'abord**, E4 attend C4 PR 6, E5 attend C7.
 
 **On livre.** P1 (mise du sceau), P2 (péage de lignée), P3 (nom) selon `SPEC_PUITS.md` §3, puis la Moisson.
 **Cible.** Point fixe **s = 0,1115 EIDL/joueur/jour**, soit **1 076 joueurs** portés par le budget actuel et 8 609 sur l'émission entière ; et, contrainte dure, **la somme des transactions dédiées reste sous 192 par jour**.
@@ -269,12 +289,16 @@ Ce qui suit est le chantier tel qu'il a été écrit la veille.
 
 ### C7 — La lignée branchée, puis le forum
 
+**Handover :** `docs/HANDOVER_LIGNEE_FORUM.md` (2026-09-14) — L1–L5 ; une pièce tient plusieurs objets, donc **tout envoi** pose les maillons de ce qu'il garde ; F1–F2 de `SPEC_FORUM.md` sont remplacés par la lignée (A22).
+
 **On livre.** `lignee.ts` relié à l'inventaire et à l'export d'un objet, puis les décisions F1–F7 de `SPEC_FORUM.md`.
 **Cible.** Un objet change de mains **en une transaction**, et donner N objets tient dans **un créneau et 28·N octets** (contre 2 177 o par témoin) ; un objet à N échanges reste vérifiable hors ligne.
 **Ce qui le tue.** L'export d'un objet à N échanges dépasse ce qu'une issue GitHub peut porter (`MAX_TX_CARACTERES = 80 000`) : il faut alors une borne sur N, écrite avant de livrer, ou le chantier n'est pas mûr.
 **Coût.** L'atelier seul ; aucune règle de consensus nouvelle — la duplication échoue parce que c'est une double dépense.
 
 ### C8 — P6, hygiène (dette D8)
+
+**Handover :** `docs/HANDOVER_HYGIENE_P6.md` (2026-09-14) — **`localcontext()` dans `eonis.py` vaut réinitialisation du testnet** (le fichier est gelé à l'octet) : à faire à la prochaine, jamais seul (A26) ; H2 et H3 sans format ni empreinte ; `federation.json` dit encore `format_chaine: 2`.
 
 **Cible.** `verify_genesis.py` toujours à 32 contrôles, 0 échec, après le passage à `localcontext()` ; `consensus.py` et `store.py` dans `historique/` avec leurs 6 contrôles ; CVE-2012-2459 documentée là où le Merkle est écrit.
 **Ce qui le tue.** Un seul chiffre des tables qui bouge : `eonis.py` est gelé, et une empreinte différente vaut réinitialisation du testnet — on renonce et on garde le `getcontext()` global avec un commentaire.
@@ -355,6 +379,7 @@ reste lisible.
 | **C2, tué par sa mesure** (2026-09-13) | Le banc du chantier est dans le dépôt (`scripts/banc-r2.ts`, `npm run banc-r2`, test CI) et il a tué C2 : sur le couple moteur + politique, `DIV_PAS = 64` rend `\|r\|` max 0,657 contre 0,640, bande de tier 29,5 contre 29,6 pt. Et le signe de D2 était le mauvais : `eperon` −0,640, `arc` +0,591. **D2 reformulée, A1 tranché (non), D9 ouverte, A16 posée, C2 bis écrit.** `DIV_PAS` reste à 32, aucune constante ne bouge ; atelier 569 → 573 tests |
 | **C2 bis, tué à son tour** (2026-09-13, soir) | La politique d'abord (A16, tranché par l'auteur) : quatre candidats dans `ia.ts`, deux qui ne changent aucun choix, deux qui aggravent `eperon`. Puis la direction moteur sondée : **la riposte qui ne demande plus la portée** ramène `\|r\|` max de 0,640 à 0,487 sur le protocole complet (0,330 avec l'allonge à `base/4`), ce que ni constante ni politique n'approchaient — le levier, pas encore la cible. **C2 ter écrit**, à l'arbitrage de l'auteur ; `ia.ts` et `bataille.ts` intacts, sa LIMITE dans `ia.ts` |
 | **C2 ter, la cible tenue** (2026-09-14) | Accordé par l'auteur comme chantier de mesure d'abord. Le contre fixé, une variante à la fois : le socle est le second levier, et il n'en est un qu'avec le contre (24 avec l'ancienne riposte : 0,604). Retenu sur le protocole complet : riposte en contre, `DIV_ALLONGE` 4, `COUP_BASE` 24 — `\|r\|` max **0,145**, bande 32,4 pt, 0 nul. **D9 fermée, A16 tenue, A2 levée.** `bataille.ts` une condition de moins, deux constantes, étalons recalibrés, `banc-r2.test.ts` sur le même côté de chaque cible ; atelier 573 tests |
+| **les handovers** (2026-09-14) | Un document de passation par chantier restant — C4 PR 5–6, C5, C6, C7, C8 — au gabarit de `HANDOVER_RELIQUES_QR.md` : ce qui existe, les formats, la cible chiffrée, ce qui tue, les fichiers et contrôles, les décisions attendues (A17–A27 ci-dessus). Zéro code. Deux faits nouveaux : la planche de relique promet un versement perdu (C5), et H1 de P6 vaut réinitialisation (C8) |
 
 **Une dette est morte le même jour** et n'apparaît donc plus au §2 : le sac
 annonçait 27 places quand `SAC_PLACES` en vaut 81 (`8f23973`). Le reste,

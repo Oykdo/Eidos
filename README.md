@@ -297,6 +297,7 @@ Tests are plain `assert` and `print`, no framework. Every validation rule comes 
 | [`docs/SPEC_FORUM.md`](docs/SPEC_FORUM.md), [`docs/SPEC_BROUILLARD.md`](docs/SPEC_BROUILLARD.md), [`docs/ETUDE_ARBRE_VISITE.md`](docs/ETUDE_ARBRE_VISITE.md) | proposals not yet built: the realm's forum, the mist of the lairs, the visit tree |
 | [`docs/LORE_CHAMBRE.md`](docs/LORE_CHAMBRE.md), [`docs/TRANSPOSITION_EIDOLON.md`](docs/TRANSPOSITION_EIDOLON.md) | the Chamber of Genesis and the rule of transposition: names and numbers, never power |
 | [`docs/HANDOVER_RELIQUES_QR.md`](docs/HANDOVER_RELIQUES_QR.md) | relics: sealing, recovering, animating |
+| [`docs/HANDOVER_VEILLEE_BATAILLE.md`](docs/HANDOVER_VEILLEE_BATAILLE.md), [`docs/HANDOVER_PREMIERE_RELIQUE.md`](docs/HANDOVER_PREMIERE_RELIQUE.md), [`docs/HANDOVER_PUITS.md`](docs/HANDOVER_PUITS.md), [`docs/HANDOVER_LIGNEE_FORUM.md`](docs/HANDOVER_LIGNEE_FORUM.md), [`docs/HANDOVER_HYGIENE_P6.md`](docs/HANDOVER_HYGIENE_P6.md) | handovers for the remaining work: the battle inside the Vigil, the first relic, the sinks, the lineage, hygiene — what exists, the numeric target, what kills it, the decisions awaited (French) |
 | [`veillees/README.md`](veillees/README.md) | how a vigil proof is deposited and judged |
 
 ## 15. What this repository is not
