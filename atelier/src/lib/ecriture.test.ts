@@ -29,6 +29,8 @@ describe("ecriture — la règle", () => {
     assert.deepEqual(regles("x", "ok.", "the txid"), ["lexique"]);
     // Mot entier : « hashtag » n'est pas « hash », « enraciné » n'est pas « racine ».
     assert.deepEqual(regles("x", "Un mot enraciné.", "a hashtag"), []);
+    // Une {variable} d'interpolation n'est pas un mot lu : « {txid} » passe, « txid » non.
+    assert.deepEqual(regles("x", "Signée · dépense {txid}.", "Signed · spend {txid}."), []);
     assert.ok(BANNIS.communs.includes("UTXO") && BANNIS.fr.includes("racine") && BANNIS.en.includes("root"));
   });
 
