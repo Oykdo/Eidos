@@ -291,6 +291,7 @@ export function TourView() {
               {t("tour.dalle")} · {t("tour.dalle.beches", { n: beches })}
             </p>
             <p className="mt-1 leading-relaxed text-pretty">{t("tour.dalle.lede")}</p>
+            <p className="mt-1 leading-relaxed text-pretty">{t("tour.dalle.legende")}</p>
           </div>
         </div>
 

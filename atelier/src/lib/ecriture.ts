@@ -110,11 +110,13 @@ export function manquements(cle: string, fr: string, en: string): Manquement[] {
     ["fr", fr, MOTIF_FR],
     ["en", en, MOTIF_EN],
   ];
-  for (const [langue, texte, banni] of langues) {
+  for (const [langue, brut, banni] of langues) {
+    // Les {variables} d'interpolation ne sont pas des mots que le joueur lit.
+    const texte = brut.replace(/\{[a-zA-Z0-9_]+\}/g, "");
     const m = banni.exec(texte);
     if (m !== null) out.push({ cle, langue, regle: "lexique", raison: `« ${m[0]} »` });
-    if (estChapeau(cle) && texte.length > CHAPEAU_MAX)
-      out.push({ cle, langue, regle: "chapeau", raison: `${texte.length} caractères au lieu de ${CHAPEAU_MAX} au plus` });
+    if (estChapeau(cle) && brut.length > CHAPEAU_MAX)
+      out.push({ cle, langue, regle: "chapeau", raison: `${brut.length} caractères au lieu de ${CHAPEAU_MAX} au plus` });
     const longue = phrases(texte).find((p) => mots(p) > PHRASE_MAX);
     if (longue !== undefined)
       out.push({ cle, langue, regle: "phrase", raison: `${mots(longue)} mots au lieu de ${PHRASE_MAX} au plus` });

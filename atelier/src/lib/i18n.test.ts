@@ -7,10 +7,11 @@ import { EN, FR, setLocale, t, type Msg } from "./i18n.ts";
  * Le cliquet de la règle d'écriture (`ecriture.ts` ; décision d'auteur du
  * 2026-09-14, chantier « langue » en trois PR) : ces comptes ne remontent
  * jamais, ils descendent PR après PR jusqu'à zéro. Mesurés à l'ouverture
- * (PR A) sur 866 clés : 24 / 15 / 41 / 53 ; abaissé par la PR B (Vérifier et Lire à zéro). `node --experimental-strip-types scripts/langue.ts`
+ * (PR A) sur 866 clés : 24 / 15 / 41 / 53 ; PR B : 16 / 15 / 39 / 33 ; PR C : zéro partout,
+ * et il y reste. `node --experimental-strip-types scripts/langue.ts`
  * liste ce qui reste, page par page.
  */
-const CLIQUET: Record<Regle, number> = { lexique: 16, chapeau: 13, phrase: 39, tutoiement: 33 };
+const CLIQUET: Record<Regle, number> = { lexique: 0, chapeau: 0, phrase: 0, tutoiement: 0 };
 
 describe("i18n", () => {
   it("FR et EN ont les mêmes clés", () => {
@@ -70,15 +71,15 @@ describe("i18n", () => {
       EN["relique.lede"],
       "A seal is found, never bought.",
     );
-    assert.equal(FR["relique.preuveAide"], "Collez eidos-artefact/1. Même preuve, même relique.");
+    assert.equal(FR["relique.preuveAide"], "Colle eidos-artefact/1. Même preuve, même relique.");
     assert.equal(EN["relique.preuveAide"], "Paste eidos-artefact/1. Same proof, same relic.");
     assert.equal(
       FR["guide.09p"],
-      "Un coffre, une racine. Chaque objet tient en 32 bits. Il ne grandit pas : la puissance ne s'accumule pas.",
+      "Un coffre, une origine. Chaque objet tient en 32 bits. Il ne grandit pas : la puissance ne s'accumule pas.",
     );
     assert.equal(
       EN["guide.09p"],
-      "One vault, one root. Each item fits in 32 bits. It does not grow: power does not pile up.",
+      "One vault, one origin. Each item fits in 32 bits. It does not grow: power does not pile up.",
     );
   });
 });
