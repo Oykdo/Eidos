@@ -92,6 +92,11 @@ entre deux états : événements rejoués depuis `Partie.avant` + `Partie.dernie
 temps, poses à un instant — pur, sans horloge) et `traits.ts` (la télégraphie dessinée,
 relue depuis `Intention.actes`) —
 `grille`, `unite`, `bataille`, `ia`, `partie`, `animation` et `traits` ont chacun leur `.test.ts`.
+La langue de l'interface a sa règle mesurable : `lib/ecriture.ts` (lexique banni, chapeau ≤ 140
+caractères, phrase ≤ 25 mots, tutoiement), `i18n.test.ts` tient le **cliquet** (les manquements
+ne remontent jamais, ils descendent PR après PR jusqu'à zéro), `npm run langue` les liste page par
+page. Le menu de l'atelier est un seul `<details>` déroulant (`components/Nav.tsx`), depuis
+`lib/navigation.ts`.
 **`bataille.ts` n'importe rien d'`ia.ts`** : le moteur ne connaît aucune politique,
 `ouvrirBataille` rend un état sans intentions, `finDePhase` ne les touche pas, et c'est
 `annoncer` qui les pose — la partie l'appelle à chaque retour de main.
@@ -207,7 +212,8 @@ python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 605 tests Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 612 tests Eidos
+npm run langue [page]          # la règle d'écriture : les manquements par page, ou ceux d'une page (~1 s)
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 npm run banc-tactique          # calibration tactique complète : 256 duels (~1 s)
 npm run banc-r2                # R2, le prix des axes : 440 320 duels et 1 200 mêlées (~16 min), le juge de C2 bis
@@ -336,7 +342,12 @@ L'historique détaillé (décisions, limites, reliquats de chaque chantier) est 
   vide, et les mots « époque », « epoch », « aeon » y sont bannis (`i18n.test.ts`) :
   on dit « cycle » pour les 1008 blocs. Chaque phrase du Guide et des hôtes cite
   une règle vraie du code ; quand un texte promet plus que le code, c'est le texte
-  qui a tort.
+  qui a tort. **Règle d'écriture** (décision d'auteur du 2026-09-14, `lib/ecriture.ts`) :
+  on **tutoie** ; le joueur ne lit jamais la chaîne — pas de UTXO, Merkle, WOTS, XMSS,
+  txid, hash, racine/root, quaternion, spinor, MSS dans l'interface, mais une pièce, un
+  coffre, un bloc, une clé, une feuille, un sceau, une preuve, une empreinte ; un
+  chapeau de page tient en 140 caractères ; une phrase en 25 mots. Le cliquet
+  d'`i18n.test.ts` ne remonte jamais.
 - Un chantier = une branche + une PR (`gh pr create`), fusionnée en rebase quand
   la CI est verte ; jamais de commit direct sur `main` sauf correctif urgent de la
   CI. Le cron `chaine` et le robinet committent aussi sur `main` : `git fetch` puis
