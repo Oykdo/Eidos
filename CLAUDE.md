@@ -46,7 +46,7 @@ federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
 vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (10 familles)
 noeud.py            nœud du testnet : rejeu, forge, robinet groupé, envois, --depuis, reliques (1+5+5+4+2+5 contrôles)
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
-relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (3 contrôles)
+relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (4 contrôles)
 reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
 robinet.py          file mempool.json alimentée par issues GitHub et courriels, frein par auteur (15 contrôles)
 courriel.py         second canal du robinet : boîte IMAP relevée par courriel.yml, même filtre (6 contrôles)
@@ -208,7 +208,7 @@ python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 -c "import noeud as N; N._test_indice()"      # 2
 python3 -c "import noeud as N; N._test_reliques()"    # 5
 python3 qr.py --test           # 5
-python3 relique.py --test      # 3
+python3 relique.py --test      # 4
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »

@@ -234,7 +234,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `courriel.py` | 321 | second canal du robinet : boîte IMAP, même filtre, frein par expéditeur | 6 |
 | `vecteurs.py` | 222 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 10 familles) | parité |
 | `qr.py` | 428 | encodeur QR, bibliothèque standard, niveau H, versions 1–10 | 5 |
-| `relique.py` | 236 | gardien des reliques : sceller, animer | 3 |
+| `relique.py` | 245 | gardien des reliques : sceller, animer | 4 |
 | `labo/aura_voxel_lab.py` | 132 | labo pendule-9 : avatar voxelisé (grille de `voxels.ts`), aura graduelle, 8 agrégateurs | 11 |
 | `labo/pendule9_run.py` | 193 | labo : la Tour libre sur le run de l'atelier, sceau, Cube et ancrage, muses de `signatures.ts` | 11 |
 | `labo/unification.py` | 95 | labo : contrat avec `pendule.ts`, fixtures synthétique et réelle (`exporter-run.ts`), don | 9 |
@@ -269,7 +269,7 @@ python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 -c "import noeud as N; N._test_indice()"      # 2
 python3 -c "import noeud as N; N._test_reliques()"    # 5
 python3 qr.py --test           # 5
-python3 relique.py --test      # 3
+python3 relique.py --test      # 4
 python3 federation.py          # 18
 python3 consensus.py           # 6, historique
 python3 noeud.py --verifier    # rejeu intégral du testnet : doit finir par « aucun refus »

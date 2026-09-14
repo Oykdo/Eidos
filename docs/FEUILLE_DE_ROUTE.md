@@ -173,7 +173,7 @@ Questions fermées. La recommandation engage le rédacteur de cette feuille, pas
 | **A2** | La bataille est-elle jouable avant que R2 soit tenu ? | **Oui pour la jauge, non pour ce qui compte** : brancher le moteur sur une route libre ; ne rien ancrer, ne rien exporter, ne publier ni échelle de tiers ni forge | Un chantier de plus, et l'aveu écrit que les tiers ne sont pas publiés |
 | **A3** | D3 — arbre de la Veillée à 64 feuilles ou 256 ? | **64** | 256 exige le Web Worker (construction ~5 s contre 1,3–1,6 s) pour un gain que 6 à 8 batailles par run ne réclament pas |
 | **A4** | D4 — la graine connue d'avance : (a) l'assumer, (b) commit-reveal, (c) une bataille ancrée par jour ? | **(a) + (c)**, documenté en LIMITE | (b) ajoute un abandon de dernier révélateur pour peu de gain ; (a) admet que la journée se simule hors ligne |
-| **A5** | D5 — une unité tombée en bataille ancrée quitte-t-elle le roster ? | **Oui** : c'est le seul puits réel du jeu | Sans elle, le marché de D6 n'a qu'une entrée ; avec elle, la permadeath devient une décision d'économie, pas de difficulté |
+| **A5** | D5 — une unité tombée en bataille ancrée quitte-t-elle le roster ? | **TRANCHÉ PAR L'AUTEUR le 2026-09-14 : oui.** En veillée ancrée seulement ; en libre, rien (une lecture). C'est le seul puits réel du jeu | Sans elle, le marché de D6 n'a qu'une entrée ; avec elle, la permadeath devient une décision d'économie, pas de difficulté |
 | **A6** | P1 — la mise du sceau se paie-t-elle par acte ou par mise ? | **La mise** (4 EIDL / 64 actes), en disant que le brûlage est la **preuve** et le décompte une **figure** | Un décompte hors chaîne dans `batailles/index.json` ; c'est la seule forme qui tienne dans 192 tx/jour |
 | **A7** | Le péage de lignée est-il obligatoire ? | **Oui, et gratuit pour le premier maillon** (l'origine) | Facultatif, il n'absorbe rien ; gratuit au premier maillon, il ne taxe pas le coffre horaire |
 | **A8** | Le canal `envoi` gagne-t-il un frein (D7) ? | **Un montant plancher**, pas un frein par auteur | Le plancher exclut le scellé à 1 atome sans exclure un joueur ; un frein par auteur pénaliserait celui qui joue |
@@ -197,7 +197,7 @@ Questions fermées. La recommandation engage le rédacteur de cette feuille, pas
 | **A21** | la caution de socle | idem | à écarter sans marché |
 | **A22** | F1–F2 de `SPEC_FORUM.md` abandonnés au profit de la lignée ? | `HANDOVER_LIGNEE_FORUM.md` §5 | l'auteur |
 | **A23–A25** | la borne sur N échanges ; les objets de jauge ; l'identité du forum | idem §6 | l'auteur, après la mesure de L2 |
-| **A26** | `localcontext()` maintenant (réinitialisation) ou à la prochaine ? | `HANDOVER_HYGIENE_P6.md` §5 | l'auteur |
+| **A26** | `localcontext()` maintenant (réinitialisation) ou à la prochaine ? | `HANDOVER_HYGIENE_P6.md` §5 | **TRANCHÉ PAR L'AUTEUR le 2026-09-14 : à la prochaine réinitialisation, jamais seul** |
 | **A27** | `format_chaine` : corrigé seul, ou avec un lecteur qui refuse ? | idem | l'auteur |
 
 ---
@@ -271,7 +271,7 @@ Ce qui suit est le chantier tel qu'il a été écrit la veille.
 
 ### C5 — La première relique et la première preuve de veillée
 
-**Handover :** `docs/HANDOVER_PREMIERE_RELIQUE.md` (2026-09-14) — la marche à suivre pas à pas, et un défaut déjà visible : la planche de `relique.py` conseille un second versement qu'une clé à usage unique rendrait indépensable.
+**Handover :** `docs/HANDOVER_PREMIERE_RELIQUE.md` (2026-09-14) — la marche à suivre pas à pas. Le défaut trouvé en l'écrivant — la planche de `relique.py` conseillait un second versement qu'une clé à usage unique rendrait indépensable — est **corrigé** (une seule pièce, `relique.py` 3 → 4 contrôles) ; décision d'auteur : la première relique est scellée à la goutte, publiée « sous-scellée ».
 
 **On livre.** Une relique scellée (A14) et une preuve de veillée déposée par le chemin réel — issue → `veillees.yml` → `depot.ts`.
 **Cible.** `reliques.json` porte **1 entrée** et `etat.json.reliques` la publie avec son statut ; `veillees/index.json` porte **1 preuve** jugée par le juge de CI, avec les trois têtes retrouvées dans `chaine-eidos.dat`.
@@ -379,7 +379,7 @@ reste lisible.
 | **C2, tué par sa mesure** (2026-09-13) | Le banc du chantier est dans le dépôt (`scripts/banc-r2.ts`, `npm run banc-r2`, test CI) et il a tué C2 : sur le couple moteur + politique, `DIV_PAS = 64` rend `\|r\|` max 0,657 contre 0,640, bande de tier 29,5 contre 29,6 pt. Et le signe de D2 était le mauvais : `eperon` −0,640, `arc` +0,591. **D2 reformulée, A1 tranché (non), D9 ouverte, A16 posée, C2 bis écrit.** `DIV_PAS` reste à 32, aucune constante ne bouge ; atelier 569 → 573 tests |
 | **C2 bis, tué à son tour** (2026-09-13, soir) | La politique d'abord (A16, tranché par l'auteur) : quatre candidats dans `ia.ts`, deux qui ne changent aucun choix, deux qui aggravent `eperon`. Puis la direction moteur sondée : **la riposte qui ne demande plus la portée** ramène `\|r\|` max de 0,640 à 0,487 sur le protocole complet (0,330 avec l'allonge à `base/4`), ce que ni constante ni politique n'approchaient — le levier, pas encore la cible. **C2 ter écrit**, à l'arbitrage de l'auteur ; `ia.ts` et `bataille.ts` intacts, sa LIMITE dans `ia.ts` |
 | **C2 ter, la cible tenue** (2026-09-14) | Accordé par l'auteur comme chantier de mesure d'abord. Le contre fixé, une variante à la fois : le socle est le second levier, et il n'en est un qu'avec le contre (24 avec l'ancienne riposte : 0,604). Retenu sur le protocole complet : riposte en contre, `DIV_ALLONGE` 4, `COUP_BASE` 24 — `\|r\|` max **0,145**, bande 32,4 pt, 0 nul. **D9 fermée, A16 tenue, A2 levée.** `bataille.ts` une condition de moins, deux constantes, étalons recalibrés, `banc-r2.test.ts` sur le même côté de chaque cible ; atelier 573 tests |
-| **les handovers** (2026-09-14) | Un document de passation par chantier restant — C4 PR 5–6, C5, C6, C7, C8 — au gabarit de `HANDOVER_RELIQUES_QR.md` : ce qui existe, les formats, la cible chiffrée, ce qui tue, les fichiers et contrôles, les décisions attendues (A17–A27 ci-dessus). Zéro code. Deux faits nouveaux : la planche de relique promet un versement perdu (C5), et H1 de P6 vaut réinitialisation (C8) |
+| **les handovers** (2026-09-14) | Un document de passation par chantier restant — C4 PR 5–6, C5, C6, C7, C8 — au gabarit de `HANDOVER_RELIQUES_QR.md` : ce qui existe, les formats, la cible chiffrée, ce qui tue, les fichiers et contrôles, les décisions attendues (A17–A27 ci-dessus). Zéro code. Deux faits nouveaux : la planche de relique promettait un versement perdu (C5 — corrigé le même jour, `relique.py` 4 contrôles, A5 et A26 tranchés), et H1 de P6 vaut réinitialisation (C8) |
 
 **Une dette est morte le même jour** et n'apparaît donc plus au §2 : le sac
 annonçait 27 places quand `SAC_PLACES` en vaut 81 (`8f23973`). Le reste,
