@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { compteParRegle, manquementsDe, type Regle } from "./ecriture.ts";
 import { EN, FR, setLocale, t, type Msg } from "./i18n.ts";
+
+/**
+ * Le cliquet de la règle d'écriture (`ecriture.ts` ; décision d'auteur du
+ * 2026-09-14, chantier « langue » en trois PR) : ces comptes ne remontent
+ * jamais, ils descendent PR après PR jusqu'à zéro. Mesurés à l'ouverture
+ * (PR A) sur 866 clés. `node --experimental-strip-types scripts/langue.ts`
+ * liste ce qui reste, page par page.
+ */
+const CLIQUET: Record<Regle, number> = { lexique: 24, chapeau: 15, phrase: 41, tutoiement: 53 };
 
 describe("i18n", () => {
   it("FR et EN ont les mêmes clés", () => {
@@ -40,6 +50,15 @@ describe("i18n", () => {
       assert.equal(re.test(FR[k]), false, `FR ${k}`);
       assert.equal(re.test(EN[k]), false, `EN ${k}`);
     }
+  });
+
+  it("la règle d'écriture : le cliquet ne remonte jamais", () => {
+    const c = compteParRegle(manquementsDe(FR, EN));
+    for (const regle of Object.keys(CLIQUET) as Regle[])
+      assert.ok(
+        c[regle] <= CLIQUET[regle],
+        `${regle} : ${c[regle]} manquements au lieu de ${CLIQUET[regle]} au plus — scripts/langue.ts les liste`,
+      );
   });
 
   it("reliques : libellés gelés", () => {

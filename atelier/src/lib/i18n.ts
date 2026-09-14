@@ -17,6 +17,7 @@ export const FR = {
   "nav.groupe.verifier": "Vérifier",
   "nav.groupe.lire": "Lire",
   "nav.groupe.jouer": "Jouer",
+  "nav.menu": "Pages",
 
   "sous.coffre": "Essai — sans valeur",
   "sous.tour": "255 coupes. Pas 255 paliers.",
@@ -975,6 +976,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "nav.groupe.verifier": "Verify",
   "nav.groupe.lire": "Read",
   "nav.groupe.jouer": "Play",
+  "nav.menu": "Pages",
   "sous.coffre": "Trial — no value",
   "sous.tour": "255 slices. Not 255 tiers.",
   "sous.veillee": "Sixty-four leaves, twenty-seven rooms, one day: what you sign remains.",
