@@ -361,7 +361,7 @@ export const FR = {
   "bataille.trace": "empreinte de l'échiquier",
   "bataille.dalle": "dalle",
   "bataille.legende":
-    "Chiffre : coût en pas depuis l'unité désignée. ◆ l'unité désignée, ◇ les siennes, ✕ un Indéchiffré — en fer s'il est à portée. Bord de fer : case menacée par l'annonce. Case assombrie : sous contrôle adverse, on y entre, on ne la quitte pas. Un clic sur une case : un pas ou une frappe.",
+    "Chiffre : coût en pas depuis l'unité désignée. ◆ l'unité désignée, ◇ les siennes, ✕ un Indéchiffré — en fer s'il est à portée. Bord de fer : case menacée par l'annonce. Case assombrie : sous contrôle adverse, on y entre et le pas s'y arrête. Un clic sur une case : un pas ou une frappe.",
   "bataille.unite.titre": "Unité désignée",
   "bataille.unite": "unité {id}",
   "bataille.unite.aucune": "Aucune unité n'a de point d'action : passez la main.",
@@ -1303,7 +1303,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "bataille.trace": "board fingerprint",
   "bataille.dalle": "slab",
   "bataille.legende":
-    "Digit: step cost from the chosen unit. ◆ the chosen unit, ◇ yours, ✕ an Undeciphered — in iron when within reach. Iron border: cell threatened by the announcement. Darkened cell: under enemy control, you may enter it, not leave it. A click on a cell: a step or a blow.",
+    "Digit: step cost from the chosen unit. ◆ the chosen unit, ◇ yours, ✕ an Undeciphered — in iron when within reach. Iron border: cell threatened by the announcement. Darkened cell: under enemy control, you may enter it, and the step ends there. A click on a cell: a step or a blow.",
   "bataille.unite.titre": "Chosen unit",
   "bataille.unite": "unit {id}",
   "bataille.unite.aucune": "No unit has an action point left: pass the turn.",

@@ -47,8 +47,12 @@ import { dalleDe } from "@/lib/eidos/tour.ts";
 
 /** Sol (case vide) : la pierre du fond, deux clartés selon la trame. */
 const CLARTE_SOL = [0.42, 0.36] as const;
-/** Case atteignable : le biome, plus clair à un pas qu'à trois. */
-const CLARTE_PAS = [1.0, 0.82, 0.68, 0.58] as const;
+/**
+ * Case atteignable : le biome, plus clair à un pas qu'à trois. Le plancher
+ * est haut exprès : vu en headless sur l'étage 40 (saturne, un biome terne),
+ * 0,68 rendait (98, 97, 91) contre un sol à (33, 38, 42) — lisible, discret.
+ */
+const CLARTE_PAS = [1.0, 0.92, 0.84, 0.76] as const;
 /** Sous contrôle adverse : la case s'assombrit, quelle que soit sa couleur. */
 const FACTEUR_CONTROLE = 0.72;
 /** Chemin survolé : or. */
