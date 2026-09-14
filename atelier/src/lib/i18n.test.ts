@@ -7,10 +7,10 @@ import { EN, FR, setLocale, t, type Msg } from "./i18n.ts";
  * Le cliquet de la règle d'écriture (`ecriture.ts` ; décision d'auteur du
  * 2026-09-14, chantier « langue » en trois PR) : ces comptes ne remontent
  * jamais, ils descendent PR après PR jusqu'à zéro. Mesurés à l'ouverture
- * (PR A) sur 866 clés. `node --experimental-strip-types scripts/langue.ts`
+ * (PR A) sur 866 clés : 24 / 15 / 41 / 53 ; abaissé par la PR B (Vérifier et Lire à zéro). `node --experimental-strip-types scripts/langue.ts`
  * liste ce qui reste, page par page.
  */
-const CLIQUET: Record<Regle, number> = { lexique: 24, chapeau: 15, phrase: 41, tutoiement: 53 };
+const CLIQUET: Record<Regle, number> = { lexique: 16, chapeau: 13, phrase: 39, tutoiement: 33 };
 
 describe("i18n", () => {
   it("FR et EN ont les mêmes clés", () => {
