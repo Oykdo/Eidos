@@ -192,7 +192,7 @@ export type Coup = {
   readonly base: number;
   readonly accord: number;
   readonly dos: number;
-  /** Hors de la portée de la cible : elle encaisse sans pouvoir riposter. */
+  /** Hors de la portée de la cible : le prix de `arc`. Elle contre quand même si elle est plus vive. */
   readonly allonge: number;
   /** `CHARGE_PAR_CASE` par case parcourue avant de frapper. Le second prix de `eperon`. */
   readonly charge: number;

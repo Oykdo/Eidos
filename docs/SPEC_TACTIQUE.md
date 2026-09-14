@@ -382,6 +382,7 @@ Un chantier = une branche = une PR, jamais deux à la fois.
 | 2 | `bataille.ts` — phases, résolution, télégraphie, vecteurs gelés | 3 | 700–1 000 |
 | 3 | `ia.ts` — intention déterministe | 2 | 400–600 |
 | 4 | rendu de grille sur le socle `components/canvas/` existant | 5 | 700–1 000 |
+| 4 bis | actes animés depuis le journal (`animation.ts`), télégraphie dessinée (`traits.ts`), molette — livrée le 2026-09-14 | 8 | 600–800 |
 | 5 | branchement Veillée : feuilles = coups, sac, permadeath | 4 | 400–700 |
 | 6 | `batailles/`, `depot-bataille.ts`, workflow | 5 | 500–800 |
 | 7 | lore : les Indéchiffrés, i18n FR/EN, Guide | 4 | 300–500 |

@@ -12,7 +12,7 @@ import { dalleDe, occupantsDe } from "../tour.ts";
 import type { Coffre } from "../types.ts";
 import { FEUILLES } from "../veillee.ts";
 import { coffreNeuf } from "../wallet.ts";
-import { rejouer, traceBataille } from "./bataille.ts";
+import { finDePhase, rejouer, traceBataille } from "./bataille.ts";
 import { distance, memeCase, voisines } from "./grille.ts";
 import {
   FEUILLES_LIBRES,
@@ -296,6 +296,27 @@ describe("partie : ouvrir, choisir, jouer, passer", () => {
     };
     assert.equal(passerLaMain(finie), finie);
     assert.equal(prochaineAJouer(finie.etat), undefined);
+  });
+
+  it("avant et derniers : ce qui vient de se jouer se rejoue à l'octet — l'acte du coffre, puis la phase adverse tracée", () => {
+    const ouverte = ouvrirPartie(coffreDeTest(), 7, [0, 2]);
+    assert.deepEqual(ouverte.derniers, []);
+    assert.equal(ouverte.avant, ouverte.etat, "à l'ouverture, rien ne s'est joué");
+    const acte = { geste: "passer", unite: ouverte.selection! } as const;
+    const jouee = jouerActe(ouverte, acte);
+    assert.deepEqual(jouee.derniers, [acte]);
+    assert.equal(jouee.avant, ouverte.etat);
+    assert.equal(traceBataille(rejouer(jouee.avant, jouee.derniers)), jouee.trace);
+    let p = jouee;
+    for (const u of p.etat.unites.filter((u) => u.camp === "coffre" && u.id !== acte.unite))
+      p = jouerActe(p, { geste: "passer", unite: u.id });
+    const passee = passerLaMain(p);
+    // `avant` est l'état où les Indéchiffrés ont la main ; `derniers`, leurs actes.
+    assert.equal(passee.avant.phase, "indechiffre");
+    assert.ok(passee.derniers.every((a) => passee.avant.unites.find((u) => u.id === a.unite)?.camp === "indechiffre"));
+    let rejoue = rejouer(passee.avant, passee.derniers);
+    if (rejoue.fin === null) rejoue = finDePhase(rejoue);
+    assert.equal(traceBataille(rejoue), passee.trace, "les actes tracés ne rejouent pas la phase");
   });
 
   it("une bataille se joue jusqu'au contact : frappe, feuille, journal, riposte lue d'avance", () => {

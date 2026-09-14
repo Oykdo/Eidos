@@ -58,7 +58,8 @@ import {
   memeCase,
   zoneDeControle,
 } from "./grille.ts";
-import { annoncer, jouerPhase } from "./ia.ts";
+import { annoncer, jouerPhaseTracee } from "./ia.ts";
+import { traitsDe, type Trait } from "./traits.ts";
 import { pas, portee, tenueMax, uniteDepuisObjet, vivante } from "./unite.ts";
 import {
   GRILLE_N,
@@ -214,6 +215,15 @@ export type Partie = {
   readonly selection: number | null;
   /** `traceBataille(etat)` : l'empreinte de l'échiquier courant. */
   readonly trace: string;
+  /**
+   * Ce qui vient de se jouer, de quoi l'animer (`animation.ts`) : l'état sur
+   * lequel `derniers` s'appliquent, et ces actes dans l'ordre — celui du
+   * coffre après `jouerActe`, ceux des Indéchiffrés après `passerLaMain`.
+   * `avant` est déjà dans la bonne phase ; les passages de main n'y sont pas,
+   * ils ne se voient pas. Vide à l'ouverture.
+   */
+  readonly avant: EtatBataille;
+  readonly derniers: readonly Acte[];
 };
 
 function avecEtat(p: Partie, etat: EtatBataille, patch: Partial<Partie> = {}): Partie {
@@ -242,7 +252,10 @@ export function ouvrirPartie(
     throw new RejetTactique(`étage ${e} sans occupant au lieu d'un Indéchiffré au moins`);
   const etat = annoncer(ouvrirBataille(e, coffre, indechiffres, feuilles));
   const premiere = ordreDePhase(etat)[0] ?? null;
-  return avecEtat({ etage: e, etat, actes: [], phases: 0, selection: premiere, trace: "" }, etat);
+  return avecEtat(
+    { etage: e, etat, actes: [], phases: 0, selection: premiere, trace: "", avant: etat, derniers: [] },
+    etat,
+  );
 }
 
 /** Désigne une unité du coffre, ou aucune. Une unité inconnue ou tombée : aucune. */
@@ -266,7 +279,7 @@ export function jouerActe(p: Partie, acte: Acte): Partie {
   const u = etat.unites.find((x) => x.id === acte.unite);
   const garde = u !== undefined && vivante(u) && u.pa > 0 && etat.fin === null;
   const selection = garde ? acte.unite : (prochaineAJouer(etat) ?? null);
-  return avecEtat(p, etat, { actes, selection });
+  return avecEtat(p, etat, { actes, selection, avant: p.etat, derniers: [acte] });
 }
 
 /** La première unité du coffre, dans l'ordre de phase, qui a encore un point d'action. */
@@ -292,15 +305,21 @@ export function coffreAJoue(etat: EtatBataille): boolean {
 export function passerLaMain(p: Partie): Partie {
   if (p.etat.fin !== null) return p;
   if (p.etat.phase !== "coffre") throw new RejetTactique(`phase ${p.etat.phase} au lieu de coffre`);
-  let etat = finDePhase(p.etat);
+  const avant = finDePhase(p.etat);
   let phases = p.phases + 1;
-  etat = jouerPhase(etat);
+  const joue = jouerPhaseTracee(avant);
+  let etat = joue.etat;
   if (etat.fin === null) {
     etat = finDePhase(etat);
     phases += 1;
   }
   etat = annoncer(etat);
-  return avecEtat(p, etat, { phases, selection: prochaineAJouer(etat) ?? null });
+  return avecEtat(p, etat, {
+    phases,
+    selection: prochaineAJouer(etat) ?? null,
+    avant,
+    derniers: joue.actes,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -353,6 +372,8 @@ export type Lecture = {
   readonly cases: readonly (readonly LectureCase[])[];
   readonly unites: readonly LectureUnite[];
   readonly intentions: readonly Intention[];
+  /** La télégraphie dessinée : un trait par case de pas annoncé, un par coup annoncé (`traits.ts`). */
+  readonly traits: readonly Trait[];
   /** Les derniers coups du journal, le plus récent d'abord. */
   readonly journal: readonly Coup[];
   /** Les actes permis à l'unité désignée, ordre canonique. */
@@ -451,6 +472,7 @@ export function lire(p: Partie, vers: Case | null = null): Lecture {
     cases,
     unites,
     intentions: etat.intentions,
+    traits: traitsDe(etat),
     journal: [...etat.journal].reverse().slice(0, JOURNAL_VISIBLE),
     actes: elue !== undefined && joueur ? actesPossibles(etat, elue.id) : [],
     aJoue: joueur && coffreAJoue(etat),

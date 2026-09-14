@@ -87,10 +87,14 @@ zone de contrôle, parcours entier), `unite.ts` (pas, portée, tenue, points d'a
 `bataille.ts` (phases, résolution sans dé, riposte, fin, `traceBataille`) et `ia.ts`
 (la politique : plan d'un tour, télégraphie, jouer une phase, jouer une bataille) —
 `partie.ts` (la main du joueur : ce qui entre en bataille, ouvrir, jouer, passer la main,
-et la `Lecture` entière que peint `components/tactique/`) —
-`grille`, `unite`, `bataille`, `ia` et `partie` ont chacun leur `.test.ts`. **`bataille.ts`
-n'importe rien d'`ia.ts`** : le moteur ne connaît aucune politique, `ouvrirBataille` et
-`finDePhase` rendent un état sans intentions, et c'est `annoncer` qui les y pose.
+et la `Lecture` entière que peint `components/tactique/`), `animation.ts` (ce qui bouge
+entre deux états : événements rejoués depuis `Partie.avant` + `Partie.derniers`, ligne de
+temps, poses à un instant — pur, sans horloge) et `traits.ts` (la télégraphie dessinée,
+relue depuis `Intention.actes`) —
+`grille`, `unite`, `bataille`, `ia`, `partie`, `animation` et `traits` ont chacun leur `.test.ts`.
+**`bataille.ts` n'importe rien d'`ia.ts`** : le moteur ne connaît aucune politique,
+`ouvrirBataille` rend un état sans intentions, `finDePhase` ne les touche pas, et c'est
+`annoncer` qui les pose — la partie l'appelle à chaque retour de main.
 `lignee.ts` porte l'échange d'objets : un objet est tenu par une sortie, changer de
 mains c'est **dépenser** cette sortie, et la duplication échoue parce que c'est une
 double dépense — pas par une règle neuve. Le module ne parle jamais au réseau : les
@@ -203,7 +207,7 @@ python3 relique.py --test      # 3
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 591 tests Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 605 tests Eidos
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 npm run banc-tactique          # calibration tactique complète : 256 duels (~1 s)
 npm run banc-r2                # R2, le prix des axes : 440 320 duels et 1 200 mêlées (~16 min), le juge de C2 bis
