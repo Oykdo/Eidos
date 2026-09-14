@@ -42,7 +42,8 @@
  * 4 adversaires, 4 distances, 60 mêlées. `--complet` rejoue le protocole
  * entier hors CI : 2 000 mots, 120 par tier, 8 adversaires, 8 distances,
  * 1 200 mêlées — 440 320 duels. C'est lui qui a mesuré `DIV_PAS` avant et
- * après C2 (`docs/ETUDE_EQUILIBRAGE_TACTIQUE.md`, second post-scriptum).
+ * après C2, puis la riposte en contre et le socle de C2 ter
+ * (`docs/ETUDE_EQUILIBRAGE_TACTIQUE.md`, second post-scriptum, PS2.2–PS2.10).
  *
  * Usage : node --experimental-strip-types scripts/banc-r2.ts [--rapide|--complet]
  *
@@ -112,18 +113,21 @@ export type EtalonR2 = {
 };
 
 /**
- * Le protocole complet, relu le 2026-09-13 sur le moteur tel qu'il est
- * (`DIV_PAS = 32`) : 440 320 duels et 1 200 mêlées, `npm run banc-r2`. La CI
- * ne le rejoue pas ; le second post-scriptum de
- * `docs/ETUDE_EQUILIBRAGE_TACTIQUE.md` en tient le détail, et le test vérifie
- * que l'échantillon rapide reste du même côté de chaque cible que lui.
+ * Le protocole complet, relu le 2026-09-14 sur le moteur de C2 ter — la
+ * riposte en contre, `COUP_BASE` 24, `DIV_ALLONGE` 4, `DIV_PAS` 32 : 440 320
+ * duels et 1 200 mêlées, `npm run banc-r2`. La CI ne le rejoue pas ; le
+ * second post-scriptum de `docs/ETUDE_EQUILIBRAGE_TACTIQUE.md` en tient le
+ * détail (PS2.10), et le test vérifie que l'échantillon rapide reste du même
+ * côté de chaque cible que lui. La veille, sur la riposte à portée et le socle
+ * 16 : r { lame 3, ecu 57, eperon −640, arc 591 }, bande 296, pointes T12
+ * { 376, 203, 38, 439 }.
  */
 export const ETALONS_R2_COMPLET: EtalonR2 = {
-  r: { lame: 3, ecu: 57, eperon: -640, arc: 591 },
-  bandeMille: 296,
+  r: { lame: -7, ecu: -8, eperon: -128, arc: 145 },
+  bandeMille: 324,
   nulsMille: 0,
-  coupsMax: 9,
-  pointesT12Mille: { lame: 376, ecu: 203, eperon: 38, arc: 439 },
+  coupsMax: 8,
+  pointesT12Mille: { lame: 402, ecu: 217, eperon: 110, arc: 165 },
 };
 
 /**
@@ -132,11 +136,11 @@ export const ETALONS_R2_COMPLET: EtalonR2 = {
  * mesure complète qu'il faut refaire, pas l'étalon qu'il faut retoucher.
  */
 export const ETALONS_R2_RAPIDE: EtalonR2 = {
-  r: { lame: 113, ecu: 19, eperon: -547, arc: 419 },
-  bandeMille: 263,
+  r: { lame: 126, ecu: -58, eperon: 53, arc: -109 },
+  bandeMille: 287,
   nulsMille: 0,
-  coupsMax: 9,
-  pointesT12Mille: { lame: 442, ecu: 234, eperon: 31, arc: 289 },
+  coupsMax: 7,
+  pointesT12Mille: { lame: 469, ecu: 215, eperon: 138, arc: 117 },
 };
 
 /** Dérive tolérée avant que le test ne soit rouge : millièmes pour r, la bande et les nuls ; feuilles pour les coups. */

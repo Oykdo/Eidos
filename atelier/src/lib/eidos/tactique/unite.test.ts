@@ -70,7 +70,7 @@ describe("unite", () => {
       pos: { x: 4, y: 4 },
       precedente: null,
       elan: 0,
-      tenue: 42,
+      tenue: 58,
       pa: PA_PAR_TOUR,
     });
     const g = genese();
@@ -130,8 +130,8 @@ describe("unite", () => {
 
   it("encaisser : la tenue s'arrête à 0, jamais au-dessous", () => {
     const g = genese();
-    assert.equal(encaisser(g, 5).tenue, 37);
-    assert.equal(encaisser(g, 0).tenue, 42);
+    assert.equal(encaisser(g, 5).tenue, 53);
+    assert.equal(encaisser(g, 0).tenue, 58);
     const tombee = encaisser(g, 1000);
     assert.equal(tombee.tenue, 0);
     assert.equal(vivante(tombee), false);
@@ -140,18 +140,18 @@ describe("unite", () => {
 
   it("reprendre : MULT_TENUE·arc/8, plafonnée à la tenue de départ", () => {
     const g = genese();
-    // arc 21 → 2·2 = 4 de reprise ; 42 − 10 = 32, puis 36.
-    assert.equal(reprendre(encaisser(g, 10)).tenue, 36);
+    // arc 21 → 2·2 = 4 de reprise ; 58 − 10 = 48, puis 52.
+    assert.equal(reprendre(encaisser(g, 10)).tenue, 52);
     // Déjà pleine : la reprise ne déborde pas.
-    assert.equal(reprendre(g).tenue, 42);
-    assert.equal(reprendre(encaisser(g, 1)).tenue, 42);
+    assert.equal(reprendre(g).tenue, 58);
+    assert.equal(reprendre(encaisser(g, 1)).tenue, 58);
   });
 
   it("reprendre : rien pour qui a dépensé un PA, rien pour qui est retirée", () => {
     const blessee = encaisser(genese(), 6);
-    assert.equal(reprendre(depenser(blessee, PA_FRAPPER)).tenue, 36);
-    assert.equal(reprendre(depenser(blessee, PA_PAR_TOUR)).tenue, 36);
-    assert.equal(reprendre(terminerTour(blessee)).tenue, 36);
+    assert.equal(reprendre(depenser(blessee, PA_FRAPPER)).tenue, 52);
+    assert.equal(reprendre(depenser(blessee, PA_PAR_TOUR)).tenue, 52);
+    assert.equal(reprendre(terminerTour(blessee)).tenue, 52);
     // On ne relève pas un mot tombé.
     assert.equal(reprendre(encaisser(genese(), 999)).tenue, 0);
   });
@@ -201,8 +201,8 @@ describe("unite", () => {
     const agie = terminerTour(encaisser(genese(), 4));
     const neuve = nouveauTour(agie);
     assert.equal(neuve.pa, PA_PAR_TOUR);
-    assert.equal(neuve.tenue, 38);
-    assert.equal(reprendre(neuve).tenue, 42);
+    assert.equal(neuve.tenue, 54);
+    assert.equal(reprendre(neuve).tenue, 58);
   });
 
   it("immuabilité : aucune fonction ne touche son argument", () => {

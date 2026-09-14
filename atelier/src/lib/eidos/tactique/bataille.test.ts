@@ -349,12 +349,18 @@ describe("bataille — résolution", () => {
     assert.equal(resoudreCoup(etat, 0, 2).dos, 0);
   });
 
-  it("l'arc a un prix : la portée l'emporte sur le lame et la ecu réunis", () => {
+  /**
+   * Une tour de 60 points de lame et de ecu dans un guet, un archer dans une
+   * meurtrière à trois cases. Dalle bâtie pour la démonstration : deux
+   * meurtrières, tout le reste plein. Ce que les contrôles prouvent est la
+   * règle de résolution, pas le tirage de l'étage.
+   */
+  function meurtriere(eperonTour: number): EtatBataille {
     const tour = brute({
       pos: TRIO.ouest,
       lame: 30,
       ecu: 30,
-      eperon: 3,
+      eperon: eperonTour,
       arc: 1,
       mot: NEUTRE.a,
       classe: "arme",
@@ -369,40 +375,42 @@ describe("bataille — résolution", () => {
       classe: "defense",
     });
     const socle = poser([tour], [archer], 12);
-    // Dalle bâtie pour la démonstration : deux meurtrières, tout le reste plein.
-    // Ce que le contrôle prouve est la règle de résolution, pas le tirage de l'étage.
     const guet = { x: 4, y: 4 };
-    const meurtriere = { x: 4, y: 1 };
+    const fente = { x: 4, y: 1 };
     const mur: boolean[][] = [];
     for (let y = 0; y < GRILLE_N; y++) {
       const ligne: boolean[] = [];
       for (let x = 0; x < GRILLE_N; x++)
-        ligne.push(!((x === guet.x && y === guet.y) || (x === meurtriere.x && y === meurtriere.y)));
+        ligne.push(!((x === guet.x && y === guet.y) || (x === fente.x && y === fente.y)));
       mur.push(ligne);
     }
-    let duel: EtatBataille = {
+    const duel: EtatBataille = {
       ...socle,
       obstacles: mur,
       unites: [
         { ...socle.unites[0]!, pos: guet },
-        { ...socle.unites[1]!, pos: meurtriere },
+        { ...socle.unites[1]!, pos: fente },
       ],
     };
     assert.equal(portee(duel.unites[0]!), PORTEE_BASE);
     assert.equal(portee(duel.unites[1]!), PORTEE_BASE + Math.trunc(48 / DIV_PORTEE));
-    assert.equal(distance(guet, meurtriere), 3);
+    assert.equal(distance(guet, fente), 3);
     assert.deepEqual(
       actesPossibles(duel, 0).map((a) => a.geste),
       ["passer"],
       "60 points de lame et de ecu, et rien à faire",
     );
+    return duel;
+  }
+
+  it("l'arc a un prix : à éperon égal, la portée l'emporte sur le lame et la ecu réunis", () => {
+    let duel = meurtriere(0);
     const coup = resoudreCoup(duel, 1, 0);
     const base = COUP_BASE + 16;
     assert.equal(coup.allonge, div(base, DIV_ALLONGE));
     assert.equal(coup.accord, 0);
     assert.equal(coup.porte, base + div(base, DIV_ALLONGE));
-    // L'allonge et la riposte s'excluent : la tour est plus vive (3 contre 0)
-    // et ne rend pourtant rien, parce qu'elle n'atteint pas la meurtrière.
+    // Personne n'est plus vif : aucun contre, la tour encaisse sans rendre.
     assert.equal(riposteDe(duel, coup), null);
     const tenueArcher = duel.unites[1]!.tenue;
     let garde = 0;
@@ -415,6 +423,30 @@ describe("bataille — résolution", () => {
     assert.deepEqual(duel.fin?.issue, "defaite");
     assert.equal(duel.unites[1]!.tenue, tenueArcher, "l'archer n'a pas été touché une fois");
     assert.equal(duel.journal.length, nCoups(TENUE_BASE + MULT_TENUE * 30, coup.porte));
+  });
+
+  it("mais pas une impunité : plus vive d'un point, la tour contre l'archer à travers la meurtrière", () => {
+    // Même dalle, même allonge : la riposte ne demande pas la portée, et la
+    // tour qui ne peut rien faire de son tour rend pourtant le premier tir.
+    const duel = meurtriere(1);
+    const coup = resoudreCoup(duel, 1, 0);
+    assert.ok(coup.allonge > 0, "l'allonge s'est éteinte");
+    const tenueTour = duel.unites[0]!.tenue;
+    const main = finDePhase(jouer(duel, { geste: "passer", unite: 0 }));
+    const apres = jouer(main, { geste: "frapper", unite: 1, cible: 0 });
+    assert.equal(apres.journal.length, 2, "l'archer n'a pas été contré");
+    const rendu = apres.journal[1]!;
+    assert.equal(rendu.riposte, true);
+    assert.equal(rendu.attaquant, 0);
+    assert.equal(rendu.cible, 1);
+    assert.equal(rendu.base, COUP_BASE + 30);
+    assert.equal(rendu.allonge, 0, "un contre n'a pas d'allonge : l'archer était à sa propre portée");
+    assert.equal(rendu.charge, 0, "un contre a chargé");
+    assert.equal(apres.unites[0]!.tenue, tenueTour - coup.porte, "le tir n'a pas porté");
+    // L'archer sans ecu ne tient que le socle : le contre le couche au premier tir.
+    assert.ok(rendu.porte >= TENUE_BASE);
+    assert.equal(apres.unites[1]!.tenue, 0);
+    assert.deepEqual(apres.fin?.issue, "victoire");
   });
 
   it("aucun coup à zéro : le plancher est un garde-fou, jamais un réglage", () => {
@@ -875,9 +907,9 @@ describe("bataille — la riposte", () => {
     }
   });
 
-  it("pas de riposte hors de portée : l'allonge et la riposte s'excluent exactement", () => {
-    // L'archer (portée 3) frappe de deux cases : la cible, plus vive mais de
-    // portée 1, encaisse l'allonge et ne rend rien.
+  it("la riposte est un contre : hors de portée du riposteur, elle se rend quand même", () => {
+    // L'archer (portée 4) frappe de deux cases : la cible, plus vive mais de
+    // portée 1, encaisse l'allonge **et** rend le coup — sans allonge, elle.
     const etat = poser(
       [brute({ pos: TRIO.ouest, lame: 12, ecu: 20, eperon: 0, arc: 32 })],
       [brute({ pos: RANG[2]!, lame: 12, ecu: 20, eperon: 32, arc: 0 })],
@@ -887,9 +919,24 @@ describe("bataille — la riposte", () => {
     assert.equal(distance(etat.unites[0]!.pos, etat.unites[1]!.pos), 2);
     const coup = resoudreCoup(etat, 0, 1);
     assert.ok(coup.allonge > 0, "l'allonge ne s'est pas appliquée");
+    const tenueArcher = etat.unites[0]!.tenue;
     const apres = jouer(etat, { geste: "frapper", unite: 0, cible: 1 });
-    assert.equal(apres.journal.length, 1, "on riposte hors de portée");
-    assert.equal(riposteDe(apres, coup), null);
+    assert.equal(apres.journal.length, 2, "pas de contre hors de portée");
+    const rendu = apres.journal[1]!;
+    assert.equal(rendu.riposte, true);
+    assert.equal(rendu.allonge, 0, "un contre porte une allonge");
+    assert.equal(apres.unites[0]!.tenue, tenueArcher - rendu.porte, "l'archer n'a pas encaissé le contre");
+    // La portée ne compte plus, le seuil compte toujours : à éperon égal, de
+    // deux cases comme au contact, rien n'est rendu.
+    const egal = poser(
+      [brute({ pos: TRIO.ouest, lame: 12, ecu: 20, eperon: 0, arc: 32 })],
+      [brute({ pos: RANG[2]!, lame: 12, ecu: 52, eperon: 0, arc: 0 })],
+    );
+    assert.equal(
+      jouer(egal, { geste: "frapper", unite: 0, cible: 1 }).journal.length,
+      1,
+      "contre rendu à éperon égal",
+    );
   });
 
   it("on ne riposte jamais à une riposte, et une frappée qui tombe ne rend rien", () => {
@@ -1010,9 +1057,16 @@ describe("bataille — la charge", () => {
 });
 
 describe("bataille — le prix des axes", () => {
-  // Le banc complet (2 000 objets, 8 distances, 3 politiques, ~296 000 duels)
-  // vit hors dépôt ; ce contrôle en est la réduction rejouable. Il mesure sur
-  // le VRAI moteur — aucune résolution n'est réécrite ici.
+  // Réduction rejouable d'un banc d'avant C2 (2 000 objets, 8 distances,
+  // 3 politiques écrites pour la mesure, ~296 000 duels), sur le VRAI moteur —
+  // aucune résolution n'est réécrite ici. Elle ne juge plus les cibles du
+  // §9 ter : C2 a établi qu'elles mesurent le couple moteur + politique du
+  // jeu, et c'est `scripts/banc-r2.test.ts` qui les tient (`ia.ts` des deux
+  // côtés, deux sièges). Ici le plus vif ouvre toujours et les politiques sont
+  // ad hoc : avec la riposte en contre (C2 ter), ce harnais rend eperon +0,396
+  // et arc −0,364 là où le jeu rend −0,128 et +0,145 — il mesure sa propre
+  // convention. Il garde le seul contrôle qui ne dépende pas d'elle : un tier
+  // n'achète pas de force.
 
   /** La plus grande région libre d'un tenant : personne n'est enfermé. */
   const REGION: Case[] = (() => {
@@ -1132,23 +1186,6 @@ describe("bataille — le prix des axes", () => {
     return vivA && !vivB ? 0 : !vivA && vivB ? 1 : -1;
   }
 
-  function pearson(xs: readonly number[], ys: readonly number[]): number {
-    const n = xs.length;
-    const mx = xs.reduce((t, x) => t + x, 0) / n;
-    const my = ys.reduce((t, y) => t + y, 0) / n;
-    let num = 0;
-    let dx = 0;
-    let dy = 0;
-    for (let i = 0; i < n; i++) {
-      const a = xs[i]! - mx;
-      const b = ys[i]! - my;
-      num += a * b;
-      dx += a * a;
-      dy += b * b;
-    }
-    return dx === 0 || dy === 0 ? 0 : num / Math.sqrt(dx * dy);
-  }
-
   const SUJETS: Sujet[] = (() => {
     const out: Sujet[] = [];
     for (let i = 0; i < 150; i++) {
@@ -1189,32 +1226,6 @@ describe("bataille — le prix des axes", () => {
           }
     return SUJETS.map((s) => (s.v + s.d === 0 ? 0.5 : s.v / (s.v + s.d)));
   })();
-
-  it("aucun axe n'achète la victoire : |r| sous 0,20 pour les quatre", () => {
-    // Le banc complet (2 000 mots, huit distances, trois politiques) tient
-    // 0,075 ; ce contrôle en voit 150 sur trois distances, on lui laisse la
-    // marge d'échantillon. Un axe qui repasse au-dessus de 0,20 ici est un
-    // axe dont le prix a bougé, pas du bruit.
-    for (const axe of ["lame", "ecu", "eperon", "arc"] as const) {
-      const r = pearson(
-        SUJETS.map((s) => s.axes[axe]),
-        TAUX,
-      );
-      assert.ok(Math.abs(r) < 0.2, `r(${axe}) = ${r.toFixed(3)} au lieu de moins de 0,20`);
-    }
-  });
-
-  it("lame+ecu ne fait plus la loi : quartile haut sur quartile bas sous 3×", () => {
-    const rangs = SUJETS.map((s, i) => ({ somme: s.axes.lame + s.axes.ecu, t: TAUX[i]! })).sort(
-      (a, b) => a.somme - b.somme,
-    );
-    const q = Math.floor(rangs.length / 4);
-    const moy = (xs: { t: number }[]) => xs.reduce((t, x) => t + x.t, 0) / xs.length;
-    const bas = moy(rangs.slice(0, q));
-    const haut = moy(rangs.slice(rangs.length - q));
-    const rapport = haut / Math.max(bas, 1e-9);
-    assert.ok(rapport < 3, `quartiles ${rapport.toFixed(2)}× au lieu de moins de 3×`);
-  });
 
   it("un mot étroit n'est jamais plus fort qu'un mot rond, seulement plus étroit", () => {
     // ext = Σ|axe − 16|/2 (SPEC_CRAFT §2) : l'extrémité, donc le tier.

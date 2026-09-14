@@ -382,6 +382,8 @@ Un détail qui n'engage rien mais qui trompe : la polarité destructive **avanta
 **Le banc est dans le dépôt.** 440 320 duels en ~16 min hors CI ; 15 616 duels et 60 mêlées en ~30 s en CI, calibrés contre les chiffres d'ici.
 **Et la suite, le même soir (PS2.8–PS2.9).** La politique ne peut pas (quatre candidats, aucun ne remonte `eperon`) ; le moteur le peut en partie : la riposte qui ne demande plus la portée ramène `|r|` max de **0,640 à 0,487** sur le protocole complet, **0,330** avec l'allonge à `base/4` — le levier, pas encore la cible, et 7 points de bande de tier en plus.
 
+**Et le lendemain (PS2.10, C2 ter).** Le levier, l'allonge et le socle **ensemble** : riposte en contre, `DIV_ALLONGE` 4, `COUP_BASE` 24 — `|r|` max **0,145** sur le protocole complet (lame −0,007, ecu −0,008, eperon −0,128, arc +0,145), Q4/Q1 0,99×, bande 32,4 pt, 0 nul. La cible (a) est tenue pour la première fois sur le couple moteur + politique du jeu ; le socle seul, sans le contre, **aggrave** (0,604).
+
 ## PS2.1 Le protocole, et ce qui change par rapport à PS.1
 Même pool que le §4 : 2 000 mots `objetDepuisGraine(sha256d("eq-" + i))`, les quatre âges à tour de rôle, classe par rang (`arme`, `defense`, `accessoire`). Mêmes panels par tier : 120 mots par tier, tirés dans l'ordre de `sha256d("tier-" + i)` (T12 vaut un mot sur 2 048 : la suite est longue, pas aléatoire). Même dalle, l'étage 198 et ses 73 cases libres ; huit distances d'engagement sur la rangée libre y = 1, le coffre en (0,1) et l'Indéchiffré en (d,1). Tout passe par `ouvrirBataille` puis `jouerBataille` — aucune grille, aucune résolution, aucune politique recopiée.
 
@@ -502,6 +504,49 @@ Même échantillon rapide, une règle changée à la fois dans un worktree jetab
 **Ce que le protocole complet ajoute à l'échantillon.** Les quatre distances que l'échantillon rapide ne joue pas (2, 4, 6, 8) et les 1 800 mots qu'il ne tire pas rendent à `arc` une partie de son prix (−0,043 → +0,194) et laissent `eperon` plus bas (−0,298 → −0,487) : la riposte sans portée est **le levier** — aucune constante ni aucune politique n'avait bougé `|r|` max de plus de 0,13, celle-ci le fait de 0,15, et de 0,31 avec l'allonge à `base/4` — mais elle **ne suffit pas seule**, et elle coûte 7 points de bande de tier. Le reste est à chercher dans ce qui reste : l'allonge, le socle du coup et de la tenue (`COUP_BASE`, `MULT_TENUE`), ensemble et sur le protocole complet.
 
 **Ce qu'une riposte sans portée veut dire, et ce qu'elle coûte.** La riposte cesse d'être un coup rendu à qui est à portée pour devenir un **contre** : le mot le plus vif rend le coup à quiconque le frappe, fût-ce de six cases — un éperon, pas un tir. Elle reste hors de tout PA et de toute feuille, elle n'appelle jamais de riposte, elle exige toujours `eperon` strictement plus haut et une tenue non nulle après le coup : deux conditions au lieu de trois. Rien ne change au carnet, à la chaîne ni aux formats — la bataille est une jauge — mais **`bataille.ts` change**, donc les contrôles de riposte de `bataille.test.ts`, la docstring de `riposteDe`, le §3 de `SPEC_TACTIQUE.md` et `BIBLE_VEILLEE.md`. Aucune preuve déposée ne rejoue encore une bataille (`depot.ts` ne connaît pas `bataille.ts`, et `veillees/index.json` est vide) : la règle peut changer sans rien invalider. C'est un chantier, avec sa première mesure faite et sa cible encore devant lui : **C2 ter**, à l'arbitrage de l'auteur.
+
+## PS2.10 C2 ter — le contre, l'allonge et le socle ensemble : la cible tenue
+Le 2026-09-14, le levier de PS2.9 fixé (la riposte ne demande plus la portée, `ia.ts` intact), une variante à la fois sur l'échantillon rapide dans un worktree jetable, puis le protocole complet sur les quatre meilleures. Deux constantes entrent en jeu que PS2.9 n'avait pas touchées : `COUP_BASE` (le socle du coup **et** de la tenue, `TENUE_BASE = MULT_TENUE·COUP_BASE`) et `MULT_TENUE`.
+
+**Échantillon rapide** (200 mots, 15 616 duels, 60 mêlées), riposte en contre partout sauf les témoins :
+
+| sonde | lame | ecu | eperon | arc | \|r\| max | Q4/Q1 | bande | T12 lame/ecu/eperon/arc | mêlée méd./max |
+|---|---|---|---|---|---|---|---|---|---|
+| témoin (riposte à portée, socle 16, `base/2`) | +0,113 | +0,019 | −0,547 | +0,419 | 0,547 | 1,12× | 26,3 pt | 44,2 / 23,4 / 3,1 / 28,9 % | 2 / 9 |
+| contre, `base/2` | +0,216 | +0,123 | −0,298 | −0,043 | 0,298 | 1,25× | 31,0 pt | 44,2 / 23,8 / 3,8 / 7,8 % | 2 / 10 |
+| contre, `base/4` | +0,265 | +0,186 | −0,171 | −0,287 | 0,287 | 1,34× | 32,5 pt | 45,5 / 25,0 / 6,3 / 3,1 % | 2 / 10 |
+| **contre, `base/4`, socle 24** | +0,126 | −0,058 | +0,053 | −0,109 | **0,126** | 1,01× | 28,7 pt | 46,9 / 21,5 / 13,8 / 11,7 % | 2 / 7 |
+| contre, `base/4`, socle 32 | +0,003 | −0,189 | +0,172 | +0,032 | 0,189 | 0,88× | 24,8 pt | 47,8 / 19,9 / 21,3 / 18,8 % | 2 / 7 |
+| contre, `base/4`, socle 20 | +0,201 | +0,061 | −0,061 | −0,197 | 0,201 | 1,14× | 28,7 pt | 47,3 / 23,4 / 10,0 / 8,6 % | 2 / 7 |
+| contre, `base/4`, socle 28 | +0,055 | −0,129 | +0,104 | −0,016 | 0,129 | 0,93× | 26,7 pt | 46,9 / 21,9 / 19,4 / 13,3 % | 2 / 8 |
+| contre, `base/3`, socle 24 | +0,112 | −0,068 | −0,038 | +0,006 | 0,112 | 1,00× | 29,8 pt | 45,1 / 21,5 / 11,9 / 12,5 % | 2 / 9 |
+| contre, `base/2`, socle 20 | +0,157 | +0,006 | −0,226 | +0,069 | 0,226 | 1,09× | 28,0 pt | 45,1 / 23,4 / 7,5 / 15,6 % | 2 / 8 |
+| contre, `base/2`, socle 24 | +0,087 | −0,084 | −0,153 | +0,162 | 0,162 | 0,98× | 27,4 pt | 43,3 / 21,5 / 10,6 / 21,1 % | 2 / 8 |
+| contre, `base/2`, socle 28 | +0,034 | −0,166 | −0,117 | +0,267 | 0,267 | 0,90× | 26,2 pt | 42,4 / 21,9 / 11,9 / 25,8 % | 2 / 8 |
+| contre, `base/4`, `MULT_TENUE` 3 | +0,180 | +0,086 | +0,205 | −0,470 | 0,470 | 1,18× | 36,3 pt | 46,4 / 20,3 / 3,1 / 0,8 % | 4 / 12 |
+| contre, `base/4`, `MULT_TENUE` 4 | +0,168 | +0,120 | +0,268 | −0,560 | 0,560 | 1,22× | 38,8 pt | 35,3 / 19,5 / 4,4 / 0,0 % | 6 / 16 |
+| contre, `base/2`, `MULT_TENUE` 3 | +0,160 | +0,035 | +0,028 | −0,219 | 0,219 | 1,12× | 37,0 pt | 41,5 / 19,1 / 1,9 / 2,3 % | 4 / 9 |
+| **témoin** : riposte à portée, `base/2`, socle 24 | +0,008 | −0,177 | −0,418 | +0,604 | 0,604 | 0,91× | 22,6 pt | 43,3 / 20,7 / 7,5 / 50,0 % | 2 / 9 |
+| témoin : riposte à portée, `base/4`, socle 24 | +0,022 | −0,173 | −0,369 | +0,538 | 0,538 | 0,92× | 22,5 pt | 46,9 / 21,1 / 8,8 / 43,8 % | 2 / 9 |
+| témoin : riposte à portée, `base/4`, socle 32 | −0,065 | −0,274 | −0,280 | +0,643 | 0,643 | 0,81× | 19,7 pt | 47,3 / 18,8 / 15,0 / 50,8 % | 2 / 8 |
+
+**Lecture des sondes.** Le socle est le second levier, et il n'en est un **qu'avec le contre** : à 24 avec l'ancienne riposte, `arc` monte à +0,604 et prend la moitié des pointes du tier haut — relever le socle dilue `lame` et `ecu` (leur levier passe de 5 à 3,67), et sans le contre ce qu'ils perdent va tout entier à l'archer. `MULT_TENUE` est à laisser : des batailles plus longues (4 à 6 feuilles par mêlée) où `arc` meurt (−0,47, −0,56).
+
+**Protocole complet, les quatre meilleures** (440 320 duels et 1 200 mêlées chacune, `DIV_PAS = 32`, `ia.ts` intact, ~36 min chacune à quatre en parallèle) :
+
+| variante | lame | ecu | eperon | arc | \|r\| max | (a) | Q4/Q1 | bande | T12 lame/ecu/eperon/arc | nuls | feuilles / mêlée |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| le moteur de la veille (PS2.2) | +0,003 | +0,057 | −0,640 | +0,591 | 0,640 | rompue | 1,04× | 29,6 pt | 37,6 / 20,3 / 3,8 / 43,9 % | 0 | 2 / 9 |
+| **contre, `base/4`, socle 24** | −0,007 | −0,008 | **−0,128** | **+0,145** | **0,145** | **tenue** | 0,99× | 32,4 pt | 40,2 / 21,7 / 11,0 / 16,5 % | 0 | 1 / 8 |
+| contre, `base/3`, socle 24 | −0,029 | −0,024 | −0,219 | +0,275 | 0,275 | tenue | 0,98× | 32,4 pt | 39,2 / 21,4 / 10,1 / 18,8 % | 0 | 1 / 8 |
+| contre, `base/4`, socle 28 | −0,097 | −0,125 | −0,024 | +0,247 | 0,247 | tenue | 0,91× | 30,3 pt | 40,6 / 21,5 / 14,6 / 20,3 % | 0 | 1 / 8 |
+| contre, `base/2`, socle 24 | −0,064 | −0,061 | −0,342 | +0,473 | 0,473 | rompue | 0,94× | 31,7 pt | 37,7 / 20,7 / 8,6 / 25,3 % | 0 | 1 / 8 |
+
+**Verdict.** La riposte en contre, l'allonge à `base/4` et le socle à 24 tiennent la cible (a) sur le protocole complet — **0,145**, les quatre axes sous 0,15 — avec (b) tenue (0,99×), 0 nul, une feuille par mêlée en médiane et 8 au pire. La bande de tier s'ouvre de 29,6 à **32,4 pt**, pas 36,8 : T1 54,1 % → T12 21,7 %, et au tier le plus haut les quatre pointes se répartissent 40 / 22 / 11 / 17 % là où `arc` en prenait 44 % la veille. Aucun axe n'achète plus la victoire, ce que le §9 ter demande. Retenu : `COUP_BASE = 24`, `DIV_ALLONGE = 4`, `riposteDe` à deux conditions ; `MULT_TENUE` et `DIV_PAS` ne bougent pas, `ia.ts` non plus.
+
+**Ce que l'échelle a appris.** L'échantillon rapide suit le protocole complet à `base/4` (0,126 → 0,145 ; la veille 0,287 → 0,330) et ne le suit **pas** à `base/2` (0,162 → 0,473 ; la veille 0,298 → 0,487) : les quatre distances paires et les 1 800 mots qu'il ne joue pas rendent à `arc` son prix quand l'allonge est chère. Conséquence dans le dépôt : le contrôle de `banc-r2.test.ts` qui exigeait de l'échantillon **le signe** de chaque axe du protocole complet est faux par construction quand les prix sont proches de zéro (eperon −0,128 complet, +0,053 rapide ; arc +0,145 / −0,109) ; il exige désormais le même côté de chaque **cible**, et un contrôle neuf affirme la cible tenue sur les deux échelles. Le contrôle « prix des axes » de `bataille.test.ts` — trois politiques ad hoc, le plus vif ouvre toujours — rendait avec le contre eperon +0,396 et arc −0,364 : il mesurait sa propre convention, il est retiré (son contrôle de tier, un mot étroit n'est pas plus fort qu'un mot rond, reste).
+
+**Ce que la règle change au jeu.** La riposte est un **contre** : frappée, une unité plus vive rend le coup à qui l'a frappée, de six cases s'il le faut — un éperon, pas un tir, et jamais d'allonge sur le coup rendu (l'attaquant était à sa propre portée). L'allonge reste un bonus (`+base/4`, 6 à 22) pour qui frappe hors de la portée de sa cible, mais elle n'achète plus l'impunité. Le socle 24 porte le coup de 24 à 88 et la tenue de 48 à 176 : les coups nus s'échangent 3,67 contre 1 au lieu de 5, les mêlées durent une phase de moins en médiane. Rien ne change au carnet, à la chaîne ni aux formats — la bataille est une jauge, et aucune preuve déposée n'en rejoue une.
 
 ## PS2.LIMITE
 - **Une politique n'est pas un joueur, mais c'est celle du jeu.** `ia.ts` tient les Indéchiffrés à l'écran ; le coffre est tenu par une main humaine que ce banc ne modélise pas. Un joueur qui tient son archer hors de portée et son rapide en retrait peut rendre d'autres chiffres — le banc mesure ce que le jeu fait jouer, pas ce qu'un joueur pourrait faire.

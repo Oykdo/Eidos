@@ -26,9 +26,13 @@
  * mesuré, r(ecu, victoire) tombe de +0,59 à +0,14 en le lui retirant.
  * `lame` achète le coup, au-dessus du même socle que la tenue (`COUP_BASE`).
  * `eperon` achète le pas, le rang de phase, la **riposte** et la **charge**.
- * `arc` achète la portée, la reprise, l'**allonge** — et, par la portée,
- * l'immunité à la riposte : frapper de plus loin que la cible ne porte, c'est
- * un bonus *et* aucun coup rendu. Les deux axes faibles s'entretiennent.
+ * `arc` achète la portée, la reprise, l'**allonge** — et rien d'autre : la
+ * riposte est un **contre**, elle ne demande pas la portée (`riposteDe`), et
+ * frapper de plus loin que la cible ne porte est un bonus, pas une impunité.
+ * Tant que la portée en était la condition, un archer n'était jamais riposté
+ * et `eperon` ne se payait pas — mesuré (`scripts/banc-r2.ts`, 440 320
+ * duels) : r(eperon) −0,640, r(arc) +0,591, deux prix hors de la cible de
+ * 0,30 que ni une constante ni la politique ne rattrapaient (C2, C2 bis).
  * La charge est additive là où tout le reste est en fraction de la base :
  * c'est voulu, elle doit valoir davantage à qui frappe faible, sinon `eperon`
  * reste mort à l'extrême (mesuré : 5,85 % de victoires au tier le plus haut).
@@ -261,7 +265,8 @@ export function resoudreCoup(etat: EtatBataille, attaquant: number, cible: numbe
   // Sans souvenir de déplacement, on rend au défenseur sa propre case :
   // `estDeDos` y lit l'absence de dos. Une unité qui n'a pas bougé regarde partout.
   const dos = estDeDos(a, d, d.precedente ?? d.pos) ? div(base, DIV_DOS) : 0;
-  // Frapper de plus loin que la cible ne riposte. Le prix de `arc`.
+  // Frapper de plus loin que la cible n'atteint. Le prix de `arc` — un bonus,
+  // pas une impunité : la riposte ne demande pas la portée.
   const allonge = distance(a.pos, d.pos) > portee(d) ? div(base, DIV_ALLONGE) : 0;
   // La charge : chaque case parcourue avant de frapper pèse sur le coup.
   // C'est le second prix de `eperon`, et le seul terme additif.
@@ -287,20 +292,30 @@ export function resoudreCoup(etat: EtatBataille, attaquant: number, cible: numbe
 /**
  * La riposte, ou `null` s'il n'y en a pas.
  *
- * Frappée à une distance d'où elle atteint son attaquant, une unité plus vive
- * que lui lui rend le coup. Trois conditions, toutes entières et toutes
- * lisibles avant de frapper :
+ * Frappée, une unité plus vive que son attaquant lui rend le coup — un
+ * **contre**, d'où qu'il ait frappé : un archer à six cases est rendu comme
+ * un voisin de case. Deux conditions, toutes entières et toutes lisibles
+ * avant de frapper :
  *
  *   1. la frappée tient encore — `tenue > 0` après le coup ; on ne relève
  *      pas un mot tombé ;
- *   2. l'attaquant est dans sa portée — `distance <= portee(d)` ; c'est
- *      exactement la négation de l'allonge : un coup qui gagne `+base/4`
- *      d'allonge n'appelle jamais de riposte, et réciproquement ;
- *   3. `d.eperon > a.eperon`, **strictement** : à égalité, personne ne rend
+ *   2. `d.eperon > a.eperon`, **strictement** : à égalité, personne ne rend
  *      rien. C'est là qu'`eperon` se paie.
  *
- * La riposte n'est pas un acte : elle ne consomme ni feuille ni point
- * d'action du riposteur, et elle ne se refuse pas. Elle
+ * La portée du riposteur n'entre pas. Elle était la troisième condition
+ * jusqu'au 2026-09-14 — l'exacte négation de l'allonge : un coup gagné de
+ * loin n'appelait jamais de riposte — et c'est elle qui rendait `eperon`
+ * gratuit : un archer n'était jamais riposté, r(eperon) −0,640 et r(arc)
+ * +0,591 sur 440 320 duels (`scripts/banc-r2.ts`), hors de la cible de 0,30
+ * que ni une constante (C2) ni la politique (C2 bis) ne rattrapaient. La
+ * lever est ce qui la rattrape (C2 ter, `docs/ETUDE_EQUILIBRAGE_TACTIQUE.md`
+ * PS2.9–PS2.10). L'allonge reste ce qu'elle est — un coup gagné hors de la
+ * portée de la cible — mais elle n'achète plus l'impunité.
+ *
+ * Le coup rendu se calcule comme tout coup (`resoudreCoup`), à ceci près
+ * que son allonge est toujours nulle : l'attaquant a frappé, il était donc à
+ * sa propre portée. La riposte n'est pas un acte : elle ne consomme ni
+ * feuille ni point d'action du riposteur, et elle ne se refuse pas. Elle
  * entre au journal comme un `Coup` marqué `riposte`. **On ne riposte jamais
  * à une riposte** : `jouer` est le seul appelant, et il ne l'appelle que sur
  * le coup porté.
@@ -314,7 +329,6 @@ export function riposteDe(etat: EtatBataille, coup: Coup): Coup | null {
   const d = uniteDe(etat, coup.cible);
   if (!vivante(d)) return null;
   if (d.axes.eperon <= a.axes.eperon) return null;
-  if (distance(d.pos, a.pos) > portee(d)) return null;
   return { ...resoudreCoup(etat, d.id, a.id), riposte: true };
 }
 
