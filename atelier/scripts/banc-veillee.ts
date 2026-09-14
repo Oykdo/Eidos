@@ -1,0 +1,541 @@
+/**
+ * Banc de la veillée — ce qu'une run entière coûte en feuilles, sous chaque règle.
+ *
+ * Deux textes du dépôt se contredisent sur ce qu'une feuille signe en combat
+ * (`docs/HANDOVER_VEILLEE_BATAILLE.md` §3, arbitrage A17) : `SPEC_TACTIQUE.md`
+ * D2 — **un coup porté** par le coffre, arbre de 64 ; `BIBLE_VEILLEE.md` §4.3 —
+ * **une mort** (un Indéchiffré retiré de la dalle), arbre de 32. Et le nombre
+ * de salles n'est pas arrêté non plus (A18) : 27 dans le code, 9 dans la bible
+ * §6.1. Ce banc ne tranche rien par un texte : il joue des runs entières sur
+ * le moteur et la politique réels et compte.
+ *
+ * Le protocole, rejouable à l'octet — aucun `Math.random`, aucune horloge,
+ * **aucune signature** (le budget est une soustraction, l'arbre n'y change
+ * rien : un run de 27 salles coûte ≈ 60 ms sur ce poste, 26 batailles à
+ * 3 contre 3, contre 2,5 à 4 s pour un run signé de `veillee-bot.ts`) :
+ *
+ * - **le jour** : `jours` jours synthétiques, `id_bloc = sha256d("banc-veillee/jour-d")`,
+ *   graine du parcours par `graineDuJour` comme dans `veillee.ts` ; les runs
+ *   se répartissent sur les jours, un jour dense est un jour dur ;
+ * - **le parcours** : celui du pendule (`penduleInitial`, `transition`), le choix
+ *   de fin de salle tiré par le xorshift du run (`pendule-phase0.ts`), l'objet
+ *   porté = le premier mot du roster ; `etageDeSalles` rejoue `etageDe` avec
+ *   `ETAGES_PAR_BANDE` en paramètre — 3 (27 salles, le code) ou 1 (9 salles,
+ *   la bible §6.1), contrôlé identique à `pendule.etageDe` pour 3. **La
+ *   dernière salle ne se joue pas** : comme dans `veillee-tour.ts`, le dernier
+ *   franchir *est* le sommet (« la dernière salle n'a pas de fin à signer ») —
+ *   26 batailles et 26 franchir pour 27 salles, 8 et 8 pour 9 ;
+ * - **le roster** : trois objets, `objetDepuisGraine(sha256d("roster-k-j"))`,
+ *   la loi des tiers est celle du tirage lui-même, la classe **lue du mot**
+ *   comme le jeu la lit (`ficheDe` → `formeProche` : elle entre dans l'accord
+ *   de chaque coup, ce n'est pas une lecture) et attachée à l'objet, jamais à
+ *   son rang ; posés comme `partie.ts` les pose (`posesDuCoffre`, `caseLibre`) ;
+ *   la tenue repart de `ecu` à chaque salle (D1). Le roster et les choix du
+ *   run ne dépendent que du jour `d` et du rang `k`, **jamais de la
+ *   configuration** : les douze rejouent les mêmes rosters sur les mêmes
+ *   parcours, et l'écart entre deux configurations ne vient que de la règle ;
+ * - **les Indéchiffrés** : les occupants de l'étage (`indechiffresDe` de
+ *   `partie.ts`, un coffre vide : tout occupant est présent), 1 à 3 ;
+ * - **la bataille** : `ouvrirBataille` puis `jouerBataille`, `ia.ts` des deux
+ *   côtés, rien d'autre ; un nul (`TOURS_MAX` phases sans issue) ou une
+ *   défaite laissent la salle **tenue**, on franchit quand même (aucune règle
+ *   ne l'interdit aujourd'hui, et la défaite ne prend aucune feuille) — la run
+ *   ne finit que sur l'arbre vide ou la dernière salle, pour que le budget se
+ *   lise seul ; la survie se lit à côté (batailles perdues, première défaite) ;
+ * - **le roster** revient entier à chaque salle (la règle du code : la tenue
+ *   repart de `ecu`), ou, en **permadeath** (A5, tranché le 2026-09-14 pour la
+ *   veillée ancrée), une unité tombée ne revient pas — roster vide, on
+ *   traverse sans se battre, et le banc le compte (`rosterBalayeMille`). En
+ *   permadeath, **« arrivé » exige un roster vivant au sommet** : un roster
+ *   mort ne lit aucune salle (bible §5.2), ses feuilles restantes ne
+ *   plafonnent aucun butin, et un verdict qui les compterait jugerait une
+ *   marche, pas une règle ;
+ * - **le budget** : `arbre` feuilles ; chaque franchir en coûte une ; en
+ *   combat, règle « coup » : le moteur décrémente lui-même `feuilles` à chaque
+ *   coup du coffre et finit la bataille sur `epuise` à zéro ; règle « mort » :
+ *   le moteur reçoit un budget que rien n'entame, et chaque Indéchiffré retiré
+ *   (riposte comprise) coûte une feuille après coup. **L'arbre nu est une fin**
+ *   sous les deux règles, comme dans `veillee.ts` (`gestes.length >= 64` ⇒
+ *   `epuise`, sauf le sommet) : un budget à zéro après une bataille ou un
+ *   franchir épuise la run là où elle se tient — sauf si ce franchir était le
+ *   dernier, qui est le sommet ; aucune salle n'est jamais abordée à zéro.
+ *   Ce que la bible §4.4 propose pour l'arbre nu (« il blesse au lieu de
+ *   tuer ») n'est pas modélisé.
+ *
+ * Douze configurations : les deux règles à leur arbre (coup 64, mort 32), sur
+ * 27 et 9 salles, plus le repli de la bible §4.5 (mort 64) — chacune avec le
+ * roster qui revient et en permadeath. Ce qu'on lit par configuration : la
+ * part des runs qui atteignent la dernière salle, les feuilles restantes à
+ * l'arrivée (médiane, quartiles), la part des arrivés qui gardent plus de
+ * `INUTILISEES` feuilles, les épuisements et leur salle médiane, coups et
+ * morts par bataille, et chaque bataille dans une case et une seule —
+ * gagnée, perdue, nulle ou épuisée (« coup » seulement : l'arbre vide en
+ * pleine bataille), les quatre sommant à 1 000 ‰. Les **seuils** sont ceux de
+ * la bible §4.5, écrits avant la mesure : moins de `ARRIVEE_MIN` (30 %) des
+ * runs arrivent ⇒ l'arbre est **trop court** pour cette règle ; plus de
+ * `GARDENT_MAX` (80 %) des arrivés gardent plus de 6 feuilles ⇒ **trop long**.
+ *
+ * Ce que le banc ne mesure pas, et qu'il faut lire à côté des chiffres : les
+ * gestes de butin (le bot ne parle ni ne creuse — les feuilles « restantes »
+ * sont leur plafond, pas leur compte), la fuite par une sortie de salle (V3,
+ * non codée), et ce qu'une salle perdue coûte au jeu (rien ici : ni butin, ni
+ * feuille — c'est la règle d'aujourd'hui).
+ *
+ * `bancVeillee("rapide")` est l'échantillon du test : 30 runs par configuration
+ * sur 6 jours, ≈ 20 s sur ce poste (i7-7700HQ, Node 22) quand la machine est
+ * libre — `npm test` le paie à chaque passage ; `--complet` rejoue 1 000 runs
+ * sur 40 jours, hors CI, ≈ 10 min, ou configuration par configuration.
+ *
+ * Usage : node --experimental-strip-types scripts/banc-veillee.ts [--rapide|--complet] [configuration ...]
+ * (sans nom : les douze ; `npm run banc-veillee` est le complet entier)
+ *
+ * LIMITE : la politique est celle du dépôt, des deux côtés ; un joueur humain
+ * rend d'autres chiffres. C'est précisément pourquoi c'est elle et aucune
+ * autre : les cibles mesurent le couple moteur + politique.
+ */
+
+import { formeProche } from "../src/lib/eidos/bestiaire.ts";
+import { hexOf, sha256d, utf8 } from "../src/lib/eidos/hash.ts";
+import { tourVide } from "../src/lib/eidos/jauge.ts";
+import { ageDeOctet, objetDepuisGraine, type Objet } from "../src/lib/eidos/objets.ts";
+import {
+  BANDES,
+  CHOIX,
+  CRANS,
+  ETAGES_PAR_BANDE,
+  debutBande,
+  etageDe,
+  penduleInitial,
+  transition,
+} from "../src/lib/eidos/pendule.ts";
+import { xorshift } from "../src/lib/eidos/pendule-phase0.ts";
+import { ouvrirBataille } from "../src/lib/eidos/tactique/bataille.ts";
+import { TOURS_MAX, jouerBataille } from "../src/lib/eidos/tactique/ia.ts";
+import { caseLibre, indechiffresDe, posesDuCoffre } from "../src/lib/eidos/tactique/partie.ts";
+import { uniteDepuisObjet, vivante } from "../src/lib/eidos/tactique/unite.ts";
+import type { Case, Classe, Unite } from "../src/lib/eidos/tactique/types.ts";
+import { qDeMot } from "../src/lib/eidos/resonance.ts";
+import { ETAGES, dalleDe } from "../src/lib/eidos/tour.ts";
+import { FEUILLES, graineDuJour } from "../src/lib/eidos/veillee.ts";
+
+export type Regle = "coup" | "mort";
+
+export type Configuration = {
+  readonly nom: string;
+  readonly regle: Regle;
+  readonly arbre: number;
+  readonly salles: number;
+  /** `ETAGES_PAR_BANDE` rejoué : 3 pour 27 salles, 1 pour 9. */
+  readonly parBande: number;
+  /** une unité tombée ne revient pas (A5) ; sinon le roster revient entier à chaque salle */
+  readonly permadeath: boolean;
+};
+
+const SOCLES: readonly Omit<Configuration, "permadeath">[] = [
+  { nom: "coup-64-27", regle: "coup", arbre: FEUILLES, salles: 27, parBande: 3 },
+  { nom: "coup-64-9", regle: "coup", arbre: FEUILLES, salles: 9, parBande: 1 },
+  { nom: "mort-32-27", regle: "mort", arbre: 32, salles: 27, parBande: 3 },
+  { nom: "mort-32-9", regle: "mort", arbre: 32, salles: 9, parBande: 1 },
+  { nom: "mort-64-27", regle: "mort", arbre: FEUILLES, salles: 27, parBande: 3 },
+  { nom: "mort-64-9", regle: "mort", arbre: FEUILLES, salles: 9, parBande: 1 },
+];
+
+/** Les douze configurations : les six socles, le roster qui revient puis en permadeath. */
+export const CONFIGURATIONS: readonly Configuration[] = [
+  ...SOCLES.map((c) => ({ ...c, permadeath: false })),
+  ...SOCLES.map((c) => ({ ...c, nom: `${c.nom}-pd`, permadeath: true })),
+];
+
+/** Unités du coffre en lice : `partie.MAX_COFFRE`, la bible §5.4 (trois au plus). */
+export const ROSTER = 3;
+
+/** Budget que rien n'entame, pour la règle « mort » : le moteur ne finit jamais sur `epuise`. */
+export const FEUILLES_SANS_FOND = 60_000;
+
+/** Les seuils de la bible §4.5, en millièmes, écrits avant la mesure. */
+export const SEUILS = { arriveeMin: 300, gardentMax: 800, inutilisees: 6 } as const;
+
+/** Ce que le test gèle d'une configuration, et ce qu'il compare au protocole complet. */
+export type EtalonVeillee = {
+  readonly arrivesMille: number;
+  readonly restantesMediane: number | null;
+  readonly gardentMille: number | null;
+  readonly coupsParBatailleMille: number;
+  readonly mortsParBatailleMille: number;
+  readonly verdict: { readonly tropCourt: boolean; readonly tropLong: boolean; readonly tient: boolean };
+};
+
+/**
+ * Dérive tolérée entre l'échantillon et son étalon (le même code, hier) :
+ * millièmes pour les arrivés, feuilles pour la médiane, millièmes de coup et
+ * de mort par bataille ; `verdict` est la marge, en millièmes, en deçà de
+ * laquelle un verdict de l'échantillon ne se compare pas à celui du complet
+ * (à 24 runs, un run vaut 42 ‰).
+ */
+export const TOLERANCES_VEILLEE = { arrives: 100, restantes: 3, coups: 600, morts: 200, verdict: 100 } as const;
+
+export type ModeVeillee = "rapide" | "complet";
+
+export type ParametresVeillee = { readonly runs: number; readonly jours: number };
+
+export const PARAMETRES_VEILLEE: Record<ModeVeillee, ParametresVeillee> = {
+  rapide: { runs: 24, jours: 6 },
+  complet: { runs: 1000, jours: 40 },
+};
+
+const CLASSES: readonly Classe[] = ["arme", "defense", "accessoire"];
+
+/** La classe d'un mot, comme `ficheDe` la lit : la forme la plus proche du catalogue, `accessoire` à défaut. */
+export function classeDuMot(mot: number): Classe {
+  const c = formeProche(qDeMot(mot)).classe;
+  return (CLASSES as readonly string[]).includes(c) ? (c as Classe) : "accessoire";
+}
+
+/** L'échantillon (24 runs × 6 jours), gelé le 2026-09-14 ; se regèle avec le moteur, jamais à la main. */
+export const ETALONS_VEILLEE_RAPIDE: Record<string, EtalonVeillee> = {
+  "coup-64-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3778, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9": { arrivesMille: 1000, restantesMediane: 24, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3872, mortsParBatailleMille: 1767, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-27": { arrivesMille: 42, restantesMediane: 0, gardentMille: 0, coupsParBatailleMille: 4070, mortsParBatailleMille: 1791, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3983, mortsParBatailleMille: 1717, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3983, mortsParBatailleMille: 1717, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3983, mortsParBatailleMille: 1717, verdict: { tropCourt: true, tropLong: false, tient: false } },
+};
+
+/** Le protocole complet (1 000 runs × 40 jours), rejoué le 2026-09-14 en ≈ 14 min : `npm run banc-veillee`. */
+export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
+  "coup-64-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3687, mortsParBatailleMille: 1694, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9": { arrivesMille: 997, restantesMediane: 23, gardentMille: 985, coupsParBatailleMille: 4192, mortsParBatailleMille: 1882, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3799, mortsParBatailleMille: 1757, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 842, coupsParBatailleMille: 4193, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-27": { arrivesMille: 57, restantesMediane: 1, gardentMille: 35, coupsParBatailleMille: 3944, mortsParBatailleMille: 1778, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4193, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3649, mortsParBatailleMille: 1647, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd": { arrivesMille: 4, restantesMediane: 17, gardentMille: 1000, coupsParBatailleMille: 3904, mortsParBatailleMille: 1753, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3649, mortsParBatailleMille: 1647, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd": { arrivesMille: 4, restantesMediane: 7, gardentMille: 750, coupsParBatailleMille: 3904, mortsParBatailleMille: 1753, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3649, mortsParBatailleMille: 1647, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd": { arrivesMille: 4, restantesMediane: 39, gardentMille: 1000, coupsParBatailleMille: 3904, mortsParBatailleMille: 1753, verdict: { tropCourt: true, tropLong: false, tient: false } },
+};
+
+export type FinRun = "sommet" | "epuise";
+
+export type Run = {
+  readonly fin: FinRun;
+  /** salle atteinte : la dernière jouée (0-based) */
+  readonly salle: number;
+  readonly feuilles: number;
+  readonly batailles: number;
+  readonly coups: number;
+  readonly morts: number;
+  readonly nuls: number;
+  readonly victoires: number;
+  readonly defaites: number;
+  /** batailles finies par le moteur sur `epuise` (règle « coup » : l'arbre vide en pleine bataille) */
+  readonly epuisees: number;
+  /** salle de la première bataille perdue, ou null */
+  readonly premiereDefaite: number | null;
+  /** salle où le roster s'est vidé (permadeath), ou null */
+  readonly rosterBalaye: number | null;
+};
+
+export type MesuresConfiguration = {
+  readonly nom: string;
+  readonly regle: Regle;
+  readonly arbre: number;
+  readonly salles: number;
+  readonly permadeath: boolean;
+  readonly runs: number;
+  /** runs arrivés au sommet — en permadeath, avec un roster vivant */
+  readonly arrivesMille: number;
+  readonly epuisesMille: number;
+  readonly salleEpuiseMediane: number | null;
+  /** batailles perdues sur batailles jouées */
+  readonly defaitesBatailleMille: number;
+  /** runs qui ont perdu au moins une bataille */
+  readonly runsAvecDefaiteMille: number;
+  readonly premiereDefaiteMediane: number | null;
+  /** permadeath : runs dont le roster s'est vidé, et à quelle salle en médiane */
+  readonly rosterBalayeMille: number;
+  readonly salleBalayeMediane: number | null;
+  /** parmi les arrivés */
+  readonly restantesQ1: number | null;
+  readonly restantesMediane: number | null;
+  readonly restantesQ3: number | null;
+  readonly gardentMille: number | null;
+  readonly coupsParBatailleMille: number;
+  readonly mortsParBatailleMille: number;
+  readonly nulsMille: number;
+  readonly victoiresMille: number;
+  readonly epuiseesBatailleMille: number;
+  readonly verdict: { tropCourt: boolean; tropLong: boolean; tient: boolean };
+};
+
+export type ResultatVeillee = {
+  readonly mode: ModeVeillee;
+  readonly parametres: ParametresVeillee;
+  readonly seuils: typeof SEUILS;
+  readonly toursMax: number;
+  readonly configurations: readonly MesuresConfiguration[];
+};
+
+function u32De(tag: string): number {
+  const h = sha256d(utf8(tag));
+  return ((h[0]! << 24) | (h[1]! << 16) | (h[2]! << 8) | h[3]!) >>> 0;
+}
+
+/**
+ * `pendule.etageDe`, avec le nombre d'étages par bande en paramètre. À 3 c'est
+ * la fonction du dépôt (contrôlé par le test) ; à 1, la bande est l'étape et
+ * le décalage balaie la bande entière, ce que la bible §6.1 décrit.
+ */
+export function etageDeSalles(i: number, p: number, parBande: number): number {
+  if (i === 0) return 0;
+  const k = Math.floor(i / parBande);
+  const j = i % parBande;
+  const debut = debutBande(k);
+  const fin = k + 1 < BANDES ? debutBande(k + 1) - 1 : ETAGES - 1;
+  const taille = fin - debut + 1;
+  const decalage = Math.floor((p * (taille - parBande)) / (CRANS - 1));
+  return Math.min(fin, debut + decalage + j);
+}
+
+export type Membre = { readonly objet: Objet; readonly classe: Classe };
+
+/**
+ * Le roster d'un run : trois objets tirés par empreinte du seul rang `k` —
+ * la même équipe pour les douze configurations —, la classe lue du mot
+ * (`classeDuMot`, la règle de `partie.ts`) et attachée à l'objet : en
+ * permadeath, un survivant garde sa classe quand un coéquipier tombe.
+ */
+export function rosterDe(k: number): Membre[] {
+  return Array.from({ length: ROSTER }, (_, j) => {
+    const objet = objetDepuisGraine(sha256d(utf8(`roster-${k}-${j}`)), ageDeOctet(k + j));
+    return { objet, classe: classeDuMot(objet.mot) };
+  });
+}
+
+function armee(roster: readonly Membre[], etage: number): Unite[] {
+  const obstacles = dalleDe(etage);
+  const poses = posesDuCoffre(roster.length);
+  const prises: Case[] = [];
+  return roster.map((m, j) => {
+    const pos = caseLibre(obstacles, prises, poses[j]!);
+    prises.push(pos);
+    return uniteDepuisObjet(m.objet, j, "coffre", pos, m.classe);
+  });
+}
+
+function mediane(valeurs: readonly number[]): number | null {
+  if (valeurs.length === 0) return null;
+  const t = [...valeurs].sort((a, b) => a - b);
+  const m = t.length >> 1;
+  return t.length % 2 === 1 ? t[m]! : Math.trunc((t[m - 1]! + t[m]!) / 2);
+}
+
+function quartile(valeurs: readonly number[], q: 1 | 3): number | null {
+  if (valeurs.length === 0) return null;
+  const t = [...valeurs].sort((a, b) => a - b);
+  return t[Math.min(t.length - 1, Math.floor((t.length * q) / 4))]!;
+}
+
+function mille(x: number): number {
+  return Math.round(x * 1000);
+}
+
+/**
+ * Un run entier sous une configuration : le jour `d`, le roster `k`, le
+ * xorshift du run — tous trois indépendants de la configuration. Les salles
+ * `0 … salles − 2` se jouent, chacune suivie d'un franchir ; le dernier
+ * franchir est le sommet.
+ */
+export function jouerRun(cfg: Configuration, d: number, k: number): Run {
+  const graine = graineDuJour(hexOf(sha256d(utf8(`banc-veillee/jour-${d}`))));
+  const alea = xorshift(u32De(`run-${d}-${k}`));
+  const rosterInitial = rosterDe(k);
+  const mot = rosterInitial[0]!.objet.mot;
+  const coffreVide = { objets: [], tour: tourVide() };
+  let roster = rosterInitial;
+  let budget = cfg.arbre;
+  let p = penduleInitial(graine);
+  let etage = 0;
+  let batailles = 0;
+  let coups = 0;
+  let morts = 0;
+  let nuls = 0;
+  let victoires = 0;
+  let defaites = 0;
+  let epuisees = 0;
+  let premiereDefaite: number | null = null;
+  let rosterBalaye: number | null = null;
+  const epuise = (salle: number): Run => ({
+    fin: "epuise",
+    salle,
+    feuilles: 0,
+    batailles,
+    coups,
+    morts,
+    nuls,
+    victoires,
+    defaites,
+    epuisees,
+    premiereDefaite,
+    rosterBalaye,
+  });
+  const derniere = cfg.salles - 1;
+  for (let salle = 0; salle < derniere; salle++) {
+    etage = etageDeSalles(salle, p, cfg.parBande);
+    if (roster.length > 0) {
+      const coffre = armee(roster, etage);
+      const ennemis = indechiffresDe(
+        coffreVide,
+        etage,
+        coffre.map((u) => u.pos),
+      );
+      const joue = jouerBataille(
+        ouvrirBataille(etage, coffre, ennemis, cfg.regle === "coup" ? budget : FEUILLES_SANS_FOND),
+      );
+      const etat = joue.etat;
+      batailles += 1;
+      const nCoffre = coffre.length;
+      const coupsIci = etat.journal.filter((c) => !c.riposte && c.attaquant < nCoffre).length;
+      const mortsIci = etat.unites.filter((u) => u.camp === "indechiffre" && !vivante(u)).length;
+      coups += coupsIci;
+      morts += mortsIci;
+      if (etat.fin === null) nuls += 1;
+      else if (etat.fin.issue === "victoire") victoires += 1;
+      else if (etat.fin.issue === "defaite") {
+        defaites += 1;
+        if (premiereDefaite === null) premiereDefaite = salle;
+      } else epuisees += 1;
+      if (cfg.permadeath) {
+        const tombees = new Set(
+          etat.unites.filter((u) => u.camp === "coffre" && !vivante(u)).map((u) => u.id),
+        );
+        roster = roster.filter((_, j) => !tombees.has(j));
+        if (roster.length === 0 && rosterBalaye === null) rosterBalaye = salle;
+      }
+      budget = cfg.regle === "coup" ? etat.feuilles : budget - mortsIci;
+      // l'arbre nu est une fin : sous « coup » le moteur l'a dit (`epuise`),
+      // sous « mort » un retrait de plus que de feuilles l'est aussi
+      if (budget <= 0) return epuise(salle);
+    }
+    budget -= 1;
+    const choix = CHOIX[Math.floor(alea() * CHOIX.length)]!;
+    p = transition(graine, salle, p, etage, choix, mot).p;
+    // le dernier franchir est le sommet, même s'il vide l'arbre (veillee.ts : sommet avant épuisé)
+    if (salle + 1 === derniere) break;
+    if (budget <= 0) return epuise(salle + 1);
+  }
+  return {
+    fin: "sommet",
+    salle: derniere,
+    feuilles: budget,
+    batailles,
+    coups,
+    morts,
+    nuls,
+    victoires,
+    defaites,
+    epuisees,
+    premiereDefaite,
+    rosterBalaye,
+  };
+}
+
+export function mesurer(cfg: Configuration, runs: readonly Run[]): MesuresConfiguration {
+  const n = runs.length;
+  // en permadeath, arriver c'est arriver vivant : un roster mort ne lit aucune salle
+  const arrives = runs.filter((r) => r.fin === "sommet" && (!cfg.permadeath || r.rosterBalaye === null));
+  const epuises = runs.filter((r) => r.fin === "epuise");
+  const restantes = arrives.map((r) => r.feuilles);
+  const batailles = runs.reduce((s, r) => s + r.batailles, 0);
+  const somme = (f: (r: Run) => number) => runs.reduce((s, r) => s + f(r), 0);
+  const parBataille = (f: (r: Run) => number) => (batailles > 0 ? mille(somme(f) / batailles) : 0);
+  const gardent = arrives.filter((r) => r.feuilles > SEUILS.inutilisees).length;
+  const arrivesMille = mille(arrives.length / n);
+  const gardentMille = arrives.length > 0 ? mille(gardent / arrives.length) : null;
+  const tropCourt = arrivesMille < SEUILS.arriveeMin;
+  // « trop long » ne se lit que sur un arbre qui arrive : quatre runs sur mille qui gardent tout ne disent rien
+  const tropLong = !tropCourt && gardentMille !== null && gardentMille > SEUILS.gardentMax;
+  const avecDefaite = runs.filter((r) => r.premiereDefaite !== null);
+  const balayes = runs.filter((r) => r.rosterBalaye !== null);
+  return {
+    nom: cfg.nom,
+    regle: cfg.regle,
+    arbre: cfg.arbre,
+    salles: cfg.salles,
+    permadeath: cfg.permadeath,
+    runs: n,
+    arrivesMille,
+    epuisesMille: mille(epuises.length / n),
+    salleEpuiseMediane: mediane(epuises.map((r) => r.salle)),
+    defaitesBatailleMille: parBataille((r) => r.defaites),
+    runsAvecDefaiteMille: mille(avecDefaite.length / n),
+    premiereDefaiteMediane: mediane(avecDefaite.map((r) => r.premiereDefaite!)),
+    rosterBalayeMille: mille(balayes.length / n),
+    salleBalayeMediane: mediane(balayes.map((r) => r.rosterBalaye!)),
+    restantesQ1: quartile(restantes, 1),
+    restantesMediane: mediane(restantes),
+    restantesQ3: quartile(restantes, 3),
+    gardentMille,
+    coupsParBatailleMille: parBataille((r) => r.coups),
+    mortsParBatailleMille: parBataille((r) => r.morts),
+    nulsMille: parBataille((r) => r.nuls),
+    victoiresMille: parBataille((r) => r.victoires),
+    epuiseesBatailleMille: parBataille((r) => r.epuisees),
+    verdict: { tropCourt, tropLong, tient: !tropCourt && !tropLong },
+  };
+}
+
+/** Le banc entier, ou les seules configurations nommées (`noms`) : le protocole complet se découpe en lots. */
+export function bancVeillee(mode: ModeVeillee = "rapide", noms: readonly string[] = []): ResultatVeillee {
+  const p = PARAMETRES_VEILLEE[mode];
+  const choisies = noms.length === 0 ? CONFIGURATIONS : CONFIGURATIONS.filter((c) => noms.includes(c.nom));
+  if (choisies.length !== (noms.length === 0 ? CONFIGURATIONS.length : noms.length))
+    throw new Error(`configuration inconnue parmi ${noms.join(", ")}`);
+  const configurations = choisies.map((cfg) => {
+    const runs: Run[] = [];
+    for (let k = 0; k < p.runs; k++) runs.push(jouerRun(cfg, k % p.jours, k));
+    return mesurer(cfg, runs);
+  });
+  return { mode, parametres: p, seuils: SEUILS, toursMax: TOURS_MAX, configurations };
+}
+
+/** Le tableau lisible d'un résultat, une ligne par configuration. */
+export function formaterResultat(r: ResultatVeillee): string {
+  const lignes = [
+    `banc de la veillée — ${r.mode} : ${r.parametres.runs} runs sur ${r.parametres.jours} jours par configuration ; seuils : arrivés ≥ ${r.seuils.arriveeMin} ‰, gardent > ${r.seuils.inutilisees} feuilles ≤ ${r.seuils.gardentMax} ‰`,
+    "configuration | arrivés ‰ (pd : roster vivant) | épuisés ‰ (salle méd.) | restantes Q1/méd/Q3 | gardent > 6 ‰ | coups/bat. | morts/bat. | bat. gagnées/perdues/nulles/épuisées ‰ | runs avec défaite ‰ (1re, méd.) | roster balayé ‰ (salle méd.) | verdict",
+  ];
+  for (const c of r.configurations) {
+    const v = c.verdict.tient ? "tient" : [c.verdict.tropCourt ? "trop court" : "", c.verdict.tropLong ? "trop long" : ""].filter(Boolean).join(", ");
+    lignes.push(
+      `${c.nom} | ${c.arrivesMille} | ${c.epuisesMille} (${c.salleEpuiseMediane ?? "—"}) | ${c.restantesQ1 ?? "—"}/${c.restantesMediane ?? "—"}/${c.restantesQ3 ?? "—"} | ${c.gardentMille ?? "—"} | ${(c.coupsParBatailleMille / 1000).toFixed(2)} | ${(c.mortsParBatailleMille / 1000).toFixed(2)} | ${c.victoiresMille}/${c.defaitesBatailleMille}/${c.nulsMille}/${c.epuiseesBatailleMille} | ${c.runsAvecDefaiteMille} (${c.premiereDefaiteMediane ?? "—"}) | ${c.rosterBalayeMille} (${c.salleBalayeMediane ?? "—"}) | ${v}`,
+    );
+  }
+  return lignes.join("\n");
+}
+
+function argumentMode(args: readonly string[]): { mode: ModeVeillee; noms: string[] } {
+  const [premier, ...reste] = args;
+  if (premier === undefined || premier === "--rapide") return { mode: "rapide", noms: reste };
+  if (premier === "--complet") return { mode: "complet", noms: reste };
+  throw new Error("usage : banc-veillee.ts [--rapide|--complet] [configuration ...]");
+}
+
+if (process.argv[1]?.endsWith("banc-veillee.ts")) {
+  const { mode, noms } = argumentMode(process.argv.slice(2));
+  const debut = Date.now();
+  const resultat = bancVeillee(mode, noms);
+  console.log(formaterResultat(resultat));
+  console.log(JSON.stringify({ ...resultat, secondes: Math.round((Date.now() - debut) / 1000) }, null, 2));
+}
+
+// `etageDe` et `ETAGES_PAR_BANDE` sont importés pour que le test affirme l'identité à 3.
+export { etageDe as etageDuDepot, ETAGES_PAR_BANDE as PAR_BANDE_DU_DEPOT };

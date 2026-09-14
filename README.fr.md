@@ -57,7 +57,7 @@ Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 git clone https://github.com/Oykdo/Eidos && cd Eidos
 python3 verify_genesis.py        # 32 contrôles de la genèse gelée
 python3 noeud.py --verifier      # rejoue toute la chaîne du réseau d'essai, doit finir par « aucun refus »
-cd atelier && npm ci && npm test # 30 tests de scripts et 612 tests Eidos, vecteurs partagés avec Python
+cd atelier && npm ci && npm test # 30 tests de scripts et 621 tests Eidos, vecteurs partagés avec Python
 ```
 
 La page Guide de l'atelier explique le cœur, les mécaniques et le monde en mots simples ; `CLAUDE.md` dit ce qui ne doit jamais changer ; `docs/FEUILLE_DE_ROUTE.md` garde chaque décision.
@@ -248,7 +248,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `etat.json`, `mempool.json` | — | état publié ; demandes de robinet et d'envoi | — |
 | `veillees/` | — | preuves de veillée déposées (`index.json`, un fichier `eidos-veillee/1` par preuve), jugées dans chaque navigateur, jamais par un serveur | — |
 | `docs/` | — | spécifications, la bible de la veillée, la feuille de route, le lore ; générateur des bannières | 2 |
-| `atelier/` | — | atelier web, moteur tactique compris (`src/lib/eidos/tactique/`) ; `npm test` lance 30 tests de scripts et 612 tests Eidos | 612 |
+| `atelier/` | — | atelier web, moteur tactique compris (`src/lib/eidos/tactique/`) ; `npm test` lance 30 tests de scripts et 621 tests Eidos | 621 |
 
 CI (`.github/workflows/`) : `tests.yml` (3 OS × 2 Python, empreintes, hygiène, `parite`), `chaine.yml` (forge horaire), `robinet.yml` (issues de robinet et d'envoi), `veillees.yml` (preuves de veillée déposées par issue), `courriel.yml` (boîte aux lettres, quand une boîte est déclarée), `pages.yml` (atelier), `init.yml`. Python 3.9 est le plancher ; Node 22 pour l'atelier.
 
@@ -276,6 +276,7 @@ python3 noeud.py --verifier    # rejeu intégral du testnet : doit finir par « 
 python3 docs/banniere.py       # redessine les bannières, 2 contrôles
 cd atelier && npm ci && npm run typecheck && npm test && npm run build
 npm run veillee-bot 60         # le bot de la veillée : trois politiques, une lecture du budget de feuilles
+npm run banc-veillee           # le budget d'une run entière sous chaque règle : 1 000 runs × 12 configurations, ~14 min
 npm run dev                    # http://localhost:8080
 ```
 
