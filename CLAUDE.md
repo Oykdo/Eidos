@@ -213,7 +213,7 @@ python3 relique.py --test      # 4
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 624 tests Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 625 tests Eidos
 npm run langue [page]          # la règle d'écriture : les manquements par page, ou ceux d'une page (~1 s)
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 npm run banc-tactique          # calibration tactique complète : 256 duels (~1 s)
@@ -308,7 +308,9 @@ Chantiers restants, chacun avec son document de passation (écrits le 2026-09-14
 (A17 tranché par la mesure, jamais par un texte), C5 `docs/HANDOVER_PREMIERE_RELIQUE.md`,
 C6 `docs/HANDOVER_PUITS.md`, C7 `docs/HANDOVER_LIGNEE_FORUM.md`, C8
 `docs/HANDOVER_HYGIENE_P6.md` (le `localcontext()` de P6 ci-dessous touche `eonis.py`,
-donc vaut réinitialisation : à la prochaine, jamais seul).
+donc vaut réinitialisation : à la prochaine, jamais seul), C9 `docs/HANDOVER_CATALOGUES_GLTF.md`
+(écrit le 2026-09-15 : hôtes, biomes, ornements, bestiaire, astres en glTF versionnés,
+zéro dépendance, figures jamais preuves).
 
 ### P6 — Hygiène
 - `getcontext().prec = 60` global → `with localcontext()` dans `dcos` et
