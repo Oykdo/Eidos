@@ -33,7 +33,7 @@
  *   posés comme `partie.ts` les pose (`posesDuCoffre`, `caseLibre`) ; la tenue
  *   repart de `ecu` à chaque salle (D1). Le roster et les choix du run ne
  *   dépendent que du jour `d`, du rang `k` et de `reserve` — **jamais de la
- *   règle** : les trente-neuf configurations rejouent les mêmes parcours, les
+ *   règle** : les quarante-cinq configurations rejouent les mêmes parcours, les
  *   trois premiers objets sont les mêmes partout, une réserve plus longue les
  *   prolonge sans les changer, et l'écart entre deux configurations ne vient
  *   que de la règle ou de la réserve ;
@@ -62,7 +62,7 @@
  *   bot capture le premier Indéchiffré de l'étage (`recrueDe` : `captureDe`
  *   puis `objetDePorte`, la lecture de `partie.indechiffresDe`), une feuille
  *   comme tout `prendre`, et seulement s'il garde après une feuille par salle
- *   qui reste à franchir (`peutRecruter`). **(b) mesure un chantier, pas le
+ *   qui reste à franchir (`peutDepenser`). **(b) mesure un chantier, pas le
  *   jeu tel que codé**, et le mesure au plus favorable — son chiffre est un
  *   plafond : la capsule est gratuite et illimitée (`prendreDansCoffre` en
  *   exige une du coffre et la consomme ; le bot n'en a aucune), la capture
@@ -89,6 +89,16 @@
  *   unités **perdues** et les **recrues** par run — le seul puits réel du jeu
  *   (`SPEC_PUITS.md` §6) se chiffre ici, et c'est lui que (a) et (e) arbitrent :
  *   trois objets par défaite, ou un ;
+ * - **le bot qui ramasse** (A17, demandé par l'auteur le 2026-09-15 : « sous
+ *   « une mort à 32 », le joueur a-t-il plus de chances de finir les salles ? ») :
+ *   `butin` gestes par salle **gagnée** — la salle se lit quand elle est vide,
+ *   bible §5.2 —, une feuille chacun (parler, creuser, ouvrir, prendre coûtent
+ *   tous une feuille dans `veillee-tour.ts`), sous la garde de `peutDepenser` :
+ *   il garde une feuille par salle qui reste à franchir, rien pour les
+ *   batailles à venir. On lit les gestes pris et voulus, les runs où l'arbre en
+ *   a refusé un, et les arbres vides en bataille (`epuisesMille`) — le sac
+ *   perdu du joueur qui a dépensé sa marge. Sur le roster qui revient, pour que
+ *   l'arbre se lise seul ; la survie est mesurée à côté ;
  * - **le budget** : `arbre` feuilles ; chaque franchir en coûte une ; en
  *   combat, règle « coup » : le moteur décrémente lui-même `feuilles` à chaque
  *   coup du coffre et finit la bataille sur `epuise` à zéro ; règle « mort » :
@@ -101,10 +111,11 @@
  *   Ce que la bible §4.4 propose pour l'arbre nu (« il blesse au lieu de
  *   tuer ») n'est pas modélisé.
  *
- * Trente-neuf configurations : les deux règles à leur arbre (coup 64, mort
+ * Quarante-cinq configurations : les deux règles à leur arbre (coup 64, mort
  * 32), sur 27 et 9 salles, plus le repli de la bible §4.5 (mort 64) — chacune
  * avec le roster qui revient et en permadeath telle qu'écrite (douze) ; puis,
- * sur les trois socles à 9 salles, les neuf contreparties d'A28 (vingt-sept).
+ * sur les trois socles à 9 salles, les neuf contreparties d'A28 (vingt-sept) ;
+ * puis, sur les mêmes, le bot qui ramasse un ou deux gestes par salle (six).
  * Ce qu'on lit par configuration : la part des runs qui atteignent la dernière salle,
  * les feuilles restantes à l'arrivée (médiane, quartiles), la part des
  * arrivés qui gardent plus de `INUTILISEES` feuilles, les épuisements et leur
@@ -116,21 +127,22 @@
  * runs arrivent ⇒ l'arbre est **trop court** pour cette règle ; plus de
  * `GARDENT_MAX` (80 %) des arrivés gardent plus de 6 feuilles ⇒ **trop long**.
  *
- * Ce que le banc ne mesure pas, et qu'il faut lire à côté des chiffres : les
- * gestes de butin (le bot ne parle ni ne creuse — les feuilles « restantes »
- * sont leur plafond, pas leur compte), la fuite par une sortie de salle (V3,
- * non codée), et ce qu'une salle perdue coûte au jeu (rien ici : ni butin, ni
+ * Ce que le banc ne mesure pas, et qu'il faut lire à côté des chiffres : ce
+ * que le butin rapporte (le bot paie des gestes, il ne lit ni hôte ni alcôve —
+ * hors des six configurations qui ramassent, les feuilles « restantes » sont le
+ * plafond du butin, pas son compte), la fuite par une sortie de salle (V3, non
+ * codée), et ce qu'une salle perdue coûte au jeu (rien ici : ni butin, ni
  * feuille — c'est la règle d'aujourd'hui).
  *
  * `bancVeillee("rapide")` est l'échantillon du test : 24 runs par configuration
  * sur 6 jours, ≈ 32 s sur ce poste (i7-7700HQ, Node 22) quand la machine est
  * libre, ≈ 65 s avec les contrôles run par run — `npm test` le paie à chaque
- * passage ; `--complet` rejoue 1 000 runs sur 40 jours, hors CI, ≈ 40 min, ou
+ * passage ; `--complet` rejoue 1 000 runs sur 40 jours, hors CI, ≈ 50 min, ou
  * configuration par configuration (un appel borné à dix minutes en tient huit
  * ou neuf : lancer par lots).
  *
  * Usage : node --experimental-strip-types scripts/banc-veillee.ts [--rapide|--complet] [configuration ...]
- * (sans nom : les trente-neuf ; `npm run banc-veillee` est le complet entier)
+ * (sans nom : les quarante-cinq ; `npm run banc-veillee` est le complet entier)
  *
  * LIMITE : la politique est celle du dépôt, des deux côtés ; un joueur humain
  * rend d'autres chiffres. C'est précisément pourquoi c'est elle et aucune
@@ -186,9 +198,11 @@ export type Configuration = {
   readonly contrepartie: Contrepartie;
   /** objets du coffre : `ROSTER` (la lice seule) ou plus — les trois premiers vivants entrent */
   readonly reserve: number;
+  /** gestes de butin par salle gagnée, une feuille chacun ; 0 = le bot ne ramasse rien */
+  readonly butin: number;
 };
 
-type Socle = Omit<Configuration, "permadeath" | "contrepartie" | "reserve">;
+type Socle = Omit<Configuration, "permadeath" | "contrepartie" | "reserve" | "butin">;
 
 /** Unités du coffre en lice : `partie.MAX_COFFRE`, la bible §5.4 (trois au plus). */
 export const ROSTER = 3;
@@ -219,14 +233,17 @@ const CONTREPARTIES: readonly { suffixe: string; contrepartie: Contrepartie; res
   { suffixe: "pd-perdue1-r6", contrepartie: "perdue-1", reserve: 6 },
 ];
 
+/** Les appétits du bot qui ramasse (A17) : un ou deux gestes par salle gagnée. */
+const APPETITS: readonly number[] = [1, 2];
+
 /**
- * Les trente-neuf configurations : les six socles, le roster qui revient
+ * Les quarante-cinq configurations : les six socles, le roster qui revient
  * puis en permadeath telle qu'écrite ; puis les trois socles à 9 salles sous
- * chaque contrepartie.
+ * chaque contrepartie ; puis, le roster qui revient, sous chaque appétit.
  */
 export const CONFIGURATIONS: readonly Configuration[] = [
-  ...SOCLES.map((c) => ({ ...c, permadeath: false, contrepartie: "aucune" as const, reserve: ROSTER })),
-  ...SOCLES.map((c) => ({ ...c, nom: `${c.nom}-pd`, permadeath: true, contrepartie: "aucune" as const, reserve: ROSTER })),
+  ...SOCLES.map((c) => ({ ...c, permadeath: false, contrepartie: "aucune" as const, reserve: ROSTER, butin: 0 })),
+  ...SOCLES.map((c) => ({ ...c, nom: `${c.nom}-pd`, permadeath: true, contrepartie: "aucune" as const, reserve: ROSTER, butin: 0 })),
   ...SOCLES.filter((c) => c.salles === 9).flatMap((c) =>
     CONTREPARTIES.map((p) => ({
       ...c,
@@ -234,7 +251,11 @@ export const CONFIGURATIONS: readonly Configuration[] = [
       permadeath: true,
       contrepartie: p.contrepartie,
       reserve: p.reserve,
+      butin: 0,
     })),
+  ),
+  ...SOCLES.filter((c) => c.salles === 9).flatMap((c) =>
+    APPETITS.map((b) => ({ ...c, nom: `${c.nom}-b${b}`, permadeath: false, contrepartie: "aucune" as const, reserve: ROSTER, butin: b })),
   ),
 ];
 
@@ -321,6 +342,12 @@ export const ETALONS_VEILLEE_RAPIDE: Record<string, EtalonVeillee> = {
   "mort-32-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4094, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 3714, mortsParBatailleMille: 1636, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4094, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-b1": { arrivesMille: 1000, restantesMediane: 17, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-b2": { arrivesMille: 1000, restantesMediane: 10, gardentMille: 625, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-b1": { arrivesMille: 958, restantesMediane: 2, gardentMille: 87, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-b2": { arrivesMille: 250, restantesMediane: 0, gardentMille: 0, coupsParBatailleMille: 4130, mortsParBatailleMille: 1842, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-b1": { arrivesMille: 1000, restantesMediane: 34, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-b2": { arrivesMille: 1000, restantesMediane: 27, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
 };
 
 /**
@@ -328,7 +355,9 @@ export const ETALONS_VEILLEE_RAPIDE: Record<string, EtalonVeillee> = {
  * douze socles rejoués le 2026-09-14 en ≈ 14 min ; les vingt et une premières
  * contreparties d'A28 le 2026-09-15, en trois lots de sept (une règle par
  * lot, ≈ 6,5 min chacun), puis les six de « perdue-1 » le même jour en deux
- * lots de trois (≈ 3,5 et 4 min) — ≈ 40 min pour les trente-neuf d'une traite.
+ * lots de trois (≈ 3,5 et 4 min), puis les six du bot qui ramasse, en deux lots
+ * de trois (≈ 6 min chacun, sous charge) — ≈ 50 min pour les quarante-cinq
+ * d'une traite.
  */
 export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
   "coup-64-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3687, mortsParBatailleMille: 1694, verdict: { tropCourt: true, tropLong: false, tient: false } },
@@ -370,6 +399,12 @@ export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
   "mort-32-9-pd-perdue1-r6": { arrivesMille: 995, restantesMediane: 9, gardentMille: 830, coupsParBatailleMille: 4240, mortsParBatailleMille: 1888, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue1": { arrivesMille: 461, restantesMediane: 40, gardentMille: 1000, coupsParBatailleMille: 3884, mortsParBatailleMille: 1703, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue1-r6": { arrivesMille: 995, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4240, mortsParBatailleMille: 1888, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-b1": { arrivesMille: 983, restantesMediane: 17, gardentMille: 914, coupsParBatailleMille: 4188, mortsParBatailleMille: 1880, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-b2": { arrivesMille: 930, restantesMediane: 11, gardentMille: 711, coupsParBatailleMille: 4166, mortsParBatailleMille: 1871, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-b1": { arrivesMille: 895, restantesMediane: 3, gardentMille: 123, coupsParBatailleMille: 4192, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-b2": { arrivesMille: 342, restantesMediane: 0, gardentMille: 26, coupsParBatailleMille: 4160, mortsParBatailleMille: 1877, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-64-9-b1": { arrivesMille: 1000, restantesMediane: 34, gardentMille: 1000, coupsParBatailleMille: 4193, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-b2": { arrivesMille: 1000, restantesMediane: 28, gardentMille: 1000, coupsParBatailleMille: 4193, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: true, tient: false } },
 };
 
 export type FinRun = "sommet" | "epuise";
@@ -395,6 +430,10 @@ export type Run = {
   readonly perdues: number;
   /** captures qui l'ont rejoint (« recrue »), une feuille chacune */
   readonly recrues: number;
+  /** gestes de butin pris, une feuille chacun */
+  readonly butin: number;
+  /** gestes de butin voulus et refusés par la garde (l'arbre ne les finançait plus) */
+  readonly butinRefuse: number;
 };
 
 export type MesuresConfiguration = {
@@ -421,6 +460,10 @@ export type MesuresConfiguration = {
   /** permadeath : unités perdues et recrues par run, en millièmes (le puits) */
   readonly perduesParRunMille: number;
   readonly recruesParRunMille: number;
+  /** le bot qui ramasse : gestes pris et voulus par run, en millièmes ; runs où l'arbre en a refusé au moins un */
+  readonly butinParRunMille: number;
+  readonly butinVouluParRunMille: number;
+  readonly butinRefuseMille: number;
   /** parmi les arrivés */
   readonly restantesQ1: number | null;
   readonly restantesMediane: number | null;
@@ -492,12 +535,14 @@ export function recrueDe(etage: number): Membre {
 }
 
 /**
- * La garde de la recrue : une capture coûte une feuille, le bot ne la paie
- * que s'il garde ensuite une feuille par salle qui reste à franchir — de la
- * salle `salle` à la dernière (`derniere`), `derniere − salle` franchirs, le
- * dernier étant le sommet, qui peut vider l'arbre.
+ * La garde d'un geste (recrue, butin) : il coûte une feuille, le bot ne la
+ * paie que s'il garde ensuite une feuille par salle qui reste à franchir — de
+ * la salle `salle` à la dernière (`derniere`), `derniere − salle` franchirs,
+ * le dernier étant le sommet, qui peut vider l'arbre. Il ne réserve rien pour
+ * les batailles à venir : un joueur prudent en garderait, et sous « une mort »
+ * il peut compter les occupants de la salle suivante — le bot, non.
  */
-export function peutRecruter(budget: number, salle: number, derniere: number): boolean {
+export function peutDepenser(budget: number, salle: number, derniere: number): boolean {
   return budget - 1 >= derniere - salle;
 }
 
@@ -571,6 +616,8 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
   let rosterBalaye: number | null = null;
   let perdues = 0;
   let recrues = 0;
+  let butin = 0;
+  let butinRefuse = 0;
   const epuise = (salle: number): Run => ({
     fin: "epuise",
     salle,
@@ -586,6 +633,8 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
     rosterBalaye,
     perdues,
     recrues,
+    butin,
+    butinRefuse,
   });
   const derniere = cfg.salles - 1;
   for (let salle = 0; salle < derniere; salle++) {
@@ -632,12 +681,22 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
         perdues += tombees.size;
         // « recrue » : une capture par salle gagnée, une feuille, si le roster est court
         // et qu'il reste après une feuille par salle encore à franchir
-        if (cfg.contrepartie === "recrue" && gagnee && roster.length < ROSTER && peutRecruter(budget, salle, derniere)) {
+        if (cfg.contrepartie === "recrue" && gagnee && roster.length < ROSTER && peutDepenser(budget, salle, derniere)) {
           roster = [...roster, recrueDe(etage)];
           recrues += 1;
           budget -= 1;
         }
         if (roster.length === 0 && rosterBalaye === null) rosterBalaye = salle;
+      }
+      // le bot qui ramasse : `butin` gestes par salle gagnée (la salle se lit quand elle est
+      // vide, bible §5.2), une feuille chacun, tant que la garde le permet ; refusé sinon
+      if (gagnee) {
+        for (let g = 0; g < cfg.butin; g++) {
+          if (peutDepenser(budget, salle, derniere)) {
+            budget -= 1;
+            butin += 1;
+          } else butinRefuse += 1;
+        }
       }
       // l'arbre nu est une fin : sous « coup » le moteur l'a dit (`epuise`),
       // sous « mort » un retrait de plus que de feuilles l'est aussi
@@ -665,6 +724,8 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
     rosterBalaye,
     perdues,
     recrues,
+    butin,
+    butinRefuse,
   };
 }
 
@@ -704,6 +765,9 @@ export function mesurer(cfg: Configuration, runs: readonly Run[]): MesuresConfig
     salleBalayeMediane: mediane(balayes.map((r) => r.rosterBalaye!)),
     perduesParRunMille: mille(somme((r) => r.perdues) / n),
     recruesParRunMille: mille(somme((r) => r.recrues) / n),
+    butinParRunMille: mille(somme((r) => r.butin) / n),
+    butinVouluParRunMille: mille(somme((r) => r.butin + r.butinRefuse) / n),
+    butinRefuseMille: mille(runs.filter((r) => r.butinRefuse > 0).length / n),
     restantesQ1: quartile(restantes, 1),
     restantesMediane: mediane(restantes),
     restantesQ3: quartile(restantes, 3),
@@ -735,12 +799,12 @@ export function bancVeillee(mode: ModeVeillee = "rapide", noms: readonly string[
 export function formaterResultat(r: ResultatVeillee): string {
   const lignes = [
     `banc de la veillée — ${r.mode} : ${r.parametres.runs} runs sur ${r.parametres.jours} jours par configuration ; seuils : arrivés ≥ ${r.seuils.arriveeMin} ‰, gardent > ${r.seuils.inutilisees} feuilles ≤ ${r.seuils.gardentMax} ‰`,
-    "configuration | arrivés ‰ (pd : roster vivant) | épuisés ‰ (salle méd.) | restantes Q1/méd/Q3 | gardent > 6 ‰ | coups/bat. | morts/bat. | bat. gagnées/perdues/nulles/épuisées ‰ | runs avec défaite ‰ (1re, méd.) | roster balayé ‰ (salle méd.) | perdues/run | recrues/run | verdict",
+    "configuration | arrivés ‰ (pd : roster vivant) | épuisés ‰ (salle méd.) | restantes Q1/méd/Q3 | gardent > 6 ‰ | coups/bat. | morts/bat. | bat. gagnées/perdues/nulles/épuisées ‰ | runs avec défaite ‰ (1re, méd.) | roster balayé ‰ (salle méd.) | perdues/run | recrues/run | butin pris/voulu par run | runs où l'arbre a refusé un geste ‰ | verdict",
   ];
   for (const c of r.configurations) {
     const v = c.verdict.tient ? "tient" : [c.verdict.tropCourt ? "trop court" : "", c.verdict.tropLong ? "trop long" : ""].filter(Boolean).join(", ");
     lignes.push(
-      `${c.nom} | ${c.arrivesMille} | ${c.epuisesMille} (${c.salleEpuiseMediane ?? "—"}) | ${c.restantesQ1 ?? "—"}/${c.restantesMediane ?? "—"}/${c.restantesQ3 ?? "—"} | ${c.gardentMille ?? "—"} | ${(c.coupsParBatailleMille / 1000).toFixed(2)} | ${(c.mortsParBatailleMille / 1000).toFixed(2)} | ${c.victoiresMille}/${c.defaitesBatailleMille}/${c.nulsMille}/${c.epuiseesBatailleMille} | ${c.runsAvecDefaiteMille} (${c.premiereDefaiteMediane ?? "—"}) | ${c.rosterBalayeMille} (${c.salleBalayeMediane ?? "—"}) | ${(c.perduesParRunMille / 1000).toFixed(2)} | ${(c.recruesParRunMille / 1000).toFixed(2)} | ${v}`,
+      `${c.nom} | ${c.arrivesMille} | ${c.epuisesMille} (${c.salleEpuiseMediane ?? "—"}) | ${c.restantesQ1 ?? "—"}/${c.restantesMediane ?? "—"}/${c.restantesQ3 ?? "—"} | ${c.gardentMille ?? "—"} | ${(c.coupsParBatailleMille / 1000).toFixed(2)} | ${(c.mortsParBatailleMille / 1000).toFixed(2)} | ${c.victoiresMille}/${c.defaitesBatailleMille}/${c.nulsMille}/${c.epuiseesBatailleMille} | ${c.runsAvecDefaiteMille} (${c.premiereDefaiteMediane ?? "—"}) | ${c.rosterBalayeMille} (${c.salleBalayeMediane ?? "—"}) | ${(c.perduesParRunMille / 1000).toFixed(2)} | ${(c.recruesParRunMille / 1000).toFixed(2)} | ${(c.butinParRunMille / 1000).toFixed(2)}/${(c.butinVouluParRunMille / 1000).toFixed(2)} | ${c.butinRefuseMille} | ${v}`,
     );
   }
   return lignes.join("\n");

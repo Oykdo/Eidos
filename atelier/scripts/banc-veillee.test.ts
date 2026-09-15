@@ -21,7 +21,7 @@ import {
   etageDuDepot,
   formaterResultat,
   jouerRun,
-  peutRecruter,
+  peutDepenser,
   premiereTombee,
   recrueDe,
   rosterDe,
@@ -58,16 +58,22 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
     for (let q = 0; q < CRANS; q++) assert.ok(etageDeSalles(8, q, 1) >= 226, `étape 8 en bande d'Uranie (position ${q})`);
   });
 
-  it("trente-neuf configurations : douze socles avec et sans permadeath, puis les neuf contreparties d'A28 à 9 salles", () => {
-    assert.equal(r.configurations.length, 39);
-    assert.equal(CONFIGURATIONS.filter((c) => c.regle === "coup").length, 4 + 9);
+  it("quarante-cinq configurations : douze socles avec et sans permadeath, les neuf contreparties d'A28 à 9 salles, le bot qui ramasse", () => {
+    assert.equal(r.configurations.length, 45);
+    assert.equal(CONFIGURATIONS.filter((c) => c.regle === "coup").length, 4 + 9 + 2);
     assert.equal(CONFIGURATIONS.filter((c) => c.permadeath).length, 6 + 27);
-    // les douze premières sont celles du 2026-09-14, intactes : la lice seule, aucune contrepartie
+    // les douze premières sont celles du 2026-09-14, intactes : la lice seule, aucune contrepartie, aucun butin
     for (const c of CONFIGURATIONS.slice(0, 12)) {
       assert.equal(c.contrepartie, "aucune", c.nom);
       assert.equal(c.reserve, ROSTER, c.nom);
+      assert.equal(c.butin, 0, c.nom);
     }
-    const contreparties = CONFIGURATIONS.slice(12);
+    // les six dernières ramassent, sur le roster qui revient, à 9 salles
+    const ramassent = CONFIGURATIONS.slice(39);
+    assert.deepEqual(ramassent.map((c) => c.butin), [1, 2, 1, 2, 1, 2]);
+    assert.ok(ramassent.every((c) => !c.permadeath && c.salles === 9 && c.contrepartie === "aucune" && c.reserve === ROSTER));
+    assert.ok(CONFIGURATIONS.slice(0, 39).every((c) => c.butin === 0), "seules les six dernières ramassent");
+    const contreparties = CONFIGURATIONS.slice(12, 39);
     assert.ok(contreparties.every((c) => c.permadeath && c.salles === 9), "les contreparties se mesurent à 9 salles, en permadeath");
     assert.deepEqual(
       contreparties.filter((c) => c.contrepartie === "perdue").map((c) => c.reserve),
@@ -124,14 +130,14 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
           assert.equal(run.salle, franchir);
           assert.equal(run.batailles, franchir, "la dernière salle ne se joue pas");
           const depense = cfg.regle === "coup" ? run.coups : run.morts;
-          assert.equal(run.feuilles, cfg.arbre - franchir - depense, `${cfg.nom} : le compte des feuilles`);
+          assert.equal(run.feuilles, cfg.arbre - franchir - depense - run.butin, `${cfg.nom} : le compte des feuilles`);
           assert.ok(run.feuilles >= 0);
         } else {
-          // épuisé : l'arbre était vide — un franchir par salle atteinte, une feuille par coup ou par retrait
+          // épuisé : l'arbre était vide — un franchir par salle atteinte, une feuille par coup ou par retrait, et par geste
           assert.equal(run.feuilles, 0);
           assert.ok(run.salle < cfg.salles);
-          if (cfg.regle === "coup") assert.equal(run.coups + run.salle, cfg.arbre, `${cfg.nom} : coups + franchir = arbre`);
-          else assert.ok(run.morts + run.salle >= cfg.arbre, `${cfg.nom} : morts + franchir ≥ arbre`);
+          if (cfg.regle === "coup") assert.equal(run.coups + run.salle + run.butin, cfg.arbre, `${cfg.nom} : coups + franchir + butin = arbre`);
+          else assert.ok(run.morts + run.salle + run.butin >= cfg.arbre, `${cfg.nom} : morts + franchir + butin ≥ arbre`);
         }
       }
     }
@@ -156,10 +162,10 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
     const reserves = [cfgDe("coup-64-9-pd-r6"), cfgDe("coup-64-9-pd-r9"), cfgDe("coup-64-9-pd-r12")];
     const perdueR6 = cfgDe("coup-64-9-pd-perdue-r6");
     // la garde de la recrue : une feuille par salle qui reste à franchir, à la feuille près
-    assert.equal(peutRecruter(9, 0, 8), true);
-    assert.equal(peutRecruter(8, 0, 8), false);
-    assert.equal(peutRecruter(2, 7, 8), true);
-    assert.equal(peutRecruter(1, 7, 8), false);
+    assert.equal(peutDepenser(9, 0, 8), true);
+    assert.equal(peutDepenser(8, 0, 8), false);
+    assert.equal(peutDepenser(2, 7, 8), true);
+    assert.equal(peutDepenser(1, 7, 8), false);
     // et elle mord : à 9 feuilles, huit franchirs à payer, aucune victoire ne laisse de quoi recruter
     const arbreNu = { ...recrue, nom: "recrue-9-feuilles", arbre: 9 };
     let recruesAvecGarde = 0;
@@ -308,6 +314,66 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
     assert.ok(m("coup-64-9-pd-perdue1-r6").rosterBalayeMille <= m("coup-64-9-pd-perdue1").rosterBalayeMille);
   });
 
+  it("le bot qui ramasse se lit run par run : un geste par salle gagnée sous la garde, l'arbre refuse ou se vide, jamais les deux à la fois", () => {
+    const socles = ["coup-64-9", "mort-32-9", "mort-64-9"].map(cfgDe);
+    let refuses = 0;
+    let epuisesApresButin = 0;
+    for (const socle of socles) {
+      const b1 = cfgDe(`${socle.nom}-b1`);
+      const b2 = cfgDe(`${socle.nom}-b2`);
+      for (let k = 0; k < p.runs; k++) {
+        const d = k % p.jours;
+        const s = jouerRun(socle, d, k);
+        const u = jouerRun(b1, d, k);
+        const v = jouerRun(b2, d, k);
+        assert.equal(s.butin + s.butinRefuse, 0, `${socle.nom} run ${k} : le socle ne ramasse rien`);
+        for (const [cfg, run] of [[b1, u], [b2, v]] as const) {
+          // voulu = l'appétit par salle gagnée ; pris + refusé = voulu ; jamais plus qu'une feuille par geste
+          assert.equal(run.butin + run.butinRefuse, cfg.butin * run.victoires, `${cfg.nom} run ${k} : pris + refusé = voulu`);
+          if (run.fin === "sommet") {
+            assert.equal(run.feuilles, cfg.arbre - (cfg.salles - 1) - (cfg.regle === "coup" ? run.coups : run.morts) - run.butin);
+            // la garde tient : un geste n'est refusé qu'à l'arbre à ras (une feuille par salle à franchir) —
+            // un run refusé qui arrive quand même arrive à zéro, le dernier franchir étant le sommet
+            if (run.butinRefuse > 0) assert.equal(run.feuilles, 0, `${cfg.nom} run ${k} : refusé avec ${run.feuilles} feuilles restantes`);
+          }
+          if (run.butinRefuse > 0) refuses += 1;
+          if (run.fin === "epuise" && run.butin > 0) epuisesApresButin += 1;
+        }
+        // sous « mort », le moteur ne voit pas le budget : les batailles sont celles du socle, seul le compte change
+        if (socle.regle === "mort") {
+          for (const run of [u, v]) {
+            if (run.fin !== "sommet") continue;
+            assert.equal(run.batailles, s.batailles, `${socle.nom} run ${k} : mêmes batailles`);
+            assert.equal(run.victoires, s.victoires);
+            assert.equal(run.morts, s.morts);
+            assert.equal(run.coups, s.coups);
+          }
+        }
+        // deux gestes prennent au moins autant qu'un, et ne laissent pas plus
+        if (u.fin === "sommet" && v.fin === "sommet") {
+          assert.ok(v.butin >= u.butin, `${socle.nom} run ${k} : b2 ramasse au moins autant que b1`);
+          assert.ok(v.feuilles <= u.feuilles);
+        }
+      }
+    }
+    assert.ok(refuses >= 3, `${refuses} runs où l'arbre a refusé un geste`);
+    assert.ok(epuisesApresButin >= 3, `${epuisesApresButin} runs épuisés après avoir ramassé`);
+    // et par configuration : ramasser coûte ce que l'arbre a ; « une mort à 32 » refuse et se vide, « un coup à 64 » finance deux gestes par salle
+    const m = (nom: string) => r.configurations.find((c) => c.nom === nom)!;
+    for (const socle of socles) {
+      const s0 = m(socle.nom);
+      const s1 = m(`${socle.nom}-b1`);
+      const s2 = m(`${socle.nom}-b2`);
+      assert.ok(s1.restantesMediane! < s0.restantesMediane!, `${socle.nom} : ramasser un geste coûte`);
+      assert.ok(s2.butinParRunMille >= s1.butinParRunMille, `${socle.nom} : deux gestes ramassent au moins autant`);
+      assert.ok(s1.butinVouluParRunMille >= s1.butinParRunMille);
+      assert.equal(s0.butinRefuseMille, 0);
+    }
+    assert.ok(m("mort-32-9-b2").butinRefuseMille + m("mort-32-9-b2").epuisesMille > m("coup-64-9-b2").butinRefuseMille + m("coup-64-9-b2").epuisesMille);
+    assert.equal(m("coup-64-9-b2").butinRefuseMille, 0, "« un coup à 64 » finance deux gestes par salle sur l'échantillon");
+    assert.equal(m("mort-64-9-b2").butinRefuseMille, 0);
+  });
+
   it("ne dérive pas de sa calibration : arrivés, feuilles restantes, coups et morts par bataille", () => {
     for (const c of r.configurations) {
       const e = ETALONS_VEILLEE_RAPIDE[c.nom];
@@ -343,7 +409,8 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
         verdictsCompares += 1;
         assert.deepEqual(c.verdict, complet.verdict, `${c.nom} : ${JSON.stringify(c.verdict)} au lieu de ${JSON.stringify(complet.verdict)}`);
       }
-      if (!c.permadeath) {
+      // le bot qui ramasse mesure justement ce que l'arbre ne finance pas : il ne juge pas le socle
+      if (!c.permadeath && c.butin === 0) {
         if (c.salles === 27) assert.ok(c.arrivesMille <= 100, `${c.nom} : 27 salles, presque personne n'arrive (${c.arrivesMille} ‰)`);
         else assert.ok(c.arrivesMille >= 900, `${c.nom} : 9 salles, le budget tient (${c.arrivesMille} ‰)`);
       }
