@@ -286,6 +286,11 @@ côté client ne passe pas, parce que le juge est le même code que le moteur.
 - **D5 — La permadeath.** Une unité tombée en bataille ancrée est-elle retirée du roster définitivement, ou
   seulement de la run ? *Recommandation : retirée du roster. Avec D6 ouvert, cette décision cesse d'être un
   simple réglage de difficulté : elle devient le puits de l'économie (§9 bis). À trancher avant la PR 6.*
+  **Tranchée par l'auteur** : oui le 2026-09-14 (A5), et le 2026-09-15 sa contrepartie (A28) — une bataille
+  **perdue** en veillée ancrée retire du coffre **la première unité tombée** (la cible du premier `Coup` du
+  journal marqué `retiree` contre le coffre, riposte comprise) ; gagnée ou nulle, rien ne quitte le coffre.
+  Telle qu'écrite ici, la règle vidait le roster à la salle 1 (`BIBLE_VEILLEE.md` §4.5) ; mesurée, la
+  première tombée coûte 1,27 objet par run et laisse 995 runs sur 1 000 aller au bout à six objets.
 
 ## 9 bis. Le marché — pourquoi il est sûr ici
 
