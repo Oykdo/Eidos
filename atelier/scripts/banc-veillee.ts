@@ -33,7 +33,7 @@
  *   posés comme `partie.ts` les pose (`posesDuCoffre`, `caseLibre`) ; la tenue
  *   repart de `ecu` à chaque salle (D1). Le roster et les choix du run ne
  *   dépendent que du jour `d`, du rang `k` et de `reserve` — **jamais de la
- *   règle** : les trente-trois configurations rejouent les mêmes parcours, les
+ *   règle** : les trente-neuf configurations rejouent les mêmes parcours, les
  *   trois premiers objets sont les mêmes partout, une réserve plus longue les
  *   prolonge sans les changer, et l'écart entre deux configurations ne vient
  *   que de la règle ou de la réserve ;
@@ -78,9 +78,17 @@
  *   le jeu tel que codé (`MAX_COFFRE` borne la lice, pas le coffre), que la
  *   mesure de 5a avait réduit à trois objets. Et (a) avec (d) : « perdue »
  *   sur une réserve de 6 ou 9, une défaite coûte la lice entière et la
- *   réserve prend la suite. On lit en plus les unités **perdues** et les
- *   **recrues** par run — le seul puits réel du jeu (`SPEC_PUITS.md` §6) se
- *   chiffre ici ;
+ *   réserve prend la suite. Enfin **le cran en dessous, demandé par l'auteur
+ *   le 2026-09-15 sur les chiffres de (a)** — « perdre coûte l'équipe entière,
+ *   n'est-ce pas trop punir ? » — **« perdue-1 »** (e) : une défaite ne coûte
+ *   que **la première tombée**, la cible du premier coup `retiree` du journal
+ *   porté contre le coffre (`premiereTombee` : le moteur l'écrit dans l'ordre,
+ *   riposte comprise, rien n'est rejoué) ; les deux autres se relèvent comme
+ *   après une victoire ; sur 3 objets (la lice se bat ensuite à deux, puis à
+ *   une) et sur 6 (la réserve la recomplète trois fois). On lit en plus les
+ *   unités **perdues** et les **recrues** par run — le seul puits réel du jeu
+ *   (`SPEC_PUITS.md` §6) se chiffre ici, et c'est lui que (a) et (e) arbitrent :
+ *   trois objets par défaite, ou un ;
  * - **le budget** : `arbre` feuilles ; chaque franchir en coûte une ; en
  *   combat, règle « coup » : le moteur décrémente lui-même `feuilles` à chaque
  *   coup du coffre et finit la bataille sur `epuise` à zéro ; règle « mort » :
@@ -93,11 +101,11 @@
  *   Ce que la bible §4.4 propose pour l'arbre nu (« il blesse au lieu de
  *   tuer ») n'est pas modélisé.
  *
- * Trente-trois configurations : les deux règles à leur arbre (coup 64, mort
+ * Trente-neuf configurations : les deux règles à leur arbre (coup 64, mort
  * 32), sur 27 et 9 salles, plus le repli de la bible §4.5 (mort 64) — chacune
  * avec le roster qui revient et en permadeath telle qu'écrite (douze) ; puis,
- * sur les trois socles à 9 salles, les sept contreparties d'A28 (vingt et
- * une). Ce qu'on lit par configuration : la part des runs qui atteignent la dernière salle,
+ * sur les trois socles à 9 salles, les neuf contreparties d'A28 (vingt-sept).
+ * Ce qu'on lit par configuration : la part des runs qui atteignent la dernière salle,
  * les feuilles restantes à l'arrivée (médiane, quartiles), la part des
  * arrivés qui gardent plus de `INUTILISEES` feuilles, les épuisements et leur
  * salle médiane, coups et morts par bataille, unités perdues et recrues par
@@ -115,12 +123,14 @@
  * feuille — c'est la règle d'aujourd'hui).
  *
  * `bancVeillee("rapide")` est l'échantillon du test : 24 runs par configuration
- * sur 6 jours, ≈ 30 s sur ce poste (i7-7700HQ, Node 22) quand la machine est
- * libre — `npm test` le paie à chaque passage ; `--complet` rejoue 1 000 runs
- * sur 40 jours, hors CI, ≈ 35 min, ou configuration par configuration.
+ * sur 6 jours, ≈ 32 s sur ce poste (i7-7700HQ, Node 22) quand la machine est
+ * libre, ≈ 65 s avec les contrôles run par run — `npm test` le paie à chaque
+ * passage ; `--complet` rejoue 1 000 runs sur 40 jours, hors CI, ≈ 40 min, ou
+ * configuration par configuration (un appel borné à dix minutes en tient huit
+ * ou neuf : lancer par lots).
  *
  * Usage : node --experimental-strip-types scripts/banc-veillee.ts [--rapide|--complet] [configuration ...]
- * (sans nom : les trente-trois ; `npm run banc-veillee` est le complet entier)
+ * (sans nom : les trente-neuf ; `npm run banc-veillee` est le complet entier)
  *
  * LIMITE : la politique est celle du dépôt, des deux côtés ; un joueur humain
  * rend d'autres chiffres. C'est précisément pourquoi c'est elle et aucune
@@ -148,7 +158,7 @@ import { ouvrirBataille } from "../src/lib/eidos/tactique/bataille.ts";
 import { TOURS_MAX, jouerBataille } from "../src/lib/eidos/tactique/ia.ts";
 import { caseLibre, indechiffresDe, posesDuCoffre } from "../src/lib/eidos/tactique/partie.ts";
 import { uniteDepuisObjet, vivante } from "../src/lib/eidos/tactique/unite.ts";
-import type { Case, Classe, Unite } from "../src/lib/eidos/tactique/types.ts";
+import type { Case, Classe, EtatBataille, Unite } from "../src/lib/eidos/tactique/types.ts";
 import { qDeMot } from "../src/lib/eidos/resonance.ts";
 import { ETAGES, dalleDe, occupantsDe } from "../src/lib/eidos/tour.ts";
 import { FEUILLES, graineDuJour } from "../src/lib/eidos/veillee.ts";
@@ -157,10 +167,11 @@ export type Regle = "coup" | "mort";
 
 /**
  * Ce qui retient la permadeath (A28) : rien (telle qu'écrite) ; « perdue »,
- * seule une bataille perdue retire les tombées ; « recrue », une capture par
- * salle gagnée quand le roster est court.
+ * seule une bataille perdue retire les tombées ; « perdue-1 », seule une
+ * bataille perdue retire une unité, la première tombée ; « recrue », une
+ * capture par salle gagnée quand le roster est court.
  */
-export type Contrepartie = "aucune" | "perdue" | "recrue";
+export type Contrepartie = "aucune" | "perdue" | "perdue-1" | "recrue";
 
 export type Configuration = {
   readonly nom: string;
@@ -192,8 +203,9 @@ const SOCLES: readonly Socle[] = [
 ];
 
 /**
- * Les sept contreparties d'A28, à 9 salles : (a) perdue, (b) recrue, (d) une
- * réserve de 6, 9 ou 12 objets, puis (a) sur une réserve de 6 ou 9.
+ * Les neuf contreparties d'A28, à 9 salles : (a) perdue, (b) recrue, (d) une
+ * réserve de 6, 9 ou 12 objets, (a) sur une réserve de 6 ou 9, puis (e)
+ * perdue-1 sur 3 et 6 objets.
  */
 const CONTREPARTIES: readonly { suffixe: string; contrepartie: Contrepartie; reserve: number }[] = [
   { suffixe: "pd-perdue", contrepartie: "perdue", reserve: ROSTER },
@@ -203,10 +215,12 @@ const CONTREPARTIES: readonly { suffixe: string; contrepartie: Contrepartie; res
   { suffixe: "pd-r12", contrepartie: "aucune", reserve: 12 },
   { suffixe: "pd-perdue-r6", contrepartie: "perdue", reserve: 6 },
   { suffixe: "pd-perdue-r9", contrepartie: "perdue", reserve: 9 },
+  { suffixe: "pd-perdue1", contrepartie: "perdue-1", reserve: ROSTER },
+  { suffixe: "pd-perdue1-r6", contrepartie: "perdue-1", reserve: 6 },
 ];
 
 /**
- * Les trente-trois configurations : les six socles, le roster qui revient
+ * Les trente-neuf configurations : les six socles, le roster qui revient
  * puis en permadeath telle qu'écrite ; puis les trois socles à 9 salles sous
  * chaque contrepartie.
  */
@@ -301,13 +315,20 @@ export const ETALONS_VEILLEE_RAPIDE: Record<string, EtalonVeillee> = {
   "mort-32-9-pd-perdue-r9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4073, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue-r6": { arrivesMille: 667, restantesMediane: 42, gardentMille: 1000, coupsParBatailleMille: 4053, mortsParBatailleMille: 1905, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue-r9": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4073, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 3714, mortsParBatailleMille: 1636, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 4094, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 9, gardentMille: 800, coupsParBatailleMille: 3714, mortsParBatailleMille: 1636, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4094, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 3714, mortsParBatailleMille: 1636, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4094, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
 };
 
 /**
  * Le protocole complet (1 000 runs × 40 jours) : `npm run banc-veillee`. Les
- * douze socles rejoués le 2026-09-14 en ≈ 14 min ; les vingt et une
+ * douze socles rejoués le 2026-09-14 en ≈ 14 min ; les vingt et une premières
  * contreparties d'A28 le 2026-09-15, en trois lots de sept (une règle par
- * lot, ≈ 6,5 min chacun) — ≈ 35 min pour les trente-trois d'une traite.
+ * lot, ≈ 6,5 min chacun), puis les six de « perdue-1 » le même jour en deux
+ * lots de trois (≈ 3,5 et 4 min) — ≈ 40 min pour les trente-neuf d'une traite.
  */
 export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
   "coup-64-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3687, mortsParBatailleMille: 1694, verdict: { tropCourt: true, tropLong: false, tient: false } },
@@ -343,6 +364,12 @@ export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
   "mort-64-9-pd-r12": { arrivesMille: 818, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4208, mortsParBatailleMille: 1866, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue-r6": { arrivesMille: 634, restantesMediane: 40, gardentMille: 1000, coupsParBatailleMille: 4290, mortsParBatailleMille: 1902, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue-r9": { arrivesMille: 907, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4280, mortsParBatailleMille: 1897, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue1": { arrivesMille: 458, restantesMediane: 22, gardentMille: 969, coupsParBatailleMille: 3883, mortsParBatailleMille: 1703, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue1-r6": { arrivesMille: 992, restantesMediane: 22, gardentMille: 983, coupsParBatailleMille: 4239, mortsParBatailleMille: 1887, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue1": { arrivesMille: 461, restantesMediane: 8, gardentMille: 779, coupsParBatailleMille: 3884, mortsParBatailleMille: 1703, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-pd-perdue1-r6": { arrivesMille: 995, restantesMediane: 9, gardentMille: 830, coupsParBatailleMille: 4240, mortsParBatailleMille: 1888, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue1": { arrivesMille: 461, restantesMediane: 40, gardentMille: 1000, coupsParBatailleMille: 3884, mortsParBatailleMille: 1703, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue1-r6": { arrivesMille: 995, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4240, mortsParBatailleMille: 1888, verdict: { tropCourt: false, tropLong: true, tient: false } },
 };
 
 export type FinRun = "sommet" | "epuise";
@@ -474,6 +501,20 @@ export function peutRecruter(budget: number, salle: number, derniere: number): b
   return budget - 1 >= derniere - salle;
 }
 
+/**
+ * La première tombée du coffre (« perdue-1 ») : la cible du premier coup du
+ * journal qui retire une unité du coffre — le moteur écrit le journal dans
+ * l'ordre des coups, riposte comprise, une unité retirée ne l'est qu'une fois.
+ * Une bataille perdue en a toujours une : la défaite est le coffre entier
+ * retiré. Refuse une bataille où rien du coffre n'est tombé.
+ */
+export function premiereTombee(etat: Pick<EtatBataille, "journal" | "unites">): number {
+  const coffre = new Set(etat.unites.filter((u) => u.camp === "coffre").map((u) => u.id));
+  const coup = etat.journal.find((c) => c.retiree && coffre.has(c.cible));
+  if (coup === undefined) throw new Error("aucune unité du coffre retirée au journal");
+  return coup.cible;
+}
+
 function armee(roster: readonly Membre[], etage: number): Unite[] {
   const obstacles = dalleDe(etage);
   const poses = posesDuCoffre(roster.length);
@@ -577,10 +618,15 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
       } else epuisees += 1;
       budget = cfg.regle === "coup" ? etat.feuilles : budget - mortsIci;
       if (cfg.permadeath) {
-        // « perdue » : gagnée ou nulle, une tombée est K.O. et revient ; perdue, elle quitte le coffre
-        const retire = cfg.contrepartie !== "perdue" || perdue;
+        // « perdue » et « perdue-1 » : gagnée ou nulle, une tombée est K.O. et revient ; perdue,
+        // la lice entière quitte le coffre (« perdue »), ou la première tombée seule (« perdue-1 »)
+        const retire = (cfg.contrepartie !== "perdue" && cfg.contrepartie !== "perdue-1") || perdue;
         const tombees = new Set(
-          retire ? etat.unites.filter((u) => u.camp === "coffre" && !vivante(u)).map((u) => u.id) : [],
+          !retire
+            ? []
+            : cfg.contrepartie === "perdue-1"
+              ? [premiereTombee(etat)]
+              : etat.unites.filter((u) => u.camp === "coffre" && !vivante(u)).map((u) => u.id),
         );
         roster = roster.filter((_, j) => !tombees.has(j));
         perdues += tombees.size;
