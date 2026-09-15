@@ -315,6 +315,14 @@ Ce qui suit est le chantier tel qu'il a été écrit la veille.
 **Ce qui le tue.** Un seul chiffre des tables qui bouge : `eonis.py` est gelé, et une empreinte différente vaut réinitialisation du testnet — on renonce et on garde le `getcontext()` global avec un commentaire.
 **Coût.** Une PR, aucun format.
 
+### C9 — Les catalogues en glTF : produits une fois, versionnés, chargés par les scènes en place
+
+**Handover :** `docs/HANDOVER_CATALOGUES_GLTF.md` (2026-09-15) — décision d'auteur du même jour : « oui, pour ce qui est fixe et produit une fois ». Cinq catalogues finis — 36 hôtes, 9 biomes, 4 ornements, 101 formes du bestiaire, 9 astres — générés **hors ligne** par un outil 3D, triés par l'auteur, versionnés en `.glb` sous `atelier/public/modeles/` avec un manifeste d'empreintes SHA-256, et chargés par les scènes three / R3F déjà là (`GLTFLoader` et `meshopt_decoder` sont dans three : **zéro dépendance**). Un mesh est une figure : clé du catalogue, jamais le mot ni la graine ; le quaternion oriente, la jauge teinte, les matières restent celles de l'atelier ; l'absence du fichier rend les voxels d'aujourd'hui. Dans le sens de l'horizon AR (des meshes plutôt que des voxels calculés).
+
+**Cible.** G1 le socle (manifeste, `Modele.tsx`, `npm run modeles`, 6 contrôles), puis G2 → G6 du plus petit catalogue au plus grand ; `npm ls --omit=dev` à 18 avant et après ; aucun octet de three sur l'accueil ; chaque `.glb` du dépôt a une entrée et une empreinte juste ; ≤ 30 Mo au total.
+**Ce qui le tue.** Un mesh choisi par le mot ou la graine ; un matériau embarqué qui casse l'isochromie ; une scène qui attend son mesh pour être jouable ; un `Canvas` R3F sur la page d'entrée ; une licence de sortie incertaine (A30).
+**Coût.** Une PR de socle, puis une PR par catalogue (le bestiaire par lots) ; G7 (une porte AR sur le coffre, `ARButton` de three) seulement sur demande explicite. Décisions A29–A34 dans le handover.
+
 ### Ce qu'on n'ouvre pas encore, et pourquoi
 
 `SPEC_MUSES.md` (la muse permute déjà les quatre axes : c'est la seule progression que la conservation autorise, et elle attend C2 pour être lisible), `SPEC_AURA_GRADUELLE.md` (D1–D10 non tranchées, contrôles K48–K56 à écrire), `SPEC_BROUILLARD.md` (B1–B5 non tranchées ; l'induction est écartée, la lampe ne l'est pas), `SPEC_CRAFT.md` PR 2 (gelée par D1 = notre C2). Aucun de ces quatre n'est bloqué par du code : ils sont bloqués par une décision ou par une mesure.
