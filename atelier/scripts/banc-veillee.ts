@@ -25,15 +25,18 @@
  *   dernière salle ne se joue pas** : comme dans `veillee-tour.ts`, le dernier
  *   franchir *est* le sommet (« la dernière salle n'a pas de fin à signer ») —
  *   26 batailles et 26 franchir pour 27 salles, 8 et 8 pour 9 ;
- * - **le roster** : trois objets, `objetDepuisGraine(sha256d("roster-k-j"))`,
- *   la loi des tiers est celle du tirage lui-même, la classe **lue du mot**
- *   comme le jeu la lit (`ficheDe` → `formeProche` : elle entre dans l'accord
- *   de chaque coup, ce n'est pas une lecture) et attachée à l'objet, jamais à
- *   son rang ; posés comme `partie.ts` les pose (`posesDuCoffre`, `caseLibre`) ;
- *   la tenue repart de `ecu` à chaque salle (D1). Le roster et les choix du
- *   run ne dépendent que du jour `d` et du rang `k`, **jamais de la
- *   configuration** : les douze rejouent les mêmes rosters sur les mêmes
- *   parcours, et l'écart entre deux configurations ne vient que de la règle ;
+ * - **le roster** : `reserve` objets au coffre (trois, sauf sous « réserve »),
+ *   `objetDepuisGraine(sha256d("roster-k-j"))`, trois en lice, la loi des
+ *   tiers est celle du tirage lui-même, la classe **lue du mot** comme le jeu
+ *   la lit (`ficheDe` → `formeProche` : elle entre dans l'accord de chaque
+ *   coup, ce n'est pas une lecture) et attachée à l'objet, jamais à son rang ;
+ *   posés comme `partie.ts` les pose (`posesDuCoffre`, `caseLibre`) ; la tenue
+ *   repart de `ecu` à chaque salle (D1). Le roster et les choix du run ne
+ *   dépendent que du jour `d`, du rang `k` et de `reserve` — **jamais de la
+ *   règle** : les trente-trois configurations rejouent les mêmes parcours, les
+ *   trois premiers objets sont les mêmes partout, une réserve plus longue les
+ *   prolonge sans les changer, et l'écart entre deux configurations ne vient
+ *   que de la règle ou de la réserve ;
  * - **les Indéchiffrés** : les occupants de l'étage (`indechiffresDe` de
  *   `partie.ts`, un coffre vide : tout occupant est présent), 1 à 3 ;
  * - **la bataille** : `ouvrirBataille` puis `jouerBataille`, `ia.ts` des deux
@@ -50,6 +53,34 @@
  *   mort ne lit aucune salle (bible §5.2), ses feuilles restantes ne
  *   plafonnent aucun butin, et un verdict qui les compterait jugerait une
  *   marche, pas une règle ;
+ * - **les contreparties de la permadeath** (A28, posé par la mesure du
+ *   2026-09-14 : telle qu'écrite, elle vide le roster à la salle 1), à
+ *   9 salles seulement, aucune ne touche au moteur. Les deux du handover :
+ *   **« perdue »** (a), une unité tombée ne quitte le coffre que dans une
+ *   bataille **perdue** — gagnée ou nulle, elle est K.O. et revient ;
+ *   **« recrue »** (b), après une salle **gagnée**, si le roster est court, le
+ *   bot capture le premier Indéchiffré de l'étage (`recrueDe` : `captureDe`
+ *   puis `objetDePorte`, la lecture de `partie.indechiffresDe`), une feuille
+ *   comme tout `prendre`, et seulement s'il garde après une feuille par salle
+ *   qui reste à franchir (`peutRecruter`). **(b) mesure un chantier, pas le
+ *   jeu tel que codé**, et le mesure au plus favorable — son chiffre est un
+ *   plafond : la capsule est gratuite et illimitée (`prendreDansCoffre` en
+ *   exige une du coffre et la consomme ; le bot n'en a aucune), la capture
+ *   réussit toujours (ni parade, ni capsule brisée), la recrue se bat dans la
+ *   run même (dans le jeu une capture va au **sac** et n'entre au coffre qu'au
+ *   sommet ou à la porte, `veillee-tour.ts`), et c'est l'abattu qui se relève
+ *   (bible §5.3 : une capsule lancée sur un Indéchiffré se brise ; handover
+ *   §4 : `tour.abattus` pour ne pas capturer un mort). Puis une **quatrième
+ *   option, posée par ce lot** (d) : **« réserve »**, le coffre porte
+ *   `reserve` objets (6, 9, 12 — les trois premiers sont le roster des autres
+ *   configurations), les trois premiers vivants entrent en lice dans l'ordre
+ *   du coffre comme `combattants` les range, une tombée ne revient pas ; c'est
+ *   le jeu tel que codé (`MAX_COFFRE` borne la lice, pas le coffre), que la
+ *   mesure de 5a avait réduit à trois objets. Et (a) avec (d) : « perdue »
+ *   sur une réserve de 6 ou 9, une défaite coûte la lice entière et la
+ *   réserve prend la suite. On lit en plus les unités **perdues** et les
+ *   **recrues** par run — le seul puits réel du jeu (`SPEC_PUITS.md` §6) se
+ *   chiffre ici ;
  * - **le budget** : `arbre` feuilles ; chaque franchir en coûte une ; en
  *   combat, règle « coup » : le moteur décrémente lui-même `feuilles` à chaque
  *   coup du coffre et finit la bataille sur `epuise` à zéro ; règle « mort » :
@@ -62,15 +93,17 @@
  *   Ce que la bible §4.4 propose pour l'arbre nu (« il blesse au lieu de
  *   tuer ») n'est pas modélisé.
  *
- * Douze configurations : les deux règles à leur arbre (coup 64, mort 32), sur
- * 27 et 9 salles, plus le repli de la bible §4.5 (mort 64) — chacune avec le
- * roster qui revient et en permadeath. Ce qu'on lit par configuration : la
- * part des runs qui atteignent la dernière salle, les feuilles restantes à
- * l'arrivée (médiane, quartiles), la part des arrivés qui gardent plus de
- * `INUTILISEES` feuilles, les épuisements et leur salle médiane, coups et
- * morts par bataille, et chaque bataille dans une case et une seule —
- * gagnée, perdue, nulle ou épuisée (« coup » seulement : l'arbre vide en
- * pleine bataille), les quatre sommant à 1 000 ‰. Les **seuils** sont ceux de
+ * Trente-trois configurations : les deux règles à leur arbre (coup 64, mort
+ * 32), sur 27 et 9 salles, plus le repli de la bible §4.5 (mort 64) — chacune
+ * avec le roster qui revient et en permadeath telle qu'écrite (douze) ; puis,
+ * sur les trois socles à 9 salles, les sept contreparties d'A28 (vingt et
+ * une). Ce qu'on lit par configuration : la part des runs qui atteignent la dernière salle,
+ * les feuilles restantes à l'arrivée (médiane, quartiles), la part des
+ * arrivés qui gardent plus de `INUTILISEES` feuilles, les épuisements et leur
+ * salle médiane, coups et morts par bataille, unités perdues et recrues par
+ * run, et chaque bataille dans une case et une seule — gagnée, perdue, nulle
+ * ou épuisée (« coup » seulement : l'arbre vide en pleine bataille), les
+ * quatre sommant à 1 000 ‰. Les **seuils** sont ceux de
  * la bible §4.5, écrits avant la mesure : moins de `ARRIVEE_MIN` (30 %) des
  * runs arrivent ⇒ l'arbre est **trop court** pour cette règle ; plus de
  * `GARDENT_MAX` (80 %) des arrivés gardent plus de 6 feuilles ⇒ **trop long**.
@@ -81,13 +114,13 @@
  * non codée), et ce qu'une salle perdue coûte au jeu (rien ici : ni butin, ni
  * feuille — c'est la règle d'aujourd'hui).
  *
- * `bancVeillee("rapide")` est l'échantillon du test : 30 runs par configuration
- * sur 6 jours, ≈ 20 s sur ce poste (i7-7700HQ, Node 22) quand la machine est
+ * `bancVeillee("rapide")` est l'échantillon du test : 24 runs par configuration
+ * sur 6 jours, ≈ 30 s sur ce poste (i7-7700HQ, Node 22) quand la machine est
  * libre — `npm test` le paie à chaque passage ; `--complet` rejoue 1 000 runs
- * sur 40 jours, hors CI, ≈ 10 min, ou configuration par configuration.
+ * sur 40 jours, hors CI, ≈ 35 min, ou configuration par configuration.
  *
  * Usage : node --experimental-strip-types scripts/banc-veillee.ts [--rapide|--complet] [configuration ...]
- * (sans nom : les douze ; `npm run banc-veillee` est le complet entier)
+ * (sans nom : les trente-trois ; `npm run banc-veillee` est le complet entier)
  *
  * LIMITE : la politique est celle du dépôt, des deux côtés ; un joueur humain
  * rend d'autres chiffres. C'est précisément pourquoi c'est elle et aucune
@@ -95,7 +128,9 @@
  */
 
 import { formeProche } from "../src/lib/eidos/bestiaire.ts";
+import { captureDe } from "../src/lib/eidos/capsules.ts";
 import { hexOf, sha256d, utf8 } from "../src/lib/eidos/hash.ts";
+import { objetDePorte } from "../src/lib/eidos/inventaire.ts";
 import { tourVide } from "../src/lib/eidos/jauge.ts";
 import { ageDeOctet, objetDepuisGraine, type Objet } from "../src/lib/eidos/objets.ts";
 import {
@@ -115,10 +150,17 @@ import { caseLibre, indechiffresDe, posesDuCoffre } from "../src/lib/eidos/tacti
 import { uniteDepuisObjet, vivante } from "../src/lib/eidos/tactique/unite.ts";
 import type { Case, Classe, Unite } from "../src/lib/eidos/tactique/types.ts";
 import { qDeMot } from "../src/lib/eidos/resonance.ts";
-import { ETAGES, dalleDe } from "../src/lib/eidos/tour.ts";
+import { ETAGES, dalleDe, occupantsDe } from "../src/lib/eidos/tour.ts";
 import { FEUILLES, graineDuJour } from "../src/lib/eidos/veillee.ts";
 
 export type Regle = "coup" | "mort";
+
+/**
+ * Ce qui retient la permadeath (A28) : rien (telle qu'écrite) ; « perdue »,
+ * seule une bataille perdue retire les tombées ; « recrue », une capture par
+ * salle gagnée quand le roster est court.
+ */
+export type Contrepartie = "aucune" | "perdue" | "recrue";
 
 export type Configuration = {
   readonly nom: string;
@@ -129,9 +171,18 @@ export type Configuration = {
   readonly parBande: number;
   /** une unité tombée ne revient pas (A5) ; sinon le roster revient entier à chaque salle */
   readonly permadeath: boolean;
+  /** en permadeath seulement ; « aucune » sinon */
+  readonly contrepartie: Contrepartie;
+  /** objets du coffre : `ROSTER` (la lice seule) ou plus — les trois premiers vivants entrent */
+  readonly reserve: number;
 };
 
-const SOCLES: readonly Omit<Configuration, "permadeath">[] = [
+type Socle = Omit<Configuration, "permadeath" | "contrepartie" | "reserve">;
+
+/** Unités du coffre en lice : `partie.MAX_COFFRE`, la bible §5.4 (trois au plus). */
+export const ROSTER = 3;
+
+const SOCLES: readonly Socle[] = [
   { nom: "coup-64-27", regle: "coup", arbre: FEUILLES, salles: 27, parBande: 3 },
   { nom: "coup-64-9", regle: "coup", arbre: FEUILLES, salles: 9, parBande: 1 },
   { nom: "mort-32-27", regle: "mort", arbre: 32, salles: 27, parBande: 3 },
@@ -140,14 +191,38 @@ const SOCLES: readonly Omit<Configuration, "permadeath">[] = [
   { nom: "mort-64-9", regle: "mort", arbre: FEUILLES, salles: 9, parBande: 1 },
 ];
 
-/** Les douze configurations : les six socles, le roster qui revient puis en permadeath. */
-export const CONFIGURATIONS: readonly Configuration[] = [
-  ...SOCLES.map((c) => ({ ...c, permadeath: false })),
-  ...SOCLES.map((c) => ({ ...c, nom: `${c.nom}-pd`, permadeath: true })),
+/**
+ * Les sept contreparties d'A28, à 9 salles : (a) perdue, (b) recrue, (d) une
+ * réserve de 6, 9 ou 12 objets, puis (a) sur une réserve de 6 ou 9.
+ */
+const CONTREPARTIES: readonly { suffixe: string; contrepartie: Contrepartie; reserve: number }[] = [
+  { suffixe: "pd-perdue", contrepartie: "perdue", reserve: ROSTER },
+  { suffixe: "pd-recrue", contrepartie: "recrue", reserve: ROSTER },
+  { suffixe: "pd-r6", contrepartie: "aucune", reserve: 6 },
+  { suffixe: "pd-r9", contrepartie: "aucune", reserve: 9 },
+  { suffixe: "pd-r12", contrepartie: "aucune", reserve: 12 },
+  { suffixe: "pd-perdue-r6", contrepartie: "perdue", reserve: 6 },
+  { suffixe: "pd-perdue-r9", contrepartie: "perdue", reserve: 9 },
 ];
 
-/** Unités du coffre en lice : `partie.MAX_COFFRE`, la bible §5.4 (trois au plus). */
-export const ROSTER = 3;
+/**
+ * Les trente-trois configurations : les six socles, le roster qui revient
+ * puis en permadeath telle qu'écrite ; puis les trois socles à 9 salles sous
+ * chaque contrepartie.
+ */
+export const CONFIGURATIONS: readonly Configuration[] = [
+  ...SOCLES.map((c) => ({ ...c, permadeath: false, contrepartie: "aucune" as const, reserve: ROSTER })),
+  ...SOCLES.map((c) => ({ ...c, nom: `${c.nom}-pd`, permadeath: true, contrepartie: "aucune" as const, reserve: ROSTER })),
+  ...SOCLES.filter((c) => c.salles === 9).flatMap((c) =>
+    CONTREPARTIES.map((p) => ({
+      ...c,
+      nom: `${c.nom}-${p.suffixe}`,
+      permadeath: true,
+      contrepartie: p.contrepartie,
+      reserve: p.reserve,
+    })),
+  ),
+];
 
 /** Budget que rien n'entame, pour la règle « mort » : le moteur ne finit jamais sur `epuise`. */
 export const FEUILLES_SANS_FOND = 60_000;
@@ -205,9 +280,35 @@ export const ETALONS_VEILLEE_RAPIDE: Record<string, EtalonVeillee> = {
   "mort-32-9-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3983, mortsParBatailleMille: 1717, verdict: { tropCourt: true, tropLong: false, tient: false } },
   "mort-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
   "mort-64-9-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3983, mortsParBatailleMille: 1717, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-perdue": { arrivesMille: 292, restantesMediane: 25, gardentMille: 1000, coupsParBatailleMille: 4172, mortsParBatailleMille: 1851, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-recrue": { arrivesMille: 250, restantesMediane: 20, gardentMille: 1000, coupsParBatailleMille: 4077, mortsParBatailleMille: 1859, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-r6": { arrivesMille: 125, restantesMediane: 18, gardentMille: 1000, coupsParBatailleMille: 3685, mortsParBatailleMille: 1629, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-r9": { arrivesMille: 542, restantesMediane: 20, gardentMille: 1000, coupsParBatailleMille: 4105, mortsParBatailleMille: 1796, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-r12": { arrivesMille: 917, restantesMediane: 20, gardentMille: 1000, coupsParBatailleMille: 4203, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue": { arrivesMille: 292, restantesMediane: 9, gardentMille: 1000, coupsParBatailleMille: 4172, mortsParBatailleMille: 1851, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-recrue": { arrivesMille: 250, restantesMediane: 4, gardentMille: 333, coupsParBatailleMille: 4077, mortsParBatailleMille: 1859, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-r6": { arrivesMille: 125, restantesMediane: 9, gardentMille: 1000, coupsParBatailleMille: 3685, mortsParBatailleMille: 1629, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-r9": { arrivesMille: 542, restantesMediane: 9, gardentMille: 1000, coupsParBatailleMille: 4105, mortsParBatailleMille: 1796, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-r12": { arrivesMille: 917, restantesMediane: 9, gardentMille: 864, coupsParBatailleMille: 4203, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue": { arrivesMille: 292, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4172, mortsParBatailleMille: 1851, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-recrue": { arrivesMille: 250, restantesMediane: 36, gardentMille: 1000, coupsParBatailleMille: 4077, mortsParBatailleMille: 1859, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-r6": { arrivesMille: 125, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 3685, mortsParBatailleMille: 1629, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-r9": { arrivesMille: 542, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4105, mortsParBatailleMille: 1796, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-r12": { arrivesMille: 917, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4203, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue-r6": { arrivesMille: 667, restantesMediane: 24, gardentMille: 1000, coupsParBatailleMille: 4053, mortsParBatailleMille: 1905, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue-r9": { arrivesMille: 1000, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 4073, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue-r6": { arrivesMille: 667, restantesMediane: 10, gardentMille: 875, coupsParBatailleMille: 4053, mortsParBatailleMille: 1905, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue-r9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4073, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue-r6": { arrivesMille: 667, restantesMediane: 42, gardentMille: 1000, coupsParBatailleMille: 4053, mortsParBatailleMille: 1905, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue-r9": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4073, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
 };
 
-/** Le protocole complet (1 000 runs × 40 jours), rejoué le 2026-09-14 en ≈ 14 min : `npm run banc-veillee`. */
+/**
+ * Le protocole complet (1 000 runs × 40 jours) : `npm run banc-veillee`. Les
+ * douze socles rejoués le 2026-09-14 en ≈ 14 min ; les vingt et une
+ * contreparties d'A28 le 2026-09-15, en trois lots de sept (une règle par
+ * lot, ≈ 6,5 min chacun) — ≈ 35 min pour les trente-trois d'une traite.
+ */
 export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
   "coup-64-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3687, mortsParBatailleMille: 1694, verdict: { tropCourt: true, tropLong: false, tient: false } },
   "coup-64-9": { arrivesMille: 997, restantesMediane: 23, gardentMille: 985, coupsParBatailleMille: 4192, mortsParBatailleMille: 1882, verdict: { tropCourt: false, tropLong: true, tient: false } },
@@ -221,6 +322,27 @@ export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
   "mort-32-9-pd": { arrivesMille: 4, restantesMediane: 7, gardentMille: 750, coupsParBatailleMille: 3904, mortsParBatailleMille: 1753, verdict: { tropCourt: true, tropLong: false, tient: false } },
   "mort-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3649, mortsParBatailleMille: 1647, verdict: { tropCourt: true, tropLong: false, tient: false } },
   "mort-64-9-pd": { arrivesMille: 4, restantesMediane: 39, gardentMille: 1000, coupsParBatailleMille: 3904, mortsParBatailleMille: 1753, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-perdue": { arrivesMille: 227, restantesMediane: 19, gardentMille: 956, coupsParBatailleMille: 4417, mortsParBatailleMille: 1982, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-recrue": { arrivesMille: 120, restantesMediane: 16, gardentMille: 933, coupsParBatailleMille: 4108, mortsParBatailleMille: 1914, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-r6": { arrivesMille: 90, restantesMediane: 20, gardentMille: 989, coupsParBatailleMille: 3864, mortsParBatailleMille: 1702, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-r9": { arrivesMille: 431, restantesMediane: 22, gardentMille: 993, coupsParBatailleMille: 4090, mortsParBatailleMille: 1810, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-r12": { arrivesMille: 818, restantesMediane: 22, gardentMille: 991, coupsParBatailleMille: 4208, mortsParBatailleMille: 1866, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue-r6": { arrivesMille: 631, restantesMediane: 21, gardentMille: 979, coupsParBatailleMille: 4288, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue-r9": { arrivesMille: 904, restantesMediane: 22, gardentMille: 985, coupsParBatailleMille: 4279, mortsParBatailleMille: 1896, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue": { arrivesMille: 230, restantesMediane: 7, gardentMille: 648, coupsParBatailleMille: 4420, mortsParBatailleMille: 1983, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-recrue": { arrivesMille: 108, restantesMediane: 3, gardentMille: 111, coupsParBatailleMille: 4107, mortsParBatailleMille: 1913, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-r6": { arrivesMille: 90, restantesMediane: 8, gardentMille: 789, coupsParBatailleMille: 3864, mortsParBatailleMille: 1702, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-r9": { arrivesMille: 431, restantesMediane: 9, gardentMille: 821, coupsParBatailleMille: 4090, mortsParBatailleMille: 1810, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-r12": { arrivesMille: 818, restantesMediane: 9, gardentMille: 828, coupsParBatailleMille: 4208, mortsParBatailleMille: 1866, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue-r6": { arrivesMille: 634, restantesMediane: 8, gardentMille: 782, coupsParBatailleMille: 4290, mortsParBatailleMille: 1902, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-pd-perdue-r9": { arrivesMille: 907, restantesMediane: 9, gardentMille: 817, coupsParBatailleMille: 4280, mortsParBatailleMille: 1897, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue": { arrivesMille: 230, restantesMediane: 39, gardentMille: 1000, coupsParBatailleMille: 4420, mortsParBatailleMille: 1983, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-recrue": { arrivesMille: 120, restantesMediane: 34, gardentMille: 1000, coupsParBatailleMille: 4108, mortsParBatailleMille: 1914, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-r6": { arrivesMille: 90, restantesMediane: 40, gardentMille: 1000, coupsParBatailleMille: 3864, mortsParBatailleMille: 1702, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-r9": { arrivesMille: 431, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4090, mortsParBatailleMille: 1810, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-r12": { arrivesMille: 818, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4208, mortsParBatailleMille: 1866, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue-r6": { arrivesMille: 634, restantesMediane: 40, gardentMille: 1000, coupsParBatailleMille: 4290, mortsParBatailleMille: 1902, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue-r9": { arrivesMille: 907, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4280, mortsParBatailleMille: 1897, verdict: { tropCourt: false, tropLong: true, tient: false } },
 };
 
 export type FinRun = "sommet" | "epuise";
@@ -242,6 +364,10 @@ export type Run = {
   readonly premiereDefaite: number | null;
   /** salle où le roster s'est vidé (permadeath), ou null */
   readonly rosterBalaye: number | null;
+  /** unités qui ont quitté le coffre (permadeath) */
+  readonly perdues: number;
+  /** captures qui l'ont rejoint (« recrue »), une feuille chacune */
+  readonly recrues: number;
 };
 
 export type MesuresConfiguration = {
@@ -250,6 +376,8 @@ export type MesuresConfiguration = {
   readonly arbre: number;
   readonly salles: number;
   readonly permadeath: boolean;
+  readonly contrepartie: Contrepartie;
+  readonly reserve: number;
   readonly runs: number;
   /** runs arrivés au sommet — en permadeath, avec un roster vivant */
   readonly arrivesMille: number;
@@ -263,6 +391,9 @@ export type MesuresConfiguration = {
   /** permadeath : runs dont le roster s'est vidé, et à quelle salle en médiane */
   readonly rosterBalayeMille: number;
   readonly salleBalayeMediane: number | null;
+  /** permadeath : unités perdues et recrues par run, en millièmes (le puits) */
+  readonly perduesParRunMille: number;
+  readonly recruesParRunMille: number;
   /** parmi les arrivés */
   readonly restantesQ1: number | null;
   readonly restantesMediane: number | null;
@@ -308,16 +439,39 @@ export function etageDeSalles(i: number, p: number, parBande: number): number {
 export type Membre = { readonly objet: Objet; readonly classe: Classe };
 
 /**
- * Le roster d'un run : trois objets tirés par empreinte du seul rang `k` —
- * la même équipe pour les douze configurations —, la classe lue du mot
- * (`classeDuMot`, la règle de `partie.ts`) et attachée à l'objet : en
+ * Le roster d'un run : `reserve` objets tirés par empreinte du seul rang `k`
+ * — les trois premiers sont la même équipe pour toutes les configurations,
+ * une réserve plus longue les prolonge sans les changer —, la classe lue du
+ * mot (`classeDuMot`, la règle de `partie.ts`) et attachée à l'objet : en
  * permadeath, un survivant garde sa classe quand un coéquipier tombe.
  */
-export function rosterDe(k: number): Membre[] {
-  return Array.from({ length: ROSTER }, (_, j) => {
+export function rosterDe(k: number, reserve: number = ROSTER): Membre[] {
+  return Array.from({ length: reserve }, (_, j) => {
     const objet = objetDepuisGraine(sha256d(utf8(`roster-${k}-${j}`)), ageDeOctet(k + j));
     return { objet, classe: classeDuMot(objet.mot) };
   });
+}
+
+/**
+ * La recrue d'une salle gagnée (« recrue ») : le premier Indéchiffré de
+ * l'étage, lu comme `partie.indechiffresDe` le lit — `captureDe` puis
+ * `objetDePorte`, la classe du mot. Le même objet que celui qu'on vient
+ * d'abattre : la capture le relève, elle n'en invente pas un autre — ce que
+ * le jeu ne permet pas aujourd'hui (voir l'en-tête : (b) est un plafond).
+ */
+export function recrueDe(etage: number): Membre {
+  const objet = objetDePorte(captureDe(occupantsDe(etage)[0]!, etage, 0));
+  return { objet, classe: classeDuMot(objet.mot) };
+}
+
+/**
+ * La garde de la recrue : une capture coûte une feuille, le bot ne la paie
+ * que s'il garde ensuite une feuille par salle qui reste à franchir — de la
+ * salle `salle` à la dernière (`derniere`), `derniere − salle` franchirs, le
+ * dernier étant le sommet, qui peut vider l'arbre.
+ */
+export function peutRecruter(budget: number, salle: number, derniere: number): boolean {
+  return budget - 1 >= derniere - salle;
 }
 
 function armee(roster: readonly Membre[], etage: number): Unite[] {
@@ -352,12 +506,13 @@ function mille(x: number): number {
  * Un run entier sous une configuration : le jour `d`, le roster `k`, le
  * xorshift du run — tous trois indépendants de la configuration. Les salles
  * `0 … salles − 2` se jouent, chacune suivie d'un franchir ; le dernier
- * franchir est le sommet.
+ * franchir est le sommet. Le coffre (`roster`) garde l'ordre du tirage ; en
+ * lice, ses `ROSTER` premiers vivants — l'unité d'id `j` est `roster[j]`.
  */
 export function jouerRun(cfg: Configuration, d: number, k: number): Run {
   const graine = graineDuJour(hexOf(sha256d(utf8(`banc-veillee/jour-${d}`))));
   const alea = xorshift(u32De(`run-${d}-${k}`));
-  const rosterInitial = rosterDe(k);
+  const rosterInitial = rosterDe(k, cfg.reserve);
   const mot = rosterInitial[0]!.objet.mot;
   const coffreVide = { objets: [], tour: tourVide() };
   let roster = rosterInitial;
@@ -373,6 +528,8 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
   let epuisees = 0;
   let premiereDefaite: number | null = null;
   let rosterBalaye: number | null = null;
+  let perdues = 0;
+  let recrues = 0;
   const epuise = (salle: number): Run => ({
     fin: "epuise",
     salle,
@@ -386,12 +543,15 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
     epuisees,
     premiereDefaite,
     rosterBalaye,
+    perdues,
+    recrues,
   });
   const derniere = cfg.salles - 1;
   for (let salle = 0; salle < derniere; salle++) {
     etage = etageDeSalles(salle, p, cfg.parBande);
     if (roster.length > 0) {
-      const coffre = armee(roster, etage);
+      const enLice = roster.slice(0, ROSTER);
+      const coffre = armee(enLice, etage);
       const ennemis = indechiffresDe(
         coffreVide,
         etage,
@@ -407,20 +567,32 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
       const mortsIci = etat.unites.filter((u) => u.camp === "indechiffre" && !vivante(u)).length;
       coups += coupsIci;
       morts += mortsIci;
+      const perdue = etat.fin !== null && etat.fin.issue === "defaite";
+      const gagnee = etat.fin !== null && etat.fin.issue === "victoire";
       if (etat.fin === null) nuls += 1;
-      else if (etat.fin.issue === "victoire") victoires += 1;
-      else if (etat.fin.issue === "defaite") {
+      else if (gagnee) victoires += 1;
+      else if (perdue) {
         defaites += 1;
         if (premiereDefaite === null) premiereDefaite = salle;
       } else epuisees += 1;
+      budget = cfg.regle === "coup" ? etat.feuilles : budget - mortsIci;
       if (cfg.permadeath) {
+        // « perdue » : gagnée ou nulle, une tombée est K.O. et revient ; perdue, elle quitte le coffre
+        const retire = cfg.contrepartie !== "perdue" || perdue;
         const tombees = new Set(
-          etat.unites.filter((u) => u.camp === "coffre" && !vivante(u)).map((u) => u.id),
+          retire ? etat.unites.filter((u) => u.camp === "coffre" && !vivante(u)).map((u) => u.id) : [],
         );
         roster = roster.filter((_, j) => !tombees.has(j));
+        perdues += tombees.size;
+        // « recrue » : une capture par salle gagnée, une feuille, si le roster est court
+        // et qu'il reste après une feuille par salle encore à franchir
+        if (cfg.contrepartie === "recrue" && gagnee && roster.length < ROSTER && peutRecruter(budget, salle, derniere)) {
+          roster = [...roster, recrueDe(etage)];
+          recrues += 1;
+          budget -= 1;
+        }
         if (roster.length === 0 && rosterBalaye === null) rosterBalaye = salle;
       }
-      budget = cfg.regle === "coup" ? etat.feuilles : budget - mortsIci;
       // l'arbre nu est une fin : sous « coup » le moteur l'a dit (`epuise`),
       // sous « mort » un retrait de plus que de feuilles l'est aussi
       if (budget <= 0) return epuise(salle);
@@ -445,6 +617,8 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
     epuisees,
     premiereDefaite,
     rosterBalaye,
+    perdues,
+    recrues,
   };
 }
 
@@ -471,6 +645,8 @@ export function mesurer(cfg: Configuration, runs: readonly Run[]): MesuresConfig
     arbre: cfg.arbre,
     salles: cfg.salles,
     permadeath: cfg.permadeath,
+    contrepartie: cfg.contrepartie,
+    reserve: cfg.reserve,
     runs: n,
     arrivesMille,
     epuisesMille: mille(epuises.length / n),
@@ -480,6 +656,8 @@ export function mesurer(cfg: Configuration, runs: readonly Run[]): MesuresConfig
     premiereDefaiteMediane: mediane(avecDefaite.map((r) => r.premiereDefaite!)),
     rosterBalayeMille: mille(balayes.length / n),
     salleBalayeMediane: mediane(balayes.map((r) => r.rosterBalaye!)),
+    perduesParRunMille: mille(somme((r) => r.perdues) / n),
+    recruesParRunMille: mille(somme((r) => r.recrues) / n),
     restantesQ1: quartile(restantes, 1),
     restantesMediane: mediane(restantes),
     restantesQ3: quartile(restantes, 3),
@@ -511,12 +689,12 @@ export function bancVeillee(mode: ModeVeillee = "rapide", noms: readonly string[
 export function formaterResultat(r: ResultatVeillee): string {
   const lignes = [
     `banc de la veillée — ${r.mode} : ${r.parametres.runs} runs sur ${r.parametres.jours} jours par configuration ; seuils : arrivés ≥ ${r.seuils.arriveeMin} ‰, gardent > ${r.seuils.inutilisees} feuilles ≤ ${r.seuils.gardentMax} ‰`,
-    "configuration | arrivés ‰ (pd : roster vivant) | épuisés ‰ (salle méd.) | restantes Q1/méd/Q3 | gardent > 6 ‰ | coups/bat. | morts/bat. | bat. gagnées/perdues/nulles/épuisées ‰ | runs avec défaite ‰ (1re, méd.) | roster balayé ‰ (salle méd.) | verdict",
+    "configuration | arrivés ‰ (pd : roster vivant) | épuisés ‰ (salle méd.) | restantes Q1/méd/Q3 | gardent > 6 ‰ | coups/bat. | morts/bat. | bat. gagnées/perdues/nulles/épuisées ‰ | runs avec défaite ‰ (1re, méd.) | roster balayé ‰ (salle méd.) | perdues/run | recrues/run | verdict",
   ];
   for (const c of r.configurations) {
     const v = c.verdict.tient ? "tient" : [c.verdict.tropCourt ? "trop court" : "", c.verdict.tropLong ? "trop long" : ""].filter(Boolean).join(", ");
     lignes.push(
-      `${c.nom} | ${c.arrivesMille} | ${c.epuisesMille} (${c.salleEpuiseMediane ?? "—"}) | ${c.restantesQ1 ?? "—"}/${c.restantesMediane ?? "—"}/${c.restantesQ3 ?? "—"} | ${c.gardentMille ?? "—"} | ${(c.coupsParBatailleMille / 1000).toFixed(2)} | ${(c.mortsParBatailleMille / 1000).toFixed(2)} | ${c.victoiresMille}/${c.defaitesBatailleMille}/${c.nulsMille}/${c.epuiseesBatailleMille} | ${c.runsAvecDefaiteMille} (${c.premiereDefaiteMediane ?? "—"}) | ${c.rosterBalayeMille} (${c.salleBalayeMediane ?? "—"}) | ${v}`,
+      `${c.nom} | ${c.arrivesMille} | ${c.epuisesMille} (${c.salleEpuiseMediane ?? "—"}) | ${c.restantesQ1 ?? "—"}/${c.restantesMediane ?? "—"}/${c.restantesQ3 ?? "—"} | ${c.gardentMille ?? "—"} | ${(c.coupsParBatailleMille / 1000).toFixed(2)} | ${(c.mortsParBatailleMille / 1000).toFixed(2)} | ${c.victoiresMille}/${c.defaitesBatailleMille}/${c.nulsMille}/${c.epuiseesBatailleMille} | ${c.runsAvecDefaiteMille} (${c.premiereDefaiteMediane ?? "—"}) | ${c.rosterBalayeMille} (${c.salleBalayeMediane ?? "—"}) | ${(c.perduesParRunMille / 1000).toFixed(2)} | ${(c.recruesParRunMille / 1000).toFixed(2)} | ${v}`,
     );
   }
   return lignes.join("\n");
