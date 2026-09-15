@@ -18,7 +18,7 @@
 |---|---|---|
 | `tirerObjet(sig, hashBloc, age)`, `graineTirage` | Eidos `objets.ts` | la naissance d'un objet depuis une signature et un bloc : « le joueur ne choisit pas le bloc, le validateur ne choisit pas la sig » |
 | `feuilleObjet`, `sceauObjet`, `canoniserMot` | Eidos `objets.ts` | l'identité d'un objet (mot canon, archétype, âge) et son sceau lisible |
-| `ficheDe`, `texteFiche` | Eidos `fiche.ts` | la lecture complète d'un objet, en quatre registres |
+| `ficheDe`, `texteFiche` | Eidos `fiche.ts` | la lecture complète d'un objet (`Fiche`, une donnée) et ses phrases en trois registres et un pied, sous la règle d'écriture |
 | format de transaction, témoin absent `flag = 0`, `sighash(i) = SHA-256(txid ‖ i)` | Eidos `utxo.py`, `envoi.ts` | une transaction partielle se sérialise, chaque entrée est signée séparément sur le même cœur |
 | envoi par issue `-----EIDOS-----`, `construire_envois`, expiration `T` | Eidos `robinet.py`, `noeud.py` | le dépôt et la validation d'une transaction sans serveur |
 | tête signée, `utxo_root`, `preuveReseau`, `jugerSortieReseau` | Eidos `temoin.ts` | prouver qu'une pièce est non dépensée sans rejouer |

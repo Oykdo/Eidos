@@ -7,11 +7,15 @@
  * âges (un métal chacun), dix genres, six affixes, trois polarités, neuf
  * tempéraments de muse. FR et EN, même nombre partout.
  *
- * Ton : une phrase, un verbe, une règle vraie. Chaque entrée cite quelque chose
- * que le code fait — la norme ne change jamais, T·q avant et q·S après, deux
- * compositions par tour depuis l'ascendant, une capsule prend à même orbite.
- * Rien ici n'invente une puissance : un objet rare est plus orienté, pas plus
- * fort.
+ * Ton : la règle d'écriture de l'atelier (`lib/ecriture.ts`, décision d'auteur
+ * du 2026-09-14) — une idée par phrase, vingt-cinq mots au plus, et jamais le
+ * vocabulaire de la chaîne : le joueur lit une pièce, une pierre, un axe, une
+ * orbite, un sceau, jamais un quaternion, une norme ou un produit. Chaque
+ * entrée cite quelque chose que le code fait — une pierre consomme la pièce
+ * qu'elle tourne, une gemme change la lecture et non la pièce, une capsule
+ * prend à même orbite. Rien ici n'invente une puissance : un objet rare est
+ * plus orienté, pas plus fort. `fiche.test.ts` passe chaque entrée par
+ * `manquements()` : un mot banni ou une phrase trop longue casse le test.
  *
  * Le lexique est une jauge : le changer ne change ni un mot ni une feuille.
  * fiche.ts choisit les entrées par des fonctions pures du mot ; ce fichier ne
@@ -29,117 +33,128 @@ import type { Polarite } from "./resonance.ts";
 export type Langue = "fr" | "en";
 export type Bilingue = { readonly fr: string; readonly en: string };
 
-/** Noms affichés des régimes : accents en français, traduction en anglais. */
-export const NOMS_REGIME: Record<Regime, Bilingue> = {
-  Vide: { fr: "Vide", en: "Void" },
-  Nebuleuse: { fr: "Nébuleuse", en: "Nebula" },
-  Pulsar: { fr: "Pulsar", en: "Pulsar" },
-  Eclipse: { fr: "Éclipse", en: "Eclipse" },
-  Comete: { fr: "Comète", en: "Comet" },
-  Horizon: { fr: "Horizon", en: "Horizon" },
-  Quasar: { fr: "Quasar", en: "Quasar" },
+/**
+ * Noms affichés des régimes : accents en français, traduction en anglais ;
+ * `de` et `le` portent l'article français (« d'Éclipse », « la Nébuleuse »),
+ * l'anglais dit toujours « of the », « the ».
+ */
+export type NomRegime = Bilingue & { readonly de: string; readonly le: string };
+
+export const NOMS_REGIME: Record<Regime, NomRegime> = {
+  Vide: { fr: "Vide", en: "Void", de: "du Vide", le: "le Vide" },
+  Nebuleuse: { fr: "Nébuleuse", en: "Nebula", de: "de Nébuleuse", le: "la Nébuleuse" },
+  Pulsar: { fr: "Pulsar", en: "Pulsar", de: "de Pulsar", le: "le Pulsar" },
+  Eclipse: { fr: "Éclipse", en: "Eclipse", de: "d'Éclipse", le: "l'Éclipse" },
+  Comete: { fr: "Comète", en: "Comet", de: "de Comète", le: "la Comète" },
+  Horizon: { fr: "Horizon", en: "Horizon", de: "d'Horizon", le: "l'Horizon" },
+  Quasar: { fr: "Quasar", en: "Quasar", de: "de Quasar", le: "le Quasar" },
 };
 
-export const NOMS_CLASSE: Record<Classe, Bilingue> = {
-  arme: { fr: "arme", en: "weapon" },
-  defense: { fr: "défense", en: "defence" },
-  accessoire: { fr: "accessoire", en: "accessory" },
+/** Les classes, avec leur article et leur genre français (arme et défense au féminin). */
+export type NomClasse = Bilingue & { readonly un: string; readonly feminin: boolean };
+
+export const NOMS_CLASSE: Record<Classe, NomClasse> = {
+  arme: { fr: "arme", en: "weapon", un: "une", feminin: true },
+  defense: { fr: "défense", en: "defence", un: "une", feminin: true },
+  accessoire: { fr: "accessoire", en: "accessory", un: "un", feminin: false },
 };
 
 /**
- * Vingt et un caractères, un par cellule de la doxa. Chaque phrase dit la
- * classe (ce qu'elle fait dans une résonance : deux armes se nuisent, une
- * défense tient l'axe, un accessoire déplace) et le régime (sa manière).
+ * Vingt et un caractères, un par cellule de la doxa : la manière de la classe
+ * (deux armes se gênent, une défense tient l'axe, un accessoire déplace) sous
+ * le régime. La phrase commence au pronom — « elle » pour une arme ou une
+ * défense, « il » pour un accessoire — parce que la fiche vient de nommer la
+ * classe et le régime juste avant (registre forme) : on ne les répète pas.
  */
 export const CARACTERES: Record<Classe, Record<Regime, Bilingue>> = {
   arme: {
     Vide: {
-      fr: "Arme du Vide : elle ne vise personne et se compose contre elle-même, son ascendant est le Vide.",
-      en: "Weapon of the Void: it aims at no one and composes against its own kind; the Void is its own ascendant.",
+      fr: "Elle ne vise personne et ne se retourne que contre elle-même.",
+      en: "It aims at no one and turns only against itself.",
     },
     Nebuleuse: {
-      fr: "Arme de Nébuleuse : diffuse, elle s'étend sur ce qu'elle frappe et ne rend jamais deux fois le même mot.",
-      en: "Weapon of the Nebula: diffuse, it spreads over what it strikes and never returns the same word twice.",
+      fr: "Diffuse, elle s'étend sur ce qu'elle frappe et ne frappe jamais deux fois pareil.",
+      en: "Diffuse, it spreads over what it strikes and never strikes the same way twice.",
     },
     Pulsar: {
-      fr: "Arme de Pulsar : elle bat en cadence ; composée deux fois, elle revient presque sur son axe.",
-      en: "Weapon of the Pulsar: it beats in time; composed twice, it comes almost back onto its axis.",
+      fr: "Elle bat en cadence ; deux coups, et elle revient presque sur son axe.",
+      en: "It beats in time; two strokes, and it comes almost back onto its axis.",
     },
     Eclipse: {
-      fr: "Arme d'Éclipse : elle couvre l'axe qu'elle vise et ne laisse paraître que le bord.",
-      en: "Weapon of the Eclipse: it covers the axis it aims at and lets only the rim show.",
+      fr: "Elle couvre ce qu'elle vise et ne laisse paraître que le bord.",
+      en: "It covers what it aims at and lets only the rim show.",
     },
     Comete: {
-      fr: "Arme de Comète : elle passe en ligne droite, tourne peu, et laisse une traîne dans l'ensemble.",
-      en: "Weapon of the Comet: it passes in a straight line, turns little, and leaves a trail in the ensemble.",
+      fr: "Elle passe en ligne droite, tourne peu, et laisse une traîne derrière elle.",
+      en: "It passes in a straight line, turns little, and leaves a trail behind.",
     },
     Horizon: {
-      fr: "Arme d'Horizon : elle sépare ; ce qui est au-dessus de son axe tient, ce qui est en dessous bascule.",
-      en: "Weapon of the Horizon: it divides; what stands above its axis holds, what lies below tips over.",
+      fr: "Elle sépare ; ce qui est au-dessus tient, ce qui est en dessous bascule.",
+      en: "It divides; what stands above holds, what lies below tips over.",
     },
     Quasar: {
-      fr: "Arme de Quasar : tout son mot est dans une seule direction, et cette direction se voit de loin.",
-      en: "Weapon of the Quasar: its whole word points one way, and that way is seen from afar.",
+      fr: "Tout son élan va dans une seule direction, et cette direction se voit de loin.",
+      en: "All its drive goes one way, and that way is seen from afar.",
     },
   },
   defense: {
     Vide: {
-      fr: "Défense du Vide : elle ne tient aucun axe et n'en cède aucun ; conjuguée, elle rend le mot tel quel.",
-      en: "Defence of the Void: it holds no axis and yields none; conjugated, it gives the word back unchanged.",
+      fr: "Elle ne tient aucun axe et n'en cède aucun ; elle rend ce qu'on lui donne, tel quel.",
+      en: "It holds no axis and yields none; it gives back what it is given, unchanged.",
     },
     Nebuleuse: {
-      fr: "Défense de Nébuleuse : elle absorbe en s'élargissant ; l'alignement se perd dans son épaisseur.",
-      en: "Defence of the Nebula: it absorbs by widening; alignment gets lost in its thickness.",
+      fr: "Elle absorbe en s'élargissant ; ce qui la vise se perd dans son épaisseur.",
+      en: "It absorbs by widening; what aims at it gets lost in its thickness.",
     },
     Pulsar: {
-      fr: "Défense de Pulsar : elle tient par intermittence, à chaque battement de sa figure.",
-      en: "Defence of the Pulsar: it holds intermittently, on every beat of its figure.",
+      fr: "Elle tient par intermittence, à chaque battement.",
+      en: "It holds intermittently, on every beat.",
     },
     Eclipse: {
-      fr: "Défense d'Éclipse : elle se place devant l'axe visé et le rend invisible sans le déplacer.",
-      en: "Defence of the Eclipse: it stands before the aimed axis and hides it without moving it.",
+      fr: "Elle se place devant ce qu'on vise et le cache sans le déplacer.",
+      en: "It stands before what is aimed at and hides it without moving it.",
     },
     Comete: {
-      fr: "Défense de Comète : elle dévie plus qu'elle n'arrête ; l'axe glisse le long de sa traîne.",
-      en: "Defence of the Comet: it deflects more than it stops; the axis slides along its trail.",
+      fr: "Elle dévie plus qu'elle n'arrête ; le coup glisse le long de sa traîne.",
+      en: "It deflects more than it stops; the blow slides along its trail.",
     },
     Horizon: {
-      fr: "Défense d'Horizon : une ligne tenue ; au seuil élite, quatre-vingt-sept centièmes, rien ne passe.",
-      en: "Defence of the Horizon: a line held; at the elite threshold, eighty-seven hundredths, nothing passes.",
+      fr: "Une ligne tenue ; bien alignée, rien ne passe.",
+      en: "A line held; well aligned, nothing passes.",
     },
     Quasar: {
-      fr: "Défense de Quasar : elle rayonne sur un seul axe et laisse tous les autres ouverts.",
-      en: "Defence of the Quasar: it radiates along one axis and leaves every other one open.",
+      fr: "Elle rayonne sur un seul axe et laisse tous les autres ouverts.",
+      en: "It radiates along one axis and leaves every other one open.",
     },
   },
   accessoire: {
     Vide: {
-      fr: "Accessoire du Vide : il ne déplace rien ; porté, il conjugue par l'identité.",
-      en: "Accessory of the Void: it moves nothing; carried, it conjugates by the identity.",
+      fr: "Il ne déplace rien ; porté, il laisse la pièce telle quelle.",
+      en: "It moves nothing; carried, it leaves the piece as it is.",
     },
     Nebuleuse: {
-      fr: "Accessoire de Nébuleuse : il brouille l'axe de ce qu'il conjugue et le rend plus large.",
-      en: "Accessory of the Nebula: it blurs the axis of what it conjugates and makes it wider.",
+      fr: "Il brouille l'axe de ce qu'il touche et le rend plus large.",
+      en: "It blurs the axis of what it touches and makes it wider.",
     },
     Pulsar: {
-      fr: "Accessoire de Pulsar : il donne le tempo ; conjugué par lui, un mot bat à sa cadence.",
-      en: "Accessory of the Pulsar: it sets the tempo; conjugated by it, a word beats at its pace.",
+      fr: "Il donne le tempo ; ce qu'il touche bat à sa cadence.",
+      en: "It sets the tempo; what it touches beats at its pace.",
     },
     Eclipse: {
-      fr: "Accessoire d'Éclipse : il cache l'axe de ce qu'il porte, sans en changer l'orbite.",
-      en: "Accessory of the Eclipse: it hides the axis of what it carries, without changing its orbit.",
+      fr: "Il cache l'axe de ce qu'il porte, sans en changer l'orbite.",
+      en: "It hides the axis of what it carries, without changing its orbit.",
     },
     Comete: {
-      fr: "Accessoire de Comète : il entraîne ; ce qu'il conjugue suit sa direction un moment.",
-      en: "Accessory of the Comet: it drags along; what it conjugates follows its direction for a while.",
+      fr: "Il entraîne ; ce qu'il touche suit sa direction un moment.",
+      en: "It drags along; what it touches follows its direction for a while.",
     },
     Horizon: {
-      fr: "Accessoire d'Horizon : il pose une limite ; conjugué par lui, un mot tient ou bascule, jamais entre.",
-      en: "Accessory of the Horizon: it sets a limit; conjugated by it, a word holds or tips, never in between.",
+      fr: "Il pose une limite ; ce qu'il touche tient ou bascule, jamais entre les deux.",
+      en: "It sets a limit; what it touches holds or tips, never in between.",
     },
     Quasar: {
-      fr: "Accessoire de Quasar : il oriente tout ce qu'il touche vers le même point du ciel.",
-      en: "Accessory of the Quasar: it turns everything it touches toward the same point of the sky.",
+      fr: "Il oriente tout ce qu'il touche vers le même point du ciel.",
+      en: "It turns everything it touches toward the same point of the sky.",
     },
   },
 };
@@ -147,67 +162,71 @@ export const CARACTERES: Record<Classe, Record<Regime, Bilingue>> = {
 /** Les quatre orbites : la première figure de la lecture, min(3, 4|w|/|q|). */
 export const ORBITES: readonly Bilingue[] = [
   {
-    fr: "Orbite vide · : presque un demi-tour ; composé avec lui-même, il revient sur ses pas.",
-    en: "Empty orbit ·: almost a half-turn; composed with itself, it comes back on its steps.",
+    fr: "Orbite · : presque un demi-tour ; sur lui-même, il revient sur ses pas.",
+    en: "Orbit ·: almost a half-turn; on itself, it comes back on its steps.",
   },
   {
-    fr: "Orbite du cercle ○ : un grand angle ; il retourne plus qu'il ne tient.",
-    en: "Orbit of the circle ○: a wide angle; it overturns more than it holds.",
+    fr: "Orbite ○ : un grand angle ; il retourne plus qu'il ne tient.",
+    en: "Orbit ○: a wide angle; it overturns more than it holds.",
   },
   {
-    fr: "Orbite du croissant ☽ : un angle franc ; il tourne et il tient.",
-    en: "Orbit of the crescent ☽: a frank angle; it turns and it holds.",
+    fr: "Orbite ☽ : un angle franc ; il tourne et il tient.",
+    en: "Orbit ☽: a frank angle; it turns and it holds.",
   },
   {
-    fr: "Orbite de la croix ✚ : un petit angle, près du repos ; il tient tout et tourne peu.",
-    en: "Orbit of the cross ✚: a small angle, near rest; it holds everything and turns little.",
+    fr: "Orbite ✚ : un petit angle, près du repos ; il tient tout et tourne peu.",
+    en: "Orbit ✚: a small angle, near rest; it holds everything and turns little.",
   },
 ];
 
-/** Cinq raretés par proximité à la forme la plus proche (centièmes d'alignement). */
+/**
+ * Cinq raretés par proximité à la forme la plus proche (centièmes d'alignement).
+ * `nom` porte le féminin (une arme franche) ; `texte` est la suite de la
+ * phrase « Une arme d'Éclipse, franche : … » — sans majuscule ni point.
+ */
 export const RARETES: readonly {
   readonly seuil: number;
-  readonly nom: Bilingue;
+  readonly nom: Bilingue & { readonly fem: string };
   readonly texte: Bilingue;
 }[] = [
   {
     seuil: 97,
-    nom: { fr: "pur", en: "pure" },
+    nom: { fr: "pur", fem: "pure", en: "pure" },
     texte: {
-      fr: "Pur : à trois centièmes de sa forme ; la distance angulaire à l'archétype est la rareté, sans table.",
-      en: "Pure: within three hundredths of its form; the angular distance to the archetype is the rarity, no table.",
+      fr: "sa forme est nette, rien ne s'en écarte",
+      en: "its form is clean, nothing strays from it",
     },
   },
   {
     seuil: 90,
-    nom: { fr: "franc", en: "frank" },
+    nom: { fr: "franc", fem: "franche", en: "frank" },
     texte: {
-      fr: "Franc : sa forme se reconnaît au premier regard, avec un écart qui lui appartient.",
-      en: "Frank: its form is known at first sight, with a deviation of its own.",
+      fr: "sa forme se reconnaît au premier regard, avec un écart qui lui appartient",
+      en: "its form is known at first sight, with a deviation of its own",
     },
   },
   {
     seuil: 78,
-    nom: { fr: "mêlé", en: "mingled" },
+    nom: { fr: "mêlé", fem: "mêlée", en: "mingled" },
     texte: {
-      fr: "Mêlé : entre deux formes du catalogue, plus proche de l'une ; la cellule se lit, elle ne se déclare pas.",
-      en: "Mingled: between two forms of the catalogue, closer to one; the cell is read, never declared.",
+      fr: "entre deux formes, plus proche de celle-ci",
+      en: "between two forms, closer to this one",
     },
   },
   {
     seuil: 60,
-    nom: { fr: "hybride", en: "hybrid" },
+    nom: { fr: "hybride", fem: "hybride", en: "hybrid" },
     texte: {
-      fr: "Hybride : aucune forme ne le tient ; il vit entre les cases du treillis.",
-      en: "Hybrid: no form holds it; it lives between the cells of the lattice.",
+      fr: "entre plusieurs formes, sans en tenir aucune",
+      en: "between several forms, holding to none",
     },
   },
   {
     seuil: 0,
-    nom: { fr: "errant", en: "errant" },
+    nom: { fr: "errant", fem: "errante", en: "errant" },
     texte: {
-      fr: "Errant : loin de tout archétype ; rare par la géométrie, pas par la puissance, la norme est la même.",
-      en: "Errant: far from every archetype; rare by geometry, not by power, the norm is the same.",
+      fr: "loin de toute forme ; rare par la géométrie, pas par la force",
+      en: "far from every form; rare by geometry, not by strength",
     },
   },
 ];
@@ -222,8 +241,8 @@ export const AGES: Record<
     metal: { fr: "or", en: "gold" },
     a: 40,
     texte: {
-      fr: "Né sous Satya, a = 40 : l'or. L'âge est une géographie, pas une puissance ; la norme du mot est la même à tout âge.",
-      en: "Born under Satya, a = 40: gold. An age is a geography, not a power; the norm of the word is the same in every age.",
+      fr: "Sous Satya, l'âge de l'or : le premier, le plus long.",
+      en: "Under Satya, the age of gold: the first, the longest.",
     },
   },
   Treta: {
@@ -231,8 +250,8 @@ export const AGES: Record<
     metal: { fr: "argent", en: "silver" },
     a: 30,
     texte: {
-      fr: "Né sous Trétâ, a = 30 : l'argent. Rien de Satya ne se reproduit ; rien de Trétâ ne vaut plus.",
-      en: "Born under Tretâ, a = 30: silver. Nothing of Satya is reproduced; nothing of Tretâ is worth more.",
+      fr: "Sous Trétâ, l'âge de l'argent : le deuxième des quatre.",
+      en: "Under Tretâ, the age of silver: the second of four.",
     },
   },
   Dvapara: {
@@ -240,8 +259,8 @@ export const AGES: Record<
     metal: { fr: "cuivre", en: "copper" },
     a: 20,
     texte: {
-      fr: "Né sous Dvâpara, a = 20 : le cuivre. La moitié de l'émission est derrière lui ; sa rareté est son histoire.",
-      en: "Born under Dvâpara, a = 20: copper. Half the emission lies behind it; its rarity is its history.",
+      fr: "Sous Dvâpara, l'âge du cuivre : le troisième des quatre.",
+      en: "Under Dvâpara, the age of copper: the third of four.",
     },
   },
   Kali: {
@@ -249,8 +268,8 @@ export const AGES: Record<
     metal: { fr: "fer", en: "iron" },
     a: 10,
     texte: {
-      fr: "Né sous Kali, a = 10 : le fer. Le dernier âge, le plus court ; ce qui s'y forge est le plus nombreux.",
-      en: "Born under Kali, a = 10: iron. The last age, the shortest; what is forged there is the most numerous.",
+      fr: "Sous Kali, l'âge du fer : le dernier, le plus court.",
+      en: "Under Kali, the age of iron: the last, the shortest.",
     },
   },
 };
@@ -258,28 +277,28 @@ export const AGES: Record<
 /** Dix genres : ce que l'objet peut faire dans le coffre et dans la Tour. */
 export const GENRES_TEXTE: Record<Genre, Bilingue> = {
   trouve: {
-    fr: "Trouvaille : le genre le plus humble, tirée de sous une case de la dalle ; les cases sont à tous, le contenu à chacun.",
-    en: "Find: the humblest kind, drawn from under a cell of the slab; the cells belong to all, the content to each.",
+    fr: "Trouvaille : tirée de sous une case de la dalle ; les cases sont à tous, ce qu'on y trouve à chacun.",
+    en: "Find: drawn from under a cell of the slab; the cells belong to all, what is found there to each.",
   },
   pierre: {
-    fr: "Pierre : elle tourne un mot, T·q en préfixe ou q·S en suffixe, et l'ordre change l'issue.",
-    en: "Stone: it turns a word, T·q as prefix or q·S as suffix, and the order changes the outcome.",
+    fr: "Pierre : elle tourne une pièce et en fait une autre ; l'ancienne est consommée, et l'ordre change l'issue.",
+    en: "Stone: it turns a piece and makes another; the old one is consumed, and the order changes the outcome.",
   },
   arme: {
-    fr: "Arme : un seul emplacement ; jusqu'à deux gemmes quand son tirage est impair.",
-    en: "Weapon: a single slot; up to two gems when its roll is odd.",
+    fr: "Arme : un seul emplacement ; jusqu'à deux gemmes.",
+    en: "Weapon: a single slot; up to two gems.",
   },
   armure: {
-    fr: "Armure : neuf emplacements possibles, jusqu'à deux gemmes ; elle habille sans changer le mot.",
-    en: "Armour: nine possible slots, up to two gems; it dresses without changing the word.",
+    fr: "Armure : neuf emplacements possibles ; elle habille sans changer la pièce.",
+    en: "Armour: nine possible slots; it dresses without changing the piece.",
   },
   gemme: {
-    fr: "Gemme : enchâssée, elle tourne le mot effectif ; l'objet ne mute pas, sa lecture change.",
-    en: "Gem: set, it turns the effective word; the item does not mutate, its reading changes.",
+    fr: "Gemme : sertie, elle change la lecture d'une pièce, jamais la pièce elle-même.",
+    en: "Gem: set, it changes how a piece reads, never the piece itself.",
   },
   philosophale: {
-    fr: "Philosophale : une par coffre personnel, et seulement parmi les dix premiers coffres.",
-    en: "Philosophical: one per personal vault, and only among the first ten vaults.",
+    fr: "Philosophale : une par coffre, et seulement dans les dix premiers.",
+    en: "Philosophical: one per vault, and only among the first ten.",
   },
   lair: {
     fr: "Ticket d'antre : il ouvre l'antre de sa bande et se consomme au passage.",
@@ -290,54 +309,54 @@ export const GENRES_TEXTE: Record<Genre, Bilingue> = {
     en: "Elixir: drunk on a floor, its effect holds there only; never drunk twice.",
   },
   capsule: {
-    fr: "Capsule : un glyphe creux ; elle prend un occupant de même orbite, ou dont l'axe tient au seuil élite.",
-    en: "Capsule: a hollow glyph; it takes an occupant of the same orbit, or whose axis holds at the elite threshold.",
+    fr: "Capsule : un glyphe creux ; elle prend un occupant de même orbite, ou assez bien aligné.",
+    en: "Capsule: a hollow glyph; it takes an occupant of the same orbit, or well enough aligned.",
   },
   capture: {
-    fr: "Capture : un occupant pris, son mot intact ; compagne d'antre, une seule libérée par étage.",
-    en: "Capture: an occupant taken, its word intact; lair companion, only one released per floor.",
+    fr: "Capture : un occupant pris, tel quel ; compagnon d'antre, un seul libéré par étage.",
+    en: "Capture: an occupant taken, as is; lair companion, only one released per floor.",
   },
 };
 
-/** Six affixes : T en préfixe, S en suffixe, le rang est l'axe du générateur. */
+/** Six affixes : T se place avant la pièce, S après ; le rang est l'axe. */
 export const AFFIXES_TEXTE: Record<Affixe, Bilingue> = {
   T1: {
-    fr: "T1 : préfixe, tourne de 80 pour 719 autour du premier axe, avant le mot.",
-    en: "T1: prefix, turns by 80 over 719 around the first axis, before the word.",
+    fr: "T1 : se place avant la pièce et la tourne autour du premier axe.",
+    en: "T1: goes before the piece and turns it around the first axis.",
   },
   T2: {
-    fr: "T2 : préfixe, tourne de 80 pour 719 autour du deuxième axe, avant le mot.",
-    en: "T2: prefix, turns by 80 over 719 around the second axis, before the word.",
+    fr: "T2 : se place avant la pièce et la tourne autour du deuxième axe.",
+    en: "T2: goes before the piece and turns it around the second axis.",
   },
   T3: {
-    fr: "T3 : préfixe, tourne de 80 pour 719 autour du troisième axe, avant le mot.",
-    en: "T3: prefix, turns by 80 over 719 around the third axis, before the word.",
+    fr: "T3 : se place avant la pièce et la tourne autour du troisième axe.",
+    en: "T3: goes before the piece and turns it around the third axis.",
   },
   S1: {
-    fr: "S1 : suffixe, tourne de 80 pour 719 autour du premier axe, après le mot.",
-    en: "S1: suffix, turns by 80 over 719 around the first axis, after the word.",
+    fr: "S1 : se place après la pièce et la tourne autour du premier axe.",
+    en: "S1: goes after the piece and turns it around the first axis.",
   },
   S2: {
-    fr: "S2 : suffixe, tourne de 80 pour 719 autour du deuxième axe, après le mot.",
-    en: "S2: suffix, turns by 80 over 719 around the second axis, after the word.",
+    fr: "S2 : se place après la pièce et la tourne autour du deuxième axe.",
+    en: "S2: goes after the piece and turns it around the second axis.",
   },
   S3: {
-    fr: "S3 : suffixe, tourne de 80 pour 719 autour du troisième axe, après le mot.",
-    en: "S3: suffix, turns by 80 over 719 around the third axis, after the word.",
+    fr: "S3 : se place après la pièce et la tourne autour du troisième axe.",
+    en: "S3: goes after the piece and turns it around the third axis.",
   },
 };
 
 export const POLARITES_TEXTE: Record<Polarite, Bilingue> = {
   constructif: {
-    fr: "constructif : les deux mots tirent dans le même sens, cos² ≥ 1/2",
-    en: "constructive: both words pull the same way, cos² ≥ 1/2",
+    fr: "constructif : les deux tirent dans le même sens",
+    en: "constructive: both pull the same way",
   },
   neutre: {
-    fr: "neutre : ni dans le même sens, ni de la même classe",
+    fr: "neutre : ni le même sens, ni la même classe",
     en: "neutral: neither the same way nor the same class",
   },
   destructif: {
-    fr: "destructif : même classe, deux armes se nuisent",
+    fr: "destructif : même classe, deux armes se gênent",
     en: "destructive: same class, two weapons hinder each other",
   },
 };
@@ -345,39 +364,39 @@ export const POLARITES_TEXTE: Record<Polarite, Bilingue> = {
 /** Neuf tempéraments, un par muse (l'archétype de l'objet). Chacun cite le rôle ou le don de la muse. */
 export const TEMPERAMENTS: Record<SignatureId, Bilingue> = {
   uranie: {
-    fr: "Marqué par Uranie ★ : il lit avant d'agir ; à l'observatoire, vingt et une cellules ouvrent la lecture des cent une formes.",
-    en: "Marked by Urania ★: it reads before acting; at the observatory, twenty-one cells open the reading of the hundred and one forms.",
+    fr: "Marqué par Uranie ★ : il lit avant d'agir ; à l'observatoire, on lit toutes les formes.",
+    en: "Marked by Urania ★: it reads before acting; at the observatory, every form is read.",
   },
   saturne: {
-    fr: "Marqué par Polymnie ♄ : il retient ; chaque écho traversé s'inscrit dans les hymnes.",
-    en: "Marked by Polyhymnia ♄: it remembers; every echo crossed is written into the hymns.",
+    fr: "Marqué par Polymnie ♄ : il retient ; ce qu'il traverse s'inscrit dans les hymnes.",
+    en: "Marked by Polyhymnia ♄: it remembers; what it crosses is written into the hymns.",
   },
   jupiter: {
-    fr: "Marqué par Euterpe ♃ : il donne le ton ; sa bande est celle des accords, et l'oreille y entend les paires.",
-    en: "Marked by Euterpe ♃: it sets the tone; its band is the band of chords, and the ear hears the pairs there.",
+    fr: "Marqué par Euterpe ♃ : il donne le ton ; chez elle, l'oreille entend les paires.",
+    en: "Marked by Euterpe ♃: it sets the tone; at her house, the ear hears the pairs.",
   },
   mars: {
-    fr: "Marqué par Érato ♂ : il forge ; T·q avant, q·S après, et une gemme sur du sel fait une capsule.",
-    en: "Marked by Erato ♂: it forges; T·q before, q·S after, and a gem on salt makes a capsule.",
+    fr: "Marqué par Érato ♂ : il forge ; chez elle, une gemme sur du sel fait une capsule.",
+    en: "Marked by Erato ♂: it forges; at her house, a gem on salt makes a capsule.",
   },
   soleil: {
     fr: "Marqué par Melpomène ☉ : il tient le milieu de la Tour ; ce qui passe sa porte a montré son sceau.",
     en: "Marked by Melpomene ☉: it holds the middle of the Tower; what passes its door has shown its seal.",
   },
   venus: {
-    fr: "Marqué par Terpsichore ♀ : il danse en ronde ; offert avec une résonance constructive, il rend une gemme.",
-    en: "Marked by Terpsichore ♀: it dances the round; offered with a constructive resonance, it gives back a gem.",
+    fr: "Marqué par Terpsichore ♀ : il danse en ronde ; offert en accord, il rend une gemme.",
+    en: "Marked by Terpsichore ♀: it dances the round; offered in accord, it gives back a gem.",
   },
   mercure: {
-    fr: "Marqué par Calliope ☿ : il accorde ; bu, le mercure accorde d'office la parade au seuil élite.",
-    en: "Marked by Calliope ☿: it tunes; drunk, mercury grants the parry at the elite threshold outright.",
+    fr: "Marqué par Calliope ☿ : il accorde ; chez elle, le mercure qu'on boit donne la parade.",
+    en: "Marked by Calliope ☿: it tunes; at her house, the mercury one drinks grants the parry.",
   },
   lune: {
-    fr: "Marqué par Clio ☽ : il se souvient ; ce qu'il a traversé se relit, et l'archiviste en tient le registre.",
-    en: "Marked by Clio ☽: it remembers; what it has crossed can be reread, and the archivist keeps the register.",
+    fr: "Marqué par Clio ☽ : il se souvient ; l'archiviste tient le registre de ce qu'il a traversé.",
+    en: "Marked by Clio ☽: it remembers; the archivist keeps the register of what it has crossed.",
   },
   terre: {
-    fr: "Marqué par Thalie ⊕ : il vient du sol ; une capsule par poste du jour honoré, trois blocs par capsule.",
-    en: "Marked by Thalia ⊕: it comes from the ground; one capsule per honoured watch of the day, three blocks per capsule.",
+    fr: "Marqué par Thalie ⊕ : il vient du sol ; une capsule par poste du jour, trois blocs chacune.",
+    en: "Marked by Thalia ⊕: it comes from the ground; one capsule per watch of the day, three blocks each.",
   },
 };

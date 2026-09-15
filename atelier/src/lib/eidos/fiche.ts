@@ -8,8 +8,11 @@
  * l'orbite (première figure), l'ascendant (deux compositions par tour, de
  * trois en trois comme la semaine), l'alignement à l'ancre, le sceau, et la
  * résonance avec les autres objets du coffre. `texteFiche(fiche, langue)` met
- * cette lecture en phrases par le lexique (objets-lexique.ts), en quatre
- * registres : forme, caractère, traits, technique.
+ * cette lecture en phrases par le lexique (objets-lexique.ts), en trois
+ * registres — forme, caractère, traits — et un pied (sceau, bloc). Le mot en
+ * hexadécimal, le quaternion, le rang du catalogue, la cellule et la proximité
+ * restent dans la `Fiche` (une donnée, pour les contrôles et le forum) ; le
+ * joueur ne les lit pas (`lib/ecriture.ts`).
  *
  * Tout est entier ; rien n'est tiré au sort ; deux appels rendent la même
  * fiche et les mêmes phrases. La fiche est une jauge : elle lit le mot, elle
@@ -38,10 +41,9 @@ import { ROLES } from "./hotes-lexique.ts";
 import { celluleDoxa } from "./integrite.ts";
 import { objetDePorte } from "./inventaire.ts";
 import { alignementCentiemes, figureOrbite } from "./lecture.ts";
-import { Q_SCALE, canoniserMot, deconstruireMot, depaqueter, sceauObjet } from "./objets.ts";
+import { canoniserMot, deconstruireMot, depaqueter, sceauObjet } from "./objets.ts";
 import * as L from "./objets-lexique.ts";
 import { paireDe, qDeMot, type Polarite } from "./resonance.ts";
-import { titreDe } from "./titres.ts";
 import type { SignatureId } from "./signatures.ts";
 import type { Affixe, Emplacement, Genre, NomAge, ObjetPorte } from "./types.ts";
 
@@ -191,60 +193,64 @@ export function ficheDe(o: ObjetPorte, autres: readonly ObjetPorte[] = []): Fich
 }
 
 export type Registres = {
+  /** ce que c'est : le genre, la forme la plus proche et sa rareté, l'âge */
   forme: string[];
+  /** sa manière : le caractère, l'orbite, l'ascendant, l'accord avec le coffre */
   caractere: string[];
+  /** d'où il vient et ce qu'il porte : la muse, l'étage, les pierres et les gemmes */
   traits: string[];
-  technique: string[];
+  /** une ligne : le sceau (son nom court) et le bloc de naissance */
+  pied: string;
 };
-
-const FIGURES = ["·", "○", "☽", "✚"] as const;
 
 function pluriel(n: number, un: string, des: string): string {
   return `${n} ${n > 1 ? des : un}`;
 }
 
-/** La fiche en phrases : quatre registres, tout vient du lexique et de la lecture. */
+/**
+ * La fiche en phrases : trois registres et un pied, tout vient du lexique et de
+ * la lecture. Règle d'écriture (`lib/ecriture.ts`) : une idée par phrase,
+ * vingt-cinq mots au plus, aucun mot de la chaîne — le joueur ne lit ni le mot
+ * en hexadécimal, ni le quaternion, ni le rang du catalogue, ni la cellule, ni
+ * la proximité en centièmes ; il lit une forme, une rareté, une orbite, un
+ * ascendant, un sceau. `fiche.test.ts` passe chaque phrase par `manquements()`.
+ */
 export function texteFiche(f: Fiche, langue: L.Langue): Registres {
-  const regime = (r: Regime) => L.NOMS_REGIME[r][langue];
-  const classe = L.NOMS_CLASSE[f.forme.classe][langue];
+  const regime = L.NOMS_REGIME[f.forme.regime];
+  const classe = L.NOMS_CLASSE[f.forme.classe];
   const rarete = L.RARETES[f.rarete]!;
   const age = L.AGES[f.age];
   const role = ROLES[f.muse].majeur[langue];
   const etage = etageMuse(f.muse);
-  const q = f.q;
   const fr = langue === "fr";
 
-  const titre = titreDe(f, langue).titre;
   const forme = [
-    fr ? `« ${titre} »` : `“${titre}”`,
     L.GENRES_TEXTE[f.genre][langue],
     fr
-      ? `Forme la plus proche : rang ${f.forme.rang} du catalogue, ${classe} de ${regime(f.forme.regime)}, cellule ${f.cellule} ; proximité ${f.proximite}/100, ${rarete.nom.fr}.`
-      : `Nearest form: rank ${f.forme.rang} of the catalogue, ${classe} of the ${regime(f.forme.regime)}, cell ${f.cellule}; proximity ${f.proximite}/100, ${rarete.nom.en}.`,
-    rarete.texte[langue],
+      ? `${classe.un === "une" ? "Une" : "Un"} ${classe.fr} ${regime.de}, ${classe.feminin ? rarete.nom.fem : rarete.nom.fr} : ${rarete.texte.fr}.`
+      : `${classe.en === "accessory" ? "An" : "A"} ${classe.en} of the ${regime.en}, ${rarete.nom.en}: ${rarete.texte.en}.`,
     age.texte[langue],
   ];
 
+  const force = L.NOMS_REGIME[f.force];
+  const faiblesse = L.NOMS_REGIME[f.faiblesse];
   const caractere = [
     L.CARACTERES[f.forme.classe][f.forme.regime][langue],
     L.ORBITES[f.orbite]![langue],
     f.forme.regime === "Vide"
       ? fr
-        ? "Son ascendant est le Vide lui-même : deux compositions par tour contre le Vide, et le Vide en a deux contre lui."
-        : "Its ascendant is the Void itself: two compositions per turn against the Void, and the Void has two against it."
+        ? "Le Vide n'a d'ascendant que sur lui-même."
+        : "The Void has the ascendant over itself alone."
       : fr
-        ? `Deux compositions par tour contre ${regime(f.force)} ; ${regime(f.faiblesse)} en a deux contre lui. L'ascendant tourne de trois en trois, comme la semaine.`
-        : `Two compositions per turn against the ${regime(f.force)}; the ${regime(f.faiblesse)} has two against it. The ascendant turns three by three, like the week.`,
-    fr
-      ? `Palier ${f.palier} du catalogue : les tirages se multiplient, jamais la norme. Alignement à l'ancre : ${f.axeAncre}/100.`
-      : `Catalogue tier ${f.palier}: the draws multiply, never the norm. Alignment with the anchor: ${f.axeAncre}/100.`,
+        ? `Ascendant sur ${force.le} ; ${faiblesse.le} l'a sur lui.`
+        : `Ascendant over the ${force.en}; the ${faiblesse.en} has it over this one.`,
   ];
   if (f.ensemble) {
     const e = f.ensemble;
     caractere.push(
       fr
-        ? `Dans ce coffre, ${pluriel(e.n, "autre objet", "autres objets")} : ${pluriel(e.constructif, "constructif", "constructifs")}, ${pluriel(e.destructif, "destructif", "destructifs")}, ${pluriel(e.neutre, "neutre", "neutres")} ; tenue ${e.tenue.toString()}.`
-        : `In this vault, ${pluriel(e.n, "other item", "other items")}: ${e.constructif} constructive, ${e.destructif} destructive, ${e.neutre} neutral; hold ${e.tenue.toString()}.`,
+        ? `Dans ce coffre, ${pluriel(e.n, "autre objet", "autres objets")} : ${pluriel(e.constructif, "constructif", "constructifs")}, ${pluriel(e.destructif, "destructif", "destructifs")}, ${pluriel(e.neutre, "neutre", "neutres")}.`
+        : `In this vault, ${pluriel(e.n, "other item", "other items")}: ${e.constructif} constructive, ${e.destructif} destructive, ${e.neutre} neutral.`,
     );
   }
 
@@ -252,11 +258,11 @@ export function texteFiche(f: Fiche, langue: L.Langue): Registres {
     L.TEMPERAMENTS[f.muse][langue],
     fr
       ? `Né chez ${role}, à l'étage ${etage} de la Tour.`
-      : `Born at ${role}'s, on floor ${etage} of the Tower.`,
+      : `From ${role}'s house, floor ${etage} of the Tower.`,
   ];
   if (f.affixe) traits.push(L.AFFIXES_TEXTE[f.affixe][langue]);
   for (const g of f.gemmes)
-    traits.push((fr ? "Gemme enchâssée : " : "Set gem: ") + L.AFFIXES_TEXTE[g][langue]);
+    traits.push((fr ? "Gemme enchâssée — " : "Set gem — ") + L.AFFIXES_TEXTE[g][langue]);
   if (f.sockets > 0) {
     traits.push(
       fr
@@ -265,28 +271,10 @@ export function texteFiche(f: Fiche, langue: L.Langue): Registres {
     );
   }
 
-  const technique = [
-    fr
-      ? `mot ${f.motHex} · ${f.canon ? "forme canonique" : "non canonique : q et −q sont le même objet"} · composante omise ${f.omise}`
-      : `word ${f.motHex} · ${f.canon ? "canonical form" : "non-canonical: q and −q are the same item"} · omitted component ${f.omise}`,
-    fr
-      ? `quaternion (${q[0]}, ${q[1]}, ${q[2]}, ${q[3]}) sur ${Q_SCALE} · norme fixe · orbite ${FIGURES[f.orbite]}`
-      : `quaternion (${q[0]}, ${q[1]}, ${q[2]}, ${q[3]}) over ${Q_SCALE} · fixed norm · orbit ${FIGURES[f.orbite]}`,
-  ];
-  if (f.motEffectif !== f.mot) {
-    technique.push(
-      fr
-        ? `mot effectif ${hexMot(f.motEffectif)} après les gemmes`
-        : `effective word ${hexMot(f.motEffectif)} after the gems`,
-    );
-  }
-  technique.push(
-    fr
-      ? `sceau ${f.sceau} · feuille : mot canon, archétype, âge · jauge : nom, affixe, nonce ${f.nonce}, bloc #${f.hauteur}`
-      : `seal ${f.sceau} · leaf: canonical word, archetype, age · gauge: name, affix, nonce ${f.nonce}, block #${f.hauteur}`,
-  );
+  // le bloc d'abord : un sceau peut finir par « · », le séparateur ne doit pas s'y confondre
+  const pied = fr ? `Bloc ${f.hauteur} · sceau ${f.sceau}` : `Block ${f.hauteur} · seal ${f.sceau}`;
 
-  return { forme, caractere, traits, technique };
+  return { forme, caractere, traits, pied };
 }
 
 /** Les cent formes du catalogue, pour les contrôles et les lectures. */
