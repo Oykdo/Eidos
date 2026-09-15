@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
 import { useCoffre } from "@/lib/store.ts";
 import type { ObjetPorte } from "@/lib/eidos/types.ts";
-import { objetDePorte, racineDuCoffre } from "@/lib/eidos/inventaire.ts";
+import { objetDePorte } from "@/lib/eidos/inventaire.ts";
 import { memeObjet } from "@/lib/eidos/coffre-horaire.ts";
 import { combatDe, COMBAT_AXES, COMBAT_BUDGET } from "@/lib/eidos/combat.ts";
 import { conjugue, produit, type Q } from "@/lib/eidos/cosmos.ts";
@@ -56,7 +56,6 @@ export function Inventaire() {
   const autre = contre != null ? (objets[contre] ?? null) : null;
   const visibles = filtre === "tout" ? objets : objets.filter((o) => o.genre === filtre);
   const philo = peutPhilosopher(coffre);
-  const racine = useMemo(() => racineDuCoffre(coffre), [coffre]);
 
   useEffect(() => {
     setGl(webglDisponible() && !reduced);
@@ -218,7 +217,7 @@ export function Inventaire() {
               </div>
             )}
           </div>
-          <FicheObjet objet={choisi} autres={objets} racine={racine} />
+          <FicheObjet objet={choisi} autres={objets} />
           <CombatBars porte={choisi} />
           <Resonance objets={objets} i={sel ?? objets.length - 1} j={contre} autre={autre} />
         </div>

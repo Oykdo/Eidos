@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { manquements } from "../ecriture.ts";
 import { CLASSES, REGIMES, coupsParTour } from "./cosmos.ts";
 import { AFFIXES, GENRES, habille } from "./equipement.ts";
 import { FORMES, faiblesseDe, ficheDe, forceDe, rareteDe, texteFiche } from "./fiche.ts";
@@ -9,6 +10,30 @@ import { objetDepuisGraine } from "./objets.ts";
 import * as L from "./objets-lexique.ts";
 import { SIGNATURES } from "./signatures.ts";
 import type { NomAge, ObjetPorte } from "./types.ts";
+
+const REGISTRES = ["forme", "caractere", "traits"] as const;
+
+/** Chaque entrée du lexique, FR et EN, à plat : ce que le joueur peut lire. */
+function lexique(): { cle: string; fr: string; en: string }[] {
+  const out: { cle: string; fr: string; en: string }[] = [];
+  for (const c of CLASSES)
+    for (const r of REGIMES) out.push({ cle: `caractere.${c}.${r}`, ...L.CARACTERES[c][r] });
+  L.ORBITES.forEach((b, i) => out.push({ cle: `orbite.${i}`, ...b }));
+  L.RARETES.forEach((r, i) => {
+    out.push({ cle: `rarete.${i}.nom`, fr: `${r.nom.fr} ${r.nom.fem}`, en: r.nom.en });
+    out.push({ cle: `rarete.${i}.texte`, ...r.texte });
+  });
+  for (const a of AGES) out.push({ cle: `age.${a}`, ...L.AGES[a].texte });
+  for (const [k, b] of Object.entries(L.GENRES_TEXTE)) out.push({ cle: `genre.${k}`, ...b });
+  for (const [k, b] of Object.entries(L.AFFIXES_TEXTE)) out.push({ cle: `affixe.${k}`, ...b });
+  for (const [k, b] of Object.entries(L.POLARITES_TEXTE)) out.push({ cle: `polarite.${k}`, ...b });
+  for (const [k, b] of Object.entries(L.TEMPERAMENTS)) out.push({ cle: `temperament.${k}`, ...b });
+  for (const [k, b] of Object.entries(L.NOMS_REGIME))
+    out.push({ cle: `regime.${k}`, fr: `${b.fr} ${b.de} ${b.le}`, en: b.en });
+  for (const [k, b] of Object.entries(L.NOMS_CLASSE))
+    out.push({ cle: `classe.${k}`, fr: `${b.un} ${b.fr}`, en: b.en });
+  return out;
+}
 
 const AGES: NomAge[] = ["Satya", "Treta", "Dvapara", "Kali"];
 
@@ -123,7 +148,7 @@ describe("fiche — la lecture d'un objet, en fonctions pures", () => {
     assert.equal(fa.motHex.length, 8);
   });
 
-  it("les phrases : quatre registres non vides, propres, différentes entre les langues, pures", () => {
+  it("les phrases : trois registres non vides et un pied, propres, différents entre les langues, purs", () => {
     let n = 0;
     for (const f of FORMES.filter((_, i) => i % 9 === 0))
       for (const age of AGES) {
@@ -135,21 +160,59 @@ describe("fiche — la lecture d'un objet, en fonctions pures", () => {
         const fiche = ficheDe({ ...o, mot: motDeQ(f.q) });
         const fr = texteFiche(fiche, "fr");
         const en = texteFiche(fiche, "en");
-        for (const reg of ["forme", "caractere", "traits", "technique"] as const) {
+        for (const reg of REGISTRES) {
           assert.ok(fr[reg].length >= 2, `${reg} fr`);
           assert.equal(fr[reg].length, en[reg].length, `${reg} : même nombre de phrases`);
           for (const s of [...fr[reg], ...en[reg]]) assert.ok(propre(s), s);
           assert.notEqual(fr[reg][0], en[reg][0]);
         }
+        assert.ok(propre(fr.pied) && propre(en.pied) && fr.pied !== en.pied);
+        assert.ok(fr.pied.includes(fiche.sceau) && fr.pied.startsWith(`Bloc ${fiche.hauteur} `));
         assert.deepEqual(texteFiche(fiche, "fr"), fr);
         assert.ok(fr.traits.some((s) => s.startsWith("Gemme enchâssée")));
-        assert.ok(
-          fr.technique.some((s) => s.includes("mot effectif")),
-          "les gemmes changent le mot effectif",
-        );
+        assert.ok(fr.forme[1]!.startsWith("Un"), "la forme la plus proche, avec son article");
         n += 1;
       }
     assert.ok(n >= 40);
+  });
+
+  it("la règle d'écriture : le lexique et chaque fiche passent manquements() — aucun mot de la chaîne, vingt-cinq mots au plus, tutoiement", () => {
+    const fautes: string[] = [];
+    for (const e of lexique())
+      for (const m of manquements(e.cle, e.fr, e.en))
+        fautes.push(`${e.cle} ${m.langue} ${m.regle} ${m.raison}`);
+    assert.equal(fautes.length, 0, `le lexique :\n${fautes.join("\n")}`);
+    // Toutes les formes, tous les âges, avec pierre, gemme, sertissures et deux autres objets : chaque phrase rendue.
+    let phrases = 0;
+    for (const f of FORMES)
+      for (const age of AGES) {
+        const o = objet(`regle-${f.rang}-${age}`, age, {
+          affixe: AFFIXES[f.rang % 6],
+          gemmes: [AFFIXES[(f.rang + 1) % 6]!],
+          sockets: 2,
+        });
+        const autres = [o, objet(`regle-autre-${f.rang}`, age), objet(`regle-tiers-${f.rang}`, age)];
+        const fiche = ficheDe({ ...o, mot: motDeQ(f.q) }, autres);
+        const fr = texteFiche(fiche, "fr");
+        const en = texteFiche(fiche, "en");
+        for (const reg of REGISTRES)
+          fr[reg].forEach((s, i) => {
+            phrases += 1;
+            for (const m of manquements(`${f.rang}.${reg}.${i}`, s, en[reg][i] ?? ""))
+              fautes.push(`${m.cle} ${m.langue} ${m.regle} ${m.raison} — ${m.langue === "fr" ? s : en[reg][i]}`);
+          });
+        for (const m of manquements(`${f.rang}.pied`, fr.pied, en.pied))
+          fautes.push(`${m.cle} ${m.langue} ${m.regle} ${m.raison}`);
+      }
+    assert.equal(fautes.length, 0, `les fiches :\n${fautes.join("\n")}`);
+    assert.ok(phrases >= 400 * 8, `${phrases} phrases lues`);
+    // Ce que le joueur ne lit plus : le mot en hexadécimal, le quaternion, le rang, la cellule, la proximité.
+    const o = objet("regle-jargon", "Kali", { gemmes: [AFFIXES[2]!], sockets: 1 });
+    const fiche = ficheDe(o);
+    const t = texteFiche(fiche, "fr");
+    const tout = [...REGISTRES.flatMap((r) => t[r]), t.pied].join("\n");
+    for (const banni of [fiche.motHex, "quaternion", "composante omise", "rang ", "cellule", "/100", "tenue ", "palier", "ancre"])
+      assert.equal(tout.includes(banni), false, `« ${banni} » dans la fiche`);
   });
 
   it("l'ensemble lit la résonance avec les autres : même classe, destructif", () => {

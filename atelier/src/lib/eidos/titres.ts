@@ -105,12 +105,17 @@ export const TOURNURES: readonly {
   readonly fr: (muse: string) => string;
   readonly en: (muse: string) => string;
 }[] = [
-  { fr: (m) => `de ${m} même`, en: (m) => `of ${m} herself` },
-  { fr: (m) => `de ${m}`, en: (m) => `of ${m}` },
+  { fr: (m) => `${de(m)} même`, en: (m) => `of ${m} herself` },
+  { fr: (m) => de(m), en: (m) => `of ${m}` },
   { fr: (m) => `selon ${m}`, en: (m) => `after ${m}` },
-  { fr: (m) => `à la manière de ${m}`, en: (m) => `in the manner of ${m}` },
+  { fr: (m) => `à la manière ${de(m)}`, en: (m) => `in the manner of ${m}` },
   { fr: (m) => `d'après ${m}`, en: (m) => `loosely after ${m}` },
 ];
+
+/** « de Clio », mais « d'Uranie », « d'Euterpe », « d'Érato » : l'élision devant une voyelle. */
+export function de(m: string): string {
+  return /^[aeiouyàâéèêëîïôöùûüÀÂÉÈÊËÎÏÔÖÙÛÜ]/u.test(m) ? `d'${m}` : `de ${m}`;
+}
 
 export const NOMS_EMPLACEMENT: Record<Emplacement, Bilingue> = {
   arme: { fr: "Arme", en: "Weapon" },
