@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { tourVide } from "../src/lib/eidos/jauge.ts";
 import { CRANS, ETAPES } from "../src/lib/eidos/pendule.ts";
-import { indechiffresDe } from "../src/lib/eidos/tactique/partie.ts";
+import { ouvrirBataille } from "../src/lib/eidos/tactique/bataille.ts";
+import { caseLibre, indechiffresDe, posesDuCoffre } from "../src/lib/eidos/tactique/partie.ts";
+import type { Case, Coup } from "../src/lib/eidos/tactique/types.ts";
 import { uniteDepuisObjet } from "../src/lib/eidos/tactique/unite.ts";
+import { dalleDe } from "../src/lib/eidos/tour.ts";
 import {
   CONFIGURATIONS,
   ETALONS_VEILLEE_COMPLET,
@@ -19,6 +22,7 @@ import {
   formaterResultat,
   jouerRun,
   peutRecruter,
+  premiereTombee,
   recrueDe,
   rosterDe,
   type Configuration,
@@ -54,10 +58,10 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
     for (let q = 0; q < CRANS; q++) assert.ok(etageDeSalles(8, q, 1) >= 226, `étape 8 en bande d'Uranie (position ${q})`);
   });
 
-  it("trente-trois configurations : douze socles avec et sans permadeath, puis les sept contreparties d'A28 à 9 salles", () => {
-    assert.equal(r.configurations.length, 33);
-    assert.equal(CONFIGURATIONS.filter((c) => c.regle === "coup").length, 4 + 7);
-    assert.equal(CONFIGURATIONS.filter((c) => c.permadeath).length, 6 + 21);
+  it("trente-neuf configurations : douze socles avec et sans permadeath, puis les neuf contreparties d'A28 à 9 salles", () => {
+    assert.equal(r.configurations.length, 39);
+    assert.equal(CONFIGURATIONS.filter((c) => c.regle === "coup").length, 4 + 9);
+    assert.equal(CONFIGURATIONS.filter((c) => c.permadeath).length, 6 + 27);
     // les douze premières sont celles du 2026-09-14, intactes : la lice seule, aucune contrepartie
     for (const c of CONFIGURATIONS.slice(0, 12)) {
       assert.equal(c.contrepartie, "aucune", c.nom);
@@ -74,6 +78,7 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
       contreparties.filter((c) => c.contrepartie === "aucune").map((c) => c.reserve),
       [6, 9, 12, 6, 9, 12, 6, 9, 12],
     );
+    assert.deepEqual(contreparties.filter((c) => c.contrepartie === "perdue-1").map((c) => c.reserve), [3, 6, 3, 6, 3, 6]);
     for (const c of r.configurations) assert.equal(c.runs, p.runs);
     assert.deepEqual(r.seuils, SEUILS);
   });
@@ -230,6 +235,77 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
     assert.ok(m("coup-64-9-pd-r9").arrivesMille >= m("coup-64-9-pd-r6").arrivesMille);
     assert.ok(m("coup-64-9-pd-recrue").recruesParRunMille > 0);
     assert.equal(m("coup-64-9-pd-perdue").recruesParRunMille, 0);
+  });
+
+  it("« perdue-1 » se lit run par run : une défaite coûte la première tombée et rien d'autre, lue au journal du moteur", () => {
+    // la première tombée est la cible du premier coup du journal qui retire une unité du coffre —
+    // un Indéchiffré tombé avant ne compte pas, une riposte compte, un coup qui ne retire pas non plus
+    const coffreVide = { objets: [], tour: tourVide() };
+    const roster = rosterDe(0);
+    const obstacles = dalleDe(0);
+    const poses = posesDuCoffre(ROSTER);
+    const prises: Case[] = [];
+    const coffre = roster.map((m, j) => {
+      const pos = caseLibre(obstacles, prises, poses[j]!);
+      prises.push(pos);
+      return uniteDepuisObjet(m.objet, j, "coffre", pos, m.classe);
+    });
+    const etat = ouvrirBataille(0, coffre, indechiffresDe(coffreVide, 0, prises), 64);
+    const n = coffre.length;
+    assert.ok(etat.unites.length > n, "au moins un Indéchiffré à l'étage 0");
+    const coup = (attaquant: number, cible: number, retiree: boolean, riposte = false): Coup => ({
+      attaquant, cible, base: 0, accord: 0, dos: 0, allonge: 0, charge: 0, porte: 0, tenueApres: retiree ? 0 : 1, retiree, riposte,
+    });
+    const journal = [coup(n, 0, false), coup(0, n, true), coup(n, 1, true, true), coup(n, 0, true), coup(n, 2, true)];
+    assert.equal(premiereTombee({ ...etat, journal }), 1);
+    assert.equal(premiereTombee({ ...etat, journal: journal.slice(3) }), 0);
+    assert.throws(() => premiereTombee({ ...etat, journal: journal.slice(0, 2) }), /aucune unité du coffre retirée/);
+    assert.throws(() => premiereTombee(etat), /aucune unité du coffre retirée/);
+
+    const socle = cfgDe("coup-64-9");
+    const perdue = cfgDe("coup-64-9-pd-perdue");
+    const perdue1 = cfgDe("coup-64-9-pd-perdue1");
+    const perdue1R6 = cfgDe("coup-64-9-pd-perdue1-r6");
+    let avecDefaite = 0;
+    let continues = 0;
+    for (let k = 0; k < p.runs; k++) {
+      const d = k % p.jours;
+      const s = jouerRun(socle, d, k);
+      const a = jouerRun(perdue, d, k);
+      const e = jouerRun(perdue1, d, k);
+      const e6 = jouerRun(perdue1R6, d, k);
+      // une défaite, une unité : jamais plus, jamais moins ; le roster ne se vide qu'à la troisième
+      assert.equal(e.perdues, e.defaites, `run ${k} : ${e.perdues} perdues pour ${e.defaites} défaites`);
+      assert.ok(e.perdues <= ROSTER);
+      assert.equal(e.rosterBalaye !== null, e.defaites === ROSTER, `run ${k} : balayé à la troisième défaite`);
+      assert.equal(e.recrues, 0);
+      assert.equal(e6.perdues, e6.defaites, `run ${k} : réserve de 6, ${e6.perdues} perdues pour ${e6.defaites} défaites`);
+      assert.equal(e6.rosterBalaye !== null, e6.defaites === perdue1R6.reserve);
+      if (a.defaites === 0) {
+        // sans défaite, les trois sont le socle
+        assert.deepEqual(e, a, `run ${k} : perdue-1 rejoue perdue`);
+        assert.deepEqual(e6, e, `run ${k} : la réserve rejoue perdue-1`);
+        assert.deepEqual({ ...e, perdues: 0, recrues: 0 }, { ...s, perdues: 0, recrues: 0 });
+      } else {
+        avecDefaite += 1;
+        // jusqu'à la première défaite, le même run ; « perdue » s'y arrête, « perdue-1 » continue à deux
+        assert.equal(e.premiereDefaite, a.premiereDefaite, `run ${k} : la même première défaite`);
+        assert.equal(e6.premiereDefaite, a.premiereDefaite);
+        assert.equal(a.batailles, a.premiereDefaite! + 1);
+        assert.ok(e.batailles >= a.batailles, `run ${k} : perdue-1 se bat encore`);
+        if (e.batailles > a.batailles) continues += 1;
+      }
+      // ce qui arrive sous « perdue » arrive sous « perdue-1 » (c'est le même run, sans défaite)
+      if (a.fin === "sommet" && a.rosterBalaye === null) assert.ok(e.fin === "sommet" && e.rosterBalaye === null, `run ${k}`);
+    }
+    assert.ok(avecDefaite >= 3 && avecDefaite <= p.runs - 3, `${avecDefaite} runs avec défaite sur ${p.runs}`);
+    assert.ok(continues >= 3, `${continues} runs continués après la première défaite`);
+    // et le compte : un objet par défaite contre trois — le puits est plus petit, la réserve de 6 ne se vide jamais
+    const m = (nom: string) => r.configurations.find((c) => c.nom === nom)!;
+    assert.ok(m("coup-64-9-pd-perdue1").perduesParRunMille < m("coup-64-9-pd-perdue").perduesParRunMille);
+    assert.ok(m("coup-64-9-pd-perdue1").arrivesMille >= m("coup-64-9-pd-perdue").arrivesMille);
+    assert.ok(m("coup-64-9-pd-perdue1-r6").arrivesMille >= m("coup-64-9-pd-perdue1").arrivesMille);
+    assert.ok(m("coup-64-9-pd-perdue1-r6").rosterBalayeMille <= m("coup-64-9-pd-perdue1").rosterBalayeMille);
   });
 
   it("ne dérive pas de sa calibration : arrivés, feuilles restantes, coups et morts par bataille", () => {
