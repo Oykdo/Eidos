@@ -7,7 +7,7 @@ import { ReliqueTrouvee } from "@/components/reliques/ReliqueTrouvee";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n.ts";
-import { formaterPrix, tousLesIonos, type Ionos } from "@/lib/eidos/relique.ts";
+import { formaterPrix, tousLesLumis, type Lumis } from "@/lib/eidos/relique.ts";
 import { asciiTrouvaille } from "@/lib/eidos/trouvaille.ts";
 import { useCoffre } from "@/lib/store.ts";
 import { formaterAtomes } from "@/lib/eidos/coinselect.ts";
@@ -28,7 +28,7 @@ import { agesScelles, sceauxDuCoffre } from "@/lib/eidos/sceaux.ts";
 
 const ReliqueCanvas = lazy(() => import("./ReliqueCanvas"));
 
-const TOUS = tousLesIonos();
+const TOUS = tousLesLumis();
 
 class RepliWebGL extends Component<{ fallback: ReactNode; children: ReactNode }, { err: boolean }> {
   state = { err: false };
@@ -50,7 +50,7 @@ function lectureGlyphe(etages: [number, number, number]): string {
 export function ReliqueView() {
   const { t } = useI18n();
   const [idx, setIdx] = useState(0);
-  const ionos: Ionos = TOUS[idx]!;
+  const lumis: Lumis = TOUS[idx]!;
   const coffre = useCoffre((s) => s.coffre);
   const hydrater = useCoffre((s) => s.hydrater);
   const acheter = useCoffre((s) => s.acheterRelique);
@@ -98,22 +98,22 @@ export function ReliqueView() {
 
   const choisi = artefacts.find((a) => a.digest === sel) ?? null;
   const genome = useMemo(() => {
-    if (choisi) return genomeAvecAge(genomeDeArtefact(choisi), ionos.age.nom);
-    return genomeDeAge(ionos.age.nom);
-  }, [choisi, ionos.age.nom]);
+    if (choisi) return genomeAvecAge(genomeDeArtefact(choisi), lumis.age.nom);
+    return genomeDeAge(lumis.age.nom);
+  }, [choisi, lumis.age.nom]);
 
   const museCourante = SIGNATURES.find((s) => s.id === genome.famille);
   const sceaux = sceauxDuCoffre(monde, coffre);
   const possedees = agesScelles(sceaux, coffre);
-  const aMoi = possedees.includes(ionos.age.nom);
+  const aMoi = possedees.includes(lumis.age.nom);
   const solde = coffre.sorties.reduce((s, o) => s + o.montant, 0);
   const simulation = coffre.nature === "atelier";
-  const peut = simulation && !aMoi && solde >= ionos.prixAtomes;
+  const peut = simulation && !aMoi && solde >= lumis.prixAtomes;
   const use3d = client && glOk && !reduced;
 
   const ascii = (
     <pre className="overflow-x-auto font-mono text-[11px] leading-[1.08] text-etain">
-      {asciiTrouvaille(ionos, 0)}
+      {asciiTrouvaille(lumis, 0)}
     </pre>
   );
 
@@ -164,7 +164,7 @@ export function ReliqueView() {
         </div>
 
         <section className="rounded-lg bg-carte p-4 shadow-[0_0_0_1px_rgb(198_203_209_/_0.14)]">
-          <h2 className="font-display text-2xl font-light text-or">{ionos.age.nomAffiche}</h2>
+          <h2 className="font-display text-2xl font-light text-or">{lumis.age.nomAffiche}</h2>
           {museCourante ? (
             <p className="mt-1 font-mono text-[13px] text-encre">
               {museCourante.astre} {museCourante.muse}
@@ -172,7 +172,7 @@ export function ReliqueView() {
             </p>
           ) : null}
           <p className="mt-1 font-mono text-[26px] tabular-nums text-encre">
-            {formaterPrix(ionos.prix)}
+            {formaterPrix(lumis.prix)}
             <span className="ml-2 text-[12px] tracking-wide text-sourd uppercase">
               {t("relique.prixUnite")}
             </span>
@@ -210,12 +210,12 @@ export function ReliqueView() {
             {aMoi ? (
               <p className="font-mono text-sm text-cuivre">{t("relique.possedee")}</p>
             ) : simulation ? (
-              <Button type="button" disabled={!peut} onClick={() => acheter(ionos.age.nom)}>
+              <Button type="button" disabled={!peut} onClick={() => acheter(lumis.age.nom)}>
                 {t("relique.acheter")}
               </Button>
             ) : (
               <p className="font-mono text-[12px] leading-relaxed text-sourd text-pretty">
-                {t("relique.sceau.trouver", { age: ionos.age.nomAffiche })}
+                {t("relique.sceau.trouver", { age: lumis.age.nomAffiche })}
               </p>
             )}
             {simulation && !aMoi && !peut ? (

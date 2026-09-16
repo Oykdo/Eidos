@@ -14,7 +14,7 @@ Eidos est trois choses qui partagent une règle, *rien ne se croit, tout se rejo
 - **un atelier web** qui rejoue les mêmes règles dans le navigateur, à l'octet près, et vous laisse vérifier une pièce, une signature, une adresse sans croire personne ;
 - **un jeu** poussé sur la chaîne — un tactical RPG au tour par tour : une Tour de 255 étages, neuf muses, des batailles sur une dalle de neuf par neuf sans un seul dé, et un run quotidien, la Veillée, où une clé à usage unique est votre vie et où la preuve de votre run se juge par quiconque sans rejouer la chaîne.
 
-Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
+Réseau d'essai seulement : l'ionos n'a aucune valeur.
 
 - Atelier en ligne : [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/)
 - Réseau d'essai : sept validateurs, un bloc par heure forgé par GitHub Actions ; robinet par issue ou par courriel ; envois par issue ; preuves de veillée déposées par issue
@@ -45,7 +45,7 @@ Réseau d'essai seulement : l'eidôlon n'a aucune valeur.
 **Comme joueur**, sur [l'atelier](https://oykdo.github.io/Eidos/) :
 
 1. Créer un coffre. Le secret reste dans votre navigateur ; enregistrez `eidos.carnet` tout de suite, sinon le coffre est perdu.
-2. Demander un eidôlon au robinet : une issue avec votre adresse en glyphes, ou un courriel. Le nœud sert la demande au bloc suivant, dans l'heure.
+2. Demander un ionos au robinet : une issue avec votre adresse en glyphes, ou un courriel. Le nœud sert la demande au bloc suivant, dans l'heure.
 3. Suivre le réseau sur la page Témoin : la tête signée est vérifiée dans votre navigateur, jamais crue.
 4. Monter la Tour : hôtes, élixirs, capsules, secrets, portes qui s'ouvrent avec un sceau d'âge.
 5. Tenir une Veillée : soixante-quatre clés à usage unique pour vie, les vingt-sept salles du jour, un sac que le sommet verse au coffre et que la dernière feuille perd.
@@ -64,7 +64,7 @@ La page Guide de l'atelier explique le cœur, les mécaniques et le monde en mot
 
 ## 1. L'unité et la forme
 
-L'unité de compte est l'**eidôlon** — εἴδωλον, l'image — en regard d'*eidos*, εἶδος, la forme. La forme est la règle ; l'image est ce qui circule. 1 eidôlon = 10⁸ atomes.
+L'unité de compte est l'**ionos** — de ἰόν, « ce qui va », le nom que Faraday donna à ce qui se déplace — en regard d'*eidos*, εἶδος, la forme. La forme est la règle ; l'ionos est ce qui circule. 1 ionos = 10⁸ atomes. (Jusqu'au testnet-3, l'unité s'appelait l'eidôlon ; le nom est rendu à Eidolon, l'autre pièce de l'écosystème.)
 
 ## 2. Les cinq propositions
 
@@ -93,18 +93,18 @@ La somme des cosinus sur une période complète est nulle : une époque émet **
 
 | Âge | `a` | Époques | Blocs | Émission | Mise du sceau (atelier) |
 |---|---|---|---|---|---|
-| Satya | 40 | 832 | 838 656 | 33 546 240 | 33,55 eidôla |
+| Satya | 40 | 832 | 838 656 | 33 546 240 | 33,55 ionos |
 | Trétâ | 30 | 624 | 628 992 | 18 869 760 | 18,87 |
 | Dvâpara | 20 | 416 | 419 328 | 8 386 560 | 8,39 |
 | Kali | 10 | 208 | 209 664 | 2 096 640 | 2,10 |
 
-**Émission totale : 62 899 200** eidôla sur 2 096 640 blocs, soit 2 080 semaines ≈ 39,9 ans. Rapport 16 : 9 : 4 : 1. Mise du sceau = émission de l'âge / 1 000 000.
+**Émission totale : 62 899 200** ionos sur 2 096 640 blocs, soit 2 080 cycles de 42 jours ≈ 239 ans à un bloc par heure. Rapport 16 : 9 : 4 : 1. Mise du sceau = émission de l'âge / 1 000 000.
 
 `math.cos` dépend de la libm locale : deux nœuds peuvent diverger. Eidos calcule le cosinus en `decimal.Decimal` par série de Taylor, avec π à 68 décimales. Les tables sont figées dans `genesis.json`. **Toute modification de `eonis.py`, même d'un commentaire, invalide la genèse** — la CI vérifie son empreinte.
 
 ```
-genesis.json  06b47645abedb5e0ac7d2fc7a1dd6fcd386ef493874fd2774544565ac46dbe28
-eonis.py      cc94ad1e6eadf7027414a1347e870a4842689431b8fca2c1b381f93f4f1dfabc
+genesis.json  6abd5f2896856da0e7a3e889adaec07e6411fa24ec5e6fd6fe90a479bf524153
+eonis.py      2eb70acb9f7c3cd991db6493110749acd9a10879a6872b87529eb212af075c78
 bloc 0        00003d32ffa7a1dc7f1ace8ec08d0c739126ad4449fe004ea772710baec2c7b6
 ```
 
@@ -149,14 +149,14 @@ Deux consensus coexistent dans le dépôt : le **fédéré** (`federation.py` + 
 
 | | |
 |---|---|
-| Validateurs | 7, graines dérivées du tag public `eidos-testnet-3` |
+| Validateurs | 7, graines dérivées du tag public `eidos-testnet-4` |
 | Signatures | XMSS de hauteur 12 : 4 096 par validateur, environ trois ans de blocs horaires |
 | Créneau | 3 600 s sur le réseau d'essai (`federation.json`), 600 s dans la spec |
 | Forge | `chaine.yml`, cron horaire sur GitHub Actions, sur `main` seulement |
 | Fichier de chaîne | `chaine-eidos.dat`, format 3, écrit par la CI et jamais à la main |
 | État publié | `etat.json` : soldes, sorties, tête signée, reliques, invariant |
 
-- **Robinet.** Deux canaux alimentent la même file : une issue GitHub contenant une adresse en glyphes (`robinet.py`), ou un courriel de sujet `robinet` vers la boîte que le nœud publie dans `etat.json.robinet_canaux` (`courriel.py`, IMAP en bibliothèque standard, sans compte GitHub). Un eidôlon par demande, une demande servie par auteur (compte GitHub ou adresse d'expéditeur) et par époque, une seule en attente, dans un budget d'époque de `a·T / 8`. Ni le corps d'une issue ni celui d'un courriel n'est jamais interpolé dans une commande : ils transitent par une variable d'environnement, et seul ce qui passe le filtre de figures et la somme de contrôle est retenu. La page d'accueil de l'atelier prépare l'une ou l'autre demande, la suit dans `mempool.json` et charge les pièces une fois servies.
+- **Robinet.** Deux canaux alimentent la même file : une issue GitHub contenant une adresse en glyphes (`robinet.py`), ou un courriel de sujet `robinet` vers la boîte que le nœud publie dans `etat.json.robinet_canaux` (`courriel.py`, IMAP en bibliothèque standard, sans compte GitHub). Un ionos par demande, une demande servie par auteur (compte GitHub ou adresse d'expéditeur) et par époque, une seule en attente, dans un budget d'époque de `a·T / 8`. Ni le corps d'une issue ni celui d'un courriel n'est jamais interpolé dans une commande : ils transitent par une variable d'environnement, et seul ce qui passe le filtre de figures et la somme de contrôle est retenu. La page d'accueil de l'atelier prépare l'une ou l'autre demande, la suit dans `mempool.json` et charge les pièces une fois servies.
 - **Envois.** L'atelier signe une dépense et produit un bloc de texte entre marqueurs `-----EIDOS-----` (base64, lignes de 76) ; collez-le dans une issue. Le nœud valide chaque envoi dans un bloc candidat sur une copie profonde du carnet, en inclut au plus 8 par bloc, porte leurs frais dans la coinbase, et fait expirer les demandes de plus d'une époque.
 - **Preuves de veillée.** Une issue intitulée « veillée » avec la preuve exportée en pièce jointe (ou un gist, ou un fichier brut dans un dépôt — trois hôtes seulement, deux mégaoctets au plus) : le juge TypeScript tourne dans la CI (`veillees.yml`, `depot.ts`), vérifie que les trois têtes de la preuve sont dans la chaîne publiée, la juge sans rejouer, et la committe dans `veillees/`. L'issue reçoit le verdict et se ferme.
 
@@ -229,7 +229,7 @@ Rien du lore n'est inventé sur place : chaque figure vient d'une source écrite
 | `wots.py` | 284 | WOTS+ w = 16, arbre L, adresses, empreintes | 5 |
 | `utxo.py` | 509 | témoins, adresses, transactions, carnet, racine UTXO, validation | 15 |
 | `federation.py` | 694 | XMSS, rotation, vivacité, tête signée, compteur persistant verrouillé | 18 |
-| `noeud.py` | 1151 | nœud du testnet : rejeu, forge, robinet, envois, `--depuis`, reliques, `etat.json` | 5 + 3 + 4 + 5 + 2 |
+| `noeud.py` | 1258 | nœud du testnet : rejeu, forge, robinet, envois, `--depuis`, reliques, `etat.json`, `format_chaine` exigé | 5 + 3 + 4 + 5 + 2 + 2 |
 | `robinet.py` | 420 | file du robinet alimentée par issues et courriels, frein par auteur | 14 |
 | `courriel.py` | 321 | second canal du robinet : boîte IMAP, même filtre, frein par expéditeur | 6 |
 | `vecteurs.py` | 222 | vecteurs partagés Python ↔ TS (`vecteurs.json`, 10 familles) | parité |
@@ -267,6 +267,7 @@ python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_paiements()"   # 3
 python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 -c "import noeud as N; N._test_indice()"      # 2
+python3 -c "import noeud as N; N._test_config()"      # 2 (format_chaine lu et exigé)
 python3 -c "import noeud as N; N._test_reliques()"    # 5
 python3 qr.py --test           # 5
 python3 relique.py --test      # 4
@@ -307,7 +308,7 @@ Les tests sont des `assert` et des `print` nus, sans framework. Toute règle de 
 - **Pas d'audit externe.** WOTS+, XMSS et l'arbre de Merkle sont des implémentations maison, écrites d'après la RFC 8391 sans vecteurs officiels.
 - **Une fédération n'est pas sans confiance.** `n` signataires connus peuvent s'entendre. La question ouverte est la gouvernance, pas la cryptographie.
 - **Le juge ne sait pas à qui est la pièce.** Une preuve de veillée montre qu'un run a eu lieu sur une pièce non dépensée, pas que la pièce est au déposant ; cela se prouve en la dépensant.
-- **Cadre réglementaire.** Prototyper est libre ; émettre et distribuer un jeton public relève de MiCA dans l'UE. L'eidôlon n'a aucune valeur.
+- **Cadre réglementaire.** Prototyper est libre ; émettre et distribuer un jeton public relève de MiCA dans l'UE. L'ionos n'a aucune valeur.
 
 ## 16. Licence
 

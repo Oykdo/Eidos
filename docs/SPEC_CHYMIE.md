@@ -122,7 +122,7 @@ Tiers de `SPEC_LOOT_TIERS` §5 (`E3 = Σ axe² − 1024`, 11 seuils). Tirage nat
 
 ## 7. Le prix — l'intégrale en couches, payée en lumens
 
-**Rien de tout cela ne se paie en eidôla.** `SPEC_PUITS` §2.4 : 8 envois par bloc, **192 transactions/jour pour le réseau entier** ; un paiement par craft ne rentre pas dans les blocs, quel qu'en soit le prix. Le **lumen** est une jauge (`tour`, hors feuille, comme les hôtes et les secrets) : zéro octet de consensus, granularité libre, et **il s'évapore en fin de run**. Contrôle : « lumen » ne collisionne avec **aucun** des 107 signes de `chymie.ts` (0 sur 107).
+**Rien de tout cela ne se paie en ionos.** `SPEC_PUITS` §2.4 : 8 envois par bloc, **192 transactions/jour pour le réseau entier** ; un paiement par craft ne rentre pas dans les blocs, quel qu'en soit le prix. Le **lumen** est une jauge (`tour`, hors feuille, comme les hôtes et les secrets) : zéro octet de consensus, granularité libre, et **il s'évapore en fin de run**. Contrôle : « lumen » ne collisionne avec **aucun** des 107 signes de `chymie.ts` (0 sur 107).
 
 **Le rendement d'un abattage est le tier de l'abattu, 1 à 12 lumens.** C'est la formule du gâteau en couches, à l'endroit :
 `E[tier] = Σ_t P(tier ≥ t) = Σ_{t=1}^{12} 2^−(t−1) = 2 − 2⁻¹¹` — **dyadique exact, aucun flottant**. Mesuré sur le tirage réel : **1,996**. σ = 1,38 par abattage.
@@ -177,7 +177,7 @@ Elle ne change pas les axes : elle change la **démarche** (`ETUDE_MOBILITE.md`,
 - **L'illisibilité comme rendement d'abattage** : étendue 21 points contre 2 048×, et 0 lumen sur les objets les plus courants.
 - **La lecture du degré par la figure dominante** (la plus littérale) : deux espèces vides, dont mercure·0 et soufre·0.
 - **Un treizième élixir « permanent »** : `TRANSPOSITION_EIDOLON.md` §4.1 l'a déjà refusé — un bonus permanent est une puissance.
-- **Payer la forge en eidôla** : 192 transactions par jour pour tout le réseau, 0,3 craft/jour à N = 1 000 font 300 transactions. Physiquement impossible (`SPEC_PUITS` §2.4).
+- **Payer la forge en ionos** : 192 transactions par jour pour tout le réseau, 0,3 craft/jour à N = 1 000 font 300 transactions. Physiquement impossible (`SPEC_PUITS` §2.4).
 
 ## Décisions à trancher
 

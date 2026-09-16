@@ -144,7 +144,7 @@ describe("sélection des sorties", () => {
     assert.ok(r.entrees.length <= 3);
   });
 
-  it("parse un montant en eidôla vers atomes", () => {
+  it("parse un montant en ionos vers atomes", () => {
     assert.equal(parserMontant("1"), ATOMES);
     assert.equal(parserMontant("1,000090"), 100_009_000);
     assert.equal(parserMontant("0.5"), 50_000_000);

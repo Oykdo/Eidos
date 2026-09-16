@@ -21,17 +21,17 @@ produire de matériel cryptographique réel avec ce fichier.
 """
 
 import hashlib, sys, time
-from decimal import Decimal, getcontext, ROUND_FLOOR
+from decimal import Decimal, localcontext, ROUND_FLOOR
 
-getcontext().prec = 60
+PRECISION = 60           # chiffres Decimal, posés localement (jamais sur le processus)
 
 # --------------------------------------------------------------------------
 # Paramètres
 # --------------------------------------------------------------------------
 T        = 1008          # blocs par époque : 168 h x 6 blocs de 10 min
 H0       = 492           # culmination : 41/84 de l'époque
-ATOMES   = 100_000_000   # 1 EIDOLON = 1e8 atomes
-AGES = [                 # (nom, a en EIDOLON, nombre d'époques)
+ATOMES   = 100_000_000   # 1 IONOS = 1e8 atomes
+AGES = [                 # (nom, a en IONOS, nombre d'époques)
     ("Satya",   40, 832),
     ("Treta",   30, 624),
     ("Dvapara", 20, 416),
@@ -48,50 +48,56 @@ PI = Decimal(
 # --------------------------------------------------------------------------
 def dcos(x: Decimal) -> Decimal:
     """cos(x) en Decimal. Reproductible sur toute plateforme, contrairement
-    a math.cos qui depend de la libm locale."""
-    two_pi = 2 * PI
-    x = x - (x / two_pi).to_integral_value(rounding=ROUND_FLOOR) * two_pi
-    if x > PI:
-        x -= two_pi
-    term = Decimal(1)
-    total = Decimal(1)
-    x2 = x * x
-    n = 0
-    while True:
-        n += 2
-        term = -term * x2 / (n * (n - 1))
-        if term == 0 or abs(term) < Decimal(10) ** (-(getcontext().prec - 5)):
-            break
-        total += term
-    return total
+    a math.cos qui depend de la libm locale. La precision est celle de
+    PRECISION, posee dans un contexte local : rien ne fuit hors de l'appel."""
+    with localcontext() as ctx:
+        ctx.prec = PRECISION
+        two_pi = 2 * PI
+        x = x - (x / two_pi).to_integral_value(rounding=ROUND_FLOOR) * two_pi
+        if x > PI:
+            x -= two_pi
+        term = Decimal(1)
+        total = Decimal(1)
+        x2 = x * x
+        n = 0
+        while True:
+            n += 2
+            term = -term * x2 / (n * (n - 1))
+            if term == 0 or abs(term) < Decimal(10) ** (-(ctx.prec - 5)):
+                break
+            total += term
+        return total
 
 
 # --------------------------------------------------------------------------
 # 2. Table d'émission cumulée, total exact
 # --------------------------------------------------------------------------
-def build_epoch_table(a_eidolon: int, T: int = T, h0: int = H0):
+def build_epoch_table(a_ionos: int, T: int = T, h0: int = H0):
     """Retourne W, liste de T+1 entiers (atomes cumules), avec W[T] exact.
 
     R(h) = a + b*cos(2*pi*(h-h0)/T),  b = a/2.
     La somme des cosinus sur une periode complete est nulle, donc le total
     vaut exactement a*T. Les arrondis sont repartis au plus fort reste :
-    aucun atome n'est cree ni perdu."""
-    total_atomes = a_eidolon * T * ATOMES
-    a = Decimal(a_eidolon) * ATOMES
-    b = a * B_RATIO
-    two_pi_over_T = 2 * PI / Decimal(T)
+    aucun atome n'est cree ni perdu. Tout le calcul Decimal tient dans un
+    contexte local a PRECISION chiffres."""
+    total_atomes = a_ionos * T * ATOMES
+    with localcontext() as ctx:
+        ctx.prec = PRECISION
+        a = Decimal(a_ionos) * ATOMES
+        b = a * B_RATIO
+        two_pi_over_T = 2 * PI / Decimal(T)
 
-    exact, floors = [], []
-    for h in range(T):
-        r = a + b * dcos(two_pi_over_T * Decimal(h - h0))
-        exact.append(r)
-        floors.append(int(r.to_integral_value(rounding=ROUND_FLOOR)))
+        exact, floors = [], []
+        for h in range(T):
+            r = a + b * dcos(two_pi_over_T * Decimal(h - h0))
+            exact.append(r)
+            floors.append(int(r.to_integral_value(rounding=ROUND_FLOOR)))
 
-    reste = total_atomes - sum(floors)
-    assert 0 <= reste <= T, "residu d'arrondi hors bornes"
+        reste = total_atomes - sum(floors)
+        assert 0 <= reste <= T, "residu d'arrondi hors bornes"
 
-    # plus fort reste, depart deterministe : fraction decroissante, puis index
-    order = sorted(range(T), key=lambda h: (-(exact[h] - floors[h]), h))
+        # plus fort reste, depart deterministe : fraction decroissante, puis index
+        order = sorted(range(T), key=lambda h: (-(exact[h] - floors[h]), h))
     for h in order[:reste]:
         floors[h] += 1
 
@@ -213,11 +219,11 @@ def tests():
 
     W = build_epoch_table(40)
     assert W[T] == 40 * T * ATOMES
-    print(f"total d'epoque exact          : {W[T] / ATOMES:,.0f} EIDOLON"); ok += 1
+    print(f"total d'epoque exact          : {W[T] / ATOMES:,.0f} IONOS"); ok += 1
 
     rs = [W[h + 1] - W[h] for h in range(T)]
     lo, hi = min(rs) / ATOMES, max(rs) / ATOMES
-    print(f"bornes de recompense          : {lo:.4f} .. {hi:.4f} EIDOLON")
+    print(f"bornes de recompense          : {lo:.4f} .. {hi:.4f} IONOS")
     assert lo > 0 and abs(hi / lo - 3) < 0.01
     print(f"rapport max/min               : {hi / lo:.6f}  (attendu 3)"); ok += 1
 
@@ -226,7 +232,7 @@ def tests():
     assert abs(pic - H0) <= 1; ok += 1
 
     total = sum(a * e for _, a, e in AGES) * T
-    print(f"emission totale du protocole  : {total:,} EIDOLON")
+    print(f"emission totale du protocole  : {total:,} IONOS")
     assert total == 62_899_200; ok += 1
 
     d = hashlib.sha256(b"esoptron").digest()

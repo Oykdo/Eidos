@@ -60,6 +60,9 @@ jobs:
       - name: Etat MSS persistant cote noeud (fichier perdu refuse puis amorce, blocs perdus, 2 controles)
         run: python -c "import noeud as N; N._test_indice()"
 
+      - name: federation.json (format_chaine lu, ecart refuse, 2 controles)
+        run: python -c "import noeud as N; N._test_config()"
+
       - name: Reliques (attente, intacte, recuperee, 4 controles)
         run: python -c "import noeud as N; N._test_reliques()"
 

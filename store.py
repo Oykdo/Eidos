@@ -201,7 +201,7 @@ def cmd_mine(n, bits=14):
                                                   p.nouvelle_adresse())], bits=bits)
         h = ch.ajouter(blk)
         print(f"#{blk['height']:<4} {h.hex()[:16]}  nonce={blk['nonce']:<7} "
-              f"+{E.reward_at(blk['height']) / E.ATOMES:.6f} EIDOLON")
+              f"+{E.reward_at(blk['height']) / E.ATOMES:.6f} IONOS")
     cmd_status(ch, p)
 
 
@@ -240,15 +240,15 @@ def cmd_status(ch=None, p=None):
     print(f"\nhauteur         {c.hauteur}   ({ch.blocs} blocs, {ch.octets:,} octets)"
           .replace(",", " "))
     print(f"tete            {c.tete.hex()}")
-    print(f"age courant     {nom}  a = {a} EIDOLON")
+    print(f"age courant     {nom}  a = {a} IONOS")
     print(f"sorties         {len(c.utxo)} non depensees")
     print(f"cles usees      {len(c.cles_usees)}")
     print(f"adresses emises {p.n}")
     circ = sum(m for _, m in c.utxo.values())
-    print(f"en circulation  {circ / E.ATOMES:.6f} EIDOLON")
-    print(f"emission        {c.emission_cumulee() / E.ATOMES:.6f} EIDOLON")
+    print(f"en circulation  {circ / E.ATOMES:.6f} IONOS")
+    print(f"emission        {c.emission_cumulee() / E.ATOMES:.6f} IONOS")
     print("invariant       " + ("OK" if circ == c.emission_cumulee() else "ROMPU"))
-    print(f"solde           {p.solde(c) / E.ATOMES:.6f} EIDOLON")
+    print(f"solde           {p.solde(c) / E.ATOMES:.6f} IONOS")
 
 
 def cmd_verify():

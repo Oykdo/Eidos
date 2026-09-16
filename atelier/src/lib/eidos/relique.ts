@@ -5,8 +5,8 @@
  * Même rapport 16 : 9 : 4 : 1. Kali ≈ 2,10 ; Satya ≈ 33,55.
  * Un robinet (1) n'y suffit pas : miner, puis acheter.
  *
- * L'**ionos** est la lumière d'une relique : son demi-grand axe `a`, son
- * demi-petit axe `b`, son prix en eidôla et sa récompense oscillante
+ * Le **lumis** est la lumière d'une relique : son demi-grand axe `a`, son
+ * demi-petit axe `b`, son prix en ionos et sa récompense oscillante
  * `R(θ) = a + b·cos(θ)`. Il s'appelait « lumen » jusqu'ici ; le mot est rendu
  * à la **monnaie de forge** de `SPEC_CHYMIE.md` §7, qui se gagne en abattant
  * et n'a rien à voir avec une relique. Deux sens sous un mot, c'est un sens
@@ -38,13 +38,13 @@ export const AGES_RELIQUE: AgeRelique[] = [
   { nom: "Kali", nomAffiche: "Kali", a: 10, epoques: 208 },
 ];
 
-export type Ionos = {
+export type Lumis = {
   age: AgeRelique;
   a: number;
   b: number;
   ratio: number;
   aire: number;
-  /** Prix en eidôla. */
+  /** Prix en ionos. */
   prix: number;
   /** Prix en atomes — entier, pour le glouton. */
   prixAtomes: number;
@@ -67,7 +67,7 @@ export function formaterPrix(n: number): string {
   });
 }
 
-export function ionosDe(age: AgeRelique): Ionos {
+export function lumisDe(age: AgeRelique): Lumis {
   const a = age.a;
   const b = a * B_SUR_A;
   return {
@@ -82,16 +82,16 @@ export function ionosDe(age: AgeRelique): Ionos {
   };
 }
 
-export function tousLesIonos(): Ionos[] {
-  return AGES_RELIQUE.map(ionosDe);
+export function tousLesLumis(): Lumis[] {
+  return AGES_RELIQUE.map(lumisDe);
 }
 
-export function echelleRelique(l: Ionos): number {
+export function echelleRelique(l: Lumis): number {
   return l.a / AGES_RELIQUE[0]!.a;
 }
 
 /** Vérifie que chaque âge a un prix distinct et que la suite décroît. */
-export function prixSontProgressifs(liste = tousLesIonos()): boolean {
+export function prixSontProgressifs(liste = tousLesLumis()): boolean {
   if (liste.length < 2) return false;
   const vus = new Set<number>();
   for (let i = 0; i < liste.length; i++) {

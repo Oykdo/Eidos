@@ -96,9 +96,9 @@ export function verifierAges(): Controle[] {
       C(
         `age-${age.nom}`,
         age.blocs === age.epoques * g.emission.T &&
-          age.emission_age_atomes === age.a_eidolon * age.epoques * g.emission.T * ATOMES,
+          age.emission_age_atomes === age.a_ionos * age.epoques * g.emission.T * ATOMES,
         `âge ${age.nom}`,
-        `${age.epoques} époques · ${age.a_eidolon} eidôla · ${age.blocs} blocs`,
+        `${age.epoques} époques · ${age.a_ionos} ionos · ${age.blocs} blocs`,
       ),
     );
   }
@@ -116,7 +116,7 @@ export function verifierAges(): Controle[] {
         totalBlocs === g.emission.blocs_totaux &&
         totalBlocs / g.emission.T === g.temps.epoques_totales,
       "émission totale",
-      `${g.emission.total_eidolon.toLocaleString("fr-FR")} eidôla · ${g.emission.blocs_totaux.toLocaleString("fr-FR")} blocs`,
+      `${g.emission.total_ionos.toLocaleString("fr-FR")} ionos · ${g.emission.blocs_totaux.toLocaleString("fr-FR")} blocs`,
     ),
   );
   return out;
@@ -156,7 +156,7 @@ export function verifierBloc0(): Controle[] {
       "recompense",
       rewardAt(0) === b.recompense_atomes,
       "récompense du bloc 0",
-      `${(b.recompense_atomes / ATOMES).toFixed(6)} eidôlon`,
+      `${(b.recompense_atomes / ATOMES).toFixed(6)} ionos`,
     ),
     C(
       "age0",
@@ -169,7 +169,7 @@ export function verifierBloc0(): Controle[] {
 export function verifierTables(): Controle[] {
   const out: Controle[] = [];
   for (const age of genesis.ages) {
-    const h = empreinteTable(age.a_eidolon);
+    const h = empreinteTable(age.a_ionos);
     out.push(
       C(
         `table-${age.nom}`,
@@ -219,7 +219,7 @@ export function verifierPortefeuille(coffre: Coffre): Controle[] {
       "solde",
       solde > 0,
       solde > 0 ? "solde en coffre" : "coffre vide — servir le robinet",
-      `${(solde / ATOMES).toFixed(6)} eidôlon`,
+      `${(solde / ATOMES).toFixed(6)} ionos`,
     ),
   ];
 }
@@ -296,7 +296,7 @@ export function verifierEchanges(coffre: Coffre): Controle[] {
       "ce-coffre",
       liveOk,
       liveOk
-        ? "ce coffre peut envoyer 1 eidôlon"
+        ? "ce coffre peut envoyer 1 ionos"
         : fragmente
           ? MSG_FRAGMENTE
           : solde === 0

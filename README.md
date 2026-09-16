@@ -14,7 +14,7 @@ Eidos is three things that share one rule, *nothing is believed, everything is r
 - **a web atelier** that replays the same rules in the browser, byte for byte, and lets you check a coin, a signature, an address without trusting anyone;
 - **a game** grown on top of the chain — a turn-based tactical RPG: a Tower of 255 floors, nine muses, battles on a nine-by-nine slab with not a single die, and a daily run, the Vigil, where a one-time key is your life and the proof of your run is judged by anyone without replaying the chain.
 
-Testnet only: the eidôlon has no value.
+Testnet only: the ionos has no value.
 
 - Live atelier: [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/)
 - Testnet: seven validators, one block per hour forged by GitHub Actions; faucet through issues or email; transfers through issues; vigil proofs deposited through issues
@@ -45,7 +45,7 @@ Testnet only: the eidôlon has no value.
 **As a player**, on [the atelier](https://oykdo.github.io/Eidos/):
 
 1. Create a vault. The secret stays in your browser; save `eidos.carnet` at once, or the vault is lost.
-2. Ask the faucet for one eidôlon: an issue with your address in glyphs, or an email. The node serves it at the next block, within the hour.
+2. Ask the faucet for one ionos: an issue with your address in glyphs, or an email. The node serves it at the next block, within the hour.
 3. Follow the network on the Witness page: the signed head is verified in your browser, never trusted.
 4. Climb the Tower: hosts, elixirs, capsules, secrets, doors that open with an age seal.
 5. Keep a Vigil: sixty-four one-time keys as life, the day's twenty-seven rooms, a bag that the summit pours into the vault and that the last leaf loses.
@@ -64,7 +64,7 @@ The Guide page of the atelier explains the core, the mechanics and the world in 
 
 ## 1. The unit and the form
 
-The unit of account is the **eidôlon** — εἴδωλον, the image — set against *eidos*, εἶδος, the form. The form is the rule; the image is what circulates. 1 eidôlon = 10⁸ atoms.
+The unit of account is the **ionos** — from ἰόν, “what goes”, the name Faraday gave to what moves — set against *eidos*, εἶδος, the form. The form is the rule; the ionos is what circulates. 1 ionos = 10⁸ atoms. (Until testnet-3 the unit was called the eidôlon; the name goes back to Eidolon, the other piece of the ecosystem.)
 
 ## 2. Five claims
 
@@ -93,18 +93,18 @@ The cosine sums to zero over a full period, so an epoch emits **exactly** `a·T`
 
 | Age | `a` | Epochs | Blocks | Emission | Seal stake (atelier) |
 |---|---|---|---|---|---|
-| Satya | 40 | 832 | 838 656 | 33 546 240 | 33.55 eidôla |
+| Satya | 40 | 832 | 838 656 | 33 546 240 | 33.55 ionos |
 | Trétâ | 30 | 624 | 628 992 | 18 869 760 | 18.87 |
 | Dvâpara | 20 | 416 | 419 328 | 8 386 560 | 8.39 |
 | Kali | 10 | 208 | 209 664 | 2 096 640 | 2.10 |
 
-**Total emission: 62 899 200** eidôla over 2 096 640 blocks, i.e. 2 080 weeks ≈ 39.9 years. Ratio 16 : 9 : 4 : 1. Seal stake = age emission / 1 000 000.
+**Total emission: 62 899 200** ionos over 2 096 640 blocks, i.e. 2 080 cycles of 42 days ≈ 239 years at one block per hour. Ratio 16 : 9 : 4 : 1. Seal stake = age emission / 1 000 000.
 
 `math.cos` depends on the local libm: two nodes could disagree. Eidos computes the cosine in `decimal.Decimal` by Taylor series, with π to 68 decimals. The tables are frozen in `genesis.json`. **Any change to `eonis.py`, even a comment, invalidates genesis** — the CI checks its fingerprint.
 
 ```
-genesis.json  06b47645abedb5e0ac7d2fc7a1dd6fcd386ef493874fd2774544565ac46dbe28
-eonis.py      cc94ad1e6eadf7027414a1347e870a4842689431b8fca2c1b381f93f4f1dfabc
+genesis.json  6abd5f2896856da0e7a3e889adaec07e6411fa24ec5e6fd6fe90a479bf524153
+eonis.py      2eb70acb9f7c3cd991db6493110749acd9a10879a6872b87529eb212af075c78
 block 0       00003d32ffa7a1dc7f1ace8ec08d0c739126ad4449fe004ea772710baec2c7b6
 ```
 
@@ -149,14 +149,14 @@ Two consensus paths coexist in the repository: the **federated** one (`federatio
 
 | | |
 |---|---|
-| Validators | 7, seeds derived from the public tag `eidos-testnet-3` |
+| Validators | 7, seeds derived from the public tag `eidos-testnet-4` |
 | Signatures | XMSS of height 12: 4 096 per validator, about three years of hourly blocks |
 | Slot | 3 600 s on the testnet (`federation.json`), 600 s in the spec |
 | Forge | `chaine.yml`, hourly cron on GitHub Actions, on `main` only |
 | Chain file | `chaine-eidos.dat`, format 3, written by the CI and never by hand |
 | Published state | `etat.json`: balances, outputs, signed head, relics, invariant |
 
-- **Faucet.** Two channels feed the same queue: a GitHub issue containing an address in glyphs (`robinet.py`), or an email with subject `robinet` to the mailbox the node publishes in `etat.json.robinet_canaux` (`courriel.py`, IMAP from the standard library, no GitHub account). One eidôlon per request, one served request per author (GitHub account or sender address) per epoch, one pending at a time, within an epoch budget of `a·T / 8`. Neither an issue body nor an email body is ever interpolated into a command: they travel through an environment variable, and only what passes the glyph filter and the checksum is kept. The atelier home page prepares either request, follows it in `mempool.json`, and loads the coins once served.
+- **Faucet.** Two channels feed the same queue: a GitHub issue containing an address in glyphs (`robinet.py`), or an email with subject `robinet` to the mailbox the node publishes in `etat.json.robinet_canaux` (`courriel.py`, IMAP from the standard library, no GitHub account). One ionos per request, one served request per author (GitHub account or sender address) per epoch, one pending at a time, within an epoch budget of `a·T / 8`. Neither an issue body nor an email body is ever interpolated into a command: they travel through an environment variable, and only what passes the glyph filter and the checksum is kept. The atelier home page prepares either request, follows it in `mempool.json`, and loads the coins once served.
 - **Transfers.** The atelier signs a spend and emits a text block between `-----EIDOS-----` markers (base64, 76-column lines); paste it in an issue. The node validates each transfer in a candidate block on a deep copy of the ledger, includes at most 8 per block, carries their fees into the coinbase, and expires requests older than one epoch.
 - **Vigil proofs.** An issue titled « veillée » with the exported proof attached (or a gist, or a raw file in a repository — three hosts only, two megabytes at most): the TypeScript judge runs in the CI (`veillees.yml`, `depot.ts`), checks that the proof's three heads are in the published chain, judges it without replaying, and commits it into `veillees/`. The issue receives the verdict and is closed.
 
@@ -229,7 +229,7 @@ Nothing in the lore is invented on the spot: each figure comes from a written so
 | `wots.py` | 284 | WOTS+ w = 16, L-tree, addresses, fingerprints | 5 |
 | `utxo.py` | 550 | witnesses, addresses, transactions, ledger, UTXO root, validation | 16 |
 | `federation.py` | 694 | XMSS, rotation, liveness, signed head, locked persistent counter | 18 |
-| `noeud.py` | 1151 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json` | 5 + 3 + 4 + 5 + 2 |
+| `noeud.py` | 1258 | testnet node: replay, forge, faucet, transfers, `--depuis`, relics, `etat.json`, `format_chaine` enforced | 5 + 3 + 4 + 5 + 2 + 2 |
 | `robinet.py` | 445 | faucet queue fed by issues and email, per-author brake | 15 |
 | `courriel.py` | 321 | second faucet channel: IMAP mailbox, same filter, per-sender brake | 6 |
 | `vecteurs.py` | 231 | shared vectors Python ↔ TS (`vecteurs.json`, 10 families) | parity |
@@ -267,6 +267,7 @@ python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_paiements()"   # 3
 python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 -c "import noeud as N; N._test_indice()"      # 2
+python3 -c "import noeud as N; N._test_config()"      # 2 (format_chaine lu et exigé)
 python3 -c "import noeud as N; N._test_reliques()"    # 5
 python3 qr.py --test           # 5
 python3 relique.py --test      # 4
@@ -308,7 +309,7 @@ Tests are plain `assert` and `print`, no framework. Every validation rule comes 
 - **No external audit.** WOTS+, XMSS and the Merkle tree are in-house implementations written from RFC 8391, without official vectors.
 - **A federation is not trustless.** `n` known signers can collude. Governance is the open question, not cryptography.
 - **The judge does not know whose coin it is.** A vigil proof shows that a run happened on an unspent coin, not that the coin belongs to the depositor; that is proven by spending it.
-- **Regulatory frame.** Prototyping is free; issuing and distributing a public token is not (MiCA in the EU). The eidôlon has no value.
+- **Regulatory frame.** Prototyping is free; issuing and distributing a public token is not (MiCA in the EU). The ionos has no value.
 
 ## 16. Licence
 

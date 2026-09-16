@@ -9,8 +9,8 @@ dans quel ordre on avance. Lis-le entièrement avant toute modification.
 ## 1. Ce qu'est Eidos
 
 Chaîne prototype à émission bornée sans halving, consensus fédéré, signatures
-post-quantiques par hachage pur (aucune courbe elliptique). Unité : l'eidôlon
-(EIDL), 1 eidôlon = 10⁸ atomes. Réseau d'essai uniquement, sans valeur.
+post-quantiques par hachage pur (aucune courbe elliptique). Unité : l'ionos
+(IONOS), 1 ionos = 10⁸ atomes. Réseau d'essai uniquement, sans valeur.
 
 Trois couches partagent la règle « rien ne se croit, tout se rejoue » : la
 **chaîne** (Python, bibliothèque standard), l'**atelier** (TypeScript, rejoue la
@@ -32,7 +32,7 @@ Les cinq propositions, dans l'ordre où elles contraignent le code :
    rejeu intégral et revalidation à chaque ouverture, par le même code qu'à la forge.
 
 Quatre âges : Satya (a=40, 832 époques), Trétâ (30, 624), Dvâpara (20, 416),
-Kali (10, 208). Total **62 899 200** eidôla sur 2 096 640 blocs.
+Kali (10, 208). Total **62 899 200** ionos sur 2 096 640 blocs.
 
 ## 2. Carte du dépôt
 
@@ -44,7 +44,7 @@ wots.py             WOTS+ w=16 (RFC 8391), arbre L, adresses, empreintes (5 cont
 utxo.py             témoins WOTS+, adresses, Tx, Carnet, racine UTXO, validation (16 contrôles)
 federation.py       XMSS, rotation, vivacité, tête signée (16 contrôles)
 vecteurs.py         vecteurs partagés Python ↔ TS, écrit/relit vecteurs.json (10 familles)
-noeud.py            nœud du testnet : rejeu, forge, robinet groupé, envois, --depuis, reliques (1+5+5+4+2+5 contrôles)
+noeud.py            nœud du testnet : rejeu, forge, robinet groupé, envois, --depuis, reliques (1+5+5+4+2+2+5 contrôles)
 qr.py               encodeur QR stdlib, octets, niveau H, versions 1–10 (5 contrôles)
 relique.py          gardien des reliques : --sceller (QR + planche + reliques.json), --animer (4 contrôles)
 reliques.json       reliques déclarées : id, adresse, âge, indice — JAMAIS de graine
@@ -111,7 +111,7 @@ un `.test.ts` nouveau s'y ajoute à la main.
 
 ## 3. Invariants — ne jamais casser
 
-- **`eonis.py` est gelé.** Son SHA-256 (`cc94ad1e…`) est dans `genesis.json` et
+- **`eonis.py` est gelé.** Son SHA-256 (`2eb70acb…`) est dans `genesis.json` et
   vérifié par la CI (job `hygiene`). Modifier un commentaire invalide la genèse.
   Si une modification est indispensable : régénérer `genesis.json`, mettre à jour
   les trois empreintes du README, `genesis-data.ts`, et réinitialiser le testnet
@@ -207,6 +207,7 @@ python3 -c "import noeud as N; N._test_envois()"      # 5
 python3 -c "import noeud as N; N._test_paiements()"   # 5 (dont le groupement)
 python3 -c "import noeud as N; N._test_depuis()"      # 4
 python3 -c "import noeud as N; N._test_indice()"      # 2
+python3 -c "import noeud as N; N._test_config()"      # 2 (format_chaine lu et exigé)
 python3 -c "import noeud as N; N._test_reliques()"    # 5
 python3 qr.py --test           # 5
 python3 relique.py --test      # 4
@@ -233,7 +234,7 @@ Règles :
 ## 5. Formats binaires (gros-boutiste)
 
 ```
-noeud.py — chaine-eidos.dat (FORMAT 3 depuis eidos-testnet-3)
+noeud.py — chaine-eidos.dat (FORMAT 3 depuis eidos-testnet-3 ; eidos-testnet-4 depuis le 2026-09-15 : même format, genèse regénérée, unité ionos, eonis.py en localcontext)
   entête  MAGIC "EIDOS\0\0\1"(8) FORMAT(2)=3
   bloc    LONGUEUR(4) CORPS
   corps   height(8) prev(32) ts(8) utxo_root(32) validateur(2) indice(4)
@@ -261,7 +262,7 @@ plus lus.
 
 1. Mettre à jour `federation.json` (`t0_unix`, `t0_iso`, racines et
    `graines_publiques` si la dérivation change) et le tag `GRAINE` de
-   `noeud.py` : `eidos-testnet-3` → `eidos-testnet-4`. La génération d'une clé
+   `noeud.py` : `eidos-testnet-4` → `eidos-testnet-5`. La génération d'une clé
    XMSS de hauteur 12 prend ~40 s ; sept clés, ~5 min.
 2. Supprimer `chaine-eidos.dat`, `etat.json`, vider `mempool.json`.
 3. `python3 noeud.py --init && python3 noeud.py --forger && python3 noeud.py --verifier`.
@@ -314,7 +315,9 @@ zéro dépendance, figures jamais preuves).
 
 ### P6 — Hygiène
 - `getcontext().prec = 60` global → `with localcontext()` dans `dcos` et
-  `build_epoch_table` (ne change pas les tables ; vérifier par `verify_genesis.py`).
+  `build_epoch_table` — FAIT le 2026-09-15 avec la réinitialisation `eidos-testnet-4`
+  (les quatre tables gardent leur empreinte, `verify_genesis.py` 32/32) ; le nœud lit
+  désormais `federation.json.format_chaine` et refuse l'écart avec `FORMAT` (A27).
 - Documenter l'ambiguïté de duplication de la dernière feuille Merkle
   (CVE-2012-2459) et pourquoi elle est bénigne ici (double dépense dans le bloc
   refusée).

@@ -406,7 +406,7 @@ def tests():
     c.valider_bloc(miner_bloc(c, [coinbase(0, a0)]))
     r0 = E.reward_at(0)
     assert alice.solde(c) == r0
-    print(f"bloc 0 : coinbase creditee    : {r0 / E.ATOMES:.6f} EIDOLON"); ok += 1
+    print(f"bloc 0 : coinbase creditee    : {r0 / E.ATOMES:.6f} IONOS"); ok += 1
 
     # Alice paie Bob, rend la monnaie sur une adresse fraiche, laisse des frais
     cb0 = [k for k, v in c.utxo.items() if v[0] == a0][0]
@@ -416,7 +416,7 @@ def tests():
     alice.signer(tx, 0, a0)
     c.valider_bloc(miner_bloc(c, [coinbase(1, alice.nouvelle_adresse(), fees=frais), tx]))
     assert bob.solde(c) == envoi
-    print(f"bloc 1 : transfert + frais    : Bob {bob.solde(c) / E.ATOMES:.2f} EIDOLON, "
+    print(f"bloc 1 : transfert + frais    : Bob {bob.solde(c) / E.ATOMES:.2f} IONOS, "
           f"frais {frais} atomes"); ok += 1
 
     total = sum(m for _, m in c.utxo.values())
@@ -541,8 +541,8 @@ def demo():
               f"recompense={E.reward_at(h) / E.ATOMES:.6f}  utxo={len(c.utxo)}")
 
     print(f"\nAlice {alice.solde(c) / E.ATOMES:.6f} + Bob {bob.solde(c) / E.ATOMES:.6f}"
-          f" = {(alice.solde(c) + bob.solde(c)) / E.ATOMES:.6f} EIDOLON")
-    print(f"emission cumulee : {c.emission_cumulee() / E.ATOMES:.6f} EIDOLON")
+          f" = {(alice.solde(c) + bob.solde(c)) / E.ATOMES:.6f} IONOS")
+    print(f"emission cumulee : {c.emission_cumulee() / E.ATOMES:.6f} IONOS")
     print(f"cles WOTS+ consommees : {len(c.cles_usees)}")
 
 

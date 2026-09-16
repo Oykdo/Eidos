@@ -29,7 +29,7 @@ jobs:
 
           # GRAINE doit etre egal a noeud.GRAINE ; hauteur 12 = 4096 signatures
           # par validateur, ~40 s de generation par cle.
-          N, HAUTEUR, GRAINE = 7, 12, "eidos-testnet-3"
+          N, HAUTEUR, GRAINE = 7, 12, "eidos-testnet-4"
           t = time.time()
           racines, graines_pub = [], []
           for i in range(N):
@@ -54,7 +54,7 @@ jobs:
                       .isoformat().replace("+00:00", "Z"),
            "derivation_graines": f"sha256('{GRAINE}/validateur/<i>')",
            "graine_publique": "sha256(graine || 'pub')",
-           "format_chaine": 2,
+           "format_chaine": 3,   # = noeud.FORMAT, que le noeud lit et exige
            "avertissement": "Reseau d'essai : graines publiques, aucune valeur.",
            "racines": racines,
            "graines_publiques": graines_pub,

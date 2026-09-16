@@ -54,7 +54,7 @@ Les objets de la ville (tirés sur la chaîne locale du coffre) et de la Tour (d
 
 ## 4. L'échange : une transaction à deux témoins
 
-Alice porte l'objet X sur la pièce `a` ; Bob porte l'objet Y sur la pièce `b` (ou offre `n` eidôla sur la pièce `b`).
+Alice porte l'objet X sur la pièce `a` ; Bob porte l'objet Y sur la pièce `b` (ou offre `n` ionos sur la pièce `b`).
 
 1. **Offre.** Alice construit le cœur `T` : entrées `[a, b]`, sorties `[b → Bob : montant de a, a → Alice : montant de b]` (rang à rang : la sortie 0 reçoit X, la sortie 1 reçoit Y ; Alice met Bob au rang 0). Elle signe **son** entrée : `sighash(0) = SHA-256(txid ‖ 0)`. La transaction partielle (témoin 1 absent, `flag = 0`) est l'**offre**. Le cœur fixe tout : montants, adresses, frais.
 2. **Acceptation.** Bob vérifie l'offre (§6), ajoute le témoin de son entrée sur le **même** cœur (même `txid`, donc même `sighash(1)`), et dépose la transaction complète dans une issue `envoi`, comme aujourd'hui.

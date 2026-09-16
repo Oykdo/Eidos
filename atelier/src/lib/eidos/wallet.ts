@@ -53,12 +53,12 @@ export const SCENARIOS: Record<
   },
   "une-piece": {
     nom: "Une pièce",
-    aide: "Une sortie de 5 eidôla. L'ancienne règle suffisait : une entrée, un rendu.",
+    aide: "Une sortie de 5 ionos. L'ancienne règle suffisait : une entrée, un rendu.",
     montants: [5 * ATOMES],
   },
   vide: {
     nom: "Vide",
-    aide: "Coffre sans sorties. Le robinet verse 1 eidôlon sur une adresse neuve.",
+    aide: "Coffre sans sorties. Le robinet verse 1 ionos sur une adresse neuve.",
     montants: [],
   },
 };
@@ -156,7 +156,7 @@ export function verserRobinet(coffre: Coffre, atomes = ATOMES): Coffre {
     frais: 0,
     poussiere: false,
     kind: "robinet",
-    note: "Robinet — 1 eidôlon",
+    note: "Robinet — 1 ionos",
   };
   return sceller(
     {

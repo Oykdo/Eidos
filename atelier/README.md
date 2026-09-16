@@ -14,7 +14,7 @@ Live : [oykdo.github.io/Eidos](https://oykdo.github.io/Eidos/). Prototype : [`..
 
 ## Français
 
-L’unité est l’**eidôlon** (10⁸ atomes). La forme est la règle ; l’image est ce qui circule.
+L’unité est l’**ionos** (10⁸ atomes). La forme est la règle ; l’ionos est ce qui circule.
 
 ### Pages
 
@@ -24,7 +24,7 @@ L’unité est l’**eidôlon** (10⁸ atomes). La forme est la règle ; l’ima
 | **Journal** | Genèse, clés, chaîne, **miner** (`R(h)`), preuve Merkle. |
 | **Témoin** | Seconde mémoire. Une tête, pas les clés. Juge une preuve. |
 | **Carte** | Reliques du monde, par âge et par muse. Trophée d'un sceau : preuve + tête signée, jugé sans rejeu. |
-| **Reliques** | Ionos d’époque. Kali 2,10 · Satya 33,55. Sauvegarde `eidos.carnet`. |
+| **Reliques** | Lumis d’âge. Kali 2,10 · Satya 33,55. Sauvegarde `eidos.carnet`. |
 | **Glyphes** | 4 figures, 64 empilements. 31 groupes. Bourrage refusé. |
 | **Signes** | Lectures des mêmes 64. Pas un 5ᵉ glyphe. |
 | **Tour** | 255 coupes. Neuf muses et leurs familiers, élixirs de la tria prima, capsules et bestiaire, alcôves, échos, antres, portes par sceaux d'âge. Jauge hors feuille. |
@@ -63,7 +63,7 @@ Ce n’est pas un nœud P2P.
 
 ### Tutoriel
 
-1. **Coffre** — **Créer mon coffre**. 1 eidôlon versé une fois. Envoyer. **Sauver eidos.carnet**.
+1. **Coffre** — **Créer mon coffre**. 1 ionos versé une fois. Envoyer. **Sauver eidos.carnet**.
 2. **Journal** — lancer la genèse. **Miner** : nonce, `R(h)` sur une adresse neuve.
 3. **Témoin** — adopter la tête, juger.
 4. **Clés** — rejouer l’attaque de réemploi. Graine d’atelier **publique**.
@@ -90,7 +90,7 @@ L’atelier `eidos-atelier-reseau-essai-v1` est reproductible **parce que** la g
 
 ## English
 
-The unit is the **eidôlon** (10⁸ atoms). The form is the rule; the image is what circulates. This UI replays the Python spec in the browser. Nothing is trusted: genesis and signatures are checked here.
+The unit is the **ionos** (10⁸ atoms). The form is the rule; the ionos is what circulates. This UI replays the Python spec in the browser. Nothing is trusted: genesis and signatures are checked here.
 
 ### Pages
 
@@ -100,7 +100,7 @@ The unit is the **eidôlon** (10⁸ atoms). The form is the rule; the image is w
 | **Log** | Genesis, chain, Merkle proof, mine `R(h)`. |
 | **Witness** | Second memory. A head, not the keys. |
 | **Tree** | Map of regimes, not a proof. |
-| **Relics** | Epoch ionos. Kali 2.10 · Satya 33.55. |
+| **Relics** | Age lumis. Kali 2.10 · Satya 33.55. |
 | **Glyphs** | 64 stacks. Padding refused. |
 | **Signs** | Readings of the same 64. |
 | **Tower** | 255 slices. Nine muses and their households, tria prima elixirs, capsules and bestiary, alcoves, echoes, lairs, gates by age seal. Off-sheet gauge. |
