@@ -45,7 +45,7 @@ Multiplier les machines ne rapporte rien (même pièce, même coffre). Il faut m
 - Pas une valeur entre joueurs. Le jour où un objet de coffre doit s'échanger, c'est une transaction, et c'est une autre spec.
 
 ## 7. Contrôles et port
-`labo/coffre_horaire.py` : tier borné et exact sur les 256 octets (K39), probabilités exactes (K40), distribution réelle plausible à 4σ (K41), déterminisme (K42), une pièce un bloc (K43), sac borné (K44), objets = tier (K45), têtes réelles espacées d'au moins une heure et contiguës (K46), fenêtre d'un jour sans effet sur la prise (K47). `labo/coffre_vecteurs.json` : 9 vecteurs (3 têtes × 3 pièces) pour le port.
+`labo/coffre_horaire.py` : tier borné et exact sur les 256 octets (K39), probabilités exactes (K40), distribution réelle plausible à 4σ (K41), déterminisme (K42), une pièce un bloc (K43), sac borné (K44), objets = tier (K45), têtes réelles espacées d'au moins une heure et contiguës (K46), fenêtre d'un jour sans effet sur la prise (K47). Après une réinitialisation du testnet, K41 (moins de 100 coffres) et K47 (24 têtes ou moins) sont **sans objet** — ni pour ni contre — jusqu'à ce que la chaîne les mesure de nouveau. `labo/coffre_vecteurs.json` : 9 vecteurs (3 têtes × 3 pièces) pour le port.
 
 **Port TS — FAIT.** `atelier/src/lib/eidos/coffre-horaire.ts` rejoue graine, tier et contenu à l'octet ; la famille `coffre` de `vecteurs.json` (trois claims, écrite par `vecteurs.py`) casse la parité ici avant qu'elle ne casse ailleurs, contrôlée par `vecteurs.test.ts`. `coffre-horaire.test.ts` : tier sur les 256 octets, probabilités lues à la main, déterminisme, neuf muses pour neuf tiers, le juge contre la vraie tête signée, l'ouverture égale au tirage.
 
