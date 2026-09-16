@@ -20,7 +20,9 @@ mesure qui décide d'adopter la fenêtre ou non — voir la conclusion imprimée
 
 LIMITE : le juge hors ligne d'un claim (tête XMSS + pièce Merkle contre utxo_root_h) est celui de
 l'ascension (ancrage.ts) ; ici on ne rejoue que le tirage. Une pièce peut réclamer les blocs passés
-d'un coup : seule la taille du sac borne cette rafale — limite assumée, voir spec §4."""
+d'un coup : seule la taille du sac borne cette rafale — limite assumée, voir spec §4.
+Après une réinitialisation du testnet, K41 (moins de MIN_COFFRES coffres) et K47 (FENETRE_JOUR
+têtes ou moins) sont SANS OBJET : ni pour ni contre, jusqu'à ce que la chaîne les mesure."""
 import hashlib, json, os, sys
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")
 ICI = os.path.dirname(os.path.abspath(__file__)); RACINE = os.path.dirname(ICI)
@@ -73,6 +75,7 @@ def pieces_reelles():
     return [{"txid": k.split(":")[0], "rang": int(k.split(":")[1]), **v} for k, v in e["sorties"].items()]
 
 FENETRE_JOUR = 24   # blocs : un coffre de hauteur h ne se réclamerait qu'avec une tête ≤ h + 23
+MIN_COFFRES = 100   # coffres réels (têtes × pièces) sous lesquels K41 n'a pas d'échantillon
 
 def rafale(tetes, txid, rang=0, fenetre=None):
     """Ce qu'une pièce récolte en réclamant les blocs passés d'un coup. `fenetre` = None : tout
@@ -97,7 +100,9 @@ def lab_test(tetes, pieces):
     def ok(t): 
         mu = n * PROBA[t - 1]; sig = (mu * (1 - PROBA[t - 1])) ** 0.5
         return abs(comptes[t - 1] - mu) <= 4 * sig + 1
-    R["K41_distribution_reelle_plausible"] = n >= 100 and all(ok(t) for t in (1, 2, 3))
+    # une mesure sans échantillon n'est ni vraie ni fausse : après une réinitialisation du testnet
+    # la chaîne est trop jeune, K41 et K47 sont SANS OBJET (None) jusqu'à ce qu'elle les mesure
+    R["K41_distribution_reelle_plausible"] = None if n < MIN_COFFRES else all(ok(t) for t in (1, 2, 3))
     R["K42_deterministe"] = coffre(tetes[0]["id_bloc"], pieces[0]["txid"], pieces[0]["rang"]) == \
         coffre(tetes[0]["id_bloc"], pieces[0]["txid"], pieces[0]["rang"])
     sac = []; deja = set()
@@ -113,7 +118,7 @@ def lab_test(tetes, pieces):
     # à ce qu'une pièce neuve emporte. Elle n'est pas adoptée (spec §5).
     r_tout = [rafale(tetes, p["txid"], p["rang"]) for p in pieces]
     r_jour = [rafale(tetes, p["txid"], p["rang"], FENETRE_JOUR) for p in pieces]
-    R["K47_fenetre_sans_effet_sur_la_prise"] = len(tetes) > FENETRE_JOUR and \
+    R["K47_fenetre_sans_effet_sur_la_prise"] = None if len(tetes) <= FENETRE_JOUR else \
         all(a["pris"] == b["pris"] == SAC_PLACES for a, b in zip(r_tout, r_jour))
     R["K46_tetes_reelles_heure_par_heure"] = len(tetes) >= 2 and all(b["ts"] - a["ts"] >= 3600 and b["hauteur"] == a["hauteur"] + 1 for a, b in zip(tetes, tetes[1:]))
     return R, n, comptes
@@ -126,7 +131,7 @@ if __name__ == "__main__":
         json.dump(vec, open(os.path.join(ICI, "coffre_vecteurs.json"), "w", encoding="utf-8", newline="\n"), indent=0)
         print("labo/coffre_vecteurs.json :", len(vec), "vecteurs"); sys.exit(0)
     R, n, comptes = lab_test(tetes, pieces)
-    for k, ok in R.items(): print(("PASS " if ok else "FAIL "), k)
+    for k, ok in R.items(): print("SANS OBJET " if ok is None else ("PASS " if ok else "FAIL "), k)
     print(f"{len(tetes)} têtes réelles × {len(pieces)} pièces = {n} coffres ; tiers 1..9 :", comptes,
           "| attendus :", [round(n * p, 1) for p in PROBA])
     a = rafale(tetes, pieces[0]["txid"], pieces[0]["rang"])
@@ -134,4 +139,4 @@ if __name__ == "__main__":
     print(f"rafale d'une pièce neuve — tout l'historique ({a['blocs']} blocs) : {a['offerts']} objets offerts, "
           f"{a['pris']} pris, {a['perdus']} perdus ; fenêtre d'un jour ({b['blocs']} blocs) : "
           f"{b['offerts']} offerts, {b['pris']} pris. Le sac plafonne les deux : la fenêtre ne change rien.")
-    sys.exit(0 if all(R.values()) else 1)
+    sys.exit(0 if all(v is not False for v in R.values()) else 1)
