@@ -29,7 +29,7 @@
 import { CHOIX, type Choix } from "./pendule.ts";
 import { DALLE_N, ETAGES } from "./tour.ts";
 import { ARG_ALCOVE } from "./veillee-tour.ts";
-import { HAUTEUR_VEILLEE, type Geste, type GesteSigne, type Veillee } from "./veillee.ts";
+import { HAUTEUR_VEILLEE, coupDeArg, type Geste, type GesteSigne, type Veillee } from "./veillee.ts";
 
 export type Boite = { largeur: number; hauteur: number; marge: number };
 /** La boîte par défaut : 640 × 180, une marge de 12 pour la racine et les feuilles. */
@@ -142,10 +142,12 @@ export type DetailGeste =
   | { genre: "hote"; etage: number }
   | { genre: "case"; x: number; y: number }
   | { genre: "alcove" }
-  | { genre: "occupant"; k: number };
+  | { genre: "occupant"; k: number }
+  | { genre: "coup"; unite: number; cible: number };
 
-/** franchir : le choix et l'objet porté ; parler : l'hôte ; ouvrir : la case ou l'alcôve ; prendre : l'occupant.
- *  Un choix, un étage ou une case hors borne sont refusés : la légende dit alors l'argument nu. */
+/** franchir : le choix et l'objet porté ; parler : l'hôte ; ouvrir : la case ou l'alcôve ; prendre : l'occupant ;
+ *  frapper : l'attaquant et la cible. Un choix, un étage ou une case hors borne sont refusés : la légende dit
+ *  alors l'argument nu. */
 export function detailGeste(g: Pick<Geste, "g" | "arg" | "mot">): DetailGeste {
   switch (g.g) {
     case "franchir": {
@@ -162,5 +164,9 @@ export function detailGeste(g: Pick<Geste, "g" | "arg" | "mot">): DetailGeste {
       return { genre: "case", x: Math.floor(g.arg / DALLE_N), y: g.arg % DALLE_N };
     case "prendre":
       return { genre: "occupant", k: g.arg };
+    case "frapper": {
+      const { unite, cible } = coupDeArg(g.arg);
+      return { genre: "coup", unite, cible };
+    }
   }
 }

@@ -175,8 +175,8 @@ cible. Le joueur voit tout, décide tout, et chaque mort est de sa faute.
 
 C'est le point où le jeu cesse d'être un tactical de plus.
 
-Aujourd'hui la Veillée entre avec un arbre XMSS de 64 feuilles ; chaque geste en brûle une ; l'arbre vide, c'est
-la fin (`veillee.ts`). En bataille :
+La Veillée entre avec un arbre XMSS de 64 feuilles ; chaque geste en brûle une ; l'arbre vide, c'est la fin
+(`veillee.ts`). **Codé le 2026-09-16 (C4 PR 5b, `veillee-tour.ts`)** — en bataille :
 
 - **Se déplacer ne signe pas.** Regarder, mesurer une portée, lire une intention, annuler : gratuit.
 - **Frapper signe.** Une feuille par coup porté. Irréversible, dans l'ordre, vérifiable par n'importe qui.
@@ -187,8 +187,9 @@ La parcimonie n'est plus une abstraction : **chaque coup que tu portes est un co
 plus.** Achever un ennemi presque mort coûte la même feuille qu'ouvrir une brèche. Le dilemme est permanent,
 et il est cryptographique, pas scénarisé.
 
-Une unité dont la tenue tombe à zéro est **retirée de la bataille**. Dans une bataille ancrée, elle est retirée
-du roster : son mot a servi. La permadeath n'est pas une règle du jeu, c'est la même primitive que la sécurité
+Une unité dont la tenue tombe à zéro est **retirée de la bataille**. Dans une bataille **perdue** en veillée
+ancrée, la **première** tombée (riposte comprise) est retirée du coffre — A28, tranché le 2026-09-15 ; gagnée ou
+nulle, rien ne part : son mot a servi. La permadeath n'est pas une règle du jeu, c'est la même primitive que la sécurité
 du réseau — une clé ne signe qu'une fois, et c'est la vie.
 
 ## 5. Les unités et la progression sans niveau

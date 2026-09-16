@@ -1,7 +1,7 @@
 /**
  * Le dépôt d'une preuve de veillée par issue — le juge dans la CI, jamais un serveur.
  *
- * Une preuve `eidos-veillee/1` pèse cent à trois cents kilo-octets (une
+ * Une preuve `eidos-veillee/2` pèse cent à trois cents kilo-octets (une
  * signature WOTS+ par geste) : elle n'entre pas dans le corps d'une issue
  * GitHub (65 536 caractères). Le joueur la **joint** à l'issue (glisser le
  * fichier : GitHub le range sous `github.com/user-attachments/files/…`), ou
@@ -53,7 +53,7 @@ const URL_CANDIDATE = /https:\/\/[A-Za-z0-9._/-]+/g;
 
 export type Source = { genre: "json"; texte: string } | { genre: "url"; url: string };
 
-/** Dans le corps d'une issue : un JSON `eidos-veillee/1` collé, sinon la première adresse autorisée. */
+/** Dans le corps d'une issue : un JSON `eidos-veillee/2` collé, sinon la première adresse autorisée. */
 export function extraireSource(corps: string): Source | { erreur: string } {
   const texte = corps.replace(/\r\n/g, "\n");
   if (texte.length > OCTETS_MAX) return { erreur: "corps trop long" };
@@ -61,7 +61,7 @@ export function extraireSource(corps: string): Source | { erreur: string } {
   const fin = texte.lastIndexOf("}");
   if (debut >= 0 && fin > debut) {
     const candidat = texte.slice(debut, fin + 1);
-    if (candidat.includes('"eidos-veillee/1"')) {
+    if (candidat.includes('"eidos-veillee/2"')) {
       try {
         JSON.parse(candidat);
         return { genre: "json", texte: candidat };

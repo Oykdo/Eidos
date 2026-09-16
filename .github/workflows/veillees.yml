@@ -1,7 +1,7 @@
 name: veillees
 
 # Une issue dont le titre commence par « veillée » (ou « veillee ») porte une
-# preuve eidos-veillee/1 : collée si elle tient, sinon jointe (glisser le
+# preuve eidos-veillee/2 : collée si elle tient, sinon jointe (glisser le
 # fichier dans l'issue) ou publiée dans un gist ou un dépôt brut. Le juge
 # TypeScript de l'atelier (atelier/scripts/deposer-veillee.ts, logique dans
 # src/lib/eidos/depot.ts) la lit, vérifie ses têtes contre la chaîne publiée,

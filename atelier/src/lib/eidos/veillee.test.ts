@@ -8,8 +8,14 @@ import { parserFederation, parserTeteReseau } from "./temoin.ts";
 import {
   FEUILLES,
   FRANCHIR_AU_SOMMET,
+  GESTES,
+  GESTES_BUTIN,
   HAUTEUR_VEILLEE,
+  SPEC_VEILLEE,
+  VERSION_VEILLEE,
+  argFrapper,
   arreterVeillee,
+  coupDeArg,
   construireArbre,
   estPremierDuJour,
   exporterVeillee,
@@ -178,7 +184,7 @@ describe("le jour : le premier bloc, prouvé par deux têtes", () => {
     let v = signerGeste(v0, libre, { g: "parler", arg: 0 }) as Veillee;
     v = franchir(v, 5, libre);
     assert.deepEqual(parcoursDe(v).etapes.map((e) => e.e), parcoursDe(ancree).etapes.map((e) => e.e));
-    assert.deepEqual(lectureVeillee(v), { salles: 6, feuilles: 6, butin: 1, libre: true, fin: null });
+    assert.deepEqual(lectureVeillee(v), { salles: 6, feuilles: 6, butin: 1, coups: 0, libre: true, fin: null });
     const fini = arreterVeillee(v, "abandon");
     assert.match((exporterVeillee(fini) as { erreur: string }).erreur, /libre/);
     assert.match((jugerVeillee(fini, fed) as { motif: string }).motif, /libre/);
@@ -281,5 +287,61 @@ describe("la clé comme vie : une feuille par geste, l'arbre vide est la fin", (
     assert.equal((signerGeste(ouvrir(), arbre, { g: "franchir", arg: 3 }) as { erreur: string }).erreur, "choix");
     assert.ok("erreur" in parserVeillee("{}"));
     assert.ok("erreur" in parserVeillee(JSON.stringify({ ...v, ancre: { piece: 1 } })));
+  });
+});
+
+describe("le geste de combat : frapper signe une feuille, l'argument dit l'attaquant et la cible (eidos-veillee/2)", () => {
+  it("frapper est le cinquième geste ; son argument code deux identifiants et se relit ; hors borne, il est refusé", () => {
+    assert.deepEqual([...GESTES], ["franchir", "parler", "ouvrir", "prendre", "frapper"]);
+    assert.deepEqual([...GESTES_BUTIN], ["parler", "ouvrir", "prendre"]);
+    assert.equal(SPEC_VEILLEE, "eidos-veillee/2");
+    assert.equal(VERSION_VEILLEE, 2);
+    for (const [u, c] of [[0, 3], [2, 5], [255, 0], [0, 255]] as const) {
+      assert.deepEqual(coupDeArg(argFrapper(u, c)), { unite: u, cible: c });
+    }
+    assert.equal(argFrapper(1, 4), 260);
+    assert.throws(() => argFrapper(256, 0), /0\.\.255/);
+    assert.throws(() => argFrapper(0, -1), /0\.\.255/);
+    assert.throws(() => argFrapper(1.5, 0), /0\.\.255/);
+  });
+
+  it("un coup signé compte comme coup, jamais comme butin ; jugé, relu, exporté ; un coup avec un mot est refusé", () => {
+    let v = ouvrir();
+    v = signerGeste(v, arbre, { g: "frapper", arg: argFrapper(0, 3) }) as Veillee;
+    v = signerGeste(v, arbre, { g: "frapper", arg: argFrapper(1, 4), mot: 7 }) as Veillee;
+    assert.ok(!("erreur" in v));
+    assert.equal(v.gestes.length, 2);
+    assert.equal(v.gestes[1]!.mot, 0, "le mot ne vaut que pour franchir");
+    v = signerGeste(v, arbre, { g: "parler", arg: 0 }) as Veillee;
+    v = franchir(v, 2);
+    const lu = lectureVeillee(v);
+    assert.deepEqual(lu, { salles: 3, feuilles: 5, butin: 1, coups: 2, libre: false, fin: null });
+    const fini = arreterVeillee(v, "abandon");
+    const j = jugerVeillee(fini, fed);
+    assert.ok(j.ok, j.ok ? "" : j.motif);
+    if (j.ok) {
+      assert.equal(j.coups, 2);
+      assert.equal(j.butin, 1);
+      assert.equal(j.salles, 3);
+      assert.equal(j.feuilles, 5);
+      assert.equal(scoreVeillee(j), 3 * FEUILLES + 1, "le score ne compte pas les coups");
+    }
+    const relu = parserVeillee(serialiserVeillee(fini));
+    assert.ok(!("erreur" in relu));
+    assert.equal((relu as Veillee).gestes[0]!.g, "frapper");
+    assert.ok(!("erreur" in exporterVeillee(fini)));
+    // un mot sur un coup, dans une preuve altérée : refusé par le juge
+    const faux = { ...fini, gestes: fini.gestes.map((g, k) => (k === 0 ? { ...g, mot: 1 } : g)) };
+    assert.match((jugerVeillee(faux, fed) as { motif: string }).motif, /mot sans franchir|message différent/);
+  });
+
+  it("eidos-veillee/1 n'a plus de lecteur : le parseur et le juge la refusent, en disant pourquoi", () => {
+    const v = arreterVeillee(franchir(ouvrir(), 1), "abandon");
+    const ancienne = { ...v, v: 1, spec: "eidos-veillee/1" };
+    const p = parserVeillee(JSON.stringify(ancienne));
+    assert.ok("erreur" in p && /eidos-veillee\/1/.test(p.erreur) && /plus lu/.test(p.erreur));
+    assert.match((jugerVeillee(ancienne as unknown as Veillee, fed) as { motif: string }).motif, /eidos-veillee\/2/);
+    const inconnue = parserVeillee(JSON.stringify({ ...v, spec: "eidos-veillee/3", v: 3 }));
+    assert.ok("erreur" in inconnue && /eidos-veillee\/2/.test(inconnue.erreur));
   });
 });

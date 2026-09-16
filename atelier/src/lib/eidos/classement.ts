@@ -1,7 +1,7 @@
 /**
  * Le classement des veillées — des preuves relues, jamais un serveur.
  *
- * Une preuve `eidos-veillee/1` déposée dans `veillees/` (un fichier par
+ * Une preuve `eidos-veillee/2` déposée dans `veillees/` (un fichier par
  * preuve, nommé `<jour>-<txid 8 hex>-<rang>.json`, inscrit dans `index.json`
  * par une PR : l'ordre du dépôt est public) est **jugée dans le navigateur de
  * chacun** (`jugerVeillee`, sans rejeu, sans serveur), puis classée :

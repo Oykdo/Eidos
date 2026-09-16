@@ -5,12 +5,18 @@
  * hauteur 6, même construction que la clé d'un validateur : federation.py
  * `CleValidateur`, vérifiée ici par xmss.ts). Chaque geste qui compte —
  * franchir (fin de salle), parler (l'hôte), ouvrir (creuser, une alcôve),
- * prendre (un occupant) — signe un message avec la feuille suivante ; rien ne
- * se re-signe. L'arbre vide avant le sommet, c'est la fin : `epuise`. Il n'y
- * a pas de point de vie ; il y a un compte qui ne remonte jamais.
+ * prendre (un occupant), **frapper** (un coup porté en bataille, A17 : un coup,
+ * une feuille) — signe un message avec la feuille suivante ; rien ne se
+ * re-signe. L'arbre vide avant le sommet, c'est la fin : `epuise`. Il n'y a
+ * pas de point de vie ; il y a un compte qui ne remonte jamais.
+ *
+ * `eidos-veillee/2` depuis le 2026-09-16 : le cinquième geste, `frapper`, dont
+ * l'argument dit l'attaquant et la cible (`argFrapper`) ; `/1` n'a plus de
+ * lecteur. Ici on ne juge du coup que sa feuille et son ordre — le rejeu de la
+ * bataille dans la preuve est la PR 6 (`veillee-tour.ts` tient la bataille).
  *
  * La veillée du jour est **identique pour tous** : le parcours (pendule.ts)
- * dérive de `graineDuJour = SHA-256d("eidos-veillee/1" ‖ id_bloc)`, où le bloc
+ * dérive de `graineDuJour = SHA-256d("eidos-veillee/2" ‖ id_bloc)`, où le bloc
  * est le PREMIER bloc du jour civil UTC — ce qui se prouve avec deux têtes
  * signées (la veille, le jour) sans rejouer la chaîne : `tete.prev` est la
  * tête de la veille et leurs jours diffèrent. Et elle **compte** parce qu'elle
@@ -40,9 +46,10 @@
  * parcours (le pendule recalculé sur les gestes « franchir »). Ce qu'il
  * n'établit pas : que la pièce est au joueur — cela se prouve en la dépensant.
  *
- * LIMITE : la jauge du jeu (ce que « parler » ou « ouvrir » a donné) reste
- * hors de ce fichier et hors preuve. Ici on ne juge que le budget et l'ordre.
- * Le score (salles × 64 + gestes de butin) est une lecture, pas une loi.
+ * LIMITE : la jauge du jeu (ce que « parler » ou « ouvrir » a donné, ce
+ * qu'un coup a fait) reste hors de ce fichier et hors preuve. Ici on ne juge
+ * que le budget et l'ordre. Le score (salles × 64 + gestes de butin, les coups
+ * n'y comptent pas) est une lecture, pas une loi.
  */
 
 import { feuilleSortie, verifierPreuve, type PreuvePortable, type SortieMin } from "./merkle.ts";
@@ -73,18 +80,34 @@ import {
 } from "./wots.ts";
 import { verifierMss, type SignatureXmss } from "./xmss.ts";
 
-export const SPEC_VEILLEE = "eidos-veillee/1";
+export const SPEC_VEILLEE = "eidos-veillee/2";
+export const VERSION_VEILLEE = 2;
 export const TAG_VEILLEE = utf8(SPEC_VEILLEE);
-export const TAG_ARBRE = utf8("eidos-veillee/1/arbre");
-export const TAG_GESTE = utf8("eidos-veillee/1/geste");
+export const TAG_ARBRE = utf8("eidos-veillee/2/arbre");
+export const TAG_GESTE = utf8("eidos-veillee/2/geste");
 export const HAUTEUR_VEILLEE = 6;
 export const FEUILLES = 1 << HAUTEUR_VEILLEE; // 64 — les soixante-quatre œufs
 export const SECONDES_PAR_JOUR = 86_400;
 /** ETAPES − 1 fins de salle mènent au sommet : 9 salles (A18). */
 export const FRANCHIR_AU_SOMMET = ETAPES - 1;
 
-export const GESTES = ["franchir", "parler", "ouvrir", "prendre"] as const;
+export const GESTES = ["franchir", "parler", "ouvrir", "prendre", "frapper"] as const;
 export type GesteId = (typeof GESTES)[number];
+
+/** Les gestes de butin : ce que le score compte. Ni franchir, ni frapper. */
+export const GESTES_BUTIN: readonly GesteId[] = ["parler", "ouvrir", "prendre"];
+
+/** L'argument d'un coup : l'attaquant (une unité du coffre) et la cible, deux identifiants < 256. */
+export function argFrapper(unite: number, cible: number): number {
+  if (!Number.isInteger(unite) || !Number.isInteger(cible) || unite < 0 || cible < 0 || unite > 255 || cible > 255) {
+    throw new Error(`coup ${unite} → ${cible} au lieu de deux identifiants dans 0..255`);
+  }
+  return unite * 256 + cible;
+}
+
+export function coupDeArg(arg: number): { unite: number; cible: number } {
+  return { unite: Math.floor(arg / 256) & 255, cible: arg & 255 };
+}
 
 function u8(n: number): Uint8Array {
   return new Uint8Array([n & 255]);
@@ -190,7 +213,7 @@ export type Geste = {
   etape: number;
   /** étage de cette salle */
   etage: number;
-  /** franchir : indice du choix (monter 0, lire 1, offrir 2) ; sinon case, occupant ou hôte */
+  /** franchir : indice du choix (monter 0, lire 1, offrir 2) ; frapper : attaquant × 256 + cible ; sinon case, occupant ou hôte */
   arg: number;
   /** franchir : mot de l'objet porté ; sinon 0 */
   mot: number;
@@ -210,7 +233,7 @@ export type AncreVeillee = {
 };
 
 export type Veillee = {
-  v: 1;
+  v: typeof VERSION_VEILLEE;
   spec: typeof SPEC_VEILLEE;
   jour: number;
   tete: TeteReseau;
@@ -302,7 +325,7 @@ export function ouvrirVeillee(
     ancree = { teteAncre, piece: { txid, rang, adresse, montant }, preuve: ancre.preuve };
   }
   return {
-    v: 1,
+    v: VERSION_VEILLEE,
     spec: SPEC_VEILLEE,
     jour: j.jour,
     tete,
@@ -360,11 +383,11 @@ export function arreterVeillee(v: Veillee, fin: "porte" | "abandon"): Veillee {
 // Juger sans rejouer
 // ---------------------------------------------------------------------------
 export type VerdictVeillee =
-  | { ok: true; jour: number; fin: Fin; salles: number; feuilles: number; butin: number; etapes: Etape[] }
+  | { ok: true; jour: number; fin: Fin; salles: number; feuilles: number; butin: number; coups: number; etapes: Etape[] }
   | { ok: false; motif: string };
 
 export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeillee {
-  if (v.v !== 1 || v.spec !== SPEC_VEILLEE) return { ok: false, motif: "pas une veillée eidos-veillee/1" };
+  if (v.v !== VERSION_VEILLEE || v.spec !== SPEC_VEILLEE) return { ok: false, motif: `pas une veillée ${SPEC_VEILLEE}` };
   if (v.hauteur !== HAUTEUR_VEILLEE) return { ok: false, motif: `arbre de hauteur ${HAUTEUR_VEILLEE} attendu` };
   if (v.fin === null) return { ok: false, motif: "veillée en cours" };
   const vt = verifierTeteReseau(v.tete, fed);
@@ -397,6 +420,7 @@ export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeille
   let h = sha256d(concat(TAG_PENDULE, graine, u8(0), u8(0), u8(p)));
   const etapes: Etape[] = [{ i: 0, p, e: 0, s: spawnDe(h, p) }];
   let butin = 0;
+  let coups = 0;
   for (let k = 0; k < v.gestes.length; k++) {
     const g = v.gestes[k]!;
     if (g.i !== k || g.sig.indice !== k) {
@@ -427,6 +451,8 @@ export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeille
       etape += 1;
       etage = etageDe(etape, p, h);
       etapes.push({ i: etape, p, e: etage, s: spawnDe(h, p) });
+    } else if (g.g === "frapper") {
+      coups += 1;
     } else {
       butin += 1;
     }
@@ -438,10 +464,10 @@ export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeille
   if (v.fin !== "epuise" && v.fin !== "sommet" && v.gestes.length >= 1 << v.hauteur) {
     return { ok: false, motif: "arbre vide : c'est épuisé" };
   }
-  return { ok: true, jour: v.jour, fin: v.fin, salles: franchis + 1, feuilles: v.gestes.length, butin, etapes };
+  return { ok: true, jour: v.jour, fin: v.fin, salles: franchis + 1, feuilles: v.gestes.length, butin, coups, etapes };
 }
 
-/** Lecture : monter loin d'abord, faire beaucoup ensuite. 9 × 64 + 56 au plus. */
+/** Lecture : monter loin d'abord, faire beaucoup ensuite. 9 × 64 + 56 au plus ; un coup ne compte pas. */
 export function scoreVeillee(verdict: Pick<Extract<VerdictVeillee, { ok: true }>, "salles" | "butin">): number {
   return verdict.salles * FEUILLES + verdict.butin;
 }
@@ -451,14 +477,17 @@ export function lectureVeillee(v: Pick<Veillee, "gestes" | "hauteur" | "ancre" |
   salles: number;
   feuilles: number;
   butin: number;
+  coups: number;
   libre: boolean;
   fin: Fin | null;
 } {
   const franchis = v.gestes.filter((g) => g.g === "franchir").length;
+  const coups = v.gestes.filter((g) => g.g === "frapper").length;
   return {
     salles: franchis + 1,
     feuilles: v.gestes.length,
-    butin: v.gestes.length - franchis,
+    butin: v.gestes.length - franchis - coups,
+    coups,
     libre: v.ancre === null,
     fin: v.fin,
   };
@@ -500,7 +529,11 @@ export function parserVeillee(raw: string): Veillee | { erreur: string } {
   } catch {
     return { erreur: "JSON invalide" };
   }
-  if (!o || o.v !== 1 || o.spec !== SPEC_VEILLEE) return { erreur: "pas une veillée eidos-veillee/1" };
+  if (!o || o.v !== VERSION_VEILLEE || o.spec !== SPEC_VEILLEE) {
+    return {
+      erreur: o?.spec === "eidos-veillee/1" ? "veillée eidos-veillee/1 : un format d'avant le geste de combat, plus lu" : `pas une veillée ${SPEC_VEILLEE}`,
+    };
+  }
   if (!teteBienFormee(o.tete) || !teteBienFormee(o.veille)) return { erreur: "tête mal formée" };
   if (o.ancre !== null) {
     const a = o.ancre as Record<string, unknown> | undefined;

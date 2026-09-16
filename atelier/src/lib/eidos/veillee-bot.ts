@@ -59,11 +59,16 @@ import { spawnIci } from "./fouilles.ts";
 import { concat, sha256d, utf8 } from "./hash.ts";
 import { aUnHote, donHonore } from "./hotes.ts";
 import { tourDe } from "./jauge.ts";
+import { captureDe } from "./capsules.ts";
 import { CHOIX, ETAPES, type Choix } from "./pendule.ts";
+import { ordreDePhase } from "./tactique/bataille.ts";
+import { planDe } from "./tactique/ia.ts";
+import { MAX_COFFRE, combattants } from "./tactique/partie.ts";
+import { occupantsDe } from "./tour.ts";
 import { xorshift } from "./pendule-phase0.ts";
 import { aUneAlcove } from "./secrets.ts";
 import { parserTeteReseau, type TeteReseau } from "./temoin.ts";
-import type { Coffre } from "./types.ts";
+import type { Coffre, ObjetPorte } from "./types.ts";
 import {
   FEUILLES,
   FRANCHIR_AU_SOMMET,
@@ -73,9 +78,17 @@ import {
   scoreVeillee,
   type Fin,
   type GesteId,
+  type Veillee,
 } from "./veillee.ts";
 import {
   abandonnerVeilleeDansCoffre,
+  batailleDansCoffre,
+  batailleEnlisee,
+  batailleOuverte,
+  jouerDansBataille,
+  ouvrirBatailleDansCoffre,
+  passerLaMainDansBataille,
+  salleTenue,
   creuserDansCoffre,
   franchirDansCoffre,
   ouvrirAlcoveDansCoffre,
@@ -120,9 +133,21 @@ export type Run = {
   score: number;
   /** gestes signés par sorte */
   gestes: Record<GesteId, number>;
-  /** gestes tentés et refusés avant la feuille (acte impossible, sac plein) : rien de brûlé */
+  /** gestes tentés et refusés avant la feuille (acte impossible, sac plein, salle tenue) : rien de brûlé */
   refus: number;
+  /** batailles ouvertes, gagnées, perdues, enlisées ; les coups sont `gestes.frapper` */
+  batailles: number;
+  victoires: number;
+  defaites: number;
+  enlisees: number;
 };
+
+/** Le roster du bot : trois captures, une par bande basse (Terre, Lune, Mercure), lues comme le jeu les lit. */
+export const ETAGES_DU_ROSTER = [0, 50, 61] as const;
+
+export function rosterDuBot(): ObjetPorte[] {
+  return ETAGES_DU_ROSTER.map((e) => captureDe(occupantsDe(e)[0]!, e, 0));
+}
 
 export type Mesures = {
   runs: number;
@@ -205,16 +230,73 @@ function reserveDuRun(): Reserver {
  * que si elle est strictement entre 0 et 1.
  */
 export function jouerVeillee(politique: Politique, alea: () => number, jour = jourDuVecteur(), pFixe?: number): Run {
+  return jouerVeilleeEntiere(politique, alea, jour, pFixe).run;
+}
+
+/** Le run et la veillée elle-même (ce que `scripts/exporter-veillee.ts` donne au labo). */
+export function jouerVeilleeEntiere(
+  politique: Politique,
+  alea: () => number,
+  jour = jourDuVecteur(),
+  pFixe?: number,
+): { run: Run; v: Veillee } {
   const p = politique === "avare" ? 0 : politique === "gourmand" ? 1 : (pFixe ?? alea());
   if (!(p >= 0 && p <= 1)) throw new Error("probabilité hors de [0, 1]");
-  const ouverture = ouvrirVeilleeDansCoffre(coffreAtelier("vide"), jour.tete, jour.veille, null);
+  const ouverture = ouvrirVeilleeDansCoffre({ ...coffreAtelier("vide"), objets: rosterDuBot() }, jour.tete, jour.veille, null);
   if (!ouverture.ok) throw new Error(ouverture.motif);
   let c: Coffre = ouverture.coffre;
   const reserver = reserveDuRun();
   const gestes = gestesVides();
   let refus = 0;
+  let batailles = 0;
+  let victoires = 0;
+  let defaites = 0;
+  let enlisees = 0;
   const tente = (): boolean => p >= 1 || (p > 0 && alea() < p);
   const finie = (): boolean => veilleeDe(c)!.v.fin !== null;
+  // la salle tenue : le coffre se bat avec ses combattants (trois au plus), la politique du dépôt
+  // des deux côtés — comme le banc ; chaque coup signe, le reste est gratuit
+  const combattre = (): void => {
+    if (!salleTenue(c)) return;
+    const indices = combattants(c).slice(0, MAX_COFFRE).map((x) => x.indice);
+    if (indices.length === 0) return;
+    const o = ouvrirBatailleDansCoffre(c, indices);
+    if (!o.ok) {
+      refus += 1;
+      return;
+    }
+    c = o.coffre;
+    batailles += 1;
+    while (batailleOuverte(c) && !batailleEnlisee(c) && !finie()) {
+      const r = batailleDansCoffre(c);
+      if (!r) break;
+      for (const id of ordreDePhase(r.partie.etat, "coffre")) {
+        const cur = batailleDansCoffre(c);
+        if (!cur || cur.partie.etat.fin !== null) break;
+        for (const a of planDe(cur.partie.etat, id).actes) {
+          const x = jouerDansBataille(c, a, reserver);
+          if (!x.ok) {
+            refus += 1;
+            break;
+          }
+          c = x.coffre;
+          if (a.geste === "frapper") gestes.frapper += 1;
+          if (x.issue !== null || finie()) break;
+        }
+      }
+      if (!batailleOuverte(c) || finie()) break;
+      const m = passerLaMainDansBataille(c);
+      if (!m.ok) {
+        refus += 1;
+        break;
+      }
+      c = m.coffre;
+    }
+    const b = veilleeDe(c)!.bataille;
+    if (b?.fin === "victoire") victoires += 1;
+    else if (b?.fin === "defaite") defaites += 1;
+    else if (batailleEnlisee(c)) enlisees += 1;
+  };
   const applique = (r: GesteOk | RefusVeillee): void => {
     if (r.ok) {
       c = r.coffre;
@@ -226,6 +308,8 @@ export function jouerVeillee(politique: Politique, alea: () => number, jour = jo
   // chaque tour de boucle franchit une salle ou s'arrête : ETAPES − 1 franchir au plus, la borne est un garde-fou
   for (let tour = 0; tour <= ETAPES && !finie(); tour++) {
     const etage = tourDe(c).etage;
+    combattre();
+    if (finie()) break;
     if (aUnHote(etage) && !donHonore(c, etage) && tente()) applique(parlerDansCoffre(c, [], reserver));
     if (finie()) break;
     const s = spawnIci(c, etage);
@@ -243,7 +327,7 @@ export function jouerVeillee(politique: Politique, alea: () => number, jour = jo
   if (!finie()) c = abandonnerVeilleeDansCoffre(c);
   const v = veilleeDe(c)!.v;
   const l = lectureVeillee(v);
-  return {
+  const run: Run = {
     politique,
     p,
     fin: v.fin!,
@@ -254,7 +338,12 @@ export function jouerVeillee(politique: Politique, alea: () => number, jour = jo
     score: scoreVeillee(l),
     gestes,
     refus,
+    batailles,
+    victoires,
+    defaites,
+    enlisees,
   };
+  return { run, v };
 }
 
 // ---------------------------------------------------------------------------

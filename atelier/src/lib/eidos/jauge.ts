@@ -31,6 +31,7 @@ export function tourVide(): Tour {
     elixirs: [],
     portes: [],
     captures: [],
+    abattus: [],
     fouilles: [],
     liberee: null,
     porte: null,
@@ -39,6 +40,53 @@ export function tourVide(): Tour {
     ascension: null,
     veillee: null,
   };
+}
+
+/** Un acte de bataille tel que la jauge le note : ceux du moteur (tactique/types.ts) et « main », le passage de main. */
+function acteDeBataille(x: unknown): { geste: "deplacer"; unite: number; vers: { x: number; y: number } } | { geste: "frapper"; unite: number; cible: number } | { geste: "passer"; unite: number } | { geste: "main" } | null {
+  if (!x || typeof x !== "object") return null;
+  const a = x as Record<string, unknown>;
+  if (a.geste === "main") return { geste: "main" };
+  const unite = entier(a.unite, 0, 255);
+  if (unite === null) return null;
+  if (a.geste === "passer") return { geste: "passer", unite };
+  if (a.geste === "frapper") {
+    const cible = entier(a.cible, 0, 255);
+    return cible === null ? null : { geste: "frapper", unite, cible };
+  }
+  if (a.geste === "deplacer") {
+    const v = a.vers as { x?: unknown; y?: unknown } | undefined;
+    const vx = entier(v?.x, 0, DALLE_N - 1);
+    const vy = entier(v?.y, 0, DALLE_N - 1);
+    return vx === null || vy === null ? null : { geste: "deplacer", unite, vers: { x: vx, y: vy } };
+  }
+  return null;
+}
+
+/** La bataille de la salle courante : de quoi la rejouer (veillee-tour.ts), jamais son état ; une forme absurde revient à null. */
+function bataille(x: unknown, etapeMax: number): NonNullable<Tour["veillee"]>["bataille"] {
+  if (!x || typeof x !== "object") return null;
+  const b = x as Record<string, unknown>;
+  const etape = entier(b.etape, 0, etapeMax);
+  const etage = entier(b.etage, 0, ETAGES - 1);
+  const feuilles = entier(b.feuilles, 0, 1 << 20);
+  if (etape === null || etage === null || feuilles === null || !Array.isArray(b.indices) || !Array.isArray(b.actes)) return null;
+  const indices: number[] = [];
+  for (const i of b.indices) {
+    const k = entier(i, 0, 1 << 20);
+    if (k === null || indices.includes(k)) return null;
+    indices.push(k);
+  }
+  if (indices.length === 0 || indices.length > 3) return null;
+  const actes = [];
+  for (const a of b.actes) {
+    const acte = acteDeBataille(a);
+    if (acte === null) return null;
+    actes.push(acte);
+  }
+  const fin = b.fin === "victoire" || b.fin === "defaite" || b.fin === "epuise" ? b.fin : null;
+  const tour = entier(b.tour, 1, 1 << 20);
+  return { etape, etage, indices, feuilles, actes, fin, tour: fin === null ? null : tour };
 }
 
 /** La veillée se relit par son propre parseur ; l'indice réservé ne descend jamais sous les gestes. */
@@ -59,7 +107,7 @@ function veillee(x: unknown): Tour["veillee"] {
   // comme les autres. La constante est répétée ici parce que veillee-tour
   // importe ce module : la remonter ferait un cycle.
   const sac = normaliserObjets(o.sac).slice(0, DALLE_N * DALLE_N);
-  return { v, indiceReserve: Math.max(reserve, v.gestes.length), sac };
+  return { v, indiceReserve: Math.max(reserve, v.gestes.length), sac, bataille: bataille(o.bataille, ETAPES - 1) };
 }
 
 /** L'ascension se relit avec tolérance ; une forme absurde revient à null. */
@@ -213,6 +261,7 @@ export function normaliserTour(x: unknown): Tour {
     elixirs: elixirsBus(t.elixirs),
     portes,
     captures: paires(t.captures, 2),
+    abattus: paires(t.abattus, 2),
     fouilles: triplets(t.fouilles),
     liberee: entier(t.liberee, 0, 0xffffffff),
     porte: entier(t.porte, 0, 0xffffffff),
@@ -244,6 +293,12 @@ export function tourDe(c: Pick<Coffre, "tour">): Tour {
 export function estPris(t: Tour, etage: number, k: number): boolean {
   const e = etageDe(etage);
   return t.captures.some((p) => p[0] === e && p[1] === k);
+}
+
+/** L'occupant `k` de l'étage a-t-il été abattu en bataille par ce coffre ? Un mort ne se capture ni ne se combat deux fois. */
+export function estAbattu(t: Tour, etage: number, k: number): boolean {
+  const e = etageDe(etage);
+  return t.abattus.some((p) => p[0] === e && p[1] === k);
 }
 
 /** L'espèce est-elle bue à cet étage ? L'effet d'un élixir tient à son étage, et là seulement. */

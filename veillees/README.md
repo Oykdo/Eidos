@@ -1,6 +1,6 @@
 # veillees/ — les preuves déposées
 
-Une **veillée** (`docs/BIBLE_VEILLEE.md`) finit par une preuve `eidos-veillee/1` :
+Une **veillée** (`docs/BIBLE_VEILLEE.md`) finit par une preuve `eidos-veillee/2` :
 le JSON exporté par la page Veillée de l'atelier. Ce dossier les recueille.
 
 ## Déposer

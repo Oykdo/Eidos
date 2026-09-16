@@ -52,6 +52,7 @@ import { FEDERATION_URL, parserFederation, type FederationPublique, type TeteRes
 import { serialiserVeillee } from "./eidos/veillee.ts";
 import { classer, lireVeillees, type Classement, type RefusLecture } from "./eidos/classement.ts";
 import { jouerRetour, motifRetour } from "./eidos/feuille-son.ts";
+import type { Acte } from "./eidos/tactique/types.ts";
 import {
   abandonnerVeilleeDansCoffre,
   capturerDansCoffre,
@@ -62,8 +63,12 @@ import {
   ouvrirAlcoveDansCoffre,
   ouvrirVeilleeDansCoffre,
   parlerDansCoffre,
+  jouerDansBataille,
+  ouvrirBatailleDansCoffre,
+  passerLaMainDansBataille,
   reserverEnSession,
   veilleeDe,
+  type CoupOk,
   type GesteOk,
   type RefusVeillee,
   type Reserver,
@@ -199,6 +204,10 @@ type Etat = {
   veilleeFranchir: (decision?: Choix | null) => void;
   veilleeAbandonner: () => void;
   veilleeEffacer: () => void;
+  /** La bataille de la salle tenue (veillee-tour.ts) : ouvrir avec des objets du coffre, jouer un acte, rendre la main. */
+  batailleOuvrir: (indices: readonly number[]) => void;
+  batailleJouer: (acte: Acte) => void;
+  bataillePasser: () => void;
   derniereVeillee: string | null;
   /** Le classement : les preuves de veillees/ relues et jugées ici ; jamais persisté. */
   classement: Classement | null;
@@ -234,7 +243,7 @@ const reserverLocal: Reserver = (racine, i) => {
 
 /** Après un geste : persister, dire la feuille ou la fin, préparer l'export si elle est finie. */
 function apresGeste(
-  r: GesteOk | RefusVeillee,
+  r: GesteOk | CoupOk | RefusVeillee,
   set: (p: Partial<Pick<Etat, "coffre" | "erreur" | "flash" | "derniereVeillee">>) => void,
 ): void {
   if (!r.ok) {
@@ -248,13 +257,21 @@ function apresGeste(
     const ex = exporterVeilleeDuCoffre(r.coffre);
     if (!("ok" in ex)) derniereVeillee = serialiserVeillee(ex);
   }
-  let flash = r.fin ? t(`veillee.fin.${r.fin}` as Msg) : t("veillee.flash.feuille", { n: r.feuilles });
-  if (r.ajoutes.length > 0 && !r.fin) flash += ` · ${t("veillee.sac.ajoute", { n: r.ajoutes.length })}`;
+  const coup = "partie" in r;
+  let flash: string;
+  if (r.fin) flash = t(`veillee.fin.${r.fin}` as Msg);
+  else if (coup && r.issue !== null) flash = t(`veillee.bataille.${r.issue}` as Msg, { n: r.feuilles });
+  else if (coup && !r.signe) flash = t("veillee.bataille.gratuit", { n: r.feuilles });
+  else flash = t("veillee.flash.feuille", { n: r.feuilles });
+  if (coup && r.tombee) flash += ` · ${t("veillee.bataille.tombee", { nom: r.tombee.nom })}`;
+  if (coup && r.abattus.length > 0) flash += ` · ${t("veillee.bataille.abattus", { n: r.abattus.length })}`;
+  if (!coup && r.ajoutes.length > 0 && !r.fin) flash += ` · ${t("veillee.sac.ajoute", { n: r.ajoutes.length })}`;
   if (r.verses.length > 0) flash += ` ${t("veillee.sac.verse", { n: r.verses.length })}`;
   if (r.perdus.length > 0) flash += ` ${t("veillee.sac.perdu", { n: r.perdus.length })}`;
   set({ coffre: r.coffre, erreur: null, flash, derniereVeillee });
-  // le retour de la feuille : un son sec, la dernière = silence ; une porte fermée ne brûle rien, rien ne sonne
-  if (r.fin !== "porte") jouerRetour(motifRetour(r.feuilles, r.fin, biomeDe(r.coffre.tour.etage).id));
+  // le retour de la feuille : un son sec, la dernière = silence ; une porte fermée ne brûle rien, rien ne sonne ;
+  // un acte gratuit de bataille (un pas, la main rendue) ne brûle rien non plus
+  if (r.fin !== "porte" && (!coup || r.signe || r.fin !== null)) jouerRetour(motifRetour(r.feuilles, r.fin, biomeDe(r.coffre.tour.etage).id));
 }
 
 function persisterTemoin(t: Temoin) {
@@ -862,6 +879,9 @@ export const useCoffre = create<Etat>((set, get) => ({
   veilleeCapturer: (k, i) => apresGeste(capturerDansCoffre(get().coffre, k, i, reserverLocal), set),
   veilleeFranchir: (decision = null) =>
     apresGeste(franchirDansCoffre(get().coffre, get().monde, decision, reserverLocal), set),
+  batailleOuvrir: (indices) => apresGeste(ouvrirBatailleDansCoffre(get().coffre, indices), set),
+  batailleJouer: (acte) => apresGeste(jouerDansBataille(get().coffre, acte, reserverLocal), set),
+  bataillePasser: () => apresGeste(passerLaMainDansBataille(get().coffre), set),
   veilleeAbandonner: () => {
     const next = abandonnerVeilleeDansCoffre(get().coffre);
     persister(next);

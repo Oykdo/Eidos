@@ -30,7 +30,7 @@ import { habille } from "./equipement.ts";
 import { especeDePorte } from "./elixirs.ts";
 import { concat, sha256d, u32, utf8 } from "./hash.ts";
 import { nomCapture } from "./hotes-lexique.ts";
-import { especeBueA, estPris, tourDe } from "./jauge.ts";
+import { especeBueA, estAbattu, estPris, tourDe } from "./jauge.ts";
 import { figureOrbite, memeOrbiteLue, motDeQ, paradeLue } from "./lecture.ts";
 import { objetDepuisGraine, type Objet } from "./objets.ts";
 import { jourCivil, minesDuJour } from "./poste.ts";
@@ -200,7 +200,7 @@ export function captureDe(occupant: Occupant, etage: number, hauteur: number): O
 /** Les occupants encore à l'étage pour ce coffre. */
 export function occupantsRestants(c: Pick<Coffre, "tour">, etage: number): Occupant[] {
   const t = tourDe(c);
-  return occupantsDe(etage).filter((o) => !estPris(t, etage, o.k));
+  return occupantsDe(etage).filter((o) => !estPris(t, etage, o.k) && !estAbattu(t, etage, o.k));
 }
 
 /** La résonance de l'étage, une fois les pris retirés : un secret de plus, qui se lit. */
