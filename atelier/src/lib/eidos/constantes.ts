@@ -1,4 +1,4 @@
-/** 1 eidôlon = 10⁸ atomes. */
+/** 1 ionos = 10⁸ atomes. */
 export const ATOMES = 100_000_000;
 
 /**

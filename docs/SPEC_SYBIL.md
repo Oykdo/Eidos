@@ -6,13 +6,13 @@
 
 ## 1. Le principe
 
-Une armée de machines multiplie tout ce qui est gratuit : les coffres, les navigateurs, les runs de la jauge. Elle ne multiplie pas ce qui est **rare sur la chaîne** : les pièces. L'émission est bornée sans halving ; le robinet verse un eidôlon par adresse dans un budget d'époque ; les reliques sont cachées dans le monde physique. Donc :
+Une armée de machines multiplie tout ce qui est gratuit : les coffres, les navigateurs, les runs de la jauge. Elle ne multiplie pas ce qui est **rare sur la chaîne** : les pièces. L'émission est bornée sans halving ; le robinet verse un ionos par adresse dans un budget d'époque ; les reliques sont cachées dans le monde physique. Donc :
 
 | Ce qui | Statut | Coût pour un bot |
 |---|---|---|
 | jouer un run dans la jauge, tirer des objets, capturer | **libre** | nul — et ça ne vaut rien à personne : rien ne se transfère |
 | un run qui **compte** (sceau, porte, trophée d'ascension) | **ancré** sur un bloc et une pièce | une pièce par run et par bloc |
-| obtenir une pièce | robinet, relique, envoi d'un autre coffre | un compte GitHub par eidôlon et par époque, ou trouver un QR dans le monde |
+| obtenir une pièce | robinet, relique, envoi d'un autre coffre | un compte GitHub par ionos et par époque, ou trouver un QR dans le monde |
 | une relique | une clé, une récupération | premier arrivé ; rejouer est impossible, la clé a signé |
 
 Le verrou n'est pas dans le client : il est dans ce que le client **ne peut pas fabriquer**.
@@ -31,7 +31,7 @@ Ce que l'ascension **ne prouve pas** : que la pièce est au joueur. Cela se prou
 
 ## 3. Le robinet, seul point d'entrée gratuit (`robinet.py`)
 
-Le workflow transmet l'auteur de l'issue (`EIDOS_ISSUE_AUTHOR`). Règle 4 : **un compte GitHub, une demande servie par époque, une seule en attente**. Avec le budget `a·T/8` déjà en place, le coût d'une armée devient : un compte GitHub par eidôlon, et une époque (1 008 blocs, six semaines) avant de le resservir. GitHub limite lui-même la création de comptes.
+Le workflow transmet l'auteur de l'issue (`EIDOS_ISSUE_AUTHOR`). Règle 4 : **un compte GitHub, une demande servie par époque, une seule en attente**. Avec le budget `a·T/8` déjà en place, le coût d'une armée devient : un compte GitHub par ionos, et une époque (1 008 blocs, six semaines) avant de le resservir. GitHub limite lui-même la création de comptes.
 
 Ce frein est côté file ; le nœud tranche toujours par adresse et par budget, et ne croit pas la file.
 
@@ -39,7 +39,7 @@ Ce frein est côté file ; le nœud tranche toujours par adresse et par budget, 
 
 Décision d'auteur : le robinet doit avoir un canal hors GitHub. Sans serveur, le seul canal que le cron peut relever en bibliothèque standard, et qui ne coûte au joueur ni compte nouveau ni application, est une **boîte aux lettres** : `courriel.py` relève INBOX par IMAP à la minute 37 (`courriel.yml`), passe chaque message non lu au même filtre que les issues, et applique la règle 4 à l'**expéditeur**, retenu sous forme d'empreinte (`courriel:` + SHA-256 de l'adresse en minuscules, 16 hex) : l'adresse elle-même n'entre ni dans `mempool.json` ni dans le journal du run. Un message sans expéditeur lisible est refusé : sans auteur, pas de frein. La page d'accueil de l'atelier prépare le courriel (sujet `robinet`, glyphes dans le corps) quand le nœud publie une boîte dans `etat.json.robinet_canaux`.
 
-Ce que cela coûte à une armée : une adresse de courriel par eidôlon et par époque. C'est **moins** qu'un compte GitHub, et c'est assumé : le budget d'époque `a·T/8` et le refus par adresse bornent le total quoi qu'il arrive ; le frein par auteur ne règle que le partage entre demandeurs. L'expéditeur d'un courriel se falsifie plus aisément qu'un compte GitHub ; le nœud ne s'en sert que comme clé de frein, jamais comme preuve. Un message est marqué lu qu'il soit accepté ou non, un message qui fait lever une exception est sauté : une boîte inondée n'arrête pas le cron, elle épuise au plus `MAX_MESSAGES` relevés par heure et fait attendre les demandes honnêtes derrière elle (pas de purge, premiers arrivés d'abord). `MAX_FILE` borne les demandes **en attente**, pas la file entière : deux cents adresses jetables ne ferment pas le robinet aux autres. Les identifiants IMAP sont des secrets du dépôt : qui les tient tient la boîte, pas la chaîne.
+Ce que cela coûte à une armée : une adresse de courriel par ionos et par époque. C'est **moins** qu'un compte GitHub, et c'est assumé : le budget d'époque `a·T/8` et le refus par adresse bornent le total quoi qu'il arrive ; le frein par auteur ne règle que le partage entre demandeurs. L'expéditeur d'un courriel se falsifie plus aisément qu'un compte GitHub ; le nœud ne s'en sert que comme clé de frein, jamais comme preuve. Un message est marqué lu qu'il soit accepté ou non, un message qui fait lever une exception est sauté : une boîte inondée n'arrête pas le cron, elle épuise au plus `MAX_MESSAGES` relevés par heure et fait attendre les demandes honnêtes derrière elle (pas de purge, premiers arrivés d'abord). `MAX_FILE` borne les demandes **en attente**, pas la file entière : deux cents adresses jetables ne ferment pas le robinet aux autres. Les identifiants IMAP sont des secrets du dépôt : qui les tient tient la boîte, pas la chaîne.
 
 Refusé : un relais serveur (Vercel, fonction) qui ouvrirait des issues au nom d'un robot — il verrait les IP, contredirait « pas de serveur », et déplacerait le frein sur une adresse IP, falsifiable et pénible pour un joueur honnête.
 

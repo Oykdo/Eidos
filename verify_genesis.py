@@ -76,12 +76,12 @@ def main():
     total_atomes = 0
     total_blocs = 0
     for age in g["ages"]:
-        W = E.build_epoch_table(age["a_eidolon"], T=T, h0=g["emission"]["h0"])
+        W = E.build_epoch_table(age["a_ionos"], T=T, h0=g["emission"]["h0"])
         h = hashlib.sha256(canon(W)).hexdigest()
         check(f"table {age['nom']:<8} empreinte",
               h == age["table_sha256"], h[:16])
         check(f"table {age['nom']:<8} total d'epoque exact",
-              W[T] == age["a_eidolon"] * T * E.ATOMES)
+              W[T] == age["a_ionos"] * T * E.ATOMES)
         rs = [W[i + 1] - W[i] for i in range(T)]
         check(f"table {age['nom']:<8} bornes declarees",
               min(rs) == age["recompense_min_atomes"] and
@@ -104,7 +104,7 @@ def main():
 
     # -- 4. totaux -----------------------------------------------------------
     check("emission totale", total_atomes == g["emission"]["total_atomes"],
-          f"{total_atomes // E.ATOMES:,} EIDOLON".replace(",", " "))
+          f"{total_atomes // E.ATOMES:,} IONOS".replace(",", " "))
     check("nombre total de blocs", total_blocs == g["emission"]["blocs_totaux"])
     check("epoques totales", total_blocs // T == t["epoques_totales"])
 
@@ -121,7 +121,7 @@ def main():
           f"{b['bits']} bits de tete")
     check("recompense du bloc 0",
           E.reward_at(0) == b["recompense_atomes"],
-          f"{b['recompense_atomes'] / E.ATOMES:.6f} EIDOLON")
+          f"{b['recompense_atomes'] / E.ATOMES:.6f} IONOS")
     check("glyphes du bloc 0", E.encode_glyphs(hsh) == b["glyphes"])
 
     print(f"\n{passed} verifications passees, {failed} echec(s).")

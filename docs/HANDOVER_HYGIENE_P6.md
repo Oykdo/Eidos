@@ -15,7 +15,7 @@ Trois dettes d'entretien qu'on paie sans toucher à rien qui engage — et pour 
 ### H1 — `getcontext().prec = 60`, global dans `eonis.py`
 
 **Le fait.** `eonis.py:26` règle la précision `Decimal` **du processus entier** à l'import ; `dcos` (`:63`) lit `getcontext().prec` pour sa borne d'arrêt, `build_epoch_table` en dépend. `CLAUDE.md` §7 demande `with localcontext()` dans les deux fonctions.
-**Ce que ça coûte, et que la feuille ne disait pas.** `eonis.py` est gelé : son SHA-256 (`cc94ad1e…`) est dans `genesis.json` et le job `hygiene` le vérifie **octet par octet**. Passer à `localcontext()` — ou ajouter le commentaire de repli que C8 proposait — change l'empreinte, donc invalide la genèse, donc **réinitialise le testnet** (`CLAUDE.md` §6 : `eidos-testnet-4`, sept clés XMSS ≈ 5 min, `federation.json`, README, `genesis-data.ts`, et plus jamais forger depuis le poste).
+**Ce que ça coûte, et que la feuille ne disait pas.** `eonis.py` est gelé : son SHA-256 (`2eb70acb…`) est dans `genesis.json` et le job `hygiene` le vérifie **octet par octet**. Passer à `localcontext()` — ou ajouter le commentaire de repli que C8 proposait — change l'empreinte, donc invalide la genèse, donc **réinitialise le testnet** (`CLAUDE.md` §6 : `eidos-testnet-4`, sept clés XMSS ≈ 5 min, `federation.json`, README, `genesis-data.ts`, et plus jamais forger depuis le poste).
 **Ce que ça rapporte.** Rien en consensus : aucun autre module du dépôt n'utilise `Decimal` (grep : `eonis.py` seul ; les `Decimal` sous `atelier/docs/expé/` sont des fichiers d'une autre session, ignorés). Les chemins de consensus sont entiers ; `Decimal` ne sert qu'à **produire** la table figée, que `verify_genesis.py` recompute (32 contrôles).
 **Recommandation.** **Ne pas toucher `eonis.py`.** Écrire le fait là où il se lit — `CLAUDE.md` §3 (une ligne sous « `eonis.py` est gelé ») et le docstring de `verify_genesis.py` : « précision globale, connue, inoffensive ; à passer en `localcontext()` **à la prochaine réinitialisation**, jamais seule ». Si l'auteur veut la payer maintenant, c'est une réinitialisation, décidée comme telle (A26), et elle se fait **avec** tout ce qui attend une réinitialisation — aujourd'hui rien d'autre.
 **Ce qui le tue.** Un seul chiffre des tables qui bouge après `localcontext()` : on garde le global. À vérifier **avant** la réinitialisation, sur une copie : `verify_genesis.py` 32/32 avec le nouveau `eonis.py` et un `genesis.json` régénéré.
@@ -51,8 +51,8 @@ Une seule PR, `hygiene-p6` : H2, H3, §3, et la ligne de `CLAUDE.md` §3 pour H1
 
 | # | Question | Recommandation |
 |---|---|---|
-| **A26** | H1 maintenant, au prix d'une réinitialisation (`eidos-testnet-4`), ou à la prochaine réinitialisation, quelle qu'en soit la cause ? | **à la prochaine**, et la noter dans `CLAUDE.md` §6 comme étape obligatoire de toute réinitialisation |
-| **A27** | `format_chaine` : le corriger seul, ou lui donner un lecteur qui refuse ? | **un lecteur** : un champ que personne ne lit dérive, D5 l'a montré |
+| **A26** | H1 maintenant, au prix d'une réinitialisation (`eidos-testnet-4`), ou à la prochaine réinitialisation, quelle qu'en soit la cause ? | **FAIT le 2026-09-15** : la réinitialisation `eidos-testnet-4` est venue d'ailleurs (l'unité renommée ionos, genèse regénérée), H1 l'a accompagnée ; tables inchangées, `verify_genesis.py` 32/32 |
+| **A27** | `format_chaine` : le corriger seul, ou lui donner un lecteur qui refuse ? | **FAIT le 2026-09-15** : `noeud.config()` lit le champ et refuse tout écart avec `FORMAT` (`_test_config`, 2 contrôles) ; `federation.json` du testnet-4 dit 3 |
 
 ## 6. Comment on vérifie
 

@@ -21,7 +21,7 @@ par le même code qu'à la forge.
                               puis tout est vérifié. Jamais implicite.
 
 Deux sortes de demandes dans mempool.json, toutes deux servies au dernier
-bloc de chaque exécution : « robinet » (le trésor verse 1 eidôlon) puis
+bloc de chaque exécution : « robinet » (le trésor verse 1 ionos) puis
 « envoi » (une transaction signée par l'atelier, en base64, au format ser_tx
 ci-dessous). Un envoi est validé sur une copie du carnet dans un bloc
 candidat ; s'il est fautif il passe en refus avec son motif, et le bloc est
@@ -58,14 +58,16 @@ RELIQUES = os.path.join(HERE, "reliques.json")
 INDICE = os.path.join(HERE, "indice-{v}.json")   # état MSS persistant, jamais versionné
 MAGIC = b"EIDOS\x00\x00\x01"
 FORMAT = 3                     # 1 : Lamport ; 2 : WOTS+ / XMSS ; 3 : + racine UTXO
-GRAINE = "eidos-testnet-3"     # tag de dérivation des graines publiques du réseau
+GRAINE = "eidos-testnet-4"     # tag de dérivation des graines publiques du réseau
+                               # (testnet-4 : genèse regénérée le 2026-09-15, l'unité
+                               # devient l'ionos et eonis.py passe en localcontext)
 MAX_PAR_EXECUTION = 6          # garde-fou : jamais plus de 6 blocs d'un coup
 MAX_PAIEMENTS = 64             # joueurs servis par bloc (groupes en peu de tx)
 MAX_RENDUS = 3                 # transactions de robinet par bloc — donc sorties
                                # de rendu, donc etendue du balayage de
                                # sorties_tresor. NE JAMAIS BAISSER : les blocs
                                # deja forges deviendraient introuvables.
-MONTANT_ROBINET = 100_000_000  # 1 eidolon par demande
+MONTANT_ROBINET = 100_000_000  # 1 ionos par demande
 BUDGET_RATIO = 8               # plafond d'époque : (a·T) / 8
 MAX_ENVOIS = 8                 # envois inclus par bloc, après le robinet
 EXPIRATION_ENVOI = E.T         # créneaux d'attente avant refus / expiree
@@ -74,8 +76,14 @@ EXPIRATION_ENVOI = E.T         # créneaux d'attente avant refus / expiree
 # ==========================================================================
 # Configuration
 # ==========================================================================
-def config():
-    c = json.load(open(CONFIG, encoding="utf-8"))
+def config(chemin=None):
+    """Lit federation.json. Son `format_chaine` doit être FORMAT : un champ que
+    personne ne lit dérive en silence (il a dit 2 pendant tout le testnet-3,
+    FORMAT 3), donc le nœud le lit et refuse l'écart."""
+    c = json.load(open(chemin or CONFIG, encoding="utf-8"))
+    if c.get("format_chaine") != FORMAT:
+        raise SystemExit(f"federation.json : format_chaine {c.get('format_chaine')!r} "
+                         f"au lieu de {FORMAT} — un autre format de chaîne que celui du nœud")
     F.CRENEAU = c["creneau_s"]
     F.PAS = c["pas_rotation"]
     racines = [bytes.fromhex(r) for r in c["racines"]]
@@ -904,7 +912,7 @@ def _test_reliques():
     assert e[1]["id"] == id_relique(bytes.fromhex("ff" * 20)) and len(e[1]["id"]) == 16
     print("relique publiee, rien recu         : attente"); ok += 1
 
-    # le gardien scelle : 1 eidôlon vers l'adresse de la relique
+    # le gardien scelle : 1 ionos vers l'adresse de la relique
     piece = list(ch.carnet.utxo)[0]
     ga = ch.carnet.utxo[piece][0]
     t = U.Tx([piece], [(a_rel, E.ATOMES), (gardien.nouvelle_adresse(), ch.carnet.utxo[piece][1] - E.ATOMES)])
@@ -914,7 +922,7 @@ def _test_reliques():
     assert e[0]["etat"] == "intacte" and e[0]["montant"] == E.ATOMES and e[0]["txid"] == t.txid().hex()
     assert e[0]["mise_attendue"] == mise_sceau("Kali") == 209_664_000 and e[0]["scellee"] is False
     assert "mise_attendue" not in e[1]
-    print("scellee par le gardien             : intacte (1 eidolon) — sous-scellee pour Kali (2,10)"); ok += 1
+    print("scellee par le gardien             : intacte (1 ionos) — sous-scellee pour Kali (2,10)"); ok += 1
 
     # une adresse hors liste reçoit aussi : ignorée
     piece = [k for k, v in ch.carnet.utxo.items() if v[0] != a_rel][0]
@@ -1011,6 +1019,30 @@ def _test_indice():
     assert blk["sig"][0] == k.compteur.prochain - 1 and blk["sig"][0] > d_chaine - 1
     print(f"blocs perdus : la chaîne dit {d_chaine}, le fichier {blk['sig'][0]} : on ne redescend pas : OK"); ok += 1
     print(f"ok : {ok} controles indice persistant")
+
+
+def _test_config():
+    """federation.json : `format_chaine` est lu, et un écart avec FORMAT est
+    refusé — le champ a dérivé une fois (2 pour une chaîne 3) parce que
+    personne ne le lisait."""
+    import tempfile
+    c = json.load(open(CONFIG, encoding="utf-8"))
+    d = tempfile.mkdtemp()
+    ok = 0
+    faux = dict(c, format_chaine=FORMAT - 1)
+    p = os.path.join(d, "federation.json")
+    json.dump(faux, open(p, "w", encoding="utf-8"))
+    try:
+        config(p)
+        raise AssertionError("format_chaine faux accepté")
+    except SystemExit as e:
+        assert f"format_chaine {FORMAT - 1} au lieu de {FORMAT}" in str(e), str(e)
+    print(f"format_chaine {FORMAT - 1} au lieu de {FORMAT} : refusé          : OK"); ok += 1
+    json.dump(dict(c, format_chaine=FORMAT), open(p, "w", encoding="utf-8"))
+    c2, fed = config(p)
+    assert c2["format_chaine"] == FORMAT and fed.n == c["n"]
+    print(f"format_chaine {FORMAT} : accepté, {fed.n} validateurs        : OK"); ok += 1
+    print(f"ok : {ok} controles config")
 
 
 def _test_artefact():

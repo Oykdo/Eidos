@@ -70,7 +70,7 @@ function Home() {
                 {formaterAtomes(solde)}
               </p>
               <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-sourd">
-                {t("coffre.eidolon")}
+                {t("coffre.solde")}
               </p>
             </section>
             <Inventaire />

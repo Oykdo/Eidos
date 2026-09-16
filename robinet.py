@@ -17,8 +17,8 @@ Le carnet tranche, pas la file :
   3. deja en_attente pour cette adresse → ignore
   4. un meme auteur (EIDOS_ISSUE_AUTHOR : compte GitHub, ou adresse de
      courriel par courriel.py) : une demande servie par epoque, une seule en
-     attente → refus au-dela. C'est le seul point d'entree des eidola, donc
-     le seul frein qui coute a une armee de comptes : un compte par eidolon,
+     attente → refus au-dela. C'est le seul point d'entree des ionos, donc
+     le seul frein qui coute a une armee de comptes : un compte par ionos,
      une epoque d'attente ensuite.
 
 Deux canaux alimentent la file : l'issue GitHub (robinet.yml) et le courriel
@@ -50,7 +50,7 @@ FIGURES = "\u00b7\u25cb\u263d\u271a"          # vide, cercle, croissant, croix
 INDEX = {c: i for i, c in enumerate(FIGURES)}
 GROUPE = re.compile("^[" + FIGURES + "]{3}$")
 
-MONTANT_ATOMES = 100_000_000                  # 1 eidolon par demande
+MONTANT_ATOMES = 100_000_000                  # 1 ionos par demande
 MAX_FILE = 200                                # demandes EN ATTENTE, au plus
 T_EPOQUE = 1008
 BUDGET_RATIO = 8
@@ -353,7 +353,7 @@ def _tests():
         {"type": "robinet", "etat": "en_attente"},
         {"type": "robinet", "etat": "servie"},
     ]}
-    # 5039 eidolon servis + 1 en file + 1 extra = 5041 > 5040
+    # 5039 ionos servis + 1 en file + 1 extra = 5041 > 5040
     assert not budget_ok(etat, file, extra=1)
     file = {"demandes": []}
     etat["robinet_epoque_atomes"] = 503_900_000_000

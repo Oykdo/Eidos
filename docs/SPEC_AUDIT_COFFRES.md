@@ -83,7 +83,7 @@ Tout ceci est une lecture : un rendu n'atteste rien.
 | Sphère \((r,\theta,\phi)\) | Origine sur la serrure (`SERRURE_LOCALE`), palier précieux |
 | Gaussienne | Socle à contours circulaires, émissif de la teinte du palier |
 
-\(A\) = amplitude du solde : \(0{,}28 + 0{,}72\log_{10}(1 + e)\), \(e\) en eidôla, plafond 1,85.
+\(A\) = amplitude du solde : \(0{,}28 + 0{,}72\log_{10}(1 + e)\), \(e\) en ionos, plafond 1,85.
 
 ## Sphérique
 

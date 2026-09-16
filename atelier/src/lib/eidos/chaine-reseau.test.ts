@@ -45,12 +45,17 @@ describe("la chaîne du réseau d'essai, lue en en-têtes signés", () => {
     assert.match((lireTetes(format) as { erreur: string }).erreur, /format 4/);
     assert.match((lireTetes(CHAINE.subarray(0, CHAINE.length - 100)) as { erreur: string }).erreur, /tronqué|incohérente/);
     const tetes = lireTetes(CHAINE) as ReturnType<typeof tete>[];
-    const alt = tetes.map((t, k) => (k === 3 ? { ...t, signature: "00" + t.signature.slice(2) } : t));
+    // la chaîne réelle peut être jeune (réinitialisation du testnet) : on altère
+    // au plus profond disponible ; prev n'est contrôlé qu'à partir du bloc 1
+    assert.ok(tetes.length >= 2, "la chaîne publiée doit avoir au moins deux blocs");
+    const kSig = Math.min(3, tetes.length - 1);
+    const kPrev = Math.min(5, tetes.length - 1);
+    const alt = tetes.map((t, k) => (k === kSig ? { ...t, signature: "00" + t.signature.slice(2) } : t));
     const va = verifierChaine(alt, fed);
-    assert.ok(!va.ok && va.hauteur === 3 && /signature/.test(va.motif));
-    const rompu = tetes.map((t, k) => (k === 5 ? { ...t, prev: "11".repeat(32) } : t));
+    assert.ok(!va.ok && va.hauteur === kSig && /signature/.test(va.motif));
+    const rompu = tetes.map((t, k) => (k === kPrev ? { ...t, prev: "11".repeat(32) } : t));
     const vr = verifierChaine(rompu, fed);
-    assert.ok(!vr.ok && vr.hauteur === 5 && /prev/.test(vr.motif));
+    assert.ok(!vr.ok && vr.hauteur === kPrev && /prev/.test(vr.motif));
     assert.ok(!verifierChaine([], fed).ok);
   });
 

@@ -20,7 +20,7 @@ Tout ce qu'il faut existe déjà :
 | Besoin | Déjà là |
 |---|---|
 | Adresse à usage unique dérivée d'une graine | `wots.adresse_de(graine)`, `wots.ts` |
-| Créditer une adresse sur le testnet | robinet (issue GitHub, 1 eidôlon) |
+| Créditer une adresse sur le testnet | robinet (issue GitHub, 1 ionos) |
 | Dépenser depuis l'atelier vers le nœud | P1 : `envoi.ts`, `robinet.py --envoi`, `noeud.construire_envois` |
 | Retrouver ses pièces | `etat.json`, `chargerTestnet` |
 | Lecture symbolique d'une pièce | artefacts (9 empilements, `noeud.artefact_de_goutte`), reliques par âge (`relique.ts`) |
@@ -200,7 +200,7 @@ l'envie. Tout tient sur le testnet-2 sans réinitialisation.
   la transaction signée y est), ni dans la transaction (seule la graine
   *publique* et la signature y sont).
 - **Réseau d'essai, sans valeur.** Une relique vaut ce que vaut le jeu.
-- **Montant.** Avec le robinet, 1 eidôlon par relique et une seule fois par
+- **Montant.** Avec le robinet, 1 ionos par relique et une seule fois par
   adresse — suffisant. Si l'on veut des prix par âge (Kali 2,10 … Satya 33,55),
   il faut un type de demande `sceau` dans `noeud.py`, budgété comme le robinet.
   À décider après R1.
@@ -216,7 +216,7 @@ l'envie. Tout tient sur le testnet-2 sans réinitialisation.
 
 ## 8. Décisions qui vous reviennent
 
-1. Le montant d'une relique : 1 eidôlon (robinet, zéro code) ou prix par âge
+1. Le montant d'une relique : 1 ionos (robinet, zéro code) ou prix par âge
    (nouveau type `sceau`, budget d'époque à fixer) ?
 2. Les indices de lieu dans `reliques.json` : publics dès le scellement, ou
    révélés par vagues ?

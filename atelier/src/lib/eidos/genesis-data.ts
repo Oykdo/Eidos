@@ -1,8 +1,8 @@
 export const genesis = {
   "spec": "eonis-genesis/1",
   "monnaie": {
-    "nom": "EIDOLON",
-    "ticker": "EIDL",
+    "nom": "IONOS",
+    "ticker": "IONOS",
     "atomes_par_unite": 100000000,
     "decimales": 8
   },
@@ -20,22 +20,22 @@ export const genesis = {
     "b_ratio": "1/2",
     "invariant": "somme des cosinus nulle sur une periode -> total = a*T exact",
     "total_atomes": 6289920000000000,
-    "total_eidolon": 62899200,
+    "total_ionos": 62899200,
     "blocs_totaux": 2096640
   },
   "generation_des_tables": {
-    "arithmetique": "decimal.Decimal, getcontext().prec = 60",
+    "arithmetique": "decimal.Decimal, localcontext() a prec = 60 dans dcos et build_epoch_table",
     "cosinus": "serie de Taylor, reduction d'argument mod 2*pi (pas math.cos)",
     "pi_decimales": 68,
     "arrondi": "plancher puis repartition au plus fort reste; egalite tranchee par index croissant",
     "serialisation_canonique": "T+1 valeurs cumulees, decimal ASCII, une par ligne, LF, newline final",
     "generateur": "eonis.py",
-    "generateur_sha256": "cc94ad1e6eadf7027414a1347e870a4842689431b8fca2c1b381f93f4f1dfabc"
+    "generateur_sha256": "2eb70acb9f7c3cd991db6493110749acd9a10879a6872b87529eb212af075c78"
   },
   "ages": [
     {
       "nom": "Satya",
-      "a_eidolon": 40,
+      "a_ionos": 40,
       "epoques": 832,
       "hauteur_debut": 0,
       "hauteur_fin": 838655,
@@ -49,7 +49,7 @@ export const genesis = {
     },
     {
       "nom": "Treta",
-      "a_eidolon": 30,
+      "a_ionos": 30,
       "epoques": 624,
       "hauteur_debut": 838656,
       "hauteur_fin": 1467647,
@@ -63,7 +63,7 @@ export const genesis = {
     },
     {
       "nom": "Dvapara",
-      "a_eidolon": 20,
+      "a_ionos": 20,
       "epoques": 416,
       "hauteur_debut": 1467648,
       "hauteur_fin": 1886975,
@@ -77,7 +77,7 @@ export const genesis = {
     },
     {
       "nom": "Kali",
-      "a_eidolon": 10,
+      "a_ionos": 10,
       "epoques": 208,
       "hauteur_debut": 1886976,
       "hauteur_fin": 2096639,

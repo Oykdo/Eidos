@@ -169,9 +169,9 @@ export function choisirRegroupement(
 export function formaterAtomes(atomes: number, digits = 6): string {
   const signe = atomes < 0 ? "-" : "";
   const n = Math.abs(atomes);
-  const eidl = Math.floor(n / ATOMES);
+  const ionos = Math.floor(n / ATOMES);
   const frac = n % ATOMES;
-  return `${signe}${eidl}.${String(frac).padStart(8, "0").slice(0, digits)}`;
+  return `${signe}${ionos}.${String(frac).padStart(8, "0").slice(0, digits)}`;
 }
 
 export function parserMontant(saisie: string): number | null {

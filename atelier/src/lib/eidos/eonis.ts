@@ -37,9 +37,9 @@ function dcos(x: Decimal): Decimal {
   return total;
 }
 
-export function buildEpochTable(aEidolon: number, t = T, h0 = H0): number[] {
-  const totalAtomes = aEidolon * t * ATOMES;
-  const a = new Decimal(aEidolon).mul(ATOMES);
+export function buildEpochTable(aIonos: number, t = T, h0 = H0): number[] {
+  const totalAtomes = aIonos * t * ATOMES;
+  const a = new Decimal(aIonos).mul(ATOMES);
   const b = a.mul(B_RATIO);
   const twoPiOverT = PI.mul(2).div(t);
   const exact: Decimal[] = [];

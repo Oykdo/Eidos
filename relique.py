@@ -68,9 +68,9 @@ def planche(ident, age, indice, adresse, date):
         f"indice : {indice or '(aucun)'}\n\n"
         f"adresse (hex) : {adresse.hex()}\n"
         f"adresse (glyphes) :\n{glyphes}\n\n"
-        f"Mise du sceau {age} : {mise / E.ATOMES:.2f} eidola. La mise arrive en UNE\n"
+        f"Mise du sceau {age} : {mise / E.ATOMES:.2f} ionos. La mise arrive en UNE\n"
         "SEULE piece : la goutte du robinet (issue « robinet » avec les 31 symboles\n"
-        "ci-dessus ; un eidolon, la relique est alors publiee « sous-scellee »), ou\n"
+        "ci-dessus ; un ionos, la relique est alors publiee « sous-scellee »), ou\n"
         "un envoi de la mise entiere depuis un coffre. Jamais les deux : une cle ne\n"
         "signe qu'une fois, une seconde piece sur cette adresse serait perdue. En\n"
         "dessous de la mise, la relique reste recuperable.\n"
@@ -188,7 +188,7 @@ def tests():
     assert "graine" not in json.dumps(f) and b64url(graine) not in json.dumps(f)
     txt = open(r["planche"], encoding="utf-8").read()
     assert b64url(graine) not in txt and graine.hex() not in txt and r["adresse"] in txt
-    assert "Mise du sceau Kali : 2.10 eidola" in txt
+    assert "Mise du sceau Kali : 2.10 ionos" in txt
     assert U.addr_decode(U.addr_encode(bytes.fromhex(r["adresse"]))) == bytes.fromhex(r["adresse"])
     print(f"scellee : id {r['id']}, planche sans graine, reliques.json : OK"); ok += 1
 

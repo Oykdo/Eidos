@@ -462,7 +462,7 @@ def tests():
     circ = sum(m for _, m in ch.carnet.utxo.values())
     assert circ == ch.carnet.emission_cumulee()
     print(f"7 blocs, un tour complet          : "
-          f"{circ / E.ATOMES:.6f} EIDOLON = emission"); ok += 1
+          f"{circ / E.ATOMES:.6f} IONOS = emission"); ok += 1
 
     # -- refus attendus -----------------------------------------------------
     def doit_echouer(label, fn):

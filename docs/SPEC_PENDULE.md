@@ -18,7 +18,7 @@ Marques : [FIXE] donnée d'auteur ou loi existante · [PROPOSÉ] à valider · [
 |---|---|---|
 | « Le pendule détermine la génération du donjon suivant » | Un étage est **public et fixe** : `graineEtage(e) = SHA-256d(tag ‖ e)`, même hôte pour tous | Le pendule ne génère pas d'étage : il choisit **quels étages** un run traverse et **où** l'on y arrive (la case de la dalle 9 × 9) |
 | Courbe de difficulté, montée en puissance (Azure Dreams) | Aucun point de vie, aucun niveau ; « un palier ne multiplie pas la norme » | La difficulté est une **exigence de lecture** : tenue de résonance requise (`COS_ELITE`, `COS_SUPREME`), nombre d'occupants, temps du duel |
-| Économie, puits contre l'inflation | Émission bornée par la chaîne ; les objets n'ont pas de puissance | Rien à inventer : l'eidôlon vit sur la chaîne, la jauge ne s'échange pas ; puits = élixirs bus, captures offertes |
+| Économie, puits contre l'inflation | Émission bornée par la chaîne ; les objets n'ont pas de puissance | Rien à inventer : l'ionos vit sur la chaîne, la jauge ne s'échange pas ; puits = élixirs bus, captures offertes |
 | Une ville de bâtiments devant la tour | « La ville est le coffre » | Les bâtiments sont les **sections du Coffre** (inventaire, journal, témoin, carte, reliques) ; ils évoluent par conséquence d'un run |
 | Livre-jeu à embranchements écrits | Rien n'est tiré au sort ; les hôtes disent des règles vraies | Les paragraphes sont **écrits à la main** (27 répliques par muse déjà prévues) ; l'ordre de lecture est choisi par le pendule |
 
