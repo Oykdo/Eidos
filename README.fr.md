@@ -12,7 +12,7 @@ Eidos est trois choses qui partagent une règle, *rien ne se croit, tout se rejo
 
 - **une chaîne prototype** à émission bornée sans halving, consensus fédéré, et signatures post-quantiques par hachage pur — aucune courbe elliptique nulle part ; la spécification est en Python, bibliothèque standard uniquement ;
 - **un atelier web** qui rejoue les mêmes règles dans le navigateur, à l'octet près, et vous laisse vérifier une pièce, une signature, une adresse sans croire personne ;
-- **un jeu** poussé sur la chaîne — un tactical RPG au tour par tour : une Tour de 255 étages, neuf muses, des batailles sur une dalle de neuf par neuf sans un seul dé, et un run quotidien, la Veillée, où une clé à usage unique est votre vie et où la preuve de votre run se juge par quiconque sans rejouer la chaîne.
+- **un jeu**, la Tour, poussé sur la chaîne — un tactical RPG au tour par tour : 255 étages, neuf muses, des batailles sur une dalle de neuf par neuf sans un seul dé, et un run quotidien, la Veillée — une nuit dans la Tour —, où une clé à usage unique est votre vie et où la preuve de votre run se juge par quiconque sans rejouer la chaîne.
 
 Réseau d'essai seulement : l'ionos n'a aucune valeur.
 

@@ -14,7 +14,7 @@ post-quantiques par hachage pur (aucune courbe elliptique). Unité : l'ionos
 
 Trois couches partagent la règle « rien ne se croit, tout se rejoue » : la
 **chaîne** (Python, bibliothèque standard), l'**atelier** (TypeScript, rejoue la
-spec à l'octet), le **jeu** (la Tour, la Veillée — jauge hors feuille, sauf les
+spec à l'octet), le **jeu**, la Tour (la Veillée en est une nuit, la bataille un combat — jauge hors feuille, sauf les
 sceaux et les preuves exportées). Un joueur commence par le Guide de l'atelier ;
 un développeur par ce fichier, puis `docs/FEUILLE_DE_ROUTE.md`.
 

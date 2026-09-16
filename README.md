@@ -12,7 +12,7 @@ Eidos is three things that share one rule, *nothing is believed, everything is r
 
 - **a prototype chain** with bounded emission and no halving, a federated consensus, and post-quantum signatures made of hashing alone — no elliptic curve anywhere; the specification is Python, standard library only;
 - **a web atelier** that replays the same rules in the browser, byte for byte, and lets you check a coin, a signature, an address without trusting anyone;
-- **a game** grown on top of the chain — a turn-based tactical RPG: a Tower of 255 floors, nine muses, battles on a nine-by-nine slab with not a single die, and a daily run, the Vigil, where a one-time key is your life and the proof of your run is judged by anyone without replaying the chain.
+- **a game**, the Tower, grown on top of the chain — a turn-based tactical RPG: 255 floors, nine muses, battles on a nine-by-nine slab with not a single die, and a daily run, the Vigil — one night in the Tower —, where a one-time key is your life and the proof of your run is judged by anyone without replaying the chain.
 
 Testnet only: the ionos has no value.
 
