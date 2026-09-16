@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from aura_voxel_lab import AGG
 from pendule9_run import Rejet
 
-FEUILLES, PAR_AGG, ETAPES, GESTES = 64, 8, 27, ("franchir", "parler", "ouvrir", "prendre")
+FEUILLES, PAR_AGG, ETAPES, GESTES = 64, 8, 9, ("franchir", "parler", "ouvrir", "prendre")   # 9 étapes depuis A18
 
 def valider_veillee(v):
     if v["hauteur"] != 6: raise ValueError(f"hauteur {v['hauteur']} au lieu de 6")

@@ -190,7 +190,7 @@ describe("le jour : le premier bloc, prouvé par deux têtes", () => {
 });
 
 describe("la clé comme vie : une feuille par geste, l'arbre vide est la fin", () => {
-  it("26 fins de salle = sommet, exporté, relu, jugé sans rejouer ; le parcours est celui du pendule", () => {
+  it("ETAPES − 1 fins de salle = sommet, exporté, relu, jugé sans rejouer ; le parcours est celui du pendule", () => {
     let v = ouvrir();
     v = signerGeste(v, arbre, { g: "parler", arg: 0 }) as Veillee;
     v = franchir(v, FRANCHIR_AU_SOMMET);
@@ -217,8 +217,10 @@ describe("la clé comme vie : une feuille par geste, l'arbre vide est la fin", (
 
   it("64 gestes sans le sommet = épuisé ; la dernière feuille est la mort, la preuve reste", () => {
     let v = ouvrir();
-    v = franchir(v, 10);
-    for (let k = 0; k < FEUILLES - 10; k++) {
+    // en deçà du sommet : la moitié des fins de salle, puis du butin jusqu'à l'arbre nu
+    const avancees = FRANCHIR_AU_SOMMET >> 1;
+    v = franchir(v, avancees);
+    for (let k = 0; k < FEUILLES - avancees; k++) {
       const r = signerGeste(v, arbre, { g: k % 2 ? "ouvrir" : "prendre", arg: k });
       assert.ok(!("erreur" in r), `geste ${k}`);
       v = r;
@@ -229,8 +231,8 @@ describe("la clé comme vie : une feuille par geste, l'arbre vide est la fin", (
     const j = jugerVeillee(v, fed);
     assert.ok(j.ok, j.ok ? "" : j.motif);
     if (j.ok) {
-      assert.equal(j.salles, 11);
-      assert.equal(j.butin, FEUILLES - 10);
+      assert.equal(j.salles, avancees + 1);
+      assert.equal(j.butin, FEUILLES - avancees);
       assert.equal(j.fin, "epuise");
     }
   });
@@ -263,7 +265,7 @@ describe("la clé comme vie : une feuille par geste, l'arbre vide est la fin", (
     // étage déclaré ailleurs que là où le pendule est
     const faux = { ...v, gestes: v.gestes.map((g, k) => (k === 2 ? { ...g, etage: g.etage + 1 } : g)) };
     assert.match((jugerVeillee(faux, fed) as { motif: string }).motif, /parcours/);
-    // sommet déclaré sans les 26 franchir
+    // sommet déclaré sans les ETAPES − 1 franchir
     assert.match((jugerVeillee({ ...v, fin: "sommet" }, fed) as { motif: string }).motif, /sommet/);
     // épuisé déclaré avec des feuilles restantes
     assert.match((jugerVeillee({ ...v, fin: "epuise" }, fed) as { motif: string }).motif, /épuisé/);

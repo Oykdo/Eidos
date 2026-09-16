@@ -66,9 +66,9 @@ Prochain kill : l'aura doit-elle rester scalaire ? Test cheap : implémenter le 
 **Rapport au dépôt Eidos :** ce laboratoire est parallèle à `atelier/src/lib/eidos/pendule.ts` (bandes × triplets, `docs/SPEC_PENDULE.md`). Figures, pas preuves. Unification = chantier suivant.
 
 ## 7. Unification pendule.ts ↔ labo — `labo/unification.py` (7/7 PASS, K19–K25)
-**Principe :** l'atelier décide du parcours (`pendule.run()` : 27 étapes, crans p ∈ 0..8, étage e, spawn s), le labo ne fait que *lire* l'aura par-dessus. Aucune logique de parcours n'est dupliquée en Python.
+**Principe :** l'atelier décide du parcours (`pendule.run()` : 9 étapes depuis A18 — 27 avant le 2026-09-16 —, crans p ∈ 0..8, étage e, spawn s), le labo ne fait que *lire* l'aura par-dessus. Aucune logique de parcours n'est dupliquée en Python.
 
-Contrat d'échange (JSON, 27 étapes) : `{"i","p","e","s":{"x","y"}}` avec `s.y = p`, `run[0].e = 0`. Cran p → position pendule-9 = p+1 (1..8 agrégateur, 9 source). Coût = `1 + bande(e)//3` (même `bandeDe` que le TS, borné 1..3). Le don reste à `genreDon` ; le labo n'ajoute que `tier = position`.
+Contrat d'échange (JSON, 9 étapes ; 27 jusqu'au 2026-09-16) : `{"i","p","e","s":{"x","y"}}` avec `s.y = p`, `run[0].e = 0`. Cran p → position pendule-9 = p+1 (1..8 agrégateur, 9 source). Coût = `1 + bande(e)//3` (même `bandeDe` que le TS, borné 1..3). Le don reste à `genreDon` ; le labo n'ajoute que `tier = position`.
 
 Kill criteria : fixture valide (K19), déterminisme (K20), invariant (K21), source vidée à 9 (K22), équivalence des agrégateurs touchés entre le chemin racine digitale et le chemin crans (K23), refus d'un spawn incohérent (K24), coût borné (K25).
 

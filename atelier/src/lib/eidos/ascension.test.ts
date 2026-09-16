@@ -13,11 +13,11 @@ import {
   finDeSalleDansCoffre,
   graineLibre,
 } from "./ascension.ts";
-import { hexOf } from "./hash.ts";
+import { fromHex, hexOf } from "./hash.ts";
 import { graineDon } from "./hotes.ts";
 import { tourDe } from "./jauge.ts";
 import { preuveReseau, serialiser } from "./merkle.ts";
-import { ETAPES, etageDe } from "./pendule.ts";
+import { ETAPES, etageDe, transition } from "./pendule.ts";
 import { parserFederation, parserTeteReseau } from "./temoin.ts";
 import { coffreAtelier, coffreNeuf } from "./wallet.ts";
 
@@ -123,7 +123,12 @@ describe("ascension — exploration libre, le pendule en fin de salle", () => {
     assert.ok(d !== null && d.length === 3);
     assert.equal(d!.filter((x) => x.lu).length, 1, "un seul choix proposé");
     assert.equal(d!.find((x) => x.lu)!.choix, choixDeSalle(tourDe(c), 0));
-    for (const x of d!) assert.equal(x.etage, etageDe(1, x.p));
+    const a0 = tourDe(c).ascension!;
+    for (const x of d!) {
+      const { p, h } = transition(fromHex(a0.graine), 0, a0.p, 0, x.choix, tourDe(c).porte ?? 0);
+      assert.equal(x.p, p);
+      assert.equal(x.etage, etageDe(1, p, h));
+    }
     const autre = d!.find((x) => !x.lu)!;
     const r = finDeSalleDansCoffre(c, [], autre.choix);
     assert.ok(r.ok && r.fin === null);

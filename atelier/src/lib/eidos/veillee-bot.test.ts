@@ -19,7 +19,7 @@ import {
   type Run,
 } from "./veillee-bot.ts";
 
-// Douze runs (2,5 à 4 s chacun, l'arbre rebâti à chaque ouverture) : le rapport gelé, calculé une fois pour toute la suite.
+// Douze runs (l'arbre rebâti à chaque ouverture) : le rapport gelé, calculé une fois pour toute la suite.
 const GRAINE = 7;
 const RUNS = 4;
 const rapport = simuler(RUNS, GRAINE);
@@ -28,36 +28,37 @@ const tous: Run[] = POLITIQUES.flatMap((p) => rapport.detail[p]);
 /** La table gelée : fin, feuilles brûlées, butin — par politique, run par run. Toute retouche
  *  du bot, du pendule, d'un acte de la Tour ou du sac (veillee-tour.ts, 81 places) la régénère
  *  sciemment : `node --experimental-strip-types src/lib/eidos/veillee-bot.ts 4` imprime les runs. */
+// Régénérée le 2026-09-16 : neuf salles (A18), l'étage choisi par le hachage dans le neuvième du cran.
 const GELE: Record<Politique, [Fin, number, number][]> = {
   avare: [
-    ["sommet", 26, 0],
-    ["sommet", 26, 0],
-    ["sommet", 26, 0],
-    ["sommet", 26, 0],
+    ["sommet", 8, 0],
+    ["sommet", 8, 0],
+    ["sommet", 8, 0],
+    ["sommet", 8, 0],
   ],
   gourmand: [
-    ["sommet", 55, 29],
-    ["sommet", 53, 27],
-    ["sommet", 54, 28],
-    ["sommet", 54, 28],
+    ["sommet", 17, 9],
+    ["sommet", 18, 10],
+    ["sommet", 19, 11],
+    ["sommet", 17, 9],
   ],
   mesure: [
-    ["sommet", 49, 23],
-    ["sommet", 35, 9],
-    ["sommet", 37, 11],
-    ["sommet", 53, 27],
+    ["sommet", 15, 7],
+    ["sommet", 12, 4],
+    ["sommet", 16, 8],
+    ["sommet", 11, 3],
   ],
 };
-const P_MESURE = ["0.6813", "0.3500", "0.3513", "0.9017"];
-// un seul « parler » par run : Thalie (demande « rien ») ; Uranie, « rien » aussi, vient quand le sac est plein
+const P_MESURE = ["0.6813", "0.3198", "0.9058", "0.3500"];
+// un seul « parler » par run : Thalie (demande « rien ») ; à neuf salles le sac ne se remplit plus, Uranie ne vient pas
 const GOURMAND_PARLER_OUVRIR = [
-  [2, 27],
-  [1, 26],
-  [2, 26],
-  [2, 26],
+  [1, 8],
+  [1, 9],
+  [1, 10],
+  [1, 8],
 ];
-// refus sans feuille : demandes insatisfaites, puis le sac plein
-const GOURMAND_REFUS = [7, 3, 6, 5];
+// refus sans feuille : demandes insatisfaites (le sac, 81 places, ne se remplit plus à neuf salles)
+const GOURMAND_REFUS = [3, 2, 2, 3];
 
 describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
   it("graine 7, 4 runs par politique : le rapport est gelé — mêmes chiffres à chaque exécution", () => {
@@ -77,12 +78,12 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
     assert.deepEqual(rapport.detail.mesure.map((r) => r.p.toFixed(4)), P_MESURE);
     assert.deepEqual(rapport.detail.gourmand.map((r) => [r.gestes.parler, r.gestes.ouvrir]), GOURMAND_PARLER_OUVRIR);
     assert.deepEqual(rapport.detail.gourmand.map((r) => r.refus), GOURMAND_REFUS);
-    assert.equal(rapport.politiques.gourmand.feuillesMoyennes, 54);
-    assert.equal(rapport.politiques.gourmand.feuillesMax, 55);
-    assert.equal(rapport.politiques.mesure.butinMoyen, 17.5);
-    // aucun sommet à 38, aucun run à 64 feuilles : le sac plafonne le butin, le budget ne mord pas
+    assert.equal(rapport.politiques.gourmand.feuillesMoyennes, 17.75);
+    assert.equal(rapport.politiques.gourmand.feuillesMax, 19);
+    assert.equal(rapport.politiques.mesure.butinMoyen, 5.5);
+    // aucun sommet à BUTIN_MAX, aucun run à 64 feuilles : la Tour seule n'offre pas de quoi vider l'arbre en neuf salles, le budget ne mord pas
     for (const p of POLITIQUES) {
-      assert.equal(rapport.politiques[p].partSommets38, 0);
+      assert.equal(rapport.politiques[p].partSommetsPleins, 0);
       assert.ok(rapport.politiques[p].feuillesMax < FEUILLES);
     }
     assert.equal(rapport.budgetMordu, false);
@@ -92,7 +93,7 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
     assert.notEqual(graineDePolitique(GRAINE, "avare"), graineDePolitique(GRAINE + 1, "avare"));
   });
 
-  it("invariants : feuilles ≤ 64, sommet ⇔ 26 franchir, salles = franchir + 1, score = salles × 64 + butin, butin ≤ sac", () => {
+  it("invariants : feuilles ≤ 64, sommet ⇔ ETAPES − 1 franchir, salles = franchir + 1, score = salles × 64 + butin, butin ≤ sac", () => {
     assert.equal(tous.length, RUNS * POLITIQUES.length);
     for (const r of tous) {
       assert.ok(r.feuilles <= FEUILLES, `${r.feuilles} feuilles`);
@@ -120,7 +121,7 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
     }
   });
 
-  it("l'avare touche toujours le sommet avec 26 feuilles et 0 butin ; le gourmand creuse chaque arrivée jusqu'au sac plein ; le mesuré tire p dans ]0, 1[", () => {
+  it("l'avare touche toujours le sommet avec ETAPES − 1 feuilles et 0 butin ; le gourmand creuse chaque arrivée ; le mesuré tire p dans ]0, 1[", () => {
     for (const r of rapport.detail.avare) {
       assert.equal(r.fin, "sommet");
       assert.equal(r.feuilles, FRANCHIR_AU_SOMMET);
@@ -135,7 +136,7 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
       // chaque salle tente la case d'arrivée : creusée, ou refusée sans feuille (sac plein)
       assert.ok(r.gestes.ouvrir + r.refus >= r.franchir, `${r.gestes.ouvrir} ouvrir + ${r.refus} refus pour ${r.franchir} franchir`);
       assert.ok(r.butin > 0);
-      assert.ok(r.refus > 0, "le sac plein refuse, sans rien brûler");
+      assert.ok(r.refus > 0, "un refus sans feuille : demande insatisfaite, ou sac plein");
       assert.ok(r.feuilles < FEUILLES, "le gourmand ne vide jamais l'arbre sur ce coffre");
     }
     for (const r of rapport.detail.mesure) {
@@ -162,35 +163,35 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
     assert.equal(reserverEnSession(o.v.racine, 0), true);
   });
 
-  it("le verdict lit les seuils de §2.4 : > 80 % des sommets à 38 = dilemme absent ; < 30 % de sommets = budget trop court ; 64 feuilles = budget mordu", () => {
-    assert.equal(BUTIN_MAX, 38);
+  it("le verdict lit les seuils de §2.4 : > 80 % des sommets à BUTIN_MAX = dilemme absent ; < 30 % de sommets = budget trop court ; 64 feuilles = budget mordu", () => {
+    assert.equal(BUTIN_MAX, 56);
     const gabarit = tous[0]!;
     const fabrique = (fin: Fin, butin: number): Run => {
       const franchir = fin === "sommet" ? FRANCHIR_AU_SOMMET : fin === "epuise" ? FEUILLES - butin : 10;
       return { ...gabarit, fin, franchir, butin, feuilles: franchir + butin, salles: franchir + 1 };
     };
-    // cinq runs : quatre sommets à 38, un à 37 → 80 % exactement, pas au-dessus : le dilemme tient
-    const juste = mesuresDe([fabrique("sommet", 38), fabrique("sommet", 38), fabrique("sommet", 38), fabrique("sommet", 38), fabrique("sommet", 37)]);
-    assert.equal(juste.partSommets38, 0.8);
+    // cinq runs : quatre sommets à BUTIN_MAX, un à BUTIN_MAX − 1 → 80 % exactement, pas au-dessus : le dilemme tient
+    const juste = mesuresDe([fabrique("sommet", BUTIN_MAX), fabrique("sommet", BUTIN_MAX), fabrique("sommet", BUTIN_MAX), fabrique("sommet", BUTIN_MAX), fabrique("sommet", BUTIN_MAX - 1)]);
+    assert.equal(juste.partSommetsPleins, 0.8);
     assert.equal(juste.feuillesMax, FEUILLES);
     assert.equal(verdictDe(juste).dilemmeAbsent, false);
-    // cinq sommets à 38 → 100 % : dilemme absent
-    const tout = mesuresDe(Array.from({ length: 5 }, () => fabrique("sommet", 38)));
-    assert.equal(tout.partSommets38, 1);
+    // cinq sommets à BUTIN_MAX → 100 % : dilemme absent
+    const tout = mesuresDe(Array.from({ length: 5 }, () => fabrique("sommet", BUTIN_MAX)));
+    assert.equal(tout.partSommetsPleins, 1);
     assert.deepEqual(verdictDe(tout), { dilemmeAbsent: true, budgetTropCourt: false, ok: false });
-    // un sommet sur dix : budget trop court ; les épuisés (64 feuilles, 40 de butin) ne comptent pas comme sommets
-    const court = mesuresDe([fabrique("sommet", 38), ...Array.from({ length: 9 }, () => fabrique("epuise", 40))]);
+    // un sommet sur dix : budget trop court ; les épuisés (64 feuilles, 60 de butin) ne comptent pas comme sommets
+    const court = mesuresDe([fabrique("sommet", BUTIN_MAX), ...Array.from({ length: 9 }, () => fabrique("epuise", 60))]);
     assert.equal(court.tauxSommet, 0.1);
-    assert.equal(court.partSommets38, 1);
+    assert.equal(court.partSommetsPleins, 1);
     assert.equal(court.feuillesMax, FEUILLES);
     assert.deepEqual(court.fins, { sommet: 1, epuise: 9, porte: 0, abandon: 0 });
     assert.deepEqual(verdictDe(court), { dilemmeAbsent: true, budgetTropCourt: true, ok: false });
     // sans aucun sommet : budget trop court, mais pas de dilemme à déclarer absent ; 13 feuilles au plus, rien de mordu
     const aucun = mesuresDe([fabrique("porte", 3), fabrique("abandon", 0)]);
-    assert.equal(aucun.partSommets38, 0);
+    assert.equal(aucun.partSommetsPleins, 0);
     assert.equal(aucun.feuillesMax, 13);
     assert.deepEqual(verdictDe(aucun), { dilemmeAbsent: false, budgetTropCourt: true, ok: false });
-    assert.equal(verdictDe({ sommets: 3, partSommets38: 0, tauxSommet: SEUILS.tauxSommetMin }).budgetTropCourt, false);
+    assert.equal(verdictDe({ sommets: 3, partSommetsPleins: 0, tauxSommet: SEUILS.tauxSommetMin }).budgetTropCourt, false);
     assert.deepEqual(mesuresDe([]), {
       runs: 0,
       sommets: 0,
@@ -198,7 +199,7 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
       feuillesMoyennes: 0,
       feuillesMax: 0,
       butinMoyen: 0,
-      partSommets38: 0,
+      partSommetsPleins: 0,
       fins: { sommet: 0, epuise: 0, porte: 0, abandon: 0 },
     });
   });

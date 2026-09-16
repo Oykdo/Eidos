@@ -9,10 +9,15 @@
  *   e ∈ 0..254 étage ; bande(e) = floor(e·9/255), neuf bandes
  *   s = (x, y)  case de spawn sur la dalle 9 × 9 ; y = p
  *
- * Un run = 27 étapes : 9 bandes × 3 étages. L'étape i est dans la bande
- * floor(i/3), à la position j = i mod 3 de l'un des neuf triplets de la bande ;
- * le pendule choisit le triplet. L'étape 0 est toujours l'étage 0 : la porte
- * de la ville, Thalie.
+ * Un run = 9 étapes : 9 bandes × 1 étage (A18, tranché par la mesure le
+ * 2026-09-14 et confirmé par l'auteur le 2026-09-16 : 27 salles ne se
+ * financent sous aucune règle avec 64 feuilles). L'étape i est dans la bande i :
+ * le cran p choisit un **neuvième** de la bande (cran 0 en bas, cran 8 en haut),
+ * le hachage de la transition choisit l'étage dans ce neuvième. Le cran seul
+ * n'offrait que neuf étages par bande — 73 sur 255, toujours les mêmes ;
+ * avec le hachage, tout étage d'une bande se visite (couverture mesurée par
+ * pendule-phase0.ts). L'étape 0 est toujours l'étage 0 : la porte de la
+ * ville, Thalie — la bande 0 n'a que sa porte quand une bande vaut une étape.
  *
  * Le don d'arrivée dépend de (étage, case, coffre) : « le loot dépend du spawn ».
  * Figures, pas preuves : rien ici n'engage le carnet.
@@ -28,8 +33,8 @@ export const TAG_DON = utf8("eidos-don/1");
 
 export const CRANS = 9;
 export const BANDES = 9;
-export const ETAGES_PAR_BANDE = 3;
-export const ETAPES = BANDES * ETAGES_PAR_BANDE; // 27
+export const ETAGES_PAR_BANDE = 1;
+export const ETAPES = BANDES * ETAGES_PAR_BANDE; // 9
 
 export const CHOIX = ["monter", "lire", "offrir"] as const;
 export type Choix = (typeof CHOIX)[number];
@@ -62,18 +67,25 @@ export function graineRun(maitre: string, n: number, graineVille: Uint8Array): U
   return sha256d(concat(TAG_RUN, utf8(`${maitre}/${n}/`), graineVille));
 }
 
-/** L'étage d'une étape : bande floor(i/3), triplet p, position i mod 3.
- *  Les neuf triplets sont étalés sur toute la bande (28 ou 29 étages) :
- *  le cran 0 part du premier étage, le cran 8 finit sur le dernier. */
-export function etageDe(i: number, p: number): number {
+/**
+ * L'étage d'une étape : bande floor(i/ETAGES_PAR_BANDE) ; le cran p choisit le
+ * neuvième de la bande (cran 0 : le bas, cran 8 : le haut), l'octet h[1] du
+ * hachage de la transition choisit l'étage dans ce neuvième ; la position
+ * j = i mod ETAGES_PAR_BANDE fait se suivre les étages d'une même bande.
+ * h[0] fait le pas du pendule, h[2] la case d'arrivée : trois octets, trois
+ * choix indépendants.
+ */
+export function etageDe(i: number, p: number, h: Uint8Array): number {
   if (i === 0) return 0;
   const k = Math.floor(i / ETAGES_PAR_BANDE);
   const j = i % ETAGES_PAR_BANDE;
   const debut = debutBande(k);
   const fin = k + 1 < BANDES ? debutBande(k + 1) - 1 : ETAGES - 1;
   const taille = fin - debut + 1;
-  const decalage = Math.floor((p * (taille - ETAGES_PAR_BANDE)) / (CRANS - 1));
-  return Math.min(fin, debut + decalage + j);
+  const de = debut + Math.floor((p * taille) / CRANS);
+  const a = debut + Math.floor(((p + 1) * taille) / CRANS) - 1;
+  const largeur = Math.max(1, a - de + 1 - (ETAGES_PAR_BANDE - 1));
+  return Math.min(fin, de + (h[1]! % largeur) + j);
 }
 
 /** Tenue de l'étage réduite à 0..2 — la résonance des occupants (lecture). */
@@ -139,7 +151,7 @@ export function don(e: number, s: Spawn, maitre: string, n: number): Don {
   return { genre: genreDon(e, s, maitre, n), quantite: quantiteDon(s) };
 }
 
-/** Un run entier : 27 étapes pour des choix et un objet porté donnés. */
+/** Un run entier : ETAPES étapes pour des choix et un objet porté donnés. */
 export function run(
   graine: Uint8Array,
   choix: (i: number) => Choix,
@@ -153,7 +165,7 @@ export function run(
   for (let i = 1; i < ETAPES; i++) {
     const t = transition(graine, i - 1, p, e, choix(i - 1), portMot(i - 1));
     p = t.p;
-    e = etageDe(i, p);
+    e = etageDe(i, p, t.h);
     out.push({ i, p, e, s: spawnDe(t.h, p) });
   }
   return out;

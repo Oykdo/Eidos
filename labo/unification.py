@@ -3,7 +3,7 @@
 Figures, pas preuves. Bibliothèque standard.
 
 Contrat (docs/SPEC_AURA_PENDULE9.md §7) — un run exporté par atelier `pendule.run()` :
-    [{"i": 0..26, "p": 0..8, "e": 0..254, "s": {"x": 0..8, "y": p}}, ...]   (27 étapes)
+    [{"i": 0..8, "p": 0..8, "e": 0..254, "s": {"x": 0..8, "y": p}}, ...]   (9 étapes, A18)
 Cran p (Terre = 8 … Uranie = 0)  →  position pendule-9 = p + 1 (1..8 = agrégateur, 9 = source).
 Coût d'une étape = 1 + bande(e) // 3, bande(e) = min(8, e·9 // 255) — même formule que bandeDe().
 Le don : genre par hachage (genreDon, à l'atelier), quantité = position = tier du labo (quantiteDon, K35).
@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from aura_voxel_lab import base_aggregators, transfer, total, AGG, CAP
 from pendule9_run import redistribute_source_9, seal_sign, cube_de_saturne
 
-ETAPES, CRANS, ETAGES = 27, 9, 255
+ETAPES, CRANS, ETAGES = 9, 9, 255   # 9 étapes depuis A18 (2026-09-16) : une par bande, 27 avant
 
 def bande_de(e): return min(8, e * 9 // ETAGES)
 def cout(e): return 1 + bande_de(e) // 3

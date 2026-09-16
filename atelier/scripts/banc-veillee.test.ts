@@ -46,16 +46,26 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
   const p = PARAMETRES_VEILLEE.rapide;
   const r = bancVeillee("rapide");
 
-  it("rejoue le pendule du dépôt : à trois étages par bande, etageDeSalles est etageDe", () => {
-    assert.equal(PAR_BANDE_DU_DEPOT, 3);
+  it("rejoue le pendule du dépôt : à un étage par bande, etageDeSalles est etageDe", () => {
+    assert.equal(PAR_BANDE_DU_DEPOT, 1);
     for (let i = 0; i < ETAPES; i++) {
       for (let q = 0; q < CRANS; q++) {
-        assert.equal(etageDeSalles(i, q, 3), etageDuDepot(i, q), `étape ${i}, position ${q}`);
+        for (const octet of [0, 1, 2, 3, 127, 254, 255]) {
+          const h = new Uint8Array(32);
+          h[1] = octet;
+          assert.equal(etageDeSalles(i, q, h, 1), etageDuDepot(i, q, h), `étape ${i}, position ${q}, octet ${octet}`);
+        }
       }
     }
     // à un étage par bande, neuf étapes balaient les neuf bandes : la dernière est celle d'Uranie
-    assert.equal(etageDeSalles(0, 0, 1), 0);
-    for (let q = 0; q < CRANS; q++) assert.ok(etageDeSalles(8, q, 1) >= 226, `étape 8 en bande d'Uranie (position ${q})`);
+    const h0 = new Uint8Array(32);
+    assert.equal(etageDeSalles(0, 0, h0, 1), 0);
+    for (let q = 0; q < CRANS; q++) assert.ok(etageDeSalles(8, q, h0, 1) >= 226, `étape 8 en bande d'Uranie (position ${q})`);
+    // à trois étages par bande (l'ancien code, en référence), vingt-sept étapes restent dans leur bande
+    for (let i = 0; i < 27; i++) for (let q = 0; q < CRANS; q++) {
+      const e = etageDeSalles(i, q, h0, 3);
+      assert.ok(e >= 0 && e <= 254 && (i === 0 ? e === 0 : Math.floor((e * 9) / 255) === Math.floor(i / 3)), `étape ${i} (3 par bande), position ${q} → ${e}`);
+    }
   });
 
   it("quarante-cinq configurations : douze socles avec et sans permadeath, les neuf contreparties d'A28 à 9 salles, le bot qui ramasse", () => {
@@ -370,8 +380,10 @@ describe("banc de la veillée — le budget d'une run entière, échantillon gel
       assert.equal(s0.butinRefuseMille, 0);
     }
     assert.ok(m("mort-32-9-b2").butinRefuseMille + m("mort-32-9-b2").epuisesMille > m("coup-64-9-b2").butinRefuseMille + m("coup-64-9-b2").epuisesMille);
-    assert.equal(m("coup-64-9-b2").butinRefuseMille, 0, "« un coup à 64 » finance deux gestes par salle sur l'échantillon");
-    assert.equal(m("mort-64-9-b2").butinRefuseMille, 0);
+    // « un coup à 64 » finance deux gestes par salle : le complet dit 46 ‰ des runs refusés (7 ‰ des batailles) — sur
+    // 24 runs, un refus vaut 42 ‰ ; on demande donc « rare », jamais « jamais »
+    assert.ok(m("coup-64-9-b2").butinRefuseMille <= TOLERANCES_VEILLEE.verdict, `« un coup à 64 » finance deux gestes par salle sur l'échantillon (${m("coup-64-9-b2").butinRefuseMille} ‰ refusés)`);
+    assert.ok(m("mort-64-9-b2").butinRefuseMille <= TOLERANCES_VEILLEE.verdict);
   });
 
   it("ne dérive pas de sa calibration : arrivés, feuilles restantes, coups et morts par bataille", () => {

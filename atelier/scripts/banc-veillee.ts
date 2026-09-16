@@ -5,7 +5,7 @@
  * (`docs/HANDOVER_VEILLEE_BATAILLE.md` §3, arbitrage A17) : `SPEC_TACTIQUE.md`
  * D2 — **un coup porté** par le coffre, arbre de 64 ; `BIBLE_VEILLEE.md` §4.3 —
  * **une mort** (un Indéchiffré retiré de la dalle), arbre de 32. Et le nombre
- * de salles n'est pas arrêté non plus (A18) : 27 dans le code, 9 dans la bible
+ * de salles est arrêté depuis le 2026-09-16 (A18) : 9 dans le code comme dans la bible ; 27 reste ici en référence
  * §6.1. Ce banc ne tranche rien par un texte : il joue des runs entières sur
  * le moteur et la politique réels et compte.
  *
@@ -20,7 +20,7 @@
  * - **le parcours** : celui du pendule (`penduleInitial`, `transition`), le choix
  *   de fin de salle tiré par le xorshift du run (`pendule-phase0.ts`), l'objet
  *   porté = le premier mot du roster ; `etageDeSalles` rejoue `etageDe` avec
- *   `ETAGES_PAR_BANDE` en paramètre — 3 (27 salles, le code) ou 1 (9 salles,
+ *   `ETAGES_PAR_BANDE` en paramètre — 3 (27 salles, l'ancien code) ou 1 (9 salles,
  *   la bible §6.1), contrôlé identique à `pendule.etageDe` pour 3. **La
  *   dernière salle ne se joue pas** : comme dans `veillee-tour.ts`, le dernier
  *   franchir *est* le sommet (« la dernière salle n'a pas de fin à signer ») —
@@ -151,7 +151,7 @@
 
 import { formeProche } from "../src/lib/eidos/bestiaire.ts";
 import { captureDe } from "../src/lib/eidos/capsules.ts";
-import { hexOf, sha256d, utf8 } from "../src/lib/eidos/hash.ts";
+import { concat, hexOf, sha256d, utf8 } from "../src/lib/eidos/hash.ts";
 import { objetDePorte } from "../src/lib/eidos/inventaire.ts";
 import { tourVide } from "../src/lib/eidos/jauge.ts";
 import { ageDeOctet, objetDepuisGraine, type Objet } from "../src/lib/eidos/objets.ts";
@@ -160,6 +160,7 @@ import {
   CHOIX,
   CRANS,
   ETAGES_PAR_BANDE,
+  TAG_PENDULE,
   debutBande,
   etageDe,
   penduleInitial,
@@ -174,6 +175,10 @@ import type { Case, Classe, EtatBataille, Unite } from "../src/lib/eidos/tactiqu
 import { qDeMot } from "../src/lib/eidos/resonance.ts";
 import { ETAGES, dalleDe, occupantsDe } from "../src/lib/eidos/tour.ts";
 import { FEUILLES, graineDuJour } from "../src/lib/eidos/veillee.ts";
+
+function u8(n: number): Uint8Array {
+  return new Uint8Array([n & 255]);
+}
 
 export type Regle = "coup" | "mort";
 
@@ -190,7 +195,7 @@ export type Configuration = {
   readonly regle: Regle;
   readonly arbre: number;
   readonly salles: number;
-  /** `ETAGES_PAR_BANDE` rejoué : 3 pour 27 salles, 1 pour 9. */
+  /** `ETAGES_PAR_BANDE` rejoué : 3 pour 27 salles (l'ancien code, en référence), 1 pour 9 (le code). */
   readonly parBande: number;
   /** une unité tombée ne revient pas (A5) ; sinon le roster revient entier à chaque salle */
   readonly permadeath: boolean;
@@ -301,53 +306,54 @@ export function classeDuMot(mot: number): Classe {
   return (CLASSES as readonly string[]).includes(c) ? (c as Classe) : "accessoire";
 }
 
-/** L'échantillon (24 runs × 6 jours), gelé le 2026-09-14 ; se regèle avec le moteur, jamais à la main. */
+/** L'échantillon (24 runs × 6 jours), gelé le 2026-09-14, regelé le 2026-09-16 (A18 : neuf salles dans le
+ *  code, l'étage choisi par le hachage dans le neuvième du cran) ; se regèle avec le moteur, jamais à la main. */
 export const ETALONS_VEILLEE_RAPIDE: Record<string, EtalonVeillee> = {
-  "coup-64-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3778, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "coup-64-9": { arrivesMille: 1000, restantesMediane: 24, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-32-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3872, mortsParBatailleMille: 1767, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-32-9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-64-27": { arrivesMille: 42, restantesMediane: 0, gardentMille: 0, coupsParBatailleMille: 4070, mortsParBatailleMille: 1791, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-64-9": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "coup-64-9-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3983, mortsParBatailleMille: 1717, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-32-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-32-9-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3983, mortsParBatailleMille: 1717, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1711, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-64-9-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3983, mortsParBatailleMille: 1717, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "coup-64-9-pd-perdue": { arrivesMille: 292, restantesMediane: 25, gardentMille: 1000, coupsParBatailleMille: 4172, mortsParBatailleMille: 1851, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "coup-64-9-pd-recrue": { arrivesMille: 250, restantesMediane: 20, gardentMille: 1000, coupsParBatailleMille: 4077, mortsParBatailleMille: 1859, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "coup-64-9-pd-r6": { arrivesMille: 125, restantesMediane: 18, gardentMille: 1000, coupsParBatailleMille: 3685, mortsParBatailleMille: 1629, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "coup-64-9-pd-r9": { arrivesMille: 542, restantesMediane: 20, gardentMille: 1000, coupsParBatailleMille: 4105, mortsParBatailleMille: 1796, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-pd-r12": { arrivesMille: 917, restantesMediane: 20, gardentMille: 1000, coupsParBatailleMille: 4203, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-32-9-pd-perdue": { arrivesMille: 292, restantesMediane: 9, gardentMille: 1000, coupsParBatailleMille: 4172, mortsParBatailleMille: 1851, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-32-9-pd-recrue": { arrivesMille: 250, restantesMediane: 4, gardentMille: 333, coupsParBatailleMille: 4077, mortsParBatailleMille: 1859, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-32-9-pd-r6": { arrivesMille: 125, restantesMediane: 9, gardentMille: 1000, coupsParBatailleMille: 3685, mortsParBatailleMille: 1629, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-32-9-pd-r9": { arrivesMille: 542, restantesMediane: 9, gardentMille: 1000, coupsParBatailleMille: 4105, mortsParBatailleMille: 1796, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-32-9-pd-r12": { arrivesMille: 917, restantesMediane: 9, gardentMille: 864, coupsParBatailleMille: 4203, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-64-9-pd-perdue": { arrivesMille: 292, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4172, mortsParBatailleMille: 1851, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-64-9-pd-recrue": { arrivesMille: 250, restantesMediane: 36, gardentMille: 1000, coupsParBatailleMille: 4077, mortsParBatailleMille: 1859, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-64-9-pd-r6": { arrivesMille: 125, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 3685, mortsParBatailleMille: 1629, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-64-9-pd-r9": { arrivesMille: 542, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4105, mortsParBatailleMille: 1796, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-64-9-pd-r12": { arrivesMille: 917, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4203, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-pd-perdue-r6": { arrivesMille: 667, restantesMediane: 24, gardentMille: 1000, coupsParBatailleMille: 4053, mortsParBatailleMille: 1905, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-pd-perdue-r9": { arrivesMille: 1000, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 4073, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-32-9-pd-perdue-r6": { arrivesMille: 667, restantesMediane: 10, gardentMille: 875, coupsParBatailleMille: 4053, mortsParBatailleMille: 1905, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-32-9-pd-perdue-r9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4073, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-64-9-pd-perdue-r6": { arrivesMille: 667, restantesMediane: 42, gardentMille: 1000, coupsParBatailleMille: 4053, mortsParBatailleMille: 1905, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-64-9-pd-perdue-r9": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4073, mortsParBatailleMille: 1901, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 3714, mortsParBatailleMille: 1636, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 4094, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-32-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 9, gardentMille: 800, coupsParBatailleMille: 3714, mortsParBatailleMille: 1636, verdict: { tropCourt: false, tropLong: false, tient: true } },
-  "mort-32-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4094, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-64-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 3714, mortsParBatailleMille: 1636, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-64-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4094, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-b1": { arrivesMille: 1000, restantesMediane: 17, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-b2": { arrivesMille: 1000, restantesMediane: 10, gardentMille: 625, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: false, tient: true } },
-  "mort-32-9-b1": { arrivesMille: 958, restantesMediane: 2, gardentMille: 87, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: false, tient: true } },
-  "mort-32-9-b2": { arrivesMille: 250, restantesMediane: 0, gardentMille: 0, coupsParBatailleMille: 4130, mortsParBatailleMille: 1842, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-64-9-b1": { arrivesMille: 1000, restantesMediane: 34, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "mort-64-9-b2": { arrivesMille: 1000, restantesMediane: 27, gardentMille: 1000, coupsParBatailleMille: 4167, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3752, mortsParBatailleMille: 1722, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9": { arrivesMille: 1000, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 4161, mortsParBatailleMille: 1849, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3836, mortsParBatailleMille: 1763, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 875, coupsParBatailleMille: 4161, mortsParBatailleMille: 1849, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-27": { arrivesMille: 42, restantesMediane: 0, gardentMille: 0, coupsParBatailleMille: 4047, mortsParBatailleMille: 1792, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4161, mortsParBatailleMille: 1849, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1733, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd": { arrivesMille: 42, restantesMediane: 12, gardentMille: 1000, coupsParBatailleMille: 4291, mortsParBatailleMille: 1800, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1733, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd": { arrivesMille: 42, restantesMediane: 6, gardentMille: 0, coupsParBatailleMille: 4291, mortsParBatailleMille: 1800, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 4133, mortsParBatailleMille: 1733, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd": { arrivesMille: 42, restantesMediane: 38, gardentMille: 1000, coupsParBatailleMille: 4291, mortsParBatailleMille: 1800, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-perdue": { arrivesMille: 292, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 4225, mortsParBatailleMille: 1854, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-recrue": { arrivesMille: 167, restantesMediane: 14, gardentMille: 1000, coupsParBatailleMille: 4260, mortsParBatailleMille: 1836, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-r6": { arrivesMille: 83, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 3669, mortsParBatailleMille: 1638, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "coup-64-9-pd-r9": { arrivesMille: 500, restantesMediane: 24, gardentMille: 1000, coupsParBatailleMille: 4040, mortsParBatailleMille: 1774, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-r12": { arrivesMille: 833, restantesMediane: 24, gardentMille: 1000, coupsParBatailleMille: 4168, mortsParBatailleMille: 1826, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue-r6": { arrivesMille: 542, restantesMediane: 24, gardentMille: 1000, coupsParBatailleMille: 4077, mortsParBatailleMille: 1828, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue-r9": { arrivesMille: 958, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 4135, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 26, gardentMille: 1000, coupsParBatailleMille: 3720, mortsParBatailleMille: 1646, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 23, gardentMille: 1000, coupsParBatailleMille: 4130, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue": { arrivesMille: 292, restantesMediane: 9, gardentMille: 714, coupsParBatailleMille: 4225, mortsParBatailleMille: 1854, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-recrue": { arrivesMille: 167, restantesMediane: 5, gardentMille: 250, coupsParBatailleMille: 4260, mortsParBatailleMille: 1836, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-r6": { arrivesMille: 83, restantesMediane: 9, gardentMille: 500, coupsParBatailleMille: 3669, mortsParBatailleMille: 1638, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-32-9-pd-r9": { arrivesMille: 500, restantesMediane: 10, gardentMille: 833, coupsParBatailleMille: 4040, mortsParBatailleMille: 1774, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-r12": { arrivesMille: 833, restantesMediane: 9, gardentMille: 850, coupsParBatailleMille: 4168, mortsParBatailleMille: 1826, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue-r6": { arrivesMille: 542, restantesMediane: 9, gardentMille: 846, coupsParBatailleMille: 4077, mortsParBatailleMille: 1828, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue-r9": { arrivesMille: 958, restantesMediane: 9, gardentMille: 826, coupsParBatailleMille: 4135, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 9, gardentMille: 800, coupsParBatailleMille: 3720, mortsParBatailleMille: 1646, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 833, coupsParBatailleMille: 4130, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue": { arrivesMille: 292, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4225, mortsParBatailleMille: 1854, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-recrue": { arrivesMille: 167, restantesMediane: 37, gardentMille: 1000, coupsParBatailleMille: 4260, mortsParBatailleMille: 1836, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-r6": { arrivesMille: 83, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 3669, mortsParBatailleMille: 1638, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-pd-r9": { arrivesMille: 500, restantesMediane: 42, gardentMille: 1000, coupsParBatailleMille: 4040, mortsParBatailleMille: 1774, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-r12": { arrivesMille: 833, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4168, mortsParBatailleMille: 1826, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue-r6": { arrivesMille: 542, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4077, mortsParBatailleMille: 1828, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue-r9": { arrivesMille: 958, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4135, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue1": { arrivesMille: 417, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 3720, mortsParBatailleMille: 1646, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-pd-perdue1-r6": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4130, mortsParBatailleMille: 1854, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-b1": { arrivesMille: 1000, restantesMediane: 16, gardentMille: 958, coupsParBatailleMille: 4161, mortsParBatailleMille: 1849, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-b2": { arrivesMille: 958, restantesMediane: 10, gardentMille: 783, coupsParBatailleMille: 4161, mortsParBatailleMille: 1849, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-b1": { arrivesMille: 875, restantesMediane: 3, gardentMille: 0, coupsParBatailleMille: 4161, mortsParBatailleMille: 1849, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-b2": { arrivesMille: 292, restantesMediane: 0, gardentMille: 0, coupsParBatailleMille: 4134, mortsParBatailleMille: 1839, verdict: { tropCourt: true, tropLong: false, tient: false } },
+  "mort-64-9-b1": { arrivesMille: 1000, restantesMediane: 35, gardentMille: 1000, coupsParBatailleMille: 4161, mortsParBatailleMille: 1849, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-64-9-b2": { arrivesMille: 1000, restantesMediane: 28, gardentMille: 1000, coupsParBatailleMille: 4161, mortsParBatailleMille: 1849, verdict: { tropCourt: false, tropLong: true, tient: false } },
 };
 
 /**
@@ -358,12 +364,20 @@ export const ETALONS_VEILLEE_RAPIDE: Record<string, EtalonVeillee> = {
  * lots de trois (≈ 3,5 et 4 min), puis les six du bot qui ramasse, en deux lots
  * de trois (≈ 6 min chacun, sous charge) — ≈ 50 min pour les quarante-cinq
  * d'une traite.
+ *
+ * Le 2026-09-16, A18 entre dans le code (neuf salles, l'étage choisi par le
+ * hachage dans le neuvième du cran : 227 étages joignables au lieu de 73) et
+ * les six configurations qui ont fondé A17 et A28 — coup-64-9, mort-32-9,
+ * coup-64-9-pd-perdue1, coup-64-9-b1, coup-64-9-b2, mort-32-9-b1 — sont
+ * rejouées à 1 000 runs (≈ 6 min) : mêmes verdicts, chaque chiffre dans les
+ * tolérances de l'échantillon. Les trente-neuf autres datent du monde à 73
+ * étages ; l'échantillon rapide, regelé le même jour, les compare toujours.
  */
 export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
   "coup-64-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3687, mortsParBatailleMille: 1694, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "coup-64-9": { arrivesMille: 997, restantesMediane: 23, gardentMille: 985, coupsParBatailleMille: 4192, mortsParBatailleMille: 1882, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9": { arrivesMille: 1000, restantesMediane: 23, gardentMille: 985, coupsParBatailleMille: 4076, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-32-27": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3799, mortsParBatailleMille: 1757, verdict: { tropCourt: true, tropLong: false, tient: false } },
-  "mort-32-9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 842, coupsParBatailleMille: 4193, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "mort-32-9": { arrivesMille: 1000, restantesMediane: 9, gardentMille: 870, coupsParBatailleMille: 4076, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-27": { arrivesMille: 57, restantesMediane: 1, gardentMille: 35, coupsParBatailleMille: 3944, mortsParBatailleMille: 1778, verdict: { tropCourt: true, tropLong: false, tient: false } },
   "mort-64-9": { arrivesMille: 1000, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4193, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "coup-64-27-pd": { arrivesMille: 0, restantesMediane: null, gardentMille: null, coupsParBatailleMille: 3649, mortsParBatailleMille: 1647, verdict: { tropCourt: true, tropLong: false, tient: false } },
@@ -393,15 +407,15 @@ export const ETALONS_VEILLEE_COMPLET: Record<string, EtalonVeillee> = {
   "mort-64-9-pd-r12": { arrivesMille: 818, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4208, mortsParBatailleMille: 1866, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue-r6": { arrivesMille: 634, restantesMediane: 40, gardentMille: 1000, coupsParBatailleMille: 4290, mortsParBatailleMille: 1902, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue-r9": { arrivesMille: 907, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4280, mortsParBatailleMille: 1897, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-pd-perdue1": { arrivesMille: 458, restantesMediane: 22, gardentMille: 969, coupsParBatailleMille: 3883, mortsParBatailleMille: 1703, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-pd-perdue1": { arrivesMille: 496, restantesMediane: 23, gardentMille: 978, coupsParBatailleMille: 3765, mortsParBatailleMille: 1691, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "coup-64-9-pd-perdue1-r6": { arrivesMille: 992, restantesMediane: 22, gardentMille: 983, coupsParBatailleMille: 4239, mortsParBatailleMille: 1887, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-32-9-pd-perdue1": { arrivesMille: 461, restantesMediane: 8, gardentMille: 779, coupsParBatailleMille: 3884, mortsParBatailleMille: 1703, verdict: { tropCourt: false, tropLong: false, tient: true } },
   "mort-32-9-pd-perdue1-r6": { arrivesMille: 995, restantesMediane: 9, gardentMille: 830, coupsParBatailleMille: 4240, mortsParBatailleMille: 1888, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue1": { arrivesMille: 461, restantesMediane: 40, gardentMille: 1000, coupsParBatailleMille: 3884, mortsParBatailleMille: 1703, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-pd-perdue1-r6": { arrivesMille: 995, restantesMediane: 41, gardentMille: 1000, coupsParBatailleMille: 4240, mortsParBatailleMille: 1888, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-b1": { arrivesMille: 983, restantesMediane: 17, gardentMille: 914, coupsParBatailleMille: 4188, mortsParBatailleMille: 1880, verdict: { tropCourt: false, tropLong: true, tient: false } },
-  "coup-64-9-b2": { arrivesMille: 930, restantesMediane: 11, gardentMille: 711, coupsParBatailleMille: 4166, mortsParBatailleMille: 1871, verdict: { tropCourt: false, tropLong: false, tient: true } },
-  "mort-32-9-b1": { arrivesMille: 895, restantesMediane: 3, gardentMille: 123, coupsParBatailleMille: 4192, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "coup-64-9-b1": { arrivesMille: 987, restantesMediane: 17, gardentMille: 935, coupsParBatailleMille: 4072, mortsParBatailleMille: 1857, verdict: { tropCourt: false, tropLong: true, tient: false } },
+  "coup-64-9-b2": { arrivesMille: 943, restantesMediane: 11, gardentMille: 730, coupsParBatailleMille: 4059, mortsParBatailleMille: 1851, verdict: { tropCourt: false, tropLong: false, tient: true } },
+  "mort-32-9-b1": { arrivesMille: 907, restantesMediane: 3, gardentMille: 98, coupsParBatailleMille: 4076, mortsParBatailleMille: 1859, verdict: { tropCourt: false, tropLong: false, tient: true } },
   "mort-32-9-b2": { arrivesMille: 342, restantesMediane: 0, gardentMille: 26, coupsParBatailleMille: 4160, mortsParBatailleMille: 1877, verdict: { tropCourt: false, tropLong: false, tient: true } },
   "mort-64-9-b1": { arrivesMille: 1000, restantesMediane: 34, gardentMille: 1000, coupsParBatailleMille: 4193, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: true, tient: false } },
   "mort-64-9-b2": { arrivesMille: 1000, restantesMediane: 28, gardentMille: 1000, coupsParBatailleMille: 4193, mortsParBatailleMille: 1883, verdict: { tropCourt: false, tropLong: true, tient: false } },
@@ -495,15 +509,17 @@ function u32De(tag: string): number {
  * la fonction du dépôt (contrôlé par le test) ; à 1, la bande est l'étape et
  * le décalage balaie la bande entière, ce que la bible §6.1 décrit.
  */
-export function etageDeSalles(i: number, p: number, parBande: number): number {
+export function etageDeSalles(i: number, p: number, h: Uint8Array, parBande: number): number {
   if (i === 0) return 0;
   const k = Math.floor(i / parBande);
   const j = i % parBande;
   const debut = debutBande(k);
   const fin = k + 1 < BANDES ? debutBande(k + 1) - 1 : ETAGES - 1;
   const taille = fin - debut + 1;
-  const decalage = Math.floor((p * (taille - parBande)) / (CRANS - 1));
-  return Math.min(fin, debut + decalage + j);
+  const de = debut + Math.floor((p * taille) / CRANS);
+  const a = debut + Math.floor(((p + 1) * taille) / CRANS) - 1;
+  const largeur = Math.max(1, a - de + 1 - (parBande - 1));
+  return Math.min(fin, de + (h[1]! % largeur) + j);
 }
 
 export type Membre = { readonly objet: Objet; readonly classe: Classe };
@@ -604,6 +620,7 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
   let roster = rosterInitial;
   let budget = cfg.arbre;
   let p = penduleInitial(graine);
+  let h = sha256d(concat(TAG_PENDULE, graine, u8(0), u8(0), u8(p)));
   let etage = 0;
   let batailles = 0;
   let coups = 0;
@@ -638,7 +655,7 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
   });
   const derniere = cfg.salles - 1;
   for (let salle = 0; salle < derniere; salle++) {
-    etage = etageDeSalles(salle, p, cfg.parBande);
+    etage = etageDeSalles(salle, p, h, cfg.parBande);
     if (roster.length > 0) {
       const enLice = roster.slice(0, ROSTER);
       const coffre = armee(enLice, etage);
@@ -704,7 +721,7 @@ export function jouerRun(cfg: Configuration, d: number, k: number): Run {
     }
     budget -= 1;
     const choix = CHOIX[Math.floor(alea() * CHOIX.length)]!;
-    p = transition(graine, salle, p, etage, choix, mot).p;
+    ({ p, h } = transition(graine, salle, p, etage, choix, mot));
     // le dernier franchir est le sommet, même s'il vide l'arbre (veillee.ts : sommet avant épuisé)
     if (salle + 1 === derniere) break;
     if (budget <= 0) return epuise(salle + 1);

@@ -14,6 +14,7 @@
 import { estNomAge } from "./relique.ts";
 import { normaliserObjets } from "./inventaire.ts";
 import { parserVeillee, serialiserVeillee } from "./veillee.ts";
+import { ETAPES } from "./pendule.ts";
 import { DALLE_N, ETAGES, etageDe } from "./tour.ts";
 import type { Coffre, ElixirBu, Espece, NomAge, Tour } from "./types.ts";
 
@@ -54,10 +55,10 @@ function veillee(x: unknown): Tour["veillee"] {
   if ("erreur" in v) return null;
   const reserve = entier(o.indiceReserve, 0, 1 << v.hauteur);
   if (reserve === null) return null;
-  // le sac : quatre-vingt-une places (veillee-tour.SAC_PLACES = 3 × ETAPES),
-  // des objets comme les autres. La valeur est répétée ici parce que
-  // veillee-tour importe ce module : la remonter ferait un cycle.
-  const sac = normaliserObjets(o.sac).slice(0, 81);
+  // le sac : la dalle entière (veillee-tour.SAC_PLACES = DALLE_N²), des objets
+  // comme les autres. La constante est répétée ici parce que veillee-tour
+  // importe ce module : la remonter ferait un cycle.
+  const sac = normaliserObjets(o.sac).slice(0, DALLE_N * DALLE_N);
   return { v, indiceReserve: Math.max(reserve, v.gestes.length), sac };
 }
 
@@ -66,7 +67,7 @@ function ascension(x: unknown): Tour["ascension"] {
   if (!x || typeof x !== "object") return null;
   const a = x as Record<string, unknown>;
   if (typeof a.graine !== "string" || !/^[0-9a-f]{64}$/.test(a.graine)) return null;
-  const etape = entier(a.etape, 0, 26);
+  const etape = entier(a.etape, 0, ETAPES - 1);
   const p = entier(a.p, 0, 8);
   const s = a.spawn as { x?: unknown; y?: unknown } | undefined;
   const x0 = entier(s?.x, 0, 8);

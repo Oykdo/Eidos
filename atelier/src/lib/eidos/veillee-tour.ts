@@ -13,7 +13,7 @@
  *
  * **Le sac.** Ce qu'une veillée rapporte — dons, trouvailles, coffrets,
  * captures, élixirs d'écho — n'entre pas au coffre au geste : il va dans un
- * sac de quatre-vingt-une places (trois par salle, la dalle entière), noté dans
+ * sac de quatre-vingt-une places (neuf par salle, la dalle entière), noté dans
  * la jauge. Le sommet, une
  * porte fermée ou l'effacement volontaire **versent** le sac au coffre ;
  * l'arbre épuisé **le perd** : les gestes restent dans la preuve, les objets
@@ -81,12 +81,12 @@ export type VeilleeDuCoffre = {
 };
 
 /**
- * Le sac : trois fois les étapes, soit 81 places — la dalle entière, 9².
- * Une place par salle (27) datait d'une dalle à moitié pleine et d'un
- * parcours de vingt-sept salles ; les salles dégagées rendent trois fois
- * plus, et un sac qui déborde refuse le butin sans qu'on ait rien décidé.
+ * Le sac : la dalle entière, 9² = 81 places — neuf par salle depuis A18 (neuf
+ * salles), trois par salle quand il y en avait vingt-sept. Écrit en DALLE_N²
+ * et non en multiple d'ETAPES : un sac qui déborde refuse le butin, et changer
+ * le nombre de salles ne doit pas rétrécir le sac sans décision.
  */
-export const SAC_PLACES = 3 * ETAPES;
+export const SAC_PLACES = DALLE_N * DALLE_N;
 
 /** L'alcôve n'a pas de case : son argument est hors de la dalle. */
 export const ARG_ALCOVE = DALLE_N * DALLE_N;

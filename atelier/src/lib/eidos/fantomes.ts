@@ -16,7 +16,7 @@
  * propre, il a la salle où il s'est arrêté.
  *
  *   écho      le bloc d'ancrage est d'un âge passé (une lecture d'archive)
- *   revenu    sommet : la vingt-septième salle atteinte
+ *   revenu    sommet : la dernière salle atteinte (la neuvième)
  *   dernier   épuisé : la dernière feuille brûlée avant le sommet
  *   ombre     porte : arrêté devant une porte sans sceau
  *   efface    abandon
