@@ -80,7 +80,7 @@ export const TAG_GESTE = utf8("eidos-veillee/1/geste");
 export const HAUTEUR_VEILLEE = 6;
 export const FEUILLES = 1 << HAUTEUR_VEILLEE; // 64 — les soixante-quatre œufs
 export const SECONDES_PAR_JOUR = 86_400;
-/** 26 fins de salle mènent au sommet : 27 salles. */
+/** ETAPES − 1 fins de salle mènent au sommet : 9 salles (A18). */
 export const FRANCHIR_AU_SOMMET = ETAPES - 1;
 
 export const GESTES = ["franchir", "parler", "ouvrir", "prendre"] as const;
@@ -186,7 +186,7 @@ export function graineArbre(maitre: string, idBlocHex: string, piece: Pick<Sorti
 // ---------------------------------------------------------------------------
 export type Geste = {
   g: GesteId;
-  /** salle courante 0..26 au moment du geste */
+  /** salle courante 0..ETAPES−1 au moment du geste */
   etape: number;
   /** étage de cette salle */
   etage: number;
@@ -241,7 +241,7 @@ export function parcoursDe(v: Pick<Veillee, "tete" | "gestes">): Parcours {
     p = t.p;
     h = t.h;
     etape += 1;
-    etage = etageDe(etape, p);
+    etage = etageDe(etape, p, h);
     spawn = spawnDe(h, p);
     etapes.push({ i: etape, p, e: etage, s: spawn });
   }
@@ -425,15 +425,15 @@ export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeille
       p = t.p;
       h = t.h;
       etape += 1;
-      etage = etageDe(etape, p);
+      etage = etageDe(etape, p, h);
       etapes.push({ i: etape, p, e: etage, s: spawnDe(h, p) });
     } else {
       butin += 1;
     }
   }
   const franchis = etape;
-  if (v.fin === "sommet" && franchis !== FRANCHIR_AU_SOMMET) return { ok: false, motif: "sommet déclaré sans les 26 fins de salle" };
-  if (v.fin !== "sommet" && franchis >= FRANCHIR_AU_SOMMET) return { ok: false, motif: "26 fins de salle : c'est le sommet" };
+  if (v.fin === "sommet" && franchis !== FRANCHIR_AU_SOMMET) return { ok: false, motif: `sommet déclaré sans les ${FRANCHIR_AU_SOMMET} fins de salle` };
+  if (v.fin !== "sommet" && franchis >= FRANCHIR_AU_SOMMET) return { ok: false, motif: `${FRANCHIR_AU_SOMMET} fins de salle : c'est le sommet` };
   if (v.fin === "epuise" && v.gestes.length !== 1 << v.hauteur) return { ok: false, motif: "épuisé déclaré avec des feuilles restantes" };
   if (v.fin !== "epuise" && v.fin !== "sommet" && v.gestes.length >= 1 << v.hauteur) {
     return { ok: false, motif: "arbre vide : c'est épuisé" };
@@ -441,7 +441,7 @@ export function jugerVeillee(v: Veillee, fed: FederationPublique): VerdictVeille
   return { ok: true, jour: v.jour, fin: v.fin, salles: franchis + 1, feuilles: v.gestes.length, butin, etapes };
 }
 
-/** Lecture : monter loin d'abord, faire beaucoup ensuite. 27 × 64 + 38 au plus. */
+/** Lecture : monter loin d'abord, faire beaucoup ensuite. 9 × 64 + 56 au plus. */
 export function scoreVeillee(verdict: Pick<Extract<VerdictVeillee, { ok: true }>, "salles" | "butin">): number {
   return verdict.salles * FEUILLES + verdict.butin;
 }

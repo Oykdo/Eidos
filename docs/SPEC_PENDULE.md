@@ -107,7 +107,7 @@ Garantie : même `graine_run` + mêmes `choix` + même objet porté ⇒ même su
 
 ## 4. Phase 0 (un week-end) — la seule chose à prototyper
 
-Construire : `pendule.ts` (transition ci-dessus), un bot qui joue 10 000 runs de 27 étapes avec des choix aléatoires (aléa **du bot**, pas du jeu), et trois mesures :
+Construire : `pendule.ts` (transition ci-dessus), un bot qui joue 10 000 runs de 27 étapes (9 depuis A18, le 2026-09-16) avec des choix aléatoires (aléa **du bot**, pas du jeu), et trois mesures :
 
 | Mesure | Seuil d'abandon |
 |---|---|

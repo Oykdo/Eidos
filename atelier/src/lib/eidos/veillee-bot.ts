@@ -7,7 +7,7 @@
  * publique : une démonstration), avec les vraies fonctions de veillee-tour.ts —
  * l'acte d'abord, la feuille ensuite. Trois politiques :
  *
- *   avare     26 franchir, rien d'autre : le run A de la bible §4.4 sans l'hôte
+ *   avare     franchir seulement (8 fois depuis A18), rien d'autre : le run A de la bible §4.4 sans l'hôte
  *   gourmand  à chaque salle, les trois gestes de butin que ce coffre permet,
  *             avant de franchir : parler (hôte présent, pas encore honoré),
  *             creuser la case d'arrivée, ouvrir l'alcôve ; jamais prendre,
@@ -23,9 +23,9 @@
  * veillee-tour.ts) : le bot ne touche à aucun état hors de lui.
  *
  * Mesures par politique : taux de sommet, feuilles brûlées en moyenne et au
- * plus, butin moyen, part des sommets à exactement 38 de butin (64 − 26),
+ * plus, butin moyen, part des sommets à exactement BUTIN_MAX de butin (64 − 8 = 56),
  * distribution des fins. Verdict contre §2.4, lu sur la politique mesurée :
- * **dilemme absent** si plus de 80 % des sommets ont 38 de butin (on prend
+ * **dilemme absent** si plus de 80 % des sommets ont BUTIN_MAX de butin (on prend
  * toujours tout) ; **budget trop court** si moins de 30 % des runs touchent
  * le sommet. Le rapport dit aussi si le **budget a mordu** — un run au moins
  * a brûlé ses 64 feuilles — sans quoi les deux seuils sont hors de portée du
@@ -44,14 +44,14 @@
  * creuse que la case d'arrivée (trois bêches par étage seraient possibles), et
  * les demandes des hôtes (preuve, orbite, sceau…) sont insatisfaites sur ce
  * coffre — « parler » n'y brûle une feuille que là où la demande est « rien ».
- * Surtout, le sac de la veillée (veillee-tour.ts, 81 places) se remplit des
- * dons d'arrivée et de chaque trouvaille : sac plein, tout geste de butin est
- * refusé sans rien brûler (compté dans `refus`). Le gourmand plafonne donc
- * vers 20 feuilles de butin sur 38, aucun run ne s'épuise, `partSommets38`
- * vaut 0 et `budgetMordu` est faux : le verdict est une lecture d'un bot que
- * le budget ne mord pas, jamais une preuve. Pour que §2.4 se falsifie, le bot
- * devra creuser les cases pleines de la dalle (une bêche brûle une feuille
- * sans remplir le sac) — une décision d'auteur, qui régénère la table gelée.
+ * Surtout, à neuf salles (A18), la Tour seule n'offre pas de quoi vider
+ * l'arbre : trois bêches, un hôte, une alcôve par salle et huit franchir font
+ * 47 feuilles au plus sur 64. Le gourmand plafonne vers 10 feuilles de butin
+ * sur 56, aucun run ne s'épuise, `partSommetsPleins` vaut 0 et `budgetMordu`
+ * est faux : le verdict est une lecture d'un bot que le budget ne mord pas,
+ * jamais une preuve. Ce sont les coups de la bataille (C4 PR 5b) qui brûlent
+ * le reste — le banc `scripts/banc-veillee.ts` les a mesurés ; ce bot les
+ * mesurera quand il se battra, et la table gelée se régénérera avec lui.
  */
 
 import { readFileSync } from "node:fs";
@@ -95,12 +95,12 @@ export type Politique = (typeof POLITIQUES)[number];
 
 export const FINS = ["sommet", "epuise", "porte", "abandon"] as const satisfies readonly Fin[];
 
-/** 64 − 26 : les feuilles qui ne sont pas dues au franchir. */
+/** 64 − 8 = 56 : les feuilles qui ne sont pas dues au franchir. */
 export const BUTIN_MAX = FEUILLES - FRANCHIR_AU_SOMMET;
 
 export const SEUILS = {
   /** Part des sommets à exactement BUTIN_MAX de butin ; au-dessus, on prend toujours tout : dilemme absent (§2.4). */
-  partSommets38Max: 0.8,
+  partSommetsPleinsMax: 0.8,
   /** Taux de sommet ; en dessous, le budget est trop court (§2.4). */
   tauxSommetMin: 0.3,
 } as const;
@@ -133,7 +133,7 @@ export type Mesures = {
   feuillesMax: number;
   butinMoyen: number;
   /** part des runs au sommet ayant dépensé exactement BUTIN_MAX feuilles de butin (0 sans sommet) */
-  partSommets38: number;
+  partSommetsPleins: number;
   fins: Record<Fin, number>;
 };
 
@@ -223,7 +223,7 @@ export function jouerVeillee(politique: Politique, alea: () => number, jour = jo
       refus += 1;
     }
   };
-  // chaque tour de boucle franchit une salle ou s'arrête : 26 franchir au plus, la borne est un garde-fou
+  // chaque tour de boucle franchit une salle ou s'arrête : ETAPES − 1 franchir au plus, la borne est un garde-fou
   for (let tour = 0; tour <= ETAPES && !finie(); tour++) {
     const etage = tourDe(c).etage;
     if (aUnHote(etage) && !donHonore(c, etage) && tente()) applique(parlerDansCoffre(c, [], reserver));
@@ -264,7 +264,7 @@ export function mesuresDe(runs: readonly Run[]): Mesures {
   const fins = {} as Record<Fin, number>;
   for (const f of FINS) fins[f] = 0;
   let sommets = 0;
-  let sommets38 = 0;
+  let sommetsPleins = 0;
   let feuilles = 0;
   let feuillesMax = 0;
   let butin = 0;
@@ -275,7 +275,7 @@ export function mesuresDe(runs: readonly Run[]): Mesures {
     butin += r.butin;
     if (r.fin === "sommet") {
       sommets += 1;
-      if (r.butin === BUTIN_MAX) sommets38 += 1;
+      if (r.butin === BUTIN_MAX) sommetsPleins += 1;
     }
   }
   const n = runs.length;
@@ -286,14 +286,14 @@ export function mesuresDe(runs: readonly Run[]): Mesures {
     feuillesMoyennes: n > 0 ? feuilles / n : 0,
     feuillesMax,
     butinMoyen: n > 0 ? butin / n : 0,
-    partSommets38: sommets > 0 ? sommets38 / sommets : 0,
+    partSommetsPleins: sommets > 0 ? sommetsPleins / sommets : 0,
     fins,
   };
 }
 
 /** Les deux seuils de §2.4 : dilemme absent (tout prendre paie toujours), budget trop court. */
-export function verdictDe(m: Pick<Mesures, "sommets" | "partSommets38" | "tauxSommet">): Verdict {
-  const dilemmeAbsent = m.sommets > 0 && m.partSommets38 > SEUILS.partSommets38Max;
+export function verdictDe(m: Pick<Mesures, "sommets" | "partSommetsPleins" | "tauxSommet">): Verdict {
+  const dilemmeAbsent = m.sommets > 0 && m.partSommetsPleins > SEUILS.partSommetsPleinsMax;
   const budgetTropCourt = m.tauxSommet < SEUILS.tauxSommetMin;
   return { dilemmeAbsent, budgetTropCourt, ok: !dilemmeAbsent && !budgetTropCourt };
 }
@@ -335,7 +335,7 @@ export function formaterRapport(r: Rapport): string {
     const m = r.politiques[politique];
     l.push("");
     l.push(
-      `${politique.padEnd(9)} sommet ${pct(m.tauxSommet).padStart(8)}  feuilles ${m.feuillesMoyennes.toFixed(2).padStart(6)} (max ${m.feuillesMax})  butin ${m.butinMoyen.toFixed(2).padStart(6)}  sommets à ${BUTIN_MAX} ${pct(m.partSommets38).padStart(8)}`,
+      `${politique.padEnd(9)} sommet ${pct(m.tauxSommet).padStart(8)}  feuilles ${m.feuillesMoyennes.toFixed(2).padStart(6)} (max ${m.feuillesMax})  butin ${m.butinMoyen.toFixed(2).padStart(6)}  sommets à ${BUTIN_MAX} ${pct(m.partSommetsPleins).padStart(8)}`,
     );
     l.push(`          fins  ${FINS.map((f) => `${f} ${m.fins[f]}`).join(" · ")}`);
     // la table gelée du test se relit ici : fin, feuilles, butin, run par run
@@ -343,7 +343,7 @@ export function formaterRapport(r: Rapport): string {
   }
   l.push("");
   l.push(
-    `dilemme absent    (> ${SEUILS.partSommets38Max * 100} % des sommets à ${BUTIN_MAX}, mesuré)  ${r.verdict.dilemmeAbsent ? "OUI : coût 2 pour « prendre »" : "non"}`,
+    `dilemme absent    (> ${SEUILS.partSommetsPleinsMax * 100} % des sommets à ${BUTIN_MAX}, mesuré)  ${r.verdict.dilemmeAbsent ? "OUI : coût 2 pour « prendre »" : "non"}`,
   );
   l.push(
     `budget trop court (< ${SEUILS.tauxSommetMin * 100} % de sommets, mesuré)        ${r.verdict.budgetTropCourt ? "OUI : coût 0 pour « parler »" : "non"}`,

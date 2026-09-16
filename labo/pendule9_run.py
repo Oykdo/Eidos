@@ -6,7 +6,7 @@ Usage : python3 pendule9_run.py   (K11–K17, K27–K28, K37–K38)
 Un run est une suite d'étapes VENUES DE L'ATELIER (labo/run_atelier.json, exporté par
 atelier/scripts/exporter-run.ts). Le mapping « racine digitale + balancier » qui vivait ici —
 255 étages parcourus un par un, cycles de 9, balancier sur les cycles impairs — a été RETIRÉ
-(LIST 7) : il contredisait pendule.ts, où un run fait 27 étapes réparties sur 255 étages en
+(LIST 7) : il contredisait pendule.ts, où un run fait 9 étapes (A18 ; 27 avant le 2026-09-16) réparties sur 255 étages en
 neuf bandes de triplets. Ce qui reste est ce qui n'était pas dans ce mapping : la loi du 9,
 la réserve de la source, le sceau, le Cube et sa portée, la table des muses.
 
@@ -19,7 +19,7 @@ from aura_voxel_lab import (avatar_params, voxelize, base_aggregators, transfer,
 
 # ---------- 1. Un run vient de l'atelier ----------
 def etapes_atelier(chemin=None):
-    """Les 27 étapes exportées par atelier/scripts/exporter-run.ts (i, p, e, s, q)."""
+    """Les 9 étapes exportées par atelier/scripts/exporter-run.ts (i, p, e, s, q)."""
     chemin = chemin or os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_atelier.json")
     return json.load(open(chemin, encoding="utf-8"))
 
@@ -154,9 +154,9 @@ def lab_test():
     parts = voxelize(s1["avatar"]); export_voxels(parts, chemin)
     back = json.load(open(chemin))
     R["K16_export_json_roundtrip"] = {k: set(map(tuple, v)) for k, v in back["parts"].items()} == parts
-    # K17 — le run suit l'atelier, jamais un compteur d'étages du labo : 27 étapes, coût par bande.
+    # K17 — le run suit l'atelier, jamais un compteur d'étages du labo : 9 étapes (A18), coût par bande.
     s3 = jouer(new_run(3))
-    R["K17_run_de_latelier"] = len(s3["log"]) == len(s3["etapes"]) == 27 and \
+    R["K17_run_de_latelier"] = len(s3["log"]) == len(s3["etapes"]) == 9 and \
         [x["floor"] for x in s3["log"]] == [et["e"] for et in s3["etapes"]] and \
         all(1 <= cost(x["floor"]) <= 3 for x in s3["log"]) and s3["log"][0]["floor"] == 0
     # K37/K38 — LIST 4 : la table des muses vient de l'atelier, jamais du labo ; le mode se déduit

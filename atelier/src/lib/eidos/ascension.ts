@@ -14,7 +14,7 @@
  * gelées au départ ; ce qui compte). Une porte fermée arrête l'ascension
  * devant elle : le pendule ne force pas un sceau.
  *
- * 27 salles : la porte de la ville, puis 26 fins de salle. La jauge (`tour.ascension`)
+ * ETAPES salles (9 depuis A18) : la porte de la ville, puis ETAPES − 1 fins de salle. La jauge (`tour.ascension`)
  * porte l'état ; elle est hors feuille, comme tout ce que la Tour note.
  */
 
@@ -49,7 +49,7 @@ export type Ancre = { tete: TeteReseau; piece: SortieMin; preuve: PreuvePortable
 export type AscensionEnCours = {
   graine: string;
   ancre: Ancre | null;
-  /** salle courante, 0..26 */
+  /** salle courante, 0..ETAPES−1 */
   etape: number;
   p: number;
   spawn: Spawn;
@@ -143,8 +143,8 @@ export function destinationsDeSalle(
   const mot = t.porte ?? 0;
   const ages = agesScelles(sceauxDuCoffre(monde, c), c);
   return CHOIX.map((choix) => {
-    const { p } = transition(graine, a.etape, a.p, t.etage, choix, mot);
-    const e = etageDe(a.etape + 1, p);
+    const { p, h } = transition(graine, a.etape, a.p, t.etage, choix, mot);
+    const e = etageDe(a.etape + 1, p, h);
     let porteFermee = false;
     for (let x = t.etage + 1; x <= e; x++) {
       if (!porteDe(x, ages, c).ouverte) {
@@ -169,7 +169,7 @@ export function finDeSalleDansCoffre(
   const i = a.etape;
   const choix = decision ?? choixDeSalle(t, t.etage);
   if (i + 1 >= ETAPES) {
-    // dernière salle : rien à trancher, 26 choix suffisent aux 27 étapes
+    // dernière salle : rien à trancher, ETAPES − 1 choix suffisent aux ETAPES étapes
     const fini = { ...a, fin: "sommet" as const };
     return {
       ok: true,
@@ -184,7 +184,7 @@ export function finDeSalleDansCoffre(
   const graine = fromHex(a.graine);
   const { p, h } = transition(graine, i, a.p, t.etage, choix, mot);
   const suivant: AscensionEnCours = { ...a, p, choix: [...a.choix, choix], mots: [...a.mots, mot] };
-  const e = etageDe(i + 1, p);
+  const e = etageDe(i + 1, p, h);
   const ages = agesScelles(sceauxDuCoffre(monde, c), c);
   for (let x = t.etage + 1; x <= e; x++) {
     const porte = porteDe(x, ages, c);

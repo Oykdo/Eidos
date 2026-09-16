@@ -21,7 +21,7 @@ export const FR = {
 
   "sous.coffre": "Essai — sans valeur",
   "sous.tour": "255 étages, tous publics et fixes. Monter ne rend pas plus fort.",
-  "sous.veillee": "64 feuilles, 27 salles, un jour. Ce que tu signes reste.",
+  "sous.veillee": "64 feuilles, 9 salles, un jour. Ce que tu signes reste.",
   "sous.coffreHoraire": "Un coffre par bloc. C'est le réseau qui donne l'heure, pas ta machine.",
   "sous.journal": "Historique",
   "sous.temoin": "Vérifier ailleurs",
@@ -205,7 +205,7 @@ export const FR = {
   "guide.mot.objet": "objet — un mot de 32 bits. Il ne grandit pas.",
   "guide.mot.feuille": "feuille — une clé qui signe une fois. Un geste la brûle ; elle ne repousse pas.",
   "guide.mot.sac": "sac — le butin d'une veillée, en attente. Le sommet le verse au coffre, la dernière feuille le perd.",
-  "guide.mot.veillee": "veillée — les vingt-sept salles du jour, les mêmes pour tous. Libre, une lecture ; ancrée sur une pièce, ce qui compte.",
+  "guide.mot.veillee": "veillée — les neuf salles du jour, les mêmes pour tous. Libre, une lecture ; ancrée sur une pièce, ce qui compte.",
   "guide.mot.preuve": "preuve — les gestes signés d'une veillée. Quiconque la juge sans rejouer la chaîne.",
   "guide.mot.fantome": "fantôme — la preuve d'un autre, relue. Une tournure et sa dernière salle, rien de plus.",
   "guide.01": "Coffre",
@@ -251,7 +251,7 @@ export const FR = {
     "Le jeu entier tient dans la Tour : 255 étages. Une porte s'ouvre avec un sceau. Tu montes avec ce que tu as trouvé, jamais avec ce que tu achètes.",
   "guide.10b": "Monter",
   "guide.11p":
-    "Une nuit dans la Tour. 64 feuilles pour vie ; chaque geste qui compte en brûle une. Les 27 salles du jour sont les mêmes pour tous. Ce que tu trouves va dans un sac, que le sommet verse au coffre.",
+    "Une nuit dans la Tour. 64 feuilles pour vie ; chaque geste qui compte en brûle une. Les 9 salles du jour sont les mêmes pour tous. Ce que tu trouves va dans un sac, que le sommet verse au coffre.",
   "guide.11b": "Veiller",
   "guide.coeur": "Le cœur",
   "guide.coeurLede": "Ce qui tient tout le reste : cinq lois, et rien à croire.",
@@ -310,10 +310,10 @@ export const FR = {
     "La dalle se creuse case par case : trois coups par étage, une case une seule fois. Les trouvailles sont à des cases fixes et publiques, mais leur contenu dépend du coffre. La case d'arrivée du pendule donne toujours.",
   "guide.meca.09t": "Le pendule et l'ascension",
   "guide.meca.09p":
-    "Un cadran à neuf crans, un par astre. En fin de salle, le pendule lit ce que tu y as fait. Tu choisis alors parmi trois destinations dont l'étage est annoncé, jamais la case. Une ascension traverse vingt-sept salles, trois par bande ; une porte fermée l'arrête. Libre, c'est une lecture ; ancrée sur un bloc et une pièce, elle compte et se juge sans rejeu.",
+    "Un cadran à neuf crans, un par astre. En fin de salle, le pendule lit ce que tu y as fait. Tu choisis alors parmi trois destinations dont l'étage est annoncé, jamais la case. Une ascension traverse neuf salles, une par bande, de Thalie à Uranie ; une porte fermée l'arrête. Libre, c'est une lecture ; ancrée sur un bloc et une pièce, elle compte et se juge sans rejeu.",
   "guide.meca.10t": "La veillée : 64 feuilles pour vie",
   "guide.meca.10p":
-    "Tu entres avec 64 clés à usage unique. Chaque geste qui compte en brûle une : franchir (26 fois, obligatoires), parler, creuser, prendre ; lire est gratuit. La dernière feuille arrête la montée, pour de bon. Une clé réutilisée est une clé compromise : le juge refuse toute partie où une clé sert deux fois. Les 27 salles du jour viennent du premier bloc du jour.",
+    "Tu entres avec 64 clés à usage unique. Chaque geste qui compte en brûle une : franchir (8 fois, obligatoires), parler, creuser, prendre ; lire est gratuit. La dernière feuille arrête la montée, pour de bon. Une clé réutilisée est une clé compromise : le juge refuse toute partie où une clé sert deux fois. Les 9 salles du jour viennent du premier bloc du jour.",
   "guide.meca.11t": "Le sac et l'extraction",
   "guide.meca.11p":
     "Le butin va dans un sac de 81 places, trois par salle. Le sommet, une porte fermée ou l'effacement volontaire le versent au coffre ; l'arbre épuisé le perd. Sac plein, plus de butin : il reste à franchir, ou à s'effacer.",
@@ -343,7 +343,7 @@ export const FR = {
   "tour.lede":
     "Terre au sol, Uranie au faîte. Monter ne rend pas plus fort : on lit mieux. Les occupants d'un étage s'accordent ou se gênent.",
   "nav.veillee": "Veillée",
-  "eco.veillee": "Une nuit dans la Tour. Une clé ne signe qu'une fois : 64 feuilles, 27 salles, un jour.",
+  "eco.veillee": "Une nuit dans la Tour. Une clé ne signe qu'une fois : 64 feuilles, 9 salles, un jour.",
   "nav.coffreHoraire": "Coffre de l'heure",
   "nav.bataille": "Bataille",
   "sous.bataille":
@@ -424,7 +424,7 @@ export const FR = {
   "coffreh.ouverture.fermer": "Fermer",
   "veillee.titre": "La Veillée",
   "veillee.lede":
-    "Tu entres avec 64 feuilles. Chaque geste qui compte en brûle une ; l'arbre nu arrête la montée. Les 27 salles du jour sont à tous.",
+    "Tu entres avec 64 feuilles. Chaque geste qui compte en brûle une ; l'arbre nu arrête la montée. Les 9 salles du jour sont à tous.",
   "veillee.jour.titre": "Le jour",
   "veillee.chaine.lire": "Lire la chaîne",
   "veillee.chaine.hauteur": "chaîne lue jusqu'au bloc {h}",
@@ -472,7 +472,7 @@ export const FR = {
   "veillee.prendre.sansCapsule": "aucune capsule dans le coffre",
   "veillee.franchir": "Franchir — la fin de salle",
   "veillee.effacer": "S'effacer",
-  "veillee.fin.sommet": "Sommet : la vingt-septième salle.",
+  "veillee.fin.sommet": "Sommet : la neuvième salle.",
   "veillee.fin.epuise": "Épuisé : la dernière feuille est brûlée.",
   "veillee.fin.porte": "Porte fermée : la veillée s'arrête ici, sans feuille.",
   "veillee.fin.abandon": "Effacée.",
@@ -521,7 +521,7 @@ export const FR = {
   "tour.pendule.commencerAncree": "Ascension ancrée",
   "tour.pendule.choisirPiece": "Pièce d'ancrage…",
   "tour.pendule.sansPiece": "Aucune pièce de ce coffre sur le réseau : robinet ou relique d'abord.",
-  "tour.pendule.fin.sommet": "Sommet : 27 salles. L'ascension ancrée s'exporte ci-dessous.",
+  "tour.pendule.fin.sommet": "Sommet : 9 salles. L'ascension ancrée s'exporte ci-dessous.",
   "tour.pendule.fin.porte":
     "Arrêtée devant une porte : il faut le sceau de l'âge. Le pendule ne force rien.",
   "tour.pendule.fin.abandon": "Ascension abandonnée. La Tour se lit librement.",
@@ -988,7 +988,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "nav.menu": "Pages",
   "sous.coffre": "Trial — no value",
   "sous.tour": "255 floors, all public and fixed. Climbing does not make you stronger.",
-  "sous.veillee": "64 leaves, 27 rooms, one day. What you sign remains.",
+  "sous.veillee": "64 leaves, 9 rooms, one day. What you sign remains.",
   "sous.coffreHoraire": "One chest per block. The network gives the hour, not your machine.",
   "sous.journal": "History",
   "sous.temoin": "Check elsewhere",
@@ -1157,7 +1157,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "guide.mot.objet": "object — a 32-bit word. It does not grow.",
   "guide.mot.feuille": "leaf — a key that signs once. A gesture burns it; it does not grow back.",
   "guide.mot.sac": "bag — a vigil's loot, waiting. The summit pours it into the vault, the last leaf loses it.",
-  "guide.mot.veillee": "vigil — the day's twenty-seven rooms, the same for everyone. Free, a reading; anchored on a coin, what counts.",
+  "guide.mot.veillee": "vigil — the day's nine rooms, the same for everyone. Free, a reading; anchored on a coin, what counts.",
   "guide.mot.preuve": "proof — the signed gestures of a vigil. Anyone judges it without replaying the chain.",
   "guide.mot.fantome": "ghost — someone else's proof, re-read. An epithet and its last room, nothing more.",
   "guide.01": "Vault",
@@ -1202,7 +1202,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
     "The whole game fits in the Tower: 255 floors. A gate opens with a seal. You climb with what you found, never with what you buy.",
   "guide.10b": "Climb",
   "guide.11p":
-    "One night in the Tower. 64 leaves as life; every gesture that counts burns one. The day's 27 rooms are the same for everyone. What you find goes into a bag, which the summit pours into the vault.",
+    "One night in the Tower. 64 leaves as life; every gesture that counts burns one. The day's 9 rooms are the same for everyone. What you find goes into a bag, which the summit pours into the vault.",
   "guide.11b": "Keep vigil",
   "guide.coeur": "The core",
   "guide.coeurLede": "What holds everything else: five laws, and nothing to believe.",
@@ -1261,10 +1261,10 @@ export const EN: { [K in keyof typeof FR]: string } = {
     "The slab is dug cell by cell: three strokes per floor, a cell only once. Finds sit on fixed, public cells, but their content depends on the vault. The pendulum's arrival cell always gives.",
   "guide.meca.09t": "The pendulum and the ascent",
   "guide.meca.09p":
-    "A dial with nine notches, one per star. At the end of a room, the pendulum reads what you did there. You then choose among three destinations whose floor is announced, never the cell. An ascent crosses twenty-seven rooms, three per band; a closed door stops it. Free, it is a reading; anchored on a block and a coin, it counts and is judged without replay.",
+    "A dial with nine notches, one per star. At the end of a room, the pendulum reads what you did there. You then choose among three destinations whose floor is announced, never the cell. An ascent crosses nine rooms, one per band, from Thalia to Urania; a closed door stops it. Free, it is a reading; anchored on a block and a coin, it counts and is judged without replay.",
   "guide.meca.10t": "The vigil: 64 leaves as life",
   "guide.meca.10p":
-    "You enter with 64 one-time keys. Every gesture that counts burns one: cross (26 times, mandatory), talk, dig, capture; reading is free. The last leaf ends the climb, for good. A reused key is a compromised key: the judge refuses any run where a key serves twice. The day's 27 rooms come from the day's first block.",
+    "You enter with 64 one-time keys. Every gesture that counts burns one: cross (8 times, mandatory), talk, dig, capture; reading is free. The last leaf ends the climb, for good. A reused key is a compromised key: the judge refuses any run where a key serves twice. The day's 9 rooms come from the day's first block.",
   "guide.meca.11t": "The bag and the extraction",
   "guide.meca.11p":
     "Loot goes into a bag of 81 places, three per room. The summit, a closed door or fading away pour it into the vault; an exhausted tree loses it. Bag full, no more loot: cross, or fade away.",
@@ -1294,7 +1294,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.lede":
     "Earth at the ground, Urania at the peak. Climbing does not make you stronger: you read better. A floor's occupants agree or clash.",
   "nav.veillee": "Vigil",
-  "eco.veillee": "One night in the Tower. A key signs once: 64 leaves, 27 rooms, one day.",
+  "eco.veillee": "One night in the Tower. A key signs once: 64 leaves, 9 rooms, one day.",
   "nav.coffreHoraire": "Chest of the hour",
   "nav.bataille": "Battle",
   "sous.bataille":
@@ -1375,7 +1375,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "coffreh.ouverture.fermer": "Close",
   "veillee.titre": "The Vigil",
   "veillee.lede":
-    "You enter with 64 leaves. Every gesture that counts burns one; a bare tree ends the climb. The day's 27 rooms belong to everyone.",
+    "You enter with 64 leaves. Every gesture that counts burns one; a bare tree ends the climb. The day's 9 rooms belong to everyone.",
   "veillee.jour.titre": "The day",
   "veillee.chaine.lire": "Read the chain",
   "veillee.chaine.hauteur": "chain read up to block {h}",
@@ -1423,7 +1423,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "veillee.prendre.sansCapsule": "no capsule in the vault",
   "veillee.franchir": "Cross — the end of the room",
   "veillee.effacer": "Fade away",
-  "veillee.fin.sommet": "Summit: the twenty-seventh room.",
+  "veillee.fin.sommet": "Summit: the ninth room.",
   "veillee.fin.epuise": "Exhausted: the last leaf is burnt.",
   "veillee.fin.porte": "Closed door: the vigil stops here, no leaf spent.",
   "veillee.fin.abandon": "Faded.",
@@ -1471,7 +1471,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.pendule.commencerAncree": "Anchored ascent",
   "tour.pendule.choisirPiece": "Anchor coin…",
   "tour.pendule.sansPiece": "No coin of this vault on the network: faucet or relic first.",
-  "tour.pendule.fin.sommet": "Summit: 27 rooms. The anchored ascent exports below.",
+  "tour.pendule.fin.sommet": "Summit: 9 rooms. The anchored ascent exports below.",
   "tour.pendule.fin.porte":
     "Stopped at a gate: the age seal is needed. The pendulum forces nothing.",
   "tour.pendule.fin.abandon": "Ascent abandoned. The Tower reads freely.",

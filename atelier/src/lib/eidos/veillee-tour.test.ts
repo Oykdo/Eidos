@@ -9,10 +9,12 @@ import { preuveReseau, serialiser } from "./merkle.ts";
 import { parserFederation, parserTeteReseau } from "./temoin.ts";
 import { DALLE_N, dalleDe } from "./tour.ts";
 import type { Coffre, ObjetPorte } from "./types.ts";
-import { FEUILLES, FRANCHIR_AU_SOMMET, jugerVeillee, lectureVeillee, parcoursDe } from "./veillee.ts";
+import { ETAPES } from "./pendule.ts";
+import { FEUILLES, FRANCHIR_AU_SOMMET, feuillesRestantes, jugerVeillee, lectureVeillee, parcoursDe, signerGeste, type Veillee } from "./veillee.ts";
 import {
   SAC_PLACES,
   abandonnerVeilleeDansCoffre,
+  arbreDuCoffre,
   capturerDansCoffre,
   creuserDansCoffre,
   enVeillee,
@@ -102,7 +104,7 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
     assert.equal(feuilles(r.coffre), FEUILLES - 1);
   });
 
-  it("26 franchir dans le coffre d'atelier : sommet, ascension close, parcours = jauge, jugé", () => {
+  it("ETAPES − 1 franchir dans le coffre d'atelier : sommet, ascension close, parcours = jauge, jugé", () => {
     let c = ouvrir(coffreAtelier("vide"));
     const etages: number[] = [];
     for (let k = 0; k < FRANCHIR_AU_SOMMET; k++) {
@@ -119,7 +121,7 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
     assert.deepEqual(parcoursDe(w.v).etapes.slice(1).map((e) => e.e), etages);
     assert.equal(tourDe(c).etage, etages[etages.length - 1]);
     const j = jugerVeillee(w.v, fed);
-    assert.ok(j.ok && j.salles === 27 && j.butin === 0, j.ok ? "" : j.motif);
+    assert.ok(j.ok && j.salles === ETAPES && j.butin === 0, j.ok ? "" : j.motif);
     assert.equal((franchirDansCoffre(c, []) as { code: string }).code, "finie");
     assert.equal((exporterVeilleeDuCoffre(c) as { code: string }).code, "atelier");
   });
@@ -165,7 +167,7 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
       etagesLibre.push(r.etage);
     }
     assert.equal(veilleeDe(c)!.v.fin, "sommet");
-    assert.deepEqual(lectureVeillee(veilleeDe(c)!.v), { salles: 27, feuilles: 27, butin: 1, libre: true, fin: "sommet" });
+    assert.deepEqual(lectureVeillee(veilleeDe(c)!.v), { salles: ETAPES, feuilles: ETAPES, butin: 1, libre: true, fin: "sommet" });
     assert.equal((exporterVeilleeDuCoffre(c) as { code: string }).code, "libre");
     assert.match((jugerVeillee(veilleeDe(c)!.v, fed) as { motif: string }).motif, /libre/);
     // les mêmes salles que la veillée ancrée du même jour
@@ -231,46 +233,42 @@ describe("la veillée dans la Tour : l'acte d'abord, la feuille ensuite", () => 
   it("le sac : l'arbre épuisé le perd — les gestes restent dans la preuve, pas les objets", () => {
     let c = ouvrir(coffreAtelier("vide"));
     const avant = (c.objets ?? []).length;
-    let franchis = 0;
-    let perdus: number | null = null;
-    while (perdus === null) {
-      const etage = tourDe(c).etage;
-      const dalle = dalleDe(etage);
-      const s = spawnIci(c, etage)!;
-      const cases: [number, number][] = [[s.x, s.y]];
-      for (let y = 0; y < DALLE_N && cases.length < 3; y++) {
-        for (let x = 0; x < DALLE_N && cases.length < 3; x++) {
-          if (dalle[y]![x] && !(x === s.x && y === s.y)) cases.push([x, y]);
-        }
+    // Un coup de bêche sur la case d'arrivée : du butin au sac, par la Tour.
+    const etage = tourDe(c).etage;
+    const s = spawnIci(c, etage)!;
+    const r0 = creuserDansCoffre(c, s.x, s.y);
+    assert.ok(r0.ok, r0.ok ? "" : r0.motif);
+    c = r0.coffre;
+    assert.ok(veilleeDe(c)!.sac.length > 0, "il y a du butin dans le sac");
+    // À neuf salles, les gestes de la Tour seule ne vident pas l'arbre (trois bêches, un hôte, une alcôve
+    // par salle et ETAPES − 1 franchir : 47 feuilles au plus sur 64) — ce sont les coups de la bataille qui
+    // le videront (C4 PR 5b). On brûle donc les feuilles à la main jusqu'à l'avant-dernière, puis le dernier
+    // geste passe par la Tour : c'est lui qui épuise l'arbre, et c'est la Tour qui perd le sac.
+    const w = veilleeDe(c)!;
+    const arbre = arbreDuCoffre(c, w.v)!;
+    let v = w.v;
+    while (feuillesRestantes(v) > 1) v = signerGeste(v, arbre, { g: "prendre", arg: 0 }) as Veillee;
+    assert.equal(v.fin, null);
+    c = { ...c, tour: { ...tourDe(c), veillee: { ...w, v, indiceReserve: v.gestes.length } } };
+    const dalle = dalleDe(etage);
+    let derniere: [number, number] | null = null;
+    for (let y = 0; y < DALLE_N && derniere === null; y++) {
+      for (let x = 0; x < DALLE_N && derniere === null; x++) {
+        if (dalle[y]![x] && !(x === s.x && y === s.y)) derniere = [x, y];
       }
-      for (const [x, y] of cases) {
-        const r = creuserDansCoffre(c, x, y);
-        // Un sac plein refuse le butin, jamais franchir : on passe son chemin
-        // et on brûle la feuille en montant. La dalle dégagée remplit vite.
-        if (!r.ok) {
-          assert.match(r.motif, /sac plein/, r.motif);
-          break;
-        }
-        c = r.coffre;
-        if (r.fin === "epuise") {
-          perdus = r.perdus.length;
-          break;
-        }
-      }
-      if (perdus !== null) break;
-      assert.ok(franchis < FRANCHIR_AU_SOMMET - 1, "le sommet ne doit pas être atteint");
-      const f = franchirDansCoffre(c, [], "monter");
-      assert.ok(f.ok, f.ok ? "" : f.motif);
-      c = f.coffre;
-      franchis += 1;
-      if (f.fin === "epuise") perdus = f.perdus.length;
     }
+    assert.ok(derniere !== null, "une case à creuser");
+    const r = creuserDansCoffre(c, derniere![0], derniere![1]);
+    assert.ok(r.ok, r.ok ? "" : r.motif);
+    assert.equal(r.fin, "epuise");
+    assert.ok(r.perdus.length > 0, "le sac est perdu avec l'arbre");
+    c = r.coffre;
     assert.equal(veilleeDe(c)!.v.fin, "epuise");
-    assert.ok(perdus > 0, "il y avait du butin dans le sac");
     assert.equal(veilleeDe(c)!.sac.length, 0);
     assert.equal((c.objets ?? []).length, avant, "rien n'est entré au coffre");
     assert.equal(veilleeDe(c)!.v.gestes.length, FEUILLES);
-    assert.equal(lectureVeillee(veilleeDe(c)!.v).butin, FEUILLES - franchis);
+    assert.equal(lectureVeillee(veilleeDe(c)!.v).butin, FEUILLES);
+    assert.equal((creuserDansCoffre(c, s.x, s.y) as { code: string }).code, "finie");
   });
 
   it("le sac : plein, les gestes de butin sont refusés, franchir reste possible ; la jauge le relit", () => {

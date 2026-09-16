@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { sha256d, utf8 } from "./hash.ts";
+import { concat, sha256d, utf8 } from "./hash.ts";
 import {
   BANDES,
   CRANS,
+  ETAGES_PAR_BANDE,
   ETAPES,
+  TAG_PENDULE,
   bandeDe,
   debutBande,
   etageDe,
@@ -28,7 +30,7 @@ describe("pendule-9 — parcours, jamais contenu", () => {
     for (let k = 0; k < BANDES; k++) {
       const d = debutBande(k);
       const f = k + 1 < BANDES ? debutBande(k + 1) - 1 : ETAGES - 1;
-      assert.ok(f - d + 1 >= 27, `bande ${k} : ${f - d + 1} étages, il en faut 27 pour 9 triplets`);
+      assert.ok(f - d + 1 >= CRANS * ETAGES_PAR_BANDE, `bande ${k} : ${f - d + 1} étages, il en faut ${CRANS * ETAGES_PAR_BANDE} pour neuf crans`);
       assert.equal(bandeDe(d), k);
       assert.equal(bandeDe(f), k);
       assert.equal(biomeDe(d).id, biomeDe(f).id);
@@ -38,15 +40,45 @@ describe("pendule-9 — parcours, jamais contenu", () => {
     assert.equal(rangBande(8), 0); // Uranie
   });
 
-  it("l'étage d'une étape reste dans sa bande ; l'étape 0 est la porte de la ville", () => {
+  it("l'étage d'une étape reste dans sa bande, le cran choisit son neuvième, le hachage l'étage dedans ; l'étape 0 est la porte de la ville", () => {
+    const h0 = new Uint8Array(32);
     for (let i = 0; i < ETAPES; i++) {
       for (let p = 0; p < CRANS; p++) {
-        const e = etageDe(i, p);
-        assert.equal(bandeDe(e), i === 0 ? 0 : Math.floor(i / 3), `étape ${i} cran ${p} → ${e}`);
+        const vus = new Set<number>();
+        for (let b = 0; b < 256; b++) {
+          const h = new Uint8Array(32);
+          h[1] = b;
+          const e = etageDe(i, p, h);
+          vus.add(e);
+          assert.equal(bandeDe(e), i === 0 ? 0 : Math.floor(i / ETAGES_PAR_BANDE), `étape ${i} cran ${p} → ${e}`);
+          // le neuvième du cran : cran 0 en bas de la bande, cran 8 en haut
+          const k = Math.floor(i / ETAGES_PAR_BANDE);
+          const debut = debutBande(k);
+          const fin = k + 1 < BANDES ? debutBande(k + 1) - 1 : ETAGES - 1;
+          const taille = fin - debut + 1;
+          if (i > 0) {
+            assert.ok(e >= debut + Math.floor((p * taille) / CRANS), `étape ${i} cran ${p} : ${e} sous son neuvième`);
+            assert.ok(e <= Math.min(fin, debut + Math.floor(((p + 1) * taille) / CRANS) - 1 + ETAGES_PAR_BANDE - 1), `étape ${i} cran ${p} : ${e} au-dessus de son neuvième`);
+          }
+        }
+        // le hachage fait visiter tout le neuvième (3 ou 4 étages), jamais un seul
+        if (i > 0) assert.ok(vus.size >= 3, `étape ${i} cran ${p} : ${vus.size} étage(s) joignables au lieu de 3 au moins`);
       }
     }
-    assert.equal(etageDe(0, 5), 0);
-    assert.equal(etageDe(26, 8), ETAGES - 1);
+    assert.equal(etageDe(0, 5, h0), 0);
+    const hautH = new Uint8Array(32);
+    hautH[1] = 255;
+    assert.equal(etageDe(ETAPES - 1, CRANS - 1, hautH), ETAGES - 1);
+    // tous les étages d'une bande sont joignables par un cran et un octet
+    for (let k = 1; k < BANDES; k++) {
+      const tous = new Set<number>();
+      for (let p = 0; p < CRANS; p++) for (let b = 0; b < 256; b++) { const h = new Uint8Array(32); h[1] = b; tous.add(etageDe(k * ETAGES_PAR_BANDE, p, h)); }
+      const debut = debutBande(k);
+      const fin = k + 1 < BANDES ? debutBande(k + 1) - 1 : ETAGES - 1;
+      assert.equal(tous.size, fin - debut + 1, `bande ${k} : ${tous.size} étages joignables sur ${fin - debut + 1}`);
+    }
+    void TAG_PENDULE;
+    void concat;
   });
 
   it("déterminisme : même graine, mêmes choix, même objet ⇒ même run ; un choix change la suite", () => {
@@ -64,11 +96,12 @@ describe("pendule-9 — parcours, jamais contenu", () => {
     }
   });
 
-  it("table de vérité gelée : les 27 étapes d'un run de référence", () => {
+  it("table de vérité gelée : les 9 étapes d'un run de référence", () => {
     const a = run(graine, (i) => (["monter", "lire", "offrir"] as const)[i % 3]!, (i) => 0x1234_5678 + i);
     const table = a.map((x) => `${x.p}:${x.e}:${x.s.x}`).join(" ");
     assert.equal(penduleInitial(graine), a[0]!.p);
-    // gelée le 2026-09-04 ; toute modification de la transition doit la régénérer sciemment
+    // gelée le 2026-09-04, régénérée le 2026-09-16 (A18 : 9 salles, l'étage choisi par le hachage dans le neuvième du cran) ;
+    // toute modification de la transition doit la régénérer sciemment
     assert.equal(table, TABLE_GELEE);
   });
 
@@ -107,5 +140,4 @@ describe("pendule-9 — parcours, jamais contenu", () => {
   });
 });
 
-const TABLE_GELEE =
-  "3:0:5 7:23:6 2:8:1 3:38:1 1:33:6 3:40:7 5:72:8 8:83:3 2:65:2 4:98:7 4:99:7 4:100:5 2:120:2 6:133:3 7:137:1 0:142:2 5:158:7 8:169:7 0:170:4 2:177:0 7:194:0 1:202:8 5:215:1 2:207:4 2:233:7 3:237:4 6:247:2";
+const TABLE_GELEE = "3:0:5 7:50:6 1:61:7 3:96:8 5:131:8 6:162:8 0:172:8 3:208:5 4:240:0";
