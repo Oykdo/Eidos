@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Shell } from "@/components/Shell";
 import { useI18n, type Msg } from "@/lib/i18n.ts";
@@ -16,7 +17,8 @@ import { aUneAlcove } from "@/lib/eidos/secrets.ts";
 import { biomeDe } from "@/lib/eidos/tour.ts";
 import { FEUILLES, feuillesRestantes, jugerVeillee, lectureVeillee, scoreVeillee } from "@/lib/eidos/veillee.ts";
 import { REPLIQUES_VEILLEE } from "@/lib/eidos/veillee-lexique.ts";
-import { SAC_PLACES, veilleeDe } from "@/lib/eidos/veillee-tour.ts";
+import { SAC_PLACES, batailleDansCoffre, batailleEnlisee, batailleOuverte, mainsDe, salleTenue, veilleeDe } from "@/lib/eidos/veillee-tour.ts";
+import { combattants } from "@/lib/eidos/tactique/partie.ts";
 import { fantomesDeSalle, nomDeFichier } from "@/lib/eidos/classement.ts";
 import { ArbreFeuilles } from "@/components/veillee/ArbreFeuilles";
 
@@ -72,6 +74,14 @@ export function VeilleeView() {
   const spawn = active ? spawnIci(coffre, etage) : null;
   const capsuleIndex = (coffre.objets ?? []).findIndex((o) => estCapsule(o));
   const occupants = active ? occupantsRestants(coffre, etage) : [];
+  // la salle tenue : le butin attend la bataille ; ouverte, elle se finit d'abord (enlisée, on franchit)
+  const tenue = active && salleTenue(coffre);
+  const ouverte = active && batailleOuverte(coffre);
+  const enlisee = active && batailleEnlisee(coffre);
+  const bloquee = ouverte && !enlisee;
+  const batailleFinie = active ? (w.bataille?.fin ?? null) : null;
+  const armee = combattants(coffre).length > 0;
+  const rejouee = useMemo(() => (ouverte ? batailleDansCoffre(coffre) : null), [ouverte, coffre]);
   const verdict = w && w.v.fin !== null && w.v.ancre && federation ? jugerVeillee(w.v, federation) : null;
   const lecture = w ? lectureVeillee(w.v) : null;
   const fantome =
@@ -199,25 +209,65 @@ export function VeilleeView() {
               ) : null}
               {w.v.fin === null ? (
                 <>
+                  <p className="mt-3 font-mono text-[12px] text-cuivre">
+                    {batailleFinie
+                      ? t(`veillee.bataille.finie.${batailleFinie}` as Msg, { t: w.bataille?.tour ?? 0 })
+                      : ouverte
+                        ? enlisee
+                          ? t("veillee.bataille.enlisee", { t: mainsDe(w.bataille!) })
+                          : t("veillee.bataille.ouverte", { t: rejouee?.partie.etat.tour ?? 0, n: feuilles })
+                        : tenue
+                          ? armee
+                            ? t("veillee.salle.tenue", { n: occupants.length })
+                            : `${t("veillee.salle.tenue", { n: occupants.length })} ${t("veillee.bataille.sansObjet")}`
+                          : t("veillee.salle.libre")}
+                  </p>
+                  {(tenue || ouverte) && armee && !batailleFinie ? (
+                    <Button asChild variant="or" className="mt-2 w-auto">
+                      <Link to="/bataille">{t("veillee.bataille.aller")}</Link>
+                    </Button>
+                  ) : null}
                   <p className="mt-3 font-mono text-[11px] uppercase tracking-[0.12em] text-sourd">{t("veillee.gestes")}</p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <Button
                       type="button"
                       variant="discret"
                       className="w-auto"
-                      disabled={!aUnHote(etage) || donHonore(coffre, etage)}
-                      title={!aUnHote(etage) ? t("veillee.parler.aucun") : donHonore(coffre, etage) ? t("veillee.parler.deja") : undefined}
+                      disabled={!aUnHote(etage) || donHonore(coffre, etage) || tenue || bloquee}
+                      title={
+                        tenue || bloquee
+                          ? t(tenue ? "veillee.err.tenue" : "veillee.err.bataille")
+                          : !aUnHote(etage)
+                            ? t("veillee.parler.aucun")
+                            : donHonore(coffre, etage)
+                              ? t("veillee.parler.deja")
+                              : undefined
+                      }
                       onClick={() => parler()}
                     >
                       {t("veillee.parler")}
                     </Button>
                     {spawn ? (
-                      <Button type="button" variant="discret" className="w-auto" onClick={() => creuser(spawn.x, spawn.y)}>
+                      <Button
+                        type="button"
+                        variant="discret"
+                        className="w-auto"
+                        disabled={tenue || bloquee}
+                        title={tenue || bloquee ? t(tenue ? "veillee.err.tenue" : "veillee.err.bataille") : undefined}
+                        onClick={() => creuser(spawn.x, spawn.y)}
+                      >
                         {t("veillee.creuser", { x: spawn.x, y: spawn.y })}
                       </Button>
                     ) : null}
                     {aUneAlcove(etage) ? (
-                      <Button type="button" variant="discret" className="w-auto" disabled={tour.alcoves.includes(etage)} onClick={() => alcove()}>
+                      <Button
+                        type="button"
+                        variant="discret"
+                        className="w-auto"
+                        disabled={tour.alcoves.includes(etage) || tenue || bloquee}
+                        title={tenue || bloquee ? t(tenue ? "veillee.err.tenue" : "veillee.err.bataille") : undefined}
+                        onClick={() => alcove()}
+                      >
                         {t("veillee.alcove")}
                       </Button>
                     ) : null}
@@ -227,8 +277,8 @@ export function VeilleeView() {
                         type="button"
                         variant="discret"
                         className="w-auto"
-                        disabled={capsuleIndex < 0}
-                        title={capsuleIndex < 0 ? t("veillee.prendre.sansCapsule") : undefined}
+                        disabled={capsuleIndex < 0 || bloquee}
+                        title={bloquee ? t("veillee.err.bataille") : capsuleIndex < 0 ? t("veillee.prendre.sansCapsule") : undefined}
                         onClick={() => capturer(o.k, capsuleIndex)}
                       >
                         {t("veillee.prendre", { k: o.k })}
@@ -243,7 +293,8 @@ export function VeilleeView() {
                         type="button"
                         variant={d.lu ? "or" : "discret"}
                         className="w-auto"
-                        title={d.porteFermee ? t("tour.pendule.porteFermee") : undefined}
+                        disabled={bloquee}
+                        title={bloquee ? t("veillee.err.bataille") : d.porteFermee ? t("tour.pendule.porteFermee") : undefined}
                         onClick={() => franchir(d.choix)}
                       >
                         {t(`tour.pendule.choix.${d.choix}` as Msg)} →{" "}

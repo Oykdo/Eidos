@@ -35,6 +35,7 @@ const TEXTES: Record<
     case: string;
     alcove: string;
     occupant: string;
+    coup: string;
     chemin: string;
     illisible: (h: number, n: number) => string;
   }
@@ -47,13 +48,14 @@ const TEXTES: Record<
     geste: "geste",
     etape: "étape",
     etage: "étage",
-    gestes: { franchir: "franchir", parler: "parler", ouvrir: "ouvrir", prendre: "prendre" },
+    gestes: { franchir: "franchir", parler: "parler", ouvrir: "ouvrir", prendre: "prendre", frapper: "frapper" },
     choix: { monter: "monter", lire: "lire", offrir: "offrir" },
     objet: "objet",
     hote: "hôte de l'étage",
     case: "case",
     alcove: "alcôve",
     occupant: "occupant",
+    coup: "coup",
     chemin: "chemin d'authentification",
     illisible: (h, n) => `arbre illisible : hauteur ${h}, ${n} gestes — un arbre de hauteur ${HAUTEUR_VEILLEE} attendu`,
   },
@@ -65,13 +67,14 @@ const TEXTES: Record<
     geste: "move",
     etape: "step",
     etage: "floor",
-    gestes: { franchir: "cross", parler: "talk", ouvrir: "open", prendre: "take" },
+    gestes: { franchir: "cross", parler: "talk", ouvrir: "open", prendre: "take", frapper: "strike" },
     choix: { monter: "climb", lire: "read", offrir: "offer" },
     objet: "item",
     hote: "host of floor",
     case: "cell",
     alcove: "alcove",
     occupant: "occupant",
+    coup: "strike",
     chemin: "authentication path",
     illisible: (h, n) => `unreadable tree: height ${h}, ${n} moves — a tree of height ${HAUTEUR_VEILLEE} expected`,
   },
@@ -95,6 +98,8 @@ function texteDetail(d: DetailGeste, x: (typeof TEXTES)[Langue]): string {
       return x.alcove;
     case "occupant":
       return `${x.occupant} ${d.k}`;
+    case "coup":
+      return `${x.coup} ${d.unite} → ${d.cible}`;
   }
 }
 

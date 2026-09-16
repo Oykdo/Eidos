@@ -28,37 +28,45 @@ const tous: Run[] = POLITIQUES.flatMap((p) => rapport.detail[p]);
 /** La table gelée : fin, feuilles brûlées, butin — par politique, run par run. Toute retouche
  *  du bot, du pendule, d'un acte de la Tour ou du sac (veillee-tour.ts, 81 places) la régénère
  *  sciemment : `node --experimental-strip-types src/lib/eidos/veillee-bot.ts 4` imprime les runs. */
-// Régénérée le 2026-09-16 : neuf salles (A18), l'étage choisi par le hachage dans le neuvième du cran.
+// Régénérée le 2026-09-16 : neuf salles (A18), l'étage choisi par le hachage dans le neuvième du cran, puis
+// le bot qui se bat (C4 PR 5b, eidos-veillee/2) : huit batailles par run, chaque coup une feuille.
 const GELE: Record<Politique, [Fin, number, number][]> = {
   avare: [
-    ["sommet", 8, 0],
-    ["sommet", 8, 0],
-    ["sommet", 8, 0],
-    ["sommet", 8, 0],
+    ["sommet", 40, 0],
+    ["sommet", 36, 0],
+    ["sommet", 33, 0],
+    ["sommet", 41, 0],
   ],
   gourmand: [
-    ["sommet", 17, 9],
-    ["sommet", 18, 10],
-    ["sommet", 19, 11],
-    ["sommet", 17, 9],
+    ["sommet", 49, 8],
+    ["sommet", 35, 5],
+    ["sommet", 45, 6],
+    ["sommet", 52, 9],
   ],
   mesure: [
-    ["sommet", 15, 7],
-    ["sommet", 12, 4],
-    ["sommet", 16, 8],
-    ["sommet", 11, 3],
+    ["sommet", 37, 4],
+    ["sommet", 49, 5],
+    ["sommet", 41, 6],
+    ["sommet", 42, 2],
   ],
 };
-const P_MESURE = ["0.6813", "0.3198", "0.9058", "0.3500"];
-// un seul « parler » par run : Thalie (demande « rien ») ; à neuf salles le sac ne se remplit plus, Uranie ne vient pas
+const P_MESURE = ["0.6813", "0.8600", "0.8200", "0.4119"];
+// un « parler » par run au moins : Thalie (demande « rien ») ; le butin attend la bataille gagnée
 const GOURMAND_PARLER_OUVRIR = [
-  [1, 8],
-  [1, 9],
-  [1, 10],
-  [1, 8],
+  [1, 7],
+  [1, 4],
+  [1, 5],
+  [2, 7],
 ];
-// refus sans feuille : demandes insatisfaites (le sac, 81 places, ne se remplit plus à neuf salles)
-const GOURMAND_REFUS = [3, 2, 2, 3];
+// refus sans feuille : salle tenue (bataille perdue ou enlisée), demandes insatisfaites
+const GOURMAND_REFUS = [3, 8, 5, 2];
+// l'avare se bat aussi : batailles, victoires, défaites, enlisées, coups — huit batailles par run
+const AVARE_BATAILLES = [
+  [8, 4, 2, 2, 32],
+  [8, 5, 2, 1, 28],
+  [8, 6, 2, 0, 25],
+  [8, 5, 2, 1, 33],
+];
 
 describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
   it("graine 7, 4 runs par politique : le rapport est gelé — mêmes chiffres à chaque exécution", () => {
@@ -78,9 +86,10 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
     assert.deepEqual(rapport.detail.mesure.map((r) => r.p.toFixed(4)), P_MESURE);
     assert.deepEqual(rapport.detail.gourmand.map((r) => [r.gestes.parler, r.gestes.ouvrir]), GOURMAND_PARLER_OUVRIR);
     assert.deepEqual(rapport.detail.gourmand.map((r) => r.refus), GOURMAND_REFUS);
-    assert.equal(rapport.politiques.gourmand.feuillesMoyennes, 17.75);
-    assert.equal(rapport.politiques.gourmand.feuillesMax, 19);
-    assert.equal(rapport.politiques.mesure.butinMoyen, 5.5);
+    assert.deepEqual(rapport.detail.avare.map((r) => [r.batailles, r.victoires, r.defaites, r.enlisees, r.gestes.frapper]), AVARE_BATAILLES);
+    assert.equal(rapport.politiques.gourmand.feuillesMoyennes, 45.25);
+    assert.equal(rapport.politiques.gourmand.feuillesMax, 52);
+    assert.equal(rapport.politiques.mesure.butinMoyen, 4.25);
     // aucun sommet à BUTIN_MAX, aucun run à 64 feuilles : la Tour seule n'offre pas de quoi vider l'arbre en neuf salles, le budget ne mord pas
     for (const p of POLITIQUES) {
       assert.equal(rapport.politiques[p].partSommetsPleins, 0);
@@ -101,14 +110,18 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
       assert.equal(r.fin === "sommet", r.franchir === FRANCHIR_AU_SOMMET, `${r.politique} : ${r.fin} avec ${r.franchir} franchir`);
       assert.equal(r.fin === "epuise", r.feuilles === FEUILLES && r.franchir < FRANCHIR_AU_SOMMET);
       assert.equal(r.salles, r.franchir + 1);
-      assert.equal(r.butin, r.feuilles - r.franchir);
+      assert.equal(r.butin, r.feuilles - r.franchir - r.gestes.frapper, "un coup n'est pas du butin");
       assert.ok(r.butin <= BUTIN_MAX);
       // chaque geste de butin de ce bot met un objet au sac : le sac plein borne le butin
       assert.ok(r.butin <= SAC_PLACES, `${r.butin} de butin pour ${SAC_PLACES} places`);
       assert.equal(r.score, r.salles * FEUILLES + r.butin);
       assert.ok(FINS.includes(r.fin));
-      // chaque feuille brûlée est un geste signé, d'une des quatre sortes ; le bot ne prend jamais
-      assert.equal(r.gestes.franchir + r.gestes.parler + r.gestes.ouvrir + r.gestes.prendre, r.feuilles);
+      // chaque feuille brûlée est un geste signé, d'une des cinq sortes ; le bot ne prend jamais
+      assert.equal(r.gestes.franchir + r.gestes.parler + r.gestes.ouvrir + r.gestes.prendre + r.gestes.frapper, r.feuilles);
+      // le bot se bat à chaque salle tenue : une bataille par salle franchie, une issue ou l'enlisement pour chacune
+      assert.equal(r.batailles, r.victoires + r.defaites + r.enlisees, `${r.politique} : ${r.batailles} batailles pour ${r.victoires}/${r.defaites}/${r.enlisees}`);
+      assert.ok(r.batailles >= r.franchir, "une bataille par salle tenue franchie au moins");
+      assert.ok(r.gestes.frapper > 0);
       assert.equal(r.gestes.franchir, r.franchir);
       assert.equal(r.gestes.prendre, 0);
     }
@@ -121,16 +134,16 @@ describe("le bot de la veillée : la falsification de §2.4, mesurée", () => {
     }
   });
 
-  it("l'avare touche toujours le sommet avec ETAPES − 1 feuilles et 0 butin ; le gourmand creuse chaque arrivée ; le mesuré tire p dans ]0, 1[", () => {
+  it("l'avare touche toujours le sommet avec ETAPES − 1 franchir, ses coups et 0 butin ; le gourmand creuse chaque arrivée gagnée ; le mesuré tire p dans ]0, 1[", () => {
     for (const r of rapport.detail.avare) {
       assert.equal(r.fin, "sommet");
-      assert.equal(r.feuilles, FRANCHIR_AU_SOMMET);
+      assert.equal(r.feuilles, FRANCHIR_AU_SOMMET + r.gestes.frapper, "l'avare ne brûle que franchir et ses coups");
       assert.equal(r.butin, 0);
       assert.equal(r.p, 0);
       assert.equal(r.refus, 0);
     }
     assert.equal(rapport.politiques.avare.tauxSommet, 1);
-    assert.equal(rapport.politiques.avare.feuillesMoyennes, FRANCHIR_AU_SOMMET);
+    assert.ok(rapport.politiques.avare.feuillesMoyennes > FRANCHIR_AU_SOMMET);
     for (const r of rapport.detail.gourmand) {
       assert.equal(r.p, 1);
       // chaque salle tente la case d'arrivée : creusée, ou refusée sans feuille (sac plein)

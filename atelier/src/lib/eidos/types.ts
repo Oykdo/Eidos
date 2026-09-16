@@ -129,6 +129,8 @@ export type Tour = {
   portes: NomAge[];
   /** (étage, k) des occupants pris par ce coffre */
   captures: [number, number][];
+  /** (étage, k) des occupants abattus en bataille par ce coffre : ils ne reviennent pas (veillee-tour.ts) */
+  abattus: [number, number][];
   /** (étage, x, y) des cases creusées par ce coffre : trois coups de bêche par étage (fouilles.ts) */
   fouilles: [number, number, number][];
   /** l'ascension en cours ou finie (pendule) ; null hors ascension. Forme : ascension.ts */

@@ -23,6 +23,8 @@ import { combatDe } from "@/lib/eidos/combat.ts";
 import { objetDePorte, signatureDe } from "@/lib/eidos/inventaire.ts";
 import { quartierDe } from "@/lib/eidos/sceaux.ts";
 import { ETAGES, TEINTE_BIOME, biomeDe } from "@/lib/eidos/tour.ts";
+import { feuillesRestantes, parcoursDe } from "@/lib/eidos/veillee.ts";
+import { batailleDansCoffre, batailleEnlisee, mainsDe, salleTenue, veilleeDe } from "@/lib/eidos/veillee-tour.ts";
 import {
   FEUILLES_LIBRES,
   MAX_COFFRE,
@@ -126,7 +128,13 @@ export function BatailleView() {
   const { t } = useI18n();
   const hydrater = useCoffre((s) => s.hydrater);
   const coffre = useCoffre((s) => s.coffre);
-  const [partie, setPartie] = useState<Partie | null>(null);
+  const batailleOuvrir = useCoffre((s) => s.batailleOuvrir);
+  const batailleJouer = useCoffre((s) => s.batailleJouer);
+  const bataillePasser = useCoffre((s) => s.bataillePasser);
+  const erreurStore = useCoffre((s) => s.erreur);
+  const flash = useCoffre((s) => s.flash);
+  const [partieLibre, setPartieLibre] = useState<Partie | null>(null);
+  const [selectionVeillee, setSelectionVeillee] = useState<number | null>(null);
   const [choix, setChoix] = useState<number[]>([]);
   const [survol, setSurvol] = useState<Case | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -145,27 +153,56 @@ export function BatailleView() {
   const teinte = TEINTE_BIOME[biome.id];
   const lisibles = useMemo(() => combattants(coffre), [coffre]);
   const occupants = useMemo(() => occupantsRestants(coffre, etage), [coffre, etage]);
+  // La veillée : sa bataille vit dans la jauge et se rejoue à chaque lecture ; la sélection, elle, est à la page.
+  const w = veilleeDe(coffre);
+  const enVeillee = w !== null && w.v.fin === null;
+  const rejouee = useMemo(() => (enVeillee ? batailleDansCoffre(coffre) : null), [coffre, enVeillee]);
+  const partie: Partie | null = useMemo(() => {
+    if (!enVeillee) return partieLibre;
+    if (!rejouee) return null;
+    return selectionVeillee === null ? rejouee.partie : choisir(rejouee.partie, selectionVeillee);
+  }, [enVeillee, partieLibre, rejouee, selectionVeillee]);
+  const tenue = enVeillee && salleTenue(coffre);
+  const enlisee = enVeillee && batailleEnlisee(coffre);
+  const finie = enVeillee ? (w.bataille?.fin ?? null) : null;
   const lecture: Lecture | null = useMemo(
     () => (partie ? lire(partie, survol) : null),
     [partie, survol],
   );
 
-  // Le coffre change d'étage ou d'objets : la partie en cours ne vaut plus, on la ferme.
+  // Le coffre change d'étage ou d'objets : la partie libre en cours ne vaut plus, on la ferme.
   useEffect(() => {
-    setPartie(null);
+    setPartieLibre(null);
     setChoix([]);
+    setSelectionVeillee(null);
   }, [etage, coffre.objets]);
 
   const tenter = (f: () => Partie) => {
     try {
-      setPartie(f());
+      setPartieLibre(f());
       setErreur(null);
     } catch (e) {
       setErreur(e instanceof RejetTactique ? e.message : String(e));
     }
   };
 
-  const ouvrir = () => tenter(() => ouvrirPartie(coffre, etage, choix, FEUILLES_LIBRES));
+  const ouvrir = () => {
+    if (enVeillee) {
+      batailleOuvrir(choix);
+      setSelectionVeillee(null);
+      return;
+    }
+    tenter(() => ouvrirPartie(coffre, etage, choix, FEUILLES_LIBRES));
+  };
+
+  const jouer = (acte: Acte) => {
+    if (enVeillee) {
+      batailleJouer(acte);
+      return;
+    }
+    if (!partie) return;
+    tenter(() => jouerActe(partie, acte));
+  };
 
   const surCase = (c: Case) => {
     if (!partie || !lecture) return;
@@ -176,22 +213,26 @@ export function BatailleView() {
       lecture.phase === "coffre" &&
       unite.id !== lecture.selection
     ) {
-      setPartie(choisir(partie, unite.id));
+      if (enVeillee) setSelectionVeillee(unite.id);
+      else setPartieLibre(choisir(partie, unite.id));
       setErreur(null);
       return;
     }
     const acte = acteDeCase(lecture, c);
     if (acte === null) return;
-    tenter(() => jouerActe(partie, acte));
+    jouer(acte);
   };
 
   const passerUnite = () => {
     if (!partie || !lecture || lecture.selection === null) return;
-    const id = lecture.selection;
-    tenter(() => jouerActe(partie, { geste: "passer", unite: id }));
+    jouer({ geste: "passer", unite: lecture.selection });
   };
 
   const passer = () => {
+    if (enVeillee) {
+      bataillePasser();
+      return;
+    }
     if (!partie) return;
     tenter(() => passerLaMain(partie));
   };
@@ -220,8 +261,22 @@ export function BatailleView() {
           {quartierDe(etage)}
         </p>
         <p className="mt-1 font-mono text-[11px] text-sourd">
-          {t("bataille.libre", { n: FEUILLES_LIBRES })}
+          {enVeillee
+            ? t("bataille.veillee", { i: parcoursDe(w.v).etape + 1, n: feuillesRestantes(w.v) })
+            : t("bataille.libre", { n: FEUILLES_LIBRES })}
         </p>
+        {enVeillee ? (
+          <p className="mt-1 font-mono text-[12px] text-cuivre">
+            {finie
+              ? t(`veillee.bataille.finie.${finie}` as Msg, { t: w.bataille?.tour ?? 0 })
+              : enlisee
+                ? t("veillee.bataille.enlisee", { t: mainsDe(w.bataille!) })
+                : tenue
+                  ? t("veillee.salle.tenue", { n: occupants.length })
+                  : t("veillee.salle.libre")}
+            {flash && !finie ? ` · ${flash}` : ""}
+          </p>
+        ) : null}
 
         {!partie || !lecture ? (
           <>
@@ -438,9 +493,11 @@ export function BatailleView() {
                 >
                   {t("bataille.passerLaMain")}
                 </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={() => setPartie(null)}>
-                  {t("bataille.recommencer")}
-                </Button>
+                {enVeillee ? null : (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setPartieLibre(null)}>
+                    {t("bataille.recommencer")}
+                  </Button>
+                )}
               </div>
             </Bloc>
 
@@ -488,6 +545,7 @@ export function BatailleView() {
           </>
         )}
         {!partie && erreur ? <p className="mt-2 font-mono text-[12px] text-fer">{erreur}</p> : null}
+        {enVeillee && erreurStore ? <p className="mt-2 font-mono text-[12px] text-fer">{erreurStore}</p> : null}
       </section>
     </Shell>
   );

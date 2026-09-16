@@ -43,7 +43,7 @@ function preuveFinie(maitre: string, libre = false): Veillee {
 
 describe("le dépôt : ce que le corps d'une issue peut dire", () => {
   it("un JSON collé, une pièce jointe, un gist, un dépôt brut ; tout autre hôte est ignoré", () => {
-    const petit = '{"v":1,"spec":"eidos-veillee/1","x":1}';
+    const petit = '{"v":2,"spec":"eidos-veillee/2","x":1}';
     assert.deepEqual(extraireSource(`Voici ma preuve :\n${petit}\nmerci`), { genre: "json", texte: petit });
     const piece = "https://github.com/user-attachments/files/12345678/20331-6d19bd75-0.json";
     assert.deepEqual(extraireSource(`[20331-6d19bd75-0.json](${piece})`), { genre: "url", url: piece });
@@ -54,7 +54,7 @@ describe("le dépôt : ce que le corps d'une issue peut dire", () => {
     assert.ok("erreur" in extraireSource("https://evil.example/preuve.json et http://github.com/user-attachments/files/1/a.json"));
     assert.ok("erreur" in extraireSource("https://github.com/user-attachments/files/1/../../secret"));
     assert.ok("erreur" in extraireSource("rien du tout"));
-    assert.ok("erreur" in extraireSource("{ pas du json \"eidos-veillee/1\" }"));
+    assert.ok("erreur" in extraireSource("{ pas du json \"eidos-veillee/2\" }"));
     assert.ok("erreur" in extraireSource("x".repeat(OCTETS_MAX + 1)));
     // un JSON qui n'est pas une veillée n'est pas retenu, l'adresse derrière l'est
     assert.deepEqual(extraireSource(`{"a":1} ${piece}`), { genre: "url", url: piece });

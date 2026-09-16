@@ -16,19 +16,21 @@ veillée ils n'ont pas de prise (K31) : les feuilles ne reviennent pas.
 
 Usage : python3 labo/aura_veillee.py [veillee.json]     (sans argument : les deux fixtures)
 Deux fixtures, deux formes de run :
-  labo/veillee_atelier.json — bot « gourmand » (graine 7, jour du vecteur), sommet, 46 feuilles ;
-     régénérable par `exporter-veillee.ts 7`, comparée à l'octet par la CI.
-  labo/veillee_jouee.json — une veillée VRAIMENT JOUÉE (parler puis trois franchir, puis abandon),
-     relue par `exporter-veillee.ts --depuis` ; source `veillee_jouee_source.json` (format
-     serialiserVeillee, signatures comprises : le labo ne les lit pas). NON régénérable en CI —
-     un run joué ne se rejoue pas, c'est le propos."""
+  labo/veillee_atelier.json — bot « gourmand » (graine 7, jour du vecteur), sommet, 49 feuilles dont
+     33 coups (le bot se bat depuis C4 PR 5b) ; régénérable par `exporter-veillee.ts 7`, comparée à
+     l'octet par la CI.
+  labo/veillee_jouee.json — une veillée VRAIMENT JOUÉE (le 2026-09-16 : la bataille de la porte, un
+     coup de bêche, trois franchir, puis abandon), relue par `exporter-veillee.ts --depuis` ; source
+     `veillee_jouee_source.json` (format serialiserVeillee eidos-veillee/2, signatures comprises : le
+     labo ne les lit pas). NON régénérable en CI — un run joué ne se rejoue pas, c'est le propos.
+Un coup (« frapper ») brûle une feuille comme les autres gestes : l'aura ne distingue pas les sortes."""
 import json, os, sys
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8")  # Windows : console cp1252
 sys.path.insert(0, os.path.dirname(__file__))
 from aura_voxel_lab import AGG
 from pendule9_run import Rejet
 
-FEUILLES, PAR_AGG, ETAPES, GESTES = 64, 8, 9, ("franchir", "parler", "ouvrir", "prendre")   # 9 étapes depuis A18
+FEUILLES, PAR_AGG, ETAPES, GESTES = 64, 8, 9, ("franchir", "parler", "ouvrir", "prendre", "frapper")   # 9 étapes depuis A18 ; frapper depuis C4 PR 5b
 
 def valider_veillee(v):
     if v["hauteur"] != 6: raise ValueError(f"hauteur {v['hauteur']} au lieu de 6")

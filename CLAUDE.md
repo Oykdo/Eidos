@@ -78,7 +78,7 @@ Dans `atelier/src/lib/eidos/` : `eonis.ts`, `lamport.ts`, `merkle.ts`, `carnet.t
 `envoi.ts`, `coffre-horaire.ts`, `wots.ts`, `xmss.ts`, `relique-qr.ts`, `pendule.ts`, `ancrage.ts`, `veillee.ts`, `veillee-tour.ts`, `chaine-reseau.ts`, `fantomes.ts`, `classement.ts`, `arbre-vue.ts`, `feuille-son.ts`, `veillee-bot.ts` — chacun avec son `.test.ts` ;
 `vecteurs.test.ts` relit `vecteurs.json`. `lamport.ts` garde Lamport en démonstration mais dérive adresses,
 empreintes et témoins via `wots.ts`. `genesis-data.ts` recopie `genesis.json`.
-La veillée : `veillee.ts` (arbre, jour, gestes, juge), `veillee-tour.ts` (gestes reliés aux actes, sac),
+La veillée : `veillee.ts` (arbre, jour, cinq gestes dont `frapper`, juge — `eidos-veillee/2`), `veillee-tour.ts` (gestes reliés aux actes, sac, la bataille de la salle tenue rejouée depuis la jauge, abattus, première tombée),
 `chaine-reseau.ts` (en-têtes de `chaine-eidos.dat`), `classement.ts`, `arbre-vue.ts`, `feuille-son.ts`,
 `veillee-bot.ts`, `depot.ts`, `fantomes.ts`, `veillee-lexique.ts`. L'accueil : `lib/accueil/orbites.ts`
 et `components/accueil/FondOrbital.tsx`.
@@ -214,7 +214,7 @@ python3 relique.py --test      # 4
 python3 consensus.py           # 6 (historique)
 python3 federation.py          # 18
 python3 noeud.py --verifier    # rejeu intégral du testnet, doit finir « aucun refus »
-cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 625 tests Eidos
+cd atelier && npm ci && npm run typecheck && npm test && npm run build   # 634 tests Eidos
 npm run langue [page]          # la règle d'écriture : les manquements par page, ou ceux d'une page (~1 s)
 npm run veillee-bot 60         # le bot de la veillée : une lecture du budget de feuilles (~4 s par run)
 npm run banc-tactique          # calibration tactique complète : 256 duels (~1 s)
