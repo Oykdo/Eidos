@@ -195,7 +195,7 @@ export const FR = {
   "guide.lire":
     "La carte et les muses montrent les mêmes figures autrement. Une lecture n'est pas une preuve.",
   "guide.jouer":
-    "La Tour, la veillée et les reliques restent sur cet appareil. Seuls le sceau et la preuve d'une veillée ancrée parlent au réseau.",
+    "Le jeu s'appelle la Tour ; la veillée en est une nuit, les reliques ses sceaux. Tout reste sur cet appareil. Seuls le sceau et la preuve d'une veillée ancrée parlent au réseau.",
   "guide.mots": "Dix mots",
   "guide.motsLede": "Ces dix mots reviennent partout. Le reste de l'atelier les emploie tels quels.",
   "guide.mot.piece": "pièce — une pièce du carnet. C'est ce que tu dépenses. Une pièce se prouve.",
@@ -248,10 +248,10 @@ export const FR = {
     "Un coffre, une origine. Chaque objet tient en 32 bits. Il ne grandit pas : la puissance ne s'accumule pas.",
   "guide.10": "Tour",
   "guide.10p":
-    "255 étages. Une porte s'ouvre avec un sceau. Tu montes avec ce que tu as trouvé, jamais avec ce que tu achètes.",
+    "Le jeu entier tient dans la Tour : 255 étages. Une porte s'ouvre avec un sceau. Tu montes avec ce que tu as trouvé, jamais avec ce que tu achètes.",
   "guide.10b": "Monter",
   "guide.11p":
-    "64 feuilles pour vie ; chaque geste qui compte en brûle une. Les 27 salles du jour sont les mêmes pour tous. Ce que tu trouves va dans un sac, que le sommet verse au coffre.",
+    "Une nuit dans la Tour. 64 feuilles pour vie ; chaque geste qui compte en brûle une. Les 27 salles du jour sont les mêmes pour tous. Ce que tu trouves va dans un sac, que le sommet verse au coffre.",
   "guide.11b": "Veiller",
   "guide.coeur": "Le cœur",
   "guide.coeurLede": "Ce qui tient tout le reste : cinq lois, et rien à croire.",
@@ -343,7 +343,7 @@ export const FR = {
   "tour.lede":
     "Terre au sol, Uranie au faîte. Monter ne rend pas plus fort : on lit mieux. Les occupants d'un étage s'accordent ou se gênent.",
   "nav.veillee": "Veillée",
-  "eco.veillee": "Une clé ne signe qu'une fois : 64 feuilles, 27 salles, un jour.",
+  "eco.veillee": "Une nuit dans la Tour. Une clé ne signe qu'une fois : 64 feuilles, 27 salles, un jour.",
   "nav.coffreHoraire": "Coffre de l'heure",
   "nav.bataille": "Bataille",
   "sous.bataille":
@@ -932,7 +932,7 @@ export const FR = {
   "eco.glyphes": "Lire une adresse.",
   "eco.arbre": "Reliques du monde.",
   "eco.signatures": "64 motifs.",
-  "eco.tour": "255 étages.",
+  "eco.tour": "Le jeu : 255 étages.",
   "eco.reliques": "Sceaux, QR, danse.",
   "eco.guide": "Mode d'emploi.",
   "psnx.exporter": "Sauver eidos.carnet",
@@ -1147,7 +1147,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "guide.lire":
     "The map and the muses show the same figures another way. A reading is not a proof.",
   "guide.jouer":
-    "The Tower, the vigil and the relics stay on this device. Only the seal and the proof of an anchored vigil talk to the network.",
+    "The game is called the Tower; the vigil is one of its nights, the relics its seals. Everything stays on this device. Only the seal and the proof of an anchored vigil talk to the network.",
   "guide.mots": "Ten words",
   "guide.motsLede": "These ten words come back everywhere. The rest of the atelier uses them as they are.",
   "guide.mot.piece": "coin — a coin of the ledger. What you spend. A coin can be proven.",
@@ -1199,10 +1199,10 @@ export const EN: { [K in keyof typeof FR]: string } = {
     "One vault, one origin. Each item fits in 32 bits. It does not grow: power does not pile up.",
   "guide.10": "Tower",
   "guide.10p":
-    "255 floors. A gate opens with a seal. You climb with what you found, never with what you buy.",
+    "The whole game fits in the Tower: 255 floors. A gate opens with a seal. You climb with what you found, never with what you buy.",
   "guide.10b": "Climb",
   "guide.11p":
-    "64 leaves as life; every gesture that counts burns one. The day's 27 rooms are the same for everyone. What you find goes into a bag, which the summit pours into the vault.",
+    "One night in the Tower. 64 leaves as life; every gesture that counts burns one. The day's 27 rooms are the same for everyone. What you find goes into a bag, which the summit pours into the vault.",
   "guide.11b": "Keep vigil",
   "guide.coeur": "The core",
   "guide.coeurLede": "What holds everything else: five laws, and nothing to believe.",
@@ -1294,7 +1294,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "tour.lede":
     "Earth at the ground, Urania at the peak. Climbing does not make you stronger: you read better. A floor's occupants agree or clash.",
   "nav.veillee": "Vigil",
-  "eco.veillee": "A key signs once: 64 leaves, 27 rooms, one day.",
+  "eco.veillee": "One night in the Tower. A key signs once: 64 leaves, 27 rooms, one day.",
   "nav.coffreHoraire": "Chest of the hour",
   "nav.bataille": "Battle",
   "sous.bataille":
@@ -1880,7 +1880,7 @@ export const EN: { [K in keyof typeof FR]: string } = {
   "eco.glyphes": "Read an address.",
   "eco.arbre": "World relics.",
   "eco.signatures": "64 patterns.",
-  "eco.tour": "255 floors.",
+  "eco.tour": "The game: 255 floors.",
   "eco.reliques": "Seals, QR, dance.",
   "eco.guide": "How-to.",
   "psnx.exporter": "Save eidos.carnet",
